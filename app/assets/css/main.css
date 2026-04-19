@@ -1,0 +1,102 @@
+@import "tailwindcss";
+@import "@nuxt/ui";
+
+/*
+ * ── GourMerge Design Tokens ──────────────────────────────────
+ * Brand identity: "Fork the recipe, merge the flavor."
+ *
+ * Color palette inspired by culinary warmth:
+ * - Primary:   Warm amber/saffron tones
+ * - Secondary: Deep forest green (herbs)
+ * - Neutral:   Slate-charcoal for dark mode elegance
+ */
+
+@theme {
+  /* ── Primary: Saffron / Amber ─────────────────────────────── */
+  --color-primary-50: oklch(0.98 0.02 85);
+  --color-primary-100: oklch(0.95 0.04 82);
+  --color-primary-200: oklch(0.90 0.08 78);
+  --color-primary-300: oklch(0.83 0.12 74);
+  --color-primary-400: oklch(0.75 0.15 70);
+  --color-primary-500: oklch(0.68 0.17 65);
+  --color-primary-600: oklch(0.60 0.16 60);
+  --color-primary-700: oklch(0.52 0.14 55);
+  --color-primary-800: oklch(0.43 0.11 50);
+  --color-primary-900: oklch(0.35 0.08 48);
+  --color-primary-950: oklch(0.25 0.06 45);
+
+  /* ── Secondary: Herb Green ────────────────────────────────── */
+  --color-secondary-50: oklch(0.97 0.02 150);
+  --color-secondary-100: oklch(0.93 0.04 148);
+  --color-secondary-200: oklch(0.87 0.07 145);
+  --color-secondary-300: oklch(0.78 0.11 140);
+  --color-secondary-400: oklch(0.68 0.14 138);
+  --color-secondary-500: oklch(0.58 0.13 135);
+  --color-secondary-600: oklch(0.50 0.12 132);
+  --color-secondary-700: oklch(0.42 0.10 130);
+  --color-secondary-800: oklch(0.35 0.08 128);
+  --color-secondary-900: oklch(0.28 0.06 126);
+  --color-secondary-950: oklch(0.20 0.04 124);
+
+  /* ── Diff Colors (GitHub-style) ───────────────────────────── */
+  --color-diff-added-bg: oklch(0.95 0.05 145);
+  --color-diff-added-text: oklch(0.30 0.10 145);
+  --color-diff-removed-bg: oklch(0.95 0.05 25);
+  --color-diff-removed-text: oklch(0.30 0.10 25);
+  --color-diff-modified-bg: oklch(0.95 0.05 85);
+  --color-diff-modified-text: oklch(0.30 0.10 85);
+
+  /* ── Typography ───────────────────────────────────────────── */
+  --font-sans: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+/* ── Dark mode diff overrides ─────────────────────────────── */
+.dark {
+  --color-diff-added-bg: oklch(0.22 0.05 145);
+  --color-diff-added-text: oklch(0.80 0.10 145);
+  --color-diff-removed-bg: oklch(0.22 0.05 25);
+  --color-diff-removed-text: oklch(0.80 0.10 25);
+  --color-diff-modified-bg: oklch(0.22 0.05 85);
+  --color-diff-modified-text: oklch(0.80 0.10 85);
+}
+
+/* ── Global smoothing ─────────────────────────────────────── */
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: smooth;
+}
+
+/* ── Diff utility classes ─────────────────────────────────── */
+.diff-added {
+  background-color: var(--color-diff-added-bg);
+  color: var(--color-diff-added-text);
+}
+
+.diff-removed {
+  background-color: var(--color-diff-removed-bg);
+  color: var(--color-diff-removed-text);
+}
+
+.diff-modified {
+  background-color: var(--color-diff-modified-bg);
+  color: var(--color-diff-modified-text);
+}
+
+/* ── Inline diff highlights (within text) ─────────────────── */
+.diff-inline-added {
+  background-color: var(--color-diff-added-bg);
+  color: var(--color-diff-added-text);
+  padding: 0.1em 0.25em;
+  border-radius: 0.2em;
+  text-decoration: none;
+}
+
+.diff-inline-removed {
+  background-color: var(--color-diff-removed-bg);
+  color: var(--color-diff-removed-text);
+  padding: 0.1em 0.25em;
+  border-radius: 0.2em;
+  text-decoration: line-through;
+}

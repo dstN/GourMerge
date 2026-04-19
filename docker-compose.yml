@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  mariadb:
+    image: mariadb:11
+    container_name: gourmerge-db
+    restart: unless-stopped
+    ports:
+      - '3306:3306'
+    environment:
+      MARIADB_ROOT_PASSWORD: gourmerge_root
+      MARIADB_DATABASE: gourmerge
+      MARIADB_USER: gourmerge
+      MARIADB_PASSWORD: gourmerge_secret
+    volumes:
+      - gourmerge_data:/var/lib/mysql
+
+volumes:
+  gourmerge_data:
