@@ -7,6 +7,7 @@ const props = defineProps<{
   total: NutritionTotals
   perServing: NutritionTotals
   servings: number
+  compact?: boolean
 }>()
 
 const activeTab = ref<'serving' | 'total'>('serving')
@@ -84,7 +85,100 @@ const hasMicros = computed(() => vitamins.value.length > 0 || minerals.value.len
 </script>
 
 <template>
-  <UCard class="mb-6">
+  <!-- ── Compact bar ──────────────────────────────────────── -->
+  <div
+    v-if="compact"
+    class="rounded-xl border border-[var(--ui-border)] bg-[var(--ui-bg-elevated)] px-4 py-3 mb-6"
+  >
+    <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+      <!-- Energy -->
+      <div class="flex items-center gap-1.5 shrink-0">
+        <UIcon name="i-lucide-flame" class="size-4 text-primary-500 shrink-0" />
+        <span class="text-lg font-bold leading-none">{{ fmt(perServing.kcal, 0) }}</span>
+        <span class="text-xs text-[var(--ui-text-muted)]">kcal</span>
+        <span class="text-xs text-[var(--ui-text-dimmed)]">/ {{ t('nutrition.perServing') }}</span>
+      </div>
+
+      <!-- Macro ratio bar -->
+      <div class="flex h-1.5 w-20 rounded-full overflow-hidden bg-[var(--ui-bg)] shrink-0">
+        <div class="bg-blue-500 transition-all" :style="{ width: macroKcal.protein + '%' }" />
+        <div class="bg-amber-500 transition-all" :style="{ width: macroKcal.carbs + '%' }" />
+        <div class="bg-orange-500 transition-all" :style="{ width: macroKcal.fat + '%' }" />
+      </div>
+
+      <!-- Macros inline -->
+      <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+        <span class="flex items-center gap-1">
+          <span class="inline-block size-2 rounded-full bg-blue-500 shrink-0" />
+          <span class="font-medium">{{ fmt(perServing.protein, 0) }}g</span>
+          <span class="text-[var(--ui-text-muted)]">{{ t('nutrition.protein') }}</span>
+        </span>
+        <span class="text-[var(--ui-border-accented)] select-none">·</span>
+        <span class="flex items-center gap-1">
+          <span class="inline-block size-2 rounded-full bg-amber-500 shrink-0" />
+          <span class="font-medium">{{ fmt(perServing.carbs, 0) }}g</span>
+          <span class="text-[var(--ui-text-muted)]">{{ t('nutrition.carbs') }}</span>
+        </span>
+        <span class="text-[var(--ui-border-accented)] select-none">·</span>
+        <span class="flex items-center gap-1">
+          <span class="inline-block size-2 rounded-full bg-orange-500 shrink-0" />
+          <span class="font-medium">{{ fmt(perServing.fat, 0) }}g</span>
+          <span class="text-[var(--ui-text-muted)]">{{ t('nutrition.fat') }}</span>
+        </span>
+        <template v-if="perServing.fiber && perServing.fiber > 0">
+          <span class="text-[var(--ui-border-accented)] select-none">·</span>
+          <span class="flex items-center gap-1">
+            <span class="inline-block size-2 rounded-full bg-green-500 shrink-0" />
+            <span class="font-medium">{{ fmt(perServing.fiber, 0) }}g</span>
+            <span class="text-[var(--ui-text-muted)]">{{ t('nutrition.fiber') }}</span>
+          </span>
+        </template>
+      </div>
+
+      <!-- Micros toggle + coverage -->
+      <div class="ml-auto flex items-center gap-3">
+        <p v-if="total.missingCount > 0" class="text-xs text-[var(--ui-text-dimmed)] hidden sm:flex items-center gap-1">
+          <UIcon name="i-lucide-info" class="size-3 shrink-0" />
+          {{ t('nutrition.missingCount', { n: total.missingCount }) }}
+        </p>
+        <button
+          v-if="hasMicros"
+          class="flex items-center gap-1 text-xs text-primary-500 hover:text-primary-400 transition-colors shrink-0"
+          @click="showMicros = !showMicros"
+        >
+          {{ t('nutrition.showMicros') }}
+          <UIcon :name="showMicros ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'" class="size-3.5" />
+        </button>
+      </div>
+    </div>
+
+    <!-- Expanded micros -->
+    <template v-if="showMicros && hasMicros">
+      <div class="mt-3 pt-3 border-t border-[var(--ui-border)] grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3">
+        <div v-if="vitamins.length > 0">
+          <p class="text-xs font-semibold uppercase tracking-wide text-[var(--ui-text-dimmed)] mb-1.5">{{ t('nutrition.vitamins') }}</p>
+          <div class="grid grid-cols-3 sm:grid-cols-4 gap-1.5">
+            <div v-for="m in vitamins" :key="m.key" class="rounded bg-[var(--ui-bg)] px-2 py-1">
+              <div class="text-xs text-[var(--ui-text-muted)] truncate">{{ m.label }}</div>
+              <div class="text-xs font-medium">{{ fmt(m.value, m.unit === 'mg' ? 1 : 2) }}<span class="text-[var(--ui-text-dimmed)]"> {{ m.unit }}</span></div>
+            </div>
+          </div>
+        </div>
+        <div v-if="minerals.length > 0">
+          <p class="text-xs font-semibold uppercase tracking-wide text-[var(--ui-text-dimmed)] mb-1.5">{{ t('nutrition.minerals') }}</p>
+          <div class="grid grid-cols-3 sm:grid-cols-4 gap-1.5">
+            <div v-for="m in minerals" :key="m.key" class="rounded bg-[var(--ui-bg)] px-2 py-1">
+              <div class="text-xs text-[var(--ui-text-muted)] truncate">{{ m.label }}</div>
+              <div class="text-xs font-medium">{{ fmt(m.value, m.unit === 'mg' ? 1 : 2) }}<span class="text-[var(--ui-text-dimmed)]"> {{ m.unit }}</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
+  </div>
+
+  <!-- ── Full card (default) ──────────────────────────────── -->
+  <UCard v-else class="mb-6">
     <template #header>
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">

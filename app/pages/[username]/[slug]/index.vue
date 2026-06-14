@@ -265,48 +265,45 @@ useHead(() => {
         </template>
       </UCard>
 
-      <!-- Ingredients + Nutrition side-by-side on lg+ -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <!-- Ingredients -->
-        <UCard>
-          <template #header>
-            <div class="flex items-center gap-2">
-              <UIcon name="i-lucide-shopping-basket" class="size-5 text-primary-500" />
-              <h2 class="text-lg font-semibold">{{ t('recipe.ingredients') }}</h2>
-              <UBadge color="neutral" variant="subtle" :label="String(recipe.currentIngredients.length)" size="xs" />
-            </div>
-          </template>
-
-          <div v-if="recipe.currentIngredients.length === 0" class="text-center py-8 text-[var(--ui-text-muted)]">
-            {{ t('recipe.noIngredients') }}
+      <!-- Ingredients -->
+      <UCard class="mb-6">
+        <template #header>
+          <div class="flex items-center gap-2">
+            <UIcon name="i-lucide-shopping-basket" class="size-5 text-primary-500" />
+            <h2 class="text-lg font-semibold">{{ t('recipe.ingredients') }}</h2>
+            <UBadge color="neutral" variant="subtle" :label="String(recipe.currentIngredients.length)" size="xs" />
           </div>
+        </template>
 
-          <div v-else class="divide-y divide-[var(--ui-border)]">
-            <div
-              v-for="ing in recipe.currentIngredients"
-              :key="ing.id"
-              class="flex items-center justify-between py-3"
-            >
-              <span class="font-medium">{{ ing.ingredientName }}</span>
-              <span class="font-mono text-sm text-[var(--ui-text-muted)]">
-                {{ ing.quantity }} {{ translateUnit(ing.unit) }}
-                <span v-if="ing.notes" class="text-[var(--ui-text-dimmed)] italic ml-2">
-                  ({{ ing.notes }})
-                </span>
+        <div v-if="recipe.currentIngredients.length === 0" class="text-center py-8 text-[var(--ui-text-muted)]">
+          {{ t('recipe.noIngredients') }}
+        </div>
+
+        <div v-else class="divide-y divide-[var(--ui-border)]">
+          <div
+            v-for="ing in recipe.currentIngredients"
+            :key="ing.id"
+            class="flex items-center justify-between py-3"
+          >
+            <span class="font-medium">{{ ing.ingredientName }}</span>
+            <span class="font-mono text-sm text-[var(--ui-text-muted)]">
+              {{ ing.quantity }} {{ translateUnit(ing.unit) }}
+              <span v-if="ing.notes" class="text-[var(--ui-text-dimmed)] italic ml-2">
+                ({{ ing.notes }})
               </span>
-            </div>
+            </span>
           </div>
-        </UCard>
+        </div>
+      </UCard>
 
-        <!-- Nutrition Facts -->
-        <RecipeNutritionFacts
-          v-if="recipe.nutritionTotal && recipe.nutritionPerServing && recipe.nutritionTotal.coveredCount > 0"
-          :total="recipe.nutritionTotal"
-          :per-serving="recipe.nutritionPerServing"
-          :servings="recipe.servings ?? 4"
-        />
-        <div v-else class="hidden lg:block" />
-      </div>
+      <!-- Nutrition bar (compact) -->
+      <RecipeNutritionFacts
+        v-if="recipe.nutritionTotal && recipe.nutritionPerServing && recipe.nutritionTotal.coveredCount > 0"
+        :total="recipe.nutritionTotal"
+        :per-serving="recipe.nutritionPerServing"
+        :servings="recipe.servings ?? 4"
+        :compact="true"
+      />
 
       <!-- Steps -->
       <UCard>
