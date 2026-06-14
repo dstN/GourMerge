@@ -33,6 +33,11 @@ const items = computed(() => [
     icon: 'i-lucide-plus',
     color: 'neutral' as const,
     to: '/recipes/new',
+  }, {
+    label: t('nav.editProfile'),
+    icon: 'i-lucide-user-pen',
+    color: 'neutral' as const,
+    to: '/settings',
   }],
   [{
     label: t('auth.logout'),

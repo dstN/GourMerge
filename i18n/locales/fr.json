@@ -7,7 +7,8 @@
     "myRecipes": "Mes recettes",
     "newRecipe": "Nouvelle recette",
     "dashboard": "Tableau de bord",
-    "quickActions": "Actions rapides"
+    "quickActions": "Actions rapides",
+    "editProfile": "Modifier le profil"
   },
   "auth": {
     "login": "Se connecter",

@@ -7,7 +7,8 @@
     "myRecipes": "My Recipes",
     "newRecipe": "New Recipe",
     "dashboard": "Dashboard",
-    "quickActions": "Quick Actions"
+    "quickActions": "Quick Actions",
+    "editProfile": "Edit Profile"
   },
   "auth": {
     "login": "Log In",
