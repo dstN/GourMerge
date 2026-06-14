@@ -10,6 +10,7 @@ import { recipes, users, recipeBranches } from '~~/server/database/schema'
 export default defineEventHandler(async (event) => {
   const query = getQuery(event)
   const db = useDrizzle()
+  if (!db) throw createError({ statusCode: 503, statusMessage: 'Database unavailable.' })
 
   // ── Public listing ──────────────────────────────────────────
   if (query.public === 'true') {

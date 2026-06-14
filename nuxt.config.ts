@@ -135,7 +135,7 @@ export default defineNuxtConfig({
       telemetry: false,
     },
     // Disable source map upload locally (no auth token in dev).
-    autoInjectServerSentry: process.env.SENTRY_AUTH_TOKEN ? 'top-level-import' : false,
+    autoInjectServerSentry: process.env.SENTRY_AUTH_TOKEN ? 'top-level-import' : undefined,
   },
 
   // ── Head / Fonts ───────────────────────────────────────────

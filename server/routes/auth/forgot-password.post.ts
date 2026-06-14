@@ -15,6 +15,7 @@ export default defineEventHandler(async (event) => {
   if (!parsed.success) throw createError({ statusCode: 400, statusMessage: 'Invalid email.' })
 
   const db = useDrizzle()
+  if (!db) return { sent: true } // fail open — don't reveal DB state
 
   // Always return success to prevent user enumeration.
   const [dbUser] = await db.select({ id: users.id, email: users.email })

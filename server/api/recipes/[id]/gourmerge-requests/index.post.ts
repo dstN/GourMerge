@@ -32,7 +32,8 @@ export default defineEventHandler(async (event) => {
   }
 
   const { title, description, sourceBranchId, targetBranchId, sourceRecipeId } = result.data
-  const db = useDrizzle()!
+  const db = useDrizzle()
+  if (!db) throw createError({ statusCode: 503, statusMessage: 'Database unavailable.' })
 
   // Verify target recipe exists + is accessible
   const [targetRecipe] = await db
@@ -81,6 +82,8 @@ export default defineEventHandler(async (event) => {
     targetBranchId,
     sourceRecipeId: sourceRecipeId ?? null,
   }).$returningId()
+
+  if (!inserted) throw createError({ statusCode: 500, statusMessage: 'Insert failed.' })
 
   setResponseStatus(event, 201)
   return { id: inserted.id }

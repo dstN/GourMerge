@@ -30,6 +30,7 @@ export default defineEventHandler(async (event) => {
 
   const { email, password } = result.data
   const db = useDrizzle()
+  if (!db) throw createError({ statusCode: 503, statusMessage: 'Database unavailable.' })
 
   // ── Find user ───────────────────────────────────────────────
   const [user] = await db

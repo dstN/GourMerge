@@ -11,8 +11,12 @@ export default defineEventHandler(async () => {
   let dbStatus = 'unknown'
   try {
     const db = useDrizzle()
-    await db.execute(sql`SELECT 1`)
-    dbStatus = 'connected'
+    if (!db) {
+      dbStatus = 'disconnected'
+    } else {
+      await db.execute(sql`SELECT 1`)
+      dbStatus = 'connected'
+    }
   }
   catch {
     dbStatus = 'disconnected'

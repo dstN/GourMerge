@@ -12,8 +12,9 @@ import {
   ingredients as ingredientsTable,
   gourmergeRequestComments,
 } from '~~/server/database/schema'
+import type { CommitIngredient, CommitStep } from '~~/shared/types'
 
-async function loadSnapshot(db: ReturnType<typeof useDrizzle>, headCommitId: number | null) {
+async function loadSnapshot(db: ReturnType<typeof useDrizzle>, headCommitId: number | null): Promise<{ ingredients: CommitIngredient[]; steps: CommitStep[] }> {
   if (!headCommitId || !db) return { ingredients: [], steps: [] }
   const [ings, steps] = await Promise.all([
     db
@@ -37,7 +38,14 @@ async function loadSnapshot(db: ReturnType<typeof useDrizzle>, headCommitId: num
       .where(eq(recipeCommitSteps.commitId, headCommitId))
       .orderBy(recipeCommitSteps.sortOrder),
   ])
-  return { ingredients: ings, steps }
+  return {
+    ingredients: ings.map((ing) => ({
+      ...ing,
+      quantity: typeof ing.quantity === 'string' ? parseFloat(ing.quantity) : ing.quantity,
+      ingredient: { id: ing.ingredient.id, name: ing.ingredient.name, nameTranslations: {}, category: null, createdAt: '' },
+    })),
+    steps,
+  }
 }
 
 export default defineEventHandler(async (event) => {
@@ -45,7 +53,8 @@ export default defineEventHandler(async (event) => {
   const gmrId = Number(getRouterParam(event, 'gmrId'))
   if (isNaN(recipeId) || isNaN(gmrId)) throw createError({ statusCode: 400, statusMessage: 'Invalid parameters' })
 
-  const db = useDrizzle()!
+  const db = useDrizzle()
+  if (!db) throw createError({ statusCode: 503, statusMessage: 'Database unavailable.' })
   const session = await getUserSession(event)
 
   const [recipe] = await db

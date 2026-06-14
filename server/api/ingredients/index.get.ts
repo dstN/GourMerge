@@ -27,6 +27,7 @@ export default defineEventHandler(async (event) => {
 
   const { q, locale, limit } = result.data
   const db = useDrizzle()
+  if (!db) throw createError({ statusCode: 503, statusMessage: 'Database unavailable.' })
 
   const rows = await db
     .select({

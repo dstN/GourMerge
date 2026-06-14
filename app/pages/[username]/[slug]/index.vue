@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type { RecipeDetail } from '~~/shared/types/recipe'
+
 definePageMeta({ middleware: ['validate-recipe-route'] })
 
 const { t } = useI18n()
@@ -9,7 +11,7 @@ const toast = useAppToast()
 const username = computed(() => route.params.username as string)
 const slug = computed(() => route.params.slug as string)
 
-const { data: recipe, pending, error } = useFetch(
+const { data: recipe, pending, error } = useFetch<RecipeDetail>(
   () => `/api/recipes/by-slug/${username.value}/${slug.value}`,
   { headers: useRequestHeaders(['cookie']) },
 )

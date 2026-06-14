@@ -51,7 +51,7 @@ function update(patch: Partial<IngredientRowData>) {
     <div class="flex-1 min-w-0">
       <IngredientAutocomplete
         :model-value="{ id: row.ingredientId, name: row.name }"
-        @update:model-value="(val) => update({ ingredientId: val.id, name: val.name })"
+        @update:model-value="(val: { id: number | null; name: string }) => update({ ingredientId: val.id, name: val.name })"
       />
     </div>
 

@@ -27,7 +27,6 @@ const items = computed(() => [
   <UDropdownMenu
     v-if="loggedIn"
     :items="items"
-    :ui="{ width: 'w-52' }"
   >
     <UButton
       icon="i-lucide-circle-help"

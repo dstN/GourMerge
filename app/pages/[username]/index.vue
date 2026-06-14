@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type { UserProfile } from '~~/shared/types/recipe'
+
 definePageMeta({ middleware: ['validate-recipe-route'] })
 
 const { t } = useI18n()
@@ -7,7 +9,7 @@ const { user: currentUser } = useUserSession()
 
 const username = computed(() => route.params.username as string)
 
-const { data: profile, pending, error } = useFetch(
+const { data: profile, pending, error } = useFetch<UserProfile>(
   () => `/api/users/${username.value}`,
   { headers: useRequestHeaders(['cookie']) },
 )

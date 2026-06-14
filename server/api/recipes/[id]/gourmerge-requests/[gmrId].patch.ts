@@ -34,7 +34,8 @@ export default defineEventHandler(async (event) => {
   const result = patchSchema.safeParse(body)
   if (!result.success) throw createError({ statusCode: 422, statusMessage: 'Validation failed' })
 
-  const db = useDrizzle()!
+  const db = useDrizzle()
+  if (!db) throw createError({ statusCode: 503, statusMessage: 'Database unavailable.' })
 
   const [recipe] = await db
     .select({ ownerId: recipes.ownerId })

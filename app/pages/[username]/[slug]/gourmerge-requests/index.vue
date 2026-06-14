@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type { RecipeDetail, GourmergeRequestListItem } from '~~/shared/types/recipe'
+
 definePageMeta({ middleware: ['validate-recipe-route'] })
 
 const { t } = useI18n()
@@ -9,19 +11,21 @@ const username = computed(() => route.params.username as string)
 const slug = computed(() => route.params.slug as string)
 const recipeUrl = computed(() => `/${username.value}/${slug.value}`)
 
-const { data: recipe } = useFetch(
+const { data: recipe } = useFetch<RecipeDetail>(
   () => `/api/recipes/by-slug/${username.value}/${slug.value}`,
-  { headers: useRequestHeaders(['cookie']), pick: ['id', 'owner', 'title'] },
+  { headers: useRequestHeaders(['cookie']) },
 )
 
 const statusFilter = ref('open')
 
-const { data: requests, pending, refresh } = useFetch(
-  () => recipe.value ? `/api/recipes/${recipe.value.id}/gourmerge-requests` : null,
+const recipeId = computed(() => recipe.value?.id ?? 0)
+
+const { data: requests, pending, refresh } = useFetch<GourmergeRequestListItem[]>(
+  () => `/api/recipes/${recipeId.value}/gourmerge-requests`,
   {
     headers: useRequestHeaders(['cookie']),
     query: computed(() => ({ status: statusFilter.value })),
-    watch: [statusFilter],
+    watch: [statusFilter, recipeId],
   },
 )
 

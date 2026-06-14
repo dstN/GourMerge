@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useDebounceFn } from '@vueuse/core'
+import type { ExploreResponse } from '~~/shared/types/recipe'
+
 const { t } = useI18n()
 
 const search = ref('')
@@ -6,7 +9,7 @@ const difficulty = ref('')
 const sort = ref('stars')
 const page = ref(1)
 
-const { data, pending, refresh } = useFetch('/api/recipes/explore', {
+const { data, pending, refresh } = useFetch<ExploreResponse>('/api/recipes/explore', {
   query: computed(() => ({
     q: search.value || undefined,
     difficulty: difficulty.value || undefined,

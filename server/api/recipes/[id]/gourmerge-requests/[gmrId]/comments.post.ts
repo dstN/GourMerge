@@ -19,7 +19,8 @@ export default defineEventHandler(async (event) => {
   const result = commentSchema.safeParse(body)
   if (!result.success) throw createError({ statusCode: 422, statusMessage: 'Validation failed' })
 
-  const db = useDrizzle()!
+  const db = useDrizzle()
+  if (!db) throw createError({ statusCode: 503, statusMessage: 'Database unavailable.' })
 
   const [recipe] = await db
     .select({ ownerId: recipes.ownerId, visibility: recipes.visibility })
@@ -51,6 +52,8 @@ export default defineEventHandler(async (event) => {
       body: result.data.body,
     })
     .$returningId()
+
+  if (!inserted) throw createError({ statusCode: 500, statusMessage: 'Insert failed.' })
 
   setResponseStatus(event, 201)
   return { id: inserted.id }

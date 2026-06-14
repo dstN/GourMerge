@@ -6,10 +6,12 @@
  */
 
 import { drizzle } from 'drizzle-orm/mysql2'
+import type { MySql2Database } from 'drizzle-orm/mysql2'
 import mysql from 'mysql2/promise'
 import * as schema from './schema'
 
-let _db: ReturnType<typeof drizzle> | null = null
+type GourMergeDb = MySql2Database<typeof schema> & { $client: mysql.Pool }
+let _db: GourMergeDb | null = null
 let _pool: mysql.Pool | null = null
 
 /**
@@ -36,7 +38,7 @@ export function useDatabase() {
     _db = drizzle(_pool, {
       schema,
       mode: 'default',
-    })
+    }) as unknown as GourMergeDb
   }
 
   return _db

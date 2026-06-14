@@ -24,6 +24,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const db = useDrizzle()
+  if (!db) throw createError({ statusCode: 503, statusMessage: 'Database unavailable.' })
 
   // ── Resolve owner ──────────────────────────────────────────
   const [owner] = await db

@@ -6,6 +6,7 @@
  * (via TipTap WYSIWYG) and commit a snapshot to any branch.
  */
 import type { IngredientRowData } from '~/components/recipe/IngredientRow.vue'
+import type { RecipeDetail } from '~~/shared/types/recipe'
 
 definePageMeta({ layout: 'dashboard', middleware: ['validate-recipe-route', 'auth'] })
 
@@ -18,7 +19,7 @@ const username = computed(() => route.params.username as string)
 const slug = computed(() => route.params.slug as string)
 
 // ── Fetch recipe ──────────────────────────────────────────────
-const { data: recipe, pending } = await useFetch(
+const { data: recipe, pending } = await useFetch<RecipeDetail>(
   () => `/api/recipes/by-slug/${username.value}/${slug.value}`,
   { headers: useRequestHeaders(['cookie']) },
 )
@@ -336,7 +337,7 @@ useSeoMeta({
               :key="i"
               :model-value="step.content"
               :index="i"
-              @update:model-value="steps[i].content = $event"
+              @update:model-value="if (steps[i]) steps[i].content = $event"
               @remove="removeStep(i)"
             />
             <template #fallback>

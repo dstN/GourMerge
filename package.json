@@ -48,6 +48,7 @@
   "devDependencies": {
     "@nuxt/eslint": "^1.16.0",
     "@nuxt/test-utils": "^4.0.3",
+    "@types/nodemailer": "^8.0.1",
     "@vite-pwa/nuxt": "^0.10.0",
     "@vitest/coverage-v8": "^4.1.8",
     "@vue/test-utils": "^2.4.11",

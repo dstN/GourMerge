@@ -11,6 +11,7 @@ export default defineEventHandler(async (event) => {
   if (!user?.id) throw createError({ statusCode: 401 })
 
   const db = useDrizzle()
+  if (!db) throw createError({ statusCode: 503, statusMessage: 'Database unavailable.' })
   const [dbUser] = await db.select({ id: users.id, email: users.email, emailVerifiedAt: users.emailVerifiedAt })
     .from(users).where(eq(users.id, user.id)).limit(1)
 

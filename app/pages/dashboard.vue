@@ -4,6 +4,7 @@
  *
  * Shows the user's recipes in a grid and quick actions.
  */
+import type { DashboardRecipe } from '~~/shared/types/recipe'
 
 definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 
@@ -15,7 +16,7 @@ useSeoMeta({
 })
 
 // Fetch user's recipes
-const { data: recipes, pending } = useFetch('/api/recipes', {
+const { data: recipes, pending } = useFetch<DashboardRecipe[]>('/api/recipes', {
   headers: useRequestHeaders(['cookie']),
 })
 </script>

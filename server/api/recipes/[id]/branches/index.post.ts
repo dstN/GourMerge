@@ -35,6 +35,7 @@ export default defineEventHandler(async (event) => {
 
   const { name, fromBranchId } = result.data
   const db = useDrizzle()
+  if (!db) throw createError({ statusCode: 503, statusMessage: 'Database unavailable.' })
 
   // ── Verify ownership ───────────────────────────────────────
   const [recipe] = await db
@@ -97,6 +98,8 @@ export default defineEventHandler(async (event) => {
     headCommitId: sourceBranch.headCommitId,
     isDefault: false,
   }).$returningId()
+
+  if (!branch) throw createError({ statusCode: 500, statusMessage: 'Insert failed.' })
 
   setResponseStatus(event, 201)
   return {

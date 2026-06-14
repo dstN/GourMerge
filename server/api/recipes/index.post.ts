@@ -38,6 +38,7 @@ export default defineEventHandler(async (event) => {
 
   const data = result.data
   const db = useDrizzle()
+  if (!db) throw createError({ statusCode: 503, statusMessage: 'Database unavailable.' })
 
   // ── Generate unique slug ────────────────────────────────────
   let slug = generateSlug(data.title)
@@ -86,12 +87,16 @@ export default defineEventHandler(async (event) => {
       visibility: data.visibility,
     }).$returningId()
 
+    if (!recipe) throw createError({ statusCode: 500, statusMessage: 'Insert failed.' })
+
     // 2. Create default "main" branch
     const [branch] = await tx.insert(recipeBranches).values({
       recipeId: recipe.id,
       name: 'main',
       isDefault: true,
     }).$returningId()
+
+    if (!branch) throw createError({ statusCode: 500, statusMessage: 'Insert failed.' })
 
     // 3. Create initial (empty) commit
     const [commit] = await tx.insert(recipeCommits).values({
@@ -100,6 +105,8 @@ export default defineEventHandler(async (event) => {
       message: 'Initial commit 🍳',
       parentCommitId: null,
     }).$returningId()
+
+    if (!commit) throw createError({ statusCode: 500, statusMessage: 'Insert failed.' })
 
     // 4. Update branch head pointer
     await tx

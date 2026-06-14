@@ -22,7 +22,8 @@ export default defineEventHandler(async (event) => {
   const limit = Math.min(50, Math.max(1, Number(query.limit) || 20))
   const offset = (page - 1) * limit
 
-  const db = useDrizzle()!
+  const db = useDrizzle()
+  if (!db) throw createError({ statusCode: 503, statusMessage: 'Database unavailable.' })
 
   const conditions = [eq(recipes.visibility, 'public')]
 

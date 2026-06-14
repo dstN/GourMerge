@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type { UserProfile } from '~~/shared/types/recipe'
+
 definePageMeta({ auth: true })
 
 const { t } = useI18n()
@@ -14,7 +16,7 @@ const form = reactive({
 })
 
 // Fetch current settings
-const { data: profile } = useFetch(() => `/api/users/${user.value?.username}`, {
+const { data: profile } = useFetch<UserProfile>(() => `/api/users/${user.value?.username}`, {
   headers: useRequestHeaders(['cookie']),
 })
 

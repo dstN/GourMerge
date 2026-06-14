@@ -73,7 +73,8 @@ export default defineEventHandler(async (event) => {
   const gmrId = Number(getRouterParam(event, 'gmrId'))
   if (isNaN(recipeId) || isNaN(gmrId)) throw createError({ statusCode: 400, statusMessage: 'Invalid parameters' })
 
-  const db = useDrizzle()!
+  const db = useDrizzle()
+  if (!db) throw createError({ statusCode: 503, statusMessage: 'Database unavailable.' })
 
   // Verify recipe ownership
   const [recipe] = await db
@@ -152,6 +153,8 @@ export default defineEventHandler(async (event) => {
       isMerge: true,
       mergeSourceCommitId: sourceHeadId,
     }).$returningId()
+
+    if (!mergeCommit) throw createError({ statusCode: 500, statusMessage: 'Insert failed.' })
 
     // 2. Insert merged ingredients
     if (mergeResult.ingredients.length > 0) {

@@ -3,7 +3,8 @@ import { eq } from 'drizzle-orm'
 import { passwordResetTokens, users } from '~~/server/database/schema'
 import { useRateLimit, getRateLimitKey } from '~~/server/utils/rateLimit'
 import { z } from 'zod'
-import { hashPassword } from 'nuxt-auth-utils'
+
+// hashPassword is auto-imported by nuxt-auth-utils Nitro plugin
 
 const bodySchema = z.object({
   token: z.string().min(32),
@@ -19,6 +20,7 @@ export default defineEventHandler(async (event) => {
 
   const tokenHash = createHash('sha256').update(parsed.data.token).digest('hex')
   const db = useDrizzle()
+  if (!db) throw createError({ statusCode: 503, statusMessage: 'Database unavailable.' })
 
   const [row] = await db.select({
     id: passwordResetTokens.id,

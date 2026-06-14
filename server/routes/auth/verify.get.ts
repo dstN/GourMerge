@@ -11,6 +11,7 @@ export default defineEventHandler(async (event) => {
 
   const tokenHash = createHash('sha256').update(token).digest('hex')
   const db = useDrizzle()
+  if (!db) throw createError({ statusCode: 503, statusMessage: 'Database unavailable.' })
 
   const [row] = await db
     .select({ id: emailVerificationTokens.id, userId: emailVerificationTokens.userId, expiresAt: emailVerificationTokens.expiresAt, usedAt: emailVerificationTokens.usedAt })

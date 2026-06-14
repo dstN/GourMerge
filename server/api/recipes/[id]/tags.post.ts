@@ -26,7 +26,8 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 422, statusMessage: 'Validation failed' })
   }
 
-  const db = useDrizzle()!
+  const db = useDrizzle()
+  if (!db) throw createError({ statusCode: 503, statusMessage: 'Database unavailable.' })
 
   // Verify ownership
   const [recipe] = await db
@@ -53,6 +54,7 @@ export default defineEventHandler(async (event) => {
 
   if (!tag && result.data.action === 'attach') {
     const [inserted] = await db.insert(tags).values({ name: tagName }).$returningId()
+    if (!inserted) throw createError({ statusCode: 500, statusMessage: 'Insert failed.' })
     tag = { id: inserted.id, name: tagName }
   }
 

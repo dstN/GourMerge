@@ -5,6 +5,10 @@ export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
   const appUrl = config.appUrl.replace(/\/$/, '')
   const db = useDrizzle()
+  if (!db) {
+    setHeader(event, 'content-type', 'application/xml; charset=utf-8')
+    return '<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>'
+  }
 
   setHeader(event, 'content-type', 'application/xml; charset=utf-8')
   setHeader(event, 'cache-control', 'public, max-age=3600, s-maxage=3600')
@@ -21,12 +25,14 @@ export default defineEventHandler(async (event) => {
     .orderBy(recipes.updatedAt)
     .limit(5000)
 
-  const staticUrls = [
+  interface SitemapUrl { loc: string; lastmod?: string; priority: string; changefreq: string }
+
+  const staticUrls: SitemapUrl[] = [
     { loc: `${appUrl}/`, priority: '1.0', changefreq: 'daily' },
     { loc: `${appUrl}/explore`, priority: '0.9', changefreq: 'hourly' },
   ]
 
-  const recipeUrls = publicRecipes.map((r) => ({
+  const recipeUrls: SitemapUrl[] = publicRecipes.map((r) => ({
     loc: `${appUrl}/${r.username}/${r.slug}`,
     lastmod: r.updatedAt.toISOString().split('T')[0],
     priority: '0.7',
@@ -39,7 +45,7 @@ export default defineEventHandler(async (event) => {
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${allUrls.map((u) => `  <url>
     <loc>${u.loc}</loc>${u.lastmod ? `\n    <lastmod>${u.lastmod}</lastmod>` : ''}
-    <changefreq>${(u as any).changefreq}</changefreq>
+    <changefreq>${u.changefreq}</changefreq>
     <priority>${u.priority}</priority>
   </url>`).join('\n')}
 </urlset>`

@@ -35,6 +35,7 @@ export default defineEventHandler(async (event) => {
   const { name, nameTranslations, category } = result.data
   const normalizedName = name.toLowerCase().trim()
   const db = useDrizzle()
+  if (!db) throw createError({ statusCode: 503, statusMessage: 'Database unavailable.' })
 
   // Try to find existing by exact normalized name (case-insensitive via LOWER())
   const [existing] = await db
@@ -56,6 +57,8 @@ export default defineEventHandler(async (event) => {
       category: category ?? null,
     })
     .$returningId()
+
+  if (!created) throw createError({ statusCode: 500, statusMessage: 'Insert failed.' })
 
   setResponseStatus(event, 201)
   return {

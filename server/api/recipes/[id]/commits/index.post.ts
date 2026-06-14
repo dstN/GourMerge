@@ -53,6 +53,7 @@ export default defineEventHandler(async (event) => {
 
   const { message, branchId, ingredients, steps } = result.data
   const db = useDrizzle()
+  if (!db) throw createError({ statusCode: 503, statusMessage: 'Database unavailable.' })
 
   // ── Verify recipe ownership ─────────────────────────────────
   const [recipe] = await db
@@ -86,6 +87,8 @@ export default defineEventHandler(async (event) => {
     authorId: session.user.id,
     message,
   }).$returningId()
+
+  if (!commit) throw createError({ statusCode: 500, statusMessage: 'Insert failed.' })
 
   // ── Store ingredient snapshot ───────────────────────────────
   if (ingredients.length > 0) {

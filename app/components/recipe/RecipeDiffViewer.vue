@@ -74,7 +74,8 @@ function getDiffIcon(type: string): string {
   }
 }
 
-function getDiffColor(type: string): string {
+type BadgeColor = 'success' | 'primary' | 'secondary' | 'info' | 'warning' | 'error' | 'neutral'
+function getDiffColor(type: string): BadgeColor {
   switch (type) {
     case 'added': return 'success'
     case 'removed': return 'error'

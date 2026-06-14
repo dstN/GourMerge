@@ -4,6 +4,8 @@
  *
  * URL: /:username/:slug/history
  */
+import type { RecipeDetail } from '~~/shared/types/recipe'
+
 definePageMeta({ layout: 'dashboard', middleware: ['validate-recipe-route', 'auth'] })
 
 const { t } = useI18n()
@@ -14,7 +16,7 @@ const slug = computed(() => route.params.slug as string)
 const recipeUrl = computed(() => `/${username.value}/${slug.value}`)
 
 // ── Fetch recipe data ────────────────────────────────────────
-const { data: recipe } = await useFetch(
+const { data: recipe } = await useFetch<RecipeDetail>(
   () => `/api/recipes/by-slug/${username.value}/${slug.value}`,
 )
 if (!recipe.value) {

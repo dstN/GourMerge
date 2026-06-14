@@ -38,6 +38,7 @@ export default defineEventHandler(async (event) => {
 
   const { username, email, password, displayName } = result.data
   const db = useDrizzle()
+  if (!db) throw createError({ statusCode: 503, statusMessage: 'Database unavailable.' })
 
   // ── Check for existing user ─────────────────────────────────
   const existing = await db
@@ -62,6 +63,8 @@ export default defineEventHandler(async (event) => {
     passwordHash,
     displayName: displayName || username,
   }).$returningId()
+
+  if (!inserted) throw createError({ statusCode: 500, statusMessage: 'Insert failed.' })
 
   // ── Session rotation: clear any pre-existing session (prevents fixation) ──
   await clearUserSession(event)

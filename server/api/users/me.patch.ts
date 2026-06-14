@@ -28,7 +28,8 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const db = useDrizzle()!
+  const db = useDrizzle()
+  if (!db) throw createError({ statusCode: 503, statusMessage: 'Database unavailable.' })
   const updates: Partial<typeof users.$inferInsert> = {}
 
   if (result.data.displayName !== undefined) updates.displayName = result.data.displayName

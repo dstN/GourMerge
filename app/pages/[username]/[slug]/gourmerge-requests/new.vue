@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type { RecipeDetail } from '~~/shared/types/recipe'
+
 definePageMeta({ middleware: ['validate-recipe-route'], auth: true })
 
 const { t } = useI18n()
@@ -10,7 +12,7 @@ const username = computed(() => route.params.username as string)
 const slug = computed(() => route.params.slug as string)
 const recipeUrl = computed(() => `/${username.value}/${slug.value}`)
 
-const { data: recipe } = useFetch(
+const { data: recipe } = useFetch<Pick<RecipeDetail, 'id' | 'branches' | 'title' | 'owner'>>(
   () => `/api/recipes/by-slug/${username.value}/${slug.value}`,
   { headers: useRequestHeaders(['cookie']), pick: ['id', 'branches', 'title', 'owner'] },
 )

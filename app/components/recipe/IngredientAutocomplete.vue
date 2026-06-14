@@ -19,11 +19,12 @@ const emit = defineEmits<{
 }>()
 
 const query = ref('')
+const selectedItem = ref<IngredientOption | undefined>(undefined)
 const options = ref<IngredientOption[]>([])
 const loading = ref(false)
 let searchTimeout: ReturnType<typeof setTimeout>
 
-// Debounced search
+// Debounced search triggered by query changes
 watch(query, (q) => {
   clearTimeout(searchTimeout)
   if (!q || q.length < 1) {
@@ -72,18 +73,14 @@ watch(() => props.modelValue, (val) => {
 
 <template>
   <UInputMenu
-    v-model="query"
+    v-model="selectedItem"
+    v-model:search-term="query"
     :items="options"
     option-attribute="localeName"
-    value-attribute="id"
     :loading="loading"
     :placeholder="placeholder ?? t('recipe.ingredientName')"
     trailing-icon="i-lucide-search"
-    @update:model-value="() => {}"
-    @change="(val: any) => {
-      const opt = options.find(o => o.id === val || o.localeName === val || o.name === val)
-      if (opt) onSelect(opt)
-    }"
+    @update:model-value="(v: IngredientOption | null) => onSelect(v)"
   >
     <template #item="{ item }">
       <span v-if="item.isNew" class="flex items-center gap-1.5 text-primary-500">

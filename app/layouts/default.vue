@@ -65,7 +65,7 @@ const localeSwitchItems = [
               value-key="value"
               size="sm"
               class="w-28"
-              @update:model-value="setLocale($event as string)"
+              @update:model-value="setLocale($event as 'en' | 'de')"
             />
             <UColorModeButton />
             <OnboardingHelpMenu />

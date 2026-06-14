@@ -23,7 +23,8 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Invalid recipe ID' })
   }
 
-  const db = useDrizzle()!
+  const db = useDrizzle()
+  if (!db) throw createError({ statusCode: 503, statusMessage: 'Database unavailable.' })
 
   // ── Load original recipe ─────────────────────────────────────
   const [original] = await db
@@ -121,12 +122,16 @@ export default defineEventHandler(async (event) => {
       forkedFromRecipeId: recipeId,
     }).$returningId()
 
+    if (!fork) throw createError({ statusCode: 500, statusMessage: 'Insert failed.' })
+
     // 2. Create default branch for fork
     const [forkBranch] = await tx.insert(recipeBranches).values({
       recipeId: fork.id,
       name: 'main',
       isDefault: true,
     }).$returningId()
+
+    if (!forkBranch) throw createError({ statusCode: 500, statusMessage: 'Insert failed.' })
 
     // 3. Copy head commit snapshot (fork point)
     const [forkCommit] = await tx.insert(recipeCommits).values({
@@ -135,6 +140,8 @@ export default defineEventHandler(async (event) => {
       message: `Forked from original recipe`,
       parentCommitId: null,
     }).$returningId()
+
+    if (!forkCommit) throw createError({ statusCode: 500, statusMessage: 'Insert failed.' })
 
     // 4. Copy ingredients (reference the same master ingredient IDs)
     if (sourceIngredients.length > 0) {

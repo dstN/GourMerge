@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type { RecipeDetail, GourmergeRequestDetail } from '~~/shared/types/recipe'
+
 definePageMeta({ middleware: ['validate-recipe-route'] })
 
 const { t } = useI18n()
@@ -11,14 +13,16 @@ const slug = computed(() => route.params.slug as string)
 const gmrId = computed(() => route.params.gmrId as string)
 const recipeUrl = computed(() => `/${username.value}/${slug.value}`)
 
-const { data: recipe } = useFetch(
+const { data: recipe } = useFetch<RecipeDetail>(
   () => `/api/recipes/by-slug/${username.value}/${slug.value}`,
-  { headers: useRequestHeaders(['cookie']), pick: ['id', 'title'] },
+  { headers: useRequestHeaders(['cookie']) },
 )
 
-const { data: gmr, pending, error, refresh } = useFetch(
-  () => recipe.value ? `/api/recipes/${recipe.value.id}/gourmerge-requests/${gmrId.value}` : null,
-  { headers: useRequestHeaders(['cookie']) },
+const recipeId = computed(() => recipe.value?.id ?? 0)
+
+const { data: gmr, pending, error, refresh } = useFetch<GourmergeRequestDetail>(
+  () => `/api/recipes/${recipeId.value}/gourmerge-requests/${gmrId.value}`,
+  { headers: useRequestHeaders(['cookie']), watch: [recipeId] },
 )
 
 // ── Actions ──────────────────────────────────────────────────────

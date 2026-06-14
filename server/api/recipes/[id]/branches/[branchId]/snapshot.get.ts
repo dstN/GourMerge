@@ -22,6 +22,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const db = useDrizzle()
+  if (!db) throw createError({ statusCode: 503, statusMessage: 'Database unavailable.' })
 
   // Verify recipe exists + check visibility
   const [recipe] = await db

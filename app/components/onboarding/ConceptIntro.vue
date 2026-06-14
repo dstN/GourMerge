@@ -25,7 +25,7 @@ async function startTour() {
 </script>
 
 <template>
-  <UModal v-model:open="show" :title="t('onboarding.conceptIntro.title')" :ui="{ width: 'max-w-2xl' }">
+  <UModal v-model:open="show" :title="t('onboarding.conceptIntro.title')" :ui="{ content: 'max-w-2xl' }">
     <template #body>
       <div class="space-y-6">
         <!-- Hero -->

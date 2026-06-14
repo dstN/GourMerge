@@ -13,6 +13,7 @@
  */
 
 import { mysqlTable, int, varchar, text, datetime, timestamp, mysqlEnum, json, decimal, boolean, index, uniqueIndex, customType } from 'drizzle-orm/mysql-core'
+import type { MySqlColumn } from 'drizzle-orm/mysql-core'
 import { relations, sql } from 'drizzle-orm'
 
 // BINARY(16) custom type for UUIDv7 external identifiers.
@@ -81,7 +82,7 @@ export const recipes = mysqlTable('recipes', {
   description: text('description'),
   visibility: mysqlEnum('visibility', ['public', 'private']).notNull().default('public'),
   /** NULL if this is an original recipe; set if this is a fork */
-  forkedFromRecipeId: int('forked_from_recipe_id').references(() => recipes.id),
+  forkedFromRecipeId: int('forked_from_recipe_id').references((): MySqlColumn => recipes.id),
   servings: int('servings').notNull().default(4),
   prepTimeMinutes: int('prep_time_minutes'),
   cookTimeMinutes: int('cook_time_minutes'),

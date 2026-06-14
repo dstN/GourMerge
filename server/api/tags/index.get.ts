@@ -8,7 +8,8 @@ import { tags } from '~~/server/database/schema'
 
 export default defineEventHandler(async (event) => {
   const { q } = getQuery(event)
-  const db = useDrizzle()!
+  const db = useDrizzle()
+  if (!db) throw createError({ statusCode: 503, statusMessage: 'Database unavailable.' })
 
   const rows = q
     ? await db

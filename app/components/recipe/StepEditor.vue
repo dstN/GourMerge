@@ -26,17 +26,12 @@ const emit = defineEmits<{
 
 const editor = useEditor({
   content: props.modelValue,
-  // SSR-safe: don't render immediately on the server
-  immediatelyRender: false,
   extensions: [
     StarterKit.configure({
       // Images are disabled project-wide (text-only v1)
       // StarterKit doesn't include image by default, so no config needed
     }),
-    Markdown.configure({
-      html: false,
-      transformPastedText: true,
-    }),
+    Markdown,
   ],
   editorProps: {
     attributes: {
@@ -44,7 +39,7 @@ const editor = useEditor({
     },
   },
   onUpdate: ({ editor: ed }) => {
-    const md = ed.storage.markdown?.getMarkdown?.() ?? ed.getText()
+    const md = ed.getMarkdown?.() ?? ed.getText()
     emit('update:modelValue', md)
   },
 })
@@ -52,9 +47,9 @@ const editor = useEditor({
 // Sync external modelValue → editor (e.g. when parent resets or loads initial data)
 watch(() => props.modelValue, (newVal) => {
   if (!editor.value) return
-  const currentMd = editor.value.storage.markdown?.getMarkdown?.() ?? ''
+  const currentMd = editor.value.getMarkdown?.() ?? ''
   if (newVal !== currentMd) {
-    editor.value.commands.setContent(newVal, false)
+    editor.value.commands.setContent(newVal)
   }
 })
 
