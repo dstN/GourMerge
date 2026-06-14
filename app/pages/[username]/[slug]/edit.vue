@@ -205,6 +205,26 @@ function cancelLeave() {
   pendingLeaveRoute.value = ''
 }
 
+// ── Delete recipe ─────────────────────────────────────────────
+const showDeleteModal = ref(false)
+const deleting = ref(false)
+
+async function deleteRecipe() {
+  if (!recipe.value) return
+  deleting.value = true
+  try {
+    await $fetch(`/api/recipes/${recipe.value.id}`, { method: 'DELETE' })
+    toast.add({ title: t('recipe.deleteSuccess'), icon: 'i-lucide-trash-2', color: 'success' })
+    allowLeave.value = true
+    await navigateTo('/recipes')
+  } catch {
+    toast.add({ title: t('recipe.deleteError'), icon: 'i-lucide-alert-circle', color: 'error' })
+  } finally {
+    deleting.value = false
+    showDeleteModal.value = false
+  }
+}
+
 // ── Ingredient management ─────────────────────────────────────
 function addIngredient() {
   ingredients.value.push({
@@ -382,6 +402,14 @@ useSeoMeta({
             color="neutral"
             size="sm"
             :to="`/${username}/${slug}`"
+          />
+          <UButton
+            :label="t('recipe.deleteTitle')"
+            icon="i-lucide-trash-2"
+            variant="outline"
+            color="error"
+            size="sm"
+            @click="showDeleteModal = true"
           />
         </div>
       </div>
@@ -653,6 +681,19 @@ useSeoMeta({
         </div>
       </UCard>
     </template>
+
+    <!-- Delete recipe confirmation modal -->
+    <UModal v-model:open="showDeleteModal" :title="t('recipe.deleteTitle')">
+      <template #body>
+        <p class="text-sm">{{ t('recipe.deleteConfirm') }}</p>
+      </template>
+      <template #footer>
+        <div class="flex gap-2 justify-end w-full">
+          <UButton variant="outline" color="neutral" :label="t('common.cancel')" :disabled="deleting" @click="showDeleteModal = false" />
+          <UButton color="error" icon="i-lucide-trash-2" :label="t('common.delete')" :loading="deleting" @click="deleteRecipe" />
+        </div>
+      </template>
+    </UModal>
 
     <!-- Unsaved changes confirmation modal -->
     <UModal v-model:open="showLeaveModal" :title="t('common.unsaved')">
