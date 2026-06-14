@@ -14,6 +14,8 @@ import {
   ingredients,
   ingredientNutrition,
   recipeStars,
+  recipeTags,
+  tags,
 } from '~~/server/database/schema'
 import { computeNutritionTotals, perServing } from '~~/server/utils/nutrition'
 
@@ -53,6 +55,7 @@ export default defineEventHandler(async (event) => {
       prepTimeMinutes: recipes.prepTimeMinutes,
       cookTimeMinutes: recipes.cookTimeMinutes,
       difficulty: recipes.difficulty,
+      dietaryType: recipes.dietaryType,
       starCount: recipes.starCount,
       forkCount: recipes.forkCount,
       forkedFromRecipeId: recipes.forkedFromRecipeId,
@@ -137,8 +140,18 @@ export default defineEventHandler(async (event) => {
     nutritionPerServing = perServing(totals, recipe.servings ?? 4)
   }
 
+  // ── Fetch recipe tags ──────────────────────────────────────
+  const tagRows = await db
+    .select({ name: tags.name })
+    .from(recipeTags)
+    .innerJoin(tags, eq(recipeTags.tagId, tags.id))
+    .where(eq(recipeTags.recipeId, recipe.id))
+
+  const recipeTags_ = tagRows.map((t) => t.name)
+
   return {
     ...recipe,
+    tags: recipeTags_,
     owner,
     branches,
     defaultBranch,

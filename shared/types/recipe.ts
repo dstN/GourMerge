@@ -23,6 +23,8 @@ export interface RecipeDetail {
   prepTimeMinutes: number | null
   cookTimeMinutes: number | null
   difficulty: 'easy' | 'medium' | 'hard'
+  dietaryType?: string | null
+  tags?: string[]
   starCount: number
   forkCount: number
   forkedFromRecipeId: number | null
@@ -85,6 +87,8 @@ export interface ExploreRecipe {
   slug: string
   description: string | null
   difficulty: string
+  dietaryType?: string | null
+  tags?: string[]
   servings: number
   prepTimeMinutes: number | null
   cookTimeMinutes: number | null

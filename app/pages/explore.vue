@@ -6,13 +6,19 @@ const { t } = useI18n()
 
 const search = ref('')
 const difficulty = ref('')
+const dietaryFilter = ref('')
 const sort = ref('stars')
+const selectedTag = ref('')
 const page = ref(1)
+
+const { data: allTags } = useFetch<Array<{ id: number; name: string }>>('/api/tags')
 
 const { data, pending, refresh } = useFetch<ExploreResponse>('/api/recipes/explore', {
   query: computed(() => ({
     q: search.value || undefined,
     difficulty: difficulty.value || undefined,
+    dietaryType: dietaryFilter.value || undefined,
+    tag: selectedTag.value || undefined,
     sort: sort.value,
     page: page.value,
     limit: 20,
@@ -22,7 +28,7 @@ const { data, pending, refresh } = useFetch<ExploreResponse>('/api/recipes/explo
 
 const debouncedRefresh = useDebounceFn(refresh, 300)
 
-watch([difficulty, sort], () => {
+watch([difficulty, sort, dietaryFilter, selectedTag], () => {
   page.value = 1
   refresh()
 })
@@ -70,6 +76,31 @@ useSeoMeta({ title: `${t('nav.explore')} — GourMerge` })
         ]"
         class="w-40"
       />
+
+      <USelect
+        v-model="dietaryFilter"
+        :options="[
+          { label: t('recipe.dietaryUnspecified'), value: '' },
+          { label: t('recipe.dietaryVegan'), value: 'vegan' },
+          { label: t('recipe.dietaryVegetarian'), value: 'vegetarian' },
+          { label: t('recipe.dietaryPescatarian'), value: 'pescatarian' },
+          { label: t('recipe.dietaryOmnivore'), value: 'omnivore' },
+        ]"
+        class="w-44"
+      />
+    </div>
+
+    <!-- Tag filter chips -->
+    <div v-if="allTags?.length" class="flex flex-wrap gap-2 mb-6">
+      <button
+        v-for="tag in allTags"
+        :key="tag.name"
+        class="text-xs px-3 py-1 rounded-full border transition-colors"
+        :class="selectedTag === tag.name
+          ? 'bg-primary-500 border-primary-500 text-white'
+          : 'border-[var(--ui-border)] hover:border-primary-500/50 text-[var(--ui-text-muted)]'"
+        @click="selectedTag = selectedTag === tag.name ? '' : tag.name; page = 1; refresh()"
+      >{{ tag.name }}</button>
     </div>
 
     <!-- Results -->
@@ -86,7 +117,7 @@ useSeoMeta({ title: `${t('nav.explore')} — GourMerge` })
       <RecipeCard
         v-for="r in data.recipes"
         :key="r.id"
-        :recipe="{ ...r, owner: { username: r.ownerUsername } }"
+        :recipe="{ ...r, owner: { username: r.ownerUsername }, tags: r.tags, dietaryType: r.dietaryType }"
       />
     </div>
 

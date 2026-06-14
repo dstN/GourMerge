@@ -42,6 +42,7 @@ const items = computed(() => [
   <UDropdownMenu :items="items">
     <UButton
       variant="ghost"
+      color="neutral"
       :label="user?.username"
       icon="i-lucide-user-circle"
       trailing-icon="i-lucide-chevron-down"

@@ -2,20 +2,22 @@
  * GET /api/recipes/explore — Browse public recipes
  *
  * Query params:
- *   q        — full-text search on title + description
- *   difficulty — 'easy' | 'medium' | 'hard'
- *   tag      — tag name (case-insensitive)
- *   sort     — 'stars' (default) | 'newest' | 'forks'
- *   page     — 1-based page number (default 1)
- *   limit    — page size (default 20, max 50)
+ *   q           — full-text search on title + description
+ *   difficulty  — 'easy' | 'medium' | 'hard'
+ *   dietaryType — 'vegan' | 'vegetarian' | 'pescatarian' | 'omnivore'
+ *   tag         — tag name (case-insensitive)
+ *   sort        — 'stars' (default) | 'newest' | 'forks'
+ *   page        — 1-based page number (default 1)
+ *   limit       — page size (default 20, max 50)
  */
-import { eq, and, desc, like, or } from 'drizzle-orm'
+import { eq, and, desc, like, or, inArray } from 'drizzle-orm'
 import { recipes, users, recipeTags, tags } from '~~/server/database/schema'
 
 export default defineEventHandler(async (event) => {
   const query = getQuery(event)
   const q = String(query.q || '').trim()
   const difficulty = query.difficulty as string | undefined
+  const dietaryTypeFilter = String(query.dietaryType || '').trim().toLowerCase()
   const tagFilter = String(query.tag || '').trim().toLowerCase()
   const sort = String(query.sort || 'stars')
   const page = Math.max(1, Number(query.page) || 1)
@@ -36,6 +38,10 @@ export default defineEventHandler(async (event) => {
 
   if (difficulty && ['easy', 'medium', 'hard'].includes(difficulty)) {
     conditions.push(eq(recipes.difficulty, difficulty as 'easy' | 'medium' | 'hard'))
+  }
+
+  if (dietaryTypeFilter && ['vegan', 'vegetarian', 'pescatarian', 'omnivore'].includes(dietaryTypeFilter)) {
+    conditions.push(eq(recipes.dietaryType, dietaryTypeFilter))
   }
 
   // Tag filter: join recipe_tags + tags
@@ -63,7 +69,6 @@ export default defineEventHandler(async (event) => {
     // MariaDB doesn't have an inArray that plays nicely with large sets;
     // for v1 scale this is fine
     const ids = taggedRecipeIds.map((r) => r.recipeId)
-    const { inArray } = await import('drizzle-orm')
     conditions.push(inArray(recipes.id, ids))
   }
 
@@ -82,6 +87,7 @@ export default defineEventHandler(async (event) => {
       slug: recipes.slug,
       description: recipes.description,
       difficulty: recipes.difficulty,
+      dietaryType: recipes.dietaryType,
       servings: recipes.servings,
       prepTimeMinutes: recipes.prepTimeMinutes,
       cookTimeMinutes: recipes.cookTimeMinutes,
@@ -101,5 +107,28 @@ export default defineEventHandler(async (event) => {
     .limit(limit)
     .offset(offset)
 
-  return { recipes: rows, page, limit }
+  // Fetch tags for all returned recipes
+  const recipeIds = rows.map((r) => r.id)
+  const tagMap = new Map<number, string[]>()
+
+  if (recipeIds.length > 0) {
+    const tagRows = await db
+      .select({ recipeId: recipeTags.recipeId, tagName: tags.name })
+      .from(recipeTags)
+      .innerJoin(tags, eq(recipeTags.tagId, tags.id))
+      .where(inArray(recipeTags.recipeId, recipeIds))
+
+    for (const row of tagRows) {
+      const existing = tagMap.get(row.recipeId) ?? []
+      existing.push(row.tagName)
+      tagMap.set(row.recipeId, existing)
+    }
+  }
+
+  const recipesWithTags = rows.map((r) => ({
+    ...r,
+    tags: tagMap.get(r.id) ?? [],
+  }))
+
+  return { recipes: recipesWithTags, page, limit }
 })

@@ -45,7 +45,7 @@ const localeSwitchItems = [
               :label="t('nav.explore')"
               variant="ghost"
               icon="i-lucide-compass"
-              to="/"
+              to="/explore"
             />
             <UButton
               :label="t('nav.newRecipe')"
@@ -67,6 +67,7 @@ const localeSwitchItems = [
               @update:model-value="setLocale($event as 'de' | 'en' | 'fr' | 'it')"
             />
             <UColorModeButton />
+            <OnboardingHelpMenu />
             <LayoutUserDropdown v-if="loggedIn" />
           </div>
         </div>

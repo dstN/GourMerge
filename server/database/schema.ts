@@ -137,6 +137,8 @@ export const recipes = mysqlTable('recipes', {
   prepTimeMinutes: int('prep_time_minutes'),
   cookTimeMinutes: int('cook_time_minutes'),
   difficulty: mysqlEnum('difficulty', ['easy', 'medium', 'hard']).notNull().default('medium'),
+  /** Dietary label: null = unspecified */
+  dietaryType: varchar('dietary_type', { length: 50 }),
   /** Denormalized counters for performance */
   starCount: int('star_count').notNull().default(0),
   forkCount: int('fork_count').notNull().default(0),
@@ -379,6 +381,18 @@ export const rateLimitHits = mysqlTable('rate_limit_hits', {
 }, (table) => [
   uniqueIndex('idx_rate_limit_bucket_window').on(table.bucketKey, table.windowStart),
 ])
+
+// ═══════════════════════════════════════════════════════════════
+// CONTACT MESSAGES (stored, no email send — SMTP not configured)
+// ═══════════════════════════════════════════════════════════════
+
+export const contactMessages = mysqlTable('contact_messages', {
+  id: int('id').primaryKey().autoincrement(),
+  name: varchar('name', { length: 255 }).notNull(),
+  email: varchar('email', { length: 255 }).notNull(),
+  message: text('message').notNull(),
+  createdAt: datetime('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+})
 
 // ═══════════════════════════════════════════════════════════════
 // DRIZZLE RELATIONS

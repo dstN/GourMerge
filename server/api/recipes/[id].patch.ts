@@ -13,6 +13,7 @@ const updateRecipeSchema = z.object({
   cookTimeMinutes: z.number().int().min(0).max(1440).optional().nullable(),
   difficulty: z.enum(['easy', 'medium', 'hard']).optional(),
   visibility: z.enum(['public', 'private']).optional(),
+  dietaryType: z.enum(['vegan', 'vegetarian', 'pescatarian', 'omnivore']).optional().nullable(),
 })
 
 export default defineEventHandler(async (event) => {

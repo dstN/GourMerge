@@ -11,6 +11,8 @@ const props = defineProps<{
     slug: string
     description?: string | null
     difficulty: string
+    dietaryType?: string | null
+    tags?: string[] | null
     starCount: number
     forkCount: number
     servings: number
@@ -74,6 +76,8 @@ const totalTime = computed(() => {
         <div class="flex items-center gap-3 text-xs text-[var(--ui-text-dimmed)] mt-auto pt-3 border-t border-[var(--ui-border)]">
           <UBadge :color="difficultyColor" variant="subtle" :label="t(`recipe.${recipe.difficulty}`)" size="xs" />
 
+          <RecipeDietaryBadge :type="recipe.dietaryType" />
+
           <span v-if="totalTime" class="flex items-center gap-1">
             <UIcon name="i-lucide-clock" class="size-3.5" />
             {{ totalTime }} min
@@ -93,6 +97,16 @@ const totalTime = computed(() => {
             <UIcon name="i-lucide-git-fork" class="size-3.5" />
             {{ recipe.forkCount }}
           </span>
+        </div>
+
+        <!-- Tags -->
+        <div v-if="recipe.tags?.length" class="flex flex-wrap gap-1 mt-2">
+          <span
+            v-for="tag in recipe.tags.slice(0, 3)"
+            :key="tag"
+            class="text-xs px-2 py-0.5 rounded-full bg-[var(--ui-bg-elevated)] text-[var(--ui-text-muted)] border border-[var(--ui-border)]"
+          >{{ tag }}</span>
+          <span v-if="recipe.tags.length > 3" class="text-xs px-2 py-0.5 rounded-full bg-[var(--ui-bg-elevated)] text-[var(--ui-text-dimmed)]">+{{ recipe.tags.length - 3 }}</span>
         </div>
 
         <!-- Owner (for public listings) -->

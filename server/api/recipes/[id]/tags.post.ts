@@ -1,16 +1,15 @@
 /**
- * POST /api/recipes/:id/tags — Attach or detach a tag from a recipe
+ * POST /api/recipes/:id/tags — Replace the full tag set for a recipe
  *
- * Body: { name: string, action: 'attach' | 'detach' }
- * Creates the tag if it doesn't exist (deduped by lowercase name).
+ * Body: { tags: string[] }
+ * Creates tags if they don't exist, deletes all existing associations, then inserts new ones.
  */
 import { z } from 'zod'
-import { eq, and } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 import { recipes, tags, recipeTags } from '~~/server/database/schema'
 
 const tagsSchema = z.object({
-  name: z.string().min(1).max(100),
-  action: z.enum(['attach', 'detach']),
+  tags: z.array(z.string().min(1).max(100)).max(50),
 })
 
 export default defineEventHandler(async (event) => {
@@ -43,37 +42,31 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 403, statusMessage: 'Forbidden' })
   }
 
-  const tagName = result.data.name.toLowerCase().trim()
+  const tagNames = result.data.tags.map((t) => t.toLowerCase().trim()).filter(Boolean)
 
-  // Find or create tag
-  let [tag] = await db
-    .select({ id: tags.id, name: tags.name })
-    .from(tags)
-    .where(eq(tags.name, tagName))
-    .limit(1)
+  // Upsert each tag and collect IDs
+  const tagIds: number[] = []
+  for (const tagName of tagNames) {
+    const [existing] = await db
+      .select({ id: tags.id })
+      .from(tags)
+      .where(eq(tags.name, tagName))
+      .limit(1)
 
-  if (!tag && result.data.action === 'attach') {
-    const [inserted] = await db.insert(tags).values({ name: tagName }).$returningId()
-    if (!inserted) throw createError({ statusCode: 500, statusMessage: 'Insert failed.' })
-    tag = { id: inserted.id, name: tagName }
-  }
-
-  if (!tag) {
-    return { success: true, action: 'noop' }
-  }
-
-  if (result.data.action === 'attach') {
-    // Ignore duplicate (ON DUPLICATE KEY via unique index)
-    try {
-      await db.insert(recipeTags).values({ recipeId, tagId: tag.id })
-    } catch {
-      // Tag already attached — not an error
+    if (existing) {
+      tagIds.push(existing.id)
+    } else {
+      const [inserted] = await db.insert(tags).values({ name: tagName }).$returningId()
+      if (inserted) tagIds.push(inserted.id)
     }
-  } else {
-    await db
-      .delete(recipeTags)
-      .where(and(eq(recipeTags.recipeId, recipeId), eq(recipeTags.tagId, tag.id)))
   }
 
-  return { success: true, action: result.data.action, tag: { id: tag.id, name: tag.name } }
+  // Replace all tag associations
+  await db.delete(recipeTags).where(eq(recipeTags.recipeId, recipeId))
+
+  if (tagIds.length > 0) {
+    await db.insert(recipeTags).values(tagIds.map((tagId) => ({ recipeId, tagId })))
+  }
+
+  return { ok: true }
 })

@@ -43,7 +43,7 @@ const localeSwitchItems = [
               :label="t('nav.explore')"
               variant="ghost"
               icon="i-lucide-compass"
-              to="/"
+              to="/explore"
               data-tour="nav-explore"
             />
             <UButton
@@ -115,6 +115,24 @@ const localeSwitchItems = [
               icon="i-simple-icons-github"
               to="https://github.com"
               target="_blank"
+            />
+            <UButton
+              :label="t('legal.impressum')"
+              variant="ghost"
+              size="xs"
+              to="/legal/impressum"
+            />
+            <UButton
+              :label="t('legal.datenschutz')"
+              variant="ghost"
+              size="xs"
+              to="/legal/datenschutz"
+            />
+            <UButton
+              :label="t('legal.contact')"
+              variant="ghost"
+              size="xs"
+              to="/legal/contact"
             />
           </div>
         </div>
