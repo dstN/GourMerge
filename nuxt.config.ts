@@ -56,8 +56,6 @@ export default defineNuxtConfig({
       background_color: '#0f172a',
       display: 'standalone',
       icons: [
-        // SVG icon for modern browsers; replace with PNG for universal support.
-        // Run: npx @vite-pwa/assets-generator to generate PNG from icon.svg.
         {
           src: '/icon.svg',
           sizes: 'any',
@@ -65,13 +63,19 @@ export default defineNuxtConfig({
           purpose: 'any maskable',
         },
         {
-          src: '/icon-192x192.png',
+          src: '/pwa-192x192.png',
           sizes: '192x192',
           type: 'image/png',
           purpose: 'any',
         },
         {
-          src: '/icon-512x512.png',
+          src: '/pwa-512x512.png',
+          sizes: '512x512',
+          type: 'image/png',
+          purpose: 'any',
+        },
+        {
+          src: '/maskable-icon-512x512.png',
           sizes: '512x512',
           type: 'image/png',
           purpose: 'maskable',
@@ -143,7 +147,7 @@ export default defineNuxtConfig({
     head: {
       link: [
         { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
-        { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
+        { rel: 'apple-touch-icon', href: '/apple-touch-icon-180x180.png' },
         { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
         { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
         {
