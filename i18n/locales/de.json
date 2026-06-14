@@ -59,12 +59,12 @@
     "learnMore": "Mehr erfahren",
     "featuresTitle": "Git-Mechaniken für die Küche",
     "featuresSubtitle": "Alle Werkzeuge, die du brauchst, um Rezepte zu versionieren, zu teilen und zu verbessern.",
-    "featureFork": "Forke Rezepte",
+    "featureFork": "Remixe Rezepte",
     "featureForkDesc": "Erstelle deine eigene Version eines fremden Rezepts und passe es nach deinem Geschmack an.",
-    "featureBranch": "Erstelle Branches",
-    "featureBranchDesc": "Experimentiere auf eigenen Branches, ohne das Original zu verändern. Perfekt für vegane oder glutenfreie Varianten.",
-    "featureCommit": "Commit deine Änderungen",
-    "featureCommitDesc": "Jede Anpassung wird als Commit gespeichert — so kannst du deine Kochgeschichte lückenlos nachvollziehen.",
+    "featureBranch": "Erstelle Varianten",
+    "featureBranchDesc": "Experimentiere auf eigenen Varianten, ohne das Original zu verändern. Perfekt für vegane oder glutenfreie Versionen.",
+    "featureCommit": "Speichere deine Versionen",
+    "featureCommitDesc": "Jede Anpassung wird als Version gespeichert — so kannst du deine Kochgeschichte lückenlos nachvollziehen.",
     "featureMerge": "GourMerge Requests",
     "featureMergeDesc": "Biete deine Verbesserungen dem Original-Autor an. Zusammen kochen wir besser.",
     "howItWorks": "So funktioniert's",
@@ -72,8 +72,8 @@
     "step1Desc": "Erstelle dein erstes Rezept — wie ein neues Repository auf GitHub.",
     "step2Title": "Zutaten & Schritte bearbeiten",
     "step2Desc": "Nutze den visuellen Editor, um Zutaten hinzuzufügen und Zubereitungsschritte zu schreiben.",
-    "step3Title": "Änderungen committen",
-    "step3Desc": "Speichere deine Anpassungen mit einer Commit-Nachricht — z.B. 'Zucker reduziert'.",
+    "step3Title": "Version speichern",
+    "step3Desc": "Speichere deine Anpassungen mit einer Versions-Notiz — z.B. 'Zucker reduziert'.",
     "step4Title": "Teilen & Zusammenarbeiten",
     "step4Desc": "Teile dein Rezept öffentlich oder lade andere ein, über GourMerge Requests beizutragen.",
     "ctaTitle": "Bereit zum Kochen?",
@@ -83,7 +83,7 @@
     "welcome": "Willkommen, {name}!",
     "subtitle": "Hier sind deine Rezepte auf einen Blick.",
     "emptyTitle": "Noch keine Rezepte",
-    "emptyDescription": "Erstelle dein erstes Rezept und starte deine kulinarische Git-Reise.",
+    "emptyDescription": "Erstelle dein erstes Rezept und starte deine kulinarische Reise.",
     "createFirst": "Erstes Rezept erstellen"
   },
   "recipe": {
@@ -104,7 +104,7 @@
     "public": "Öffentlich",
     "private": "Privat",
     "createTitle": "Neues Rezept erstellen",
-    "createSubtitle": "Erstelle ein neues Rezept-Repository. Du kannst danach sofort Zutaten und Schritte hinzufügen.",
+    "createSubtitle": "Erstelle ein neues Rezept. Du kannst danach sofort Zutaten und Schritte hinzufügen.",
     "createButton": "Rezept erstellen",
     "createError": "Fehler beim Erstellen des Rezepts",
     "notFound": "Rezept nicht gefunden",
@@ -122,22 +122,22 @@
     "addStep": "Schritt hinzufügen",
     "stepPlaceholder": "Beschreibe diesen Zubereitungsschritt...",
     "viewRecipe": "Rezept ansehen",
-    "commitChanges": "Änderungen committen",
-    "commitMessage": "Commit-Nachricht",
+    "commitChanges": "Version speichern",
+    "commitMessage": "Versions-Notiz",
     "commitMessagePlaceholder": "z.B. Zucker reduziert, Vanille hinzugefügt",
     "commitHint": "Beschreibe kurz, was du geändert hast.",
-    "commit": "Committen",
+    "commit": "Speichern",
     "createIngredient": "\"{name}\" erstellen",
     "saveChanges": "Änderungen speichern",
     "unsavedChanges": "Du hast ungespeicherte Änderungen. Trotzdem verlassen?",
-    "commitSuccess": "Änderungen erfolgreich gespeichert.",
-    "commitError": "Änderungen konnten nicht gespeichert werden.",
+    "commitSuccess": "Version erfolgreich gespeichert.",
+    "commitError": "Version konnte nicht gespeichert werden.",
     "ingredientIncomplete": "Jede Zutat benötigt einen Namen und eine Menge.",
     "commitPlaceholder": "z.B. Zucker reduziert, Vanille hinzugefügt",
-    "fork": "Forken",
-    "forkSuccess": "Rezept erfolgreich geforkt.",
-    "forkError": "Rezept konnte nicht geforkt werden.",
-    "seoDescriptionFallback": "Entdecke und forke dieses Rezept auf GourMerge — die Plattform für kollaborative Rezeptentwicklung."
+    "fork": "Remixen",
+    "forkSuccess": "Eigene Version erstellt.",
+    "forkError": "Eigene Version konnte nicht erstellt werden.",
+    "seoDescriptionFallback": "Entdecke und remixe dieses Rezept auf GourMerge — die Plattform für kollaborative Rezeptentwicklung."
   },
   "common": {
     "on": "am",
@@ -171,7 +171,7 @@
     "titlePlural": "GourMerge Requests",
     "open": "Offen",
     "closed": "Geschlossen",
-    "merged": "Gemerged",
+    "merged": "Zusammengeführt",
     "draft": "Entwurf",
     "new": "Neuer GourMerge Request",
     "createTitle": "GourMerge Request öffnen",
@@ -180,27 +180,27 @@
     "requestTitlePlaceholder": "z.B. Zucker reduziert und Vanille hinzugefügt",
     "description": "Beschreibung",
     "descriptionPlaceholder": "Beschreibe deine Änderungen und warum sie das Rezept verbessern...",
-    "sourceBranch": "Von Branch (deine Änderungen)",
-    "targetBranch": "In Branch (Ziel)",
+    "sourceBranch": "Von Variante (deine Änderungen)",
+    "targetBranch": "In Variante (Ziel)",
     "submit": "GourMerge Request öffnen",
     "submitSuccess": "GourMerge Request geöffnet.",
     "submitError": "GourMerge Request konnte nicht geöffnet werden.",
     "noRequests": "Noch keine GourMerge Requests.",
-    "mergeButton": "Mergen",
-    "mergeSuccess": "Erfolgreich gemerged!",
-    "mergeError": "Mergen fehlgeschlagen.",
+    "mergeButton": "Zusammenführen",
+    "mergeSuccess": "Erfolgreich zusammengeführt!",
+    "mergeError": "Zusammenführen fehlgeschlagen.",
     "closeButton": "Schließen",
     "reopenButton": "Wieder öffnen",
-    "conflictsTitle": "Merge-Konflikte",
-    "conflictsDesc": "Die folgenden Konflikte müssen vor dem Mergen manuell gelöst werden.",
+    "conflictsTitle": "Konflikte",
+    "conflictsDesc": "Die folgenden Konflikte müssen vor dem Zusammenführen manuell gelöst werden.",
     "addComment": "Kommentar hinzufügen",
     "commentPlaceholder": "Hinterlasse einen Kommentar...",
     "commentSubmit": "Kommentieren",
-    "noDiff": "Keine Änderungen zwischen diesen Branches erkannt.",
+    "noDiff": "Keine Änderungen zwischen diesen Varianten erkannt.",
     "diffTitle": "Änderungen",
     "backToList": "Zurück zu GourMerge Requests",
     "by": "Geöffnet von {author}",
-    "cannotMerge": "Nur der Rezept-Autor kann mergen."
+    "cannotMerge": "Nur der Rezept-Autor kann zusammenführen."
   },
   "error": {
     "notFoundTitle": "Seite nicht gefunden",
@@ -214,12 +214,12 @@
     "details": "Technische Details"
   },
   "history": {
-    "title": "Commit-Verlauf",
-    "viewDiff": "Diff anzeigen",
-    "initialCommit": "Erster Commit",
-    "empty": "Keine Commits",
-    "emptyDesc": "Dieser Branch hat noch keine Commits.",
-    "diffError": "Diff konnte nicht geladen werden."
+    "title": "Versionsverlauf",
+    "viewDiff": "Änderungen anzeigen",
+    "initialCommit": "Erste Version",
+    "empty": "Noch keine Versionen",
+    "emptyDesc": "Diese Variante hat noch keine gespeicherten Versionen.",
+    "diffError": "Änderungen konnten nicht geladen werden."
   },
   "glossary": {
     "seoDescription": "GourMerge-Glossar — Git-Konzepte als Koch-Begriffe erklärt.",
@@ -227,32 +227,32 @@
     "recipe": {
       "alias": "Rezept",
       "canonical": "Repository",
-      "description": "Ein Rezept auf GourMerge ist ein vollständiges Repository: Es hat Zutaten, Schritte, Branches, einen Commit-Verlauf und kann geforkt werden.",
+      "description": "Ein Rezept auf GourMerge ist ein vollständiges Repository: Es hat Zutaten, Schritte, Varianten, einen Versionsverlauf und kann geremixed werden.",
       "helpHint": "Rezepte funktionieren wie GitHub-Repositories. Alles, was du über Forken, Branchen und Committen weißt, gilt hier genauso."
     },
     "fork": {
       "alias": "Remix",
       "canonical": "Fork",
       "description": "Erstelle deine eigene unabhängige Kopie eines fremden Rezepts und passe es frei an.",
-      "helpHint": "Beim Forken entsteht eine persönliche Kopie eines Rezepts. Deine Änderungen bleiben getrennt vom Original – außer du stellst einen GourMerge Request."
+      "helpHint": "Beim Remixen entsteht eine persönliche Kopie eines Rezepts. Deine Änderungen bleiben getrennt vom Original – außer du stellst einen GourMerge Request."
     },
     "branch": {
       "alias": "Variante",
       "canonical": "Branch",
       "description": "Eine parallele Version deines Rezepts – experimentiere, ohne die Hauptversion zu verändern.",
-      "helpHint": "Stell dir einen Branch wie eine 'vegane Variante' oder 'glutenfreie Version' vor. Änderungen auf einem Branch wirken sich erst auf andere aus, wenn du mergst."
+      "helpHint": "Stell dir eine Variante wie eine 'vegane Version' oder 'glutenfreie Variante' vor. Änderungen auf einer Variante wirken sich erst auf andere aus, wenn du sie zusammenführst."
     },
     "commit": {
       "alias": "Version speichern",
       "canonical": "Commit",
       "description": "Ein benannter Schnappschuss deines Rezepts zu einem bestimmten Zeitpunkt.",
-      "helpHint": "Jeder Commit speichert alle Zutaten und Schritte als Snapshot. Du kannst jederzeit zurückblättern und sehen, was sich genau geändert hat."
+      "helpHint": "Jede gespeicherte Version enthält alle Zutaten und Schritte als Snapshot. Du kannst jederzeit zurückblättern und sehen, was sich genau geändert hat."
     },
     "merge": {
       "alias": "Zusammenführen",
       "canonical": "Merge",
       "description": "Übernimm Änderungen von einer Variante in eine andere und kombiniere das Beste aus beiden.",
-      "helpHint": "Beim Mergen kombiniert GourMerge die Zutaten- und Schrittänderungen. Wenn zwei Personen dieselbe Zutat unterschiedlich geändert haben, siehst du einen Konflikt."
+      "helpHint": "Beim Zusammenführen kombiniert GourMerge die Zutaten- und Schrittänderungen. Wenn zwei Personen dieselbe Zutat unterschiedlich geändert haben, siehst du einen Konflikt."
     },
     "gourmergeRequest": {
       "alias": "Verbesserungsvorschlag",
@@ -264,13 +264,13 @@
       "alias": "Änderungen",
       "canonical": "Diff",
       "description": "Eine Gegenüberstellung, was sich genau zwischen zwei Versionen eines Rezepts verändert hat.",
-      "helpHint": "Der Diff zeigt hinzugefügte Zutaten grün, entfernte rot und geänderte hervorgehoben. Bei Schritttexten werden einzelne Wortänderungen markiert."
+      "helpHint": "Die Änderungsansicht zeigt hinzugefügte Zutaten grün, entfernte rot und geänderte hervorgehoben. Bei Schritttexten werden einzelne Wortänderungen markiert."
     },
     "history": {
       "alias": "Versionsverlauf",
       "canonical": "Commit-Verlauf",
       "description": "Eine Zeitlinie aller gespeicherten Versionen dieses Rezepts, von alt nach neu.",
-      "helpHint": "Jedes Mal, wenn du Änderungen commitest, erscheint hier ein neuer Eintrag. Klicke auf einen Commit, um das Rezept zu diesem Zeitpunkt zu sehen oder es mit einer anderen Version zu vergleichen."
+      "helpHint": "Jedes Mal, wenn du eine Version speicherst, erscheint hier ein neuer Eintrag. Klicke auf eine Version, um das Rezept zu diesem Zeitpunkt zu sehen oder es mit einer anderen Version zu vergleichen."
     }
   },
   "profile": {
@@ -299,22 +299,22 @@
     "allDifficulties": "Alle Schwierigkeiten",
     "sortStars": "Meiste Sterne",
     "sortNewest": "Neueste",
-    "sortForks": "Meiste Forks",
+    "sortForks": "Meiste Remixes",
     "noResults": "Keine Rezepte gefunden.",
     "loadMore": "Mehr laden"
   },
   "branches": {
-    "title": "Branches",
-    "create": "Neuer Branch",
-    "createTitle": "Neuen Branch erstellen",
-    "name": "Branch-Name",
-    "namePlaceholder": "z.B. vegan-variante",
+    "title": "Varianten",
+    "create": "Neue Variante",
+    "createTitle": "Neue Variante erstellen",
+    "name": "Varianten-Name",
+    "namePlaceholder": "z.B. vegane-variante",
     "from": "Basierend auf",
-    "fromDefault": "Standard-Branch (main)",
-    "created": "Branch erstellt",
-    "deleted": "Branch gelöscht",
-    "viewHistory": "Verlauf",
-    "empty": "Keine Branches vorhanden."
+    "fromDefault": "Standard-Variante (main)",
+    "created": "Variante erstellt",
+    "deleted": "Variante gelöscht",
+    "viewHistory": "Versionsverlauf",
+    "empty": "Noch keine Varianten vorhanden."
   },
   "onboarding": {
     "skipAll": "Überspringen",
@@ -366,11 +366,11 @@
       },
       "newRecipe": {
         "title": "Rezept erstellen",
-        "desc": "Starte ein neues Rezept-Repository. Füge Zutaten hinzu, schreibe Schritt-für-Schritt-Anweisungen und speichere deine erste Version."
+        "desc": "Starte ein neues Rezept. Füge Zutaten hinzu, schreibe Schritt-für-Schritt-Anweisungen und speichere deine erste Version."
       },
       "fork": {
         "title": "Remix starten",
-        "desc": "Forke ein öffentliches Rezept, um deine eigene Kopie zu erstellen. Das Original bleibt unberührt."
+        "desc": "Remixe ein öffentliches Rezept, um deine eigene Kopie zu erstellen. Das Original bleibt unberührt."
       },
       "star": {
         "title": "Rezepte markieren",
@@ -378,11 +378,11 @@
       },
       "history": {
         "title": "Versionsverlauf",
-        "desc": "Jeder Commit wird hier gespeichert. Klicke auf eine Version, um das Rezept zu diesem Zeitpunkt zu sehen."
+        "desc": "Jede gespeicherte Version wird hier festgehalten. Klicke auf eine Version, um das Rezept zu diesem Zeitpunkt zu sehen."
       },
       "gourmergeRequest": {
         "title": "Änderungen vorschlagen",
-        "desc": "Öffne einen GourMerge Request, um die Änderungen deines Forks dem Original-Autor vorzuschlagen."
+        "desc": "Öffne einen GourMerge Request, um die Änderungen deines Remixes dem Original-Autor vorzuschlagen."
       }
     }
   },

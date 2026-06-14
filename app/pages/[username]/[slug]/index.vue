@@ -3,7 +3,7 @@ import type { RecipeDetail } from '~~/shared/types/recipe'
 
 definePageMeta({ middleware: ['validate-recipe-route'] })
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const route = useRoute()
 const { user, loggedIn } = useUserSession()
 const toast = useAppToast()
@@ -13,7 +13,7 @@ const slug = computed(() => route.params.slug as string)
 
 const { data: recipe, pending, error } = useFetch<RecipeDetail>(
   () => `/api/recipes/by-slug/${username.value}/${slug.value}`,
-  { headers: useRequestHeaders(['cookie']) },
+  { headers: useRequestHeaders(['cookie']), query: { locale } },
 )
 
 const isOwner = computed(() => recipe.value?.owner?.id === user.value?.id)

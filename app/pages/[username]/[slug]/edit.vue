@@ -5,13 +5,15 @@
  * Allows owners to edit ingredients (via autocomplete) and preparation steps
  * (via TipTap WYSIWYG) and commit a snapshot to any branch.
  */
+import IngredientRow from '~/components/recipe/IngredientRow.vue'
 import type { IngredientRowData } from '~/components/recipe/IngredientRow.vue'
+import StepEditor from '~/components/recipe/StepEditor.vue'
 import type { RecipeDetail } from '~~/shared/types/recipe'
 import type { CanonicalUnit } from '~~/shared/types'
 
 definePageMeta({ layout: 'dashboard', middleware: ['validate-recipe-route', 'auth'] })
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const toast = useToast()
@@ -52,7 +54,9 @@ async function loadBranchSnapshot(branchId: number) {
     const snapshot = await $fetch<{
       ingredients: Array<{ ingredientId: number | null; ingredientName: string; quantity: string; unit: CanonicalUnit; notes: string | null; sortOrder: number }>
       steps: Array<{ content: string }>
-    }>(`/api/recipes/${recipe.value!.id}/branches/${branchId}/snapshot`)
+    }>(`/api/recipes/${recipe.value!.id}/branches/${branchId}/snapshot`, {
+      query: { locale: locale.value },
+    })
 
     ingredients.value = snapshot.ingredients.map((ing) => ({
       ingredientId: ing.ingredientId,
@@ -131,6 +135,11 @@ function addStep() {
 
 function removeStep(index: number) {
   steps.value.splice(index, 1)
+}
+
+function updateStepContent(index: number, content: string) {
+  const step = steps.value[index]
+  if (step) step.content = content
 }
 
 // ── Commit ────────────────────────────────────────────────────
@@ -226,8 +235,7 @@ useSeoMeta({
             v-if="recipe.branches?.length > 1"
             :model-value="selectedBranchId"
             :items="recipe.branches.map((b: any) => ({ label: b.name, value: b.id }))"
-            option-attribute="label"
-            value-attribute="value"
+            value-key="value"
             size="sm"
             icon="i-lucide-git-branch"
             @update:model-value="(val) => router.replace({ query: { branch: val } })"
@@ -338,7 +346,7 @@ useSeoMeta({
               :key="i"
               :model-value="step.content"
               :index="i"
-              @update:model-value="if (steps[i]) steps[i].content = $event"
+              @update:model-value="updateStepContent(i, $event)"
               @remove="removeStep(i)"
             />
             <template #fallback>

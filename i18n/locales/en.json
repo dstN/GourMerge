@@ -59,12 +59,12 @@
     "learnMore": "Learn More",
     "featuresTitle": "Git Mechanics for the Kitchen",
     "featuresSubtitle": "All the tools you need to version, share, and improve recipes.",
-    "featureFork": "Fork Recipes",
+    "featureFork": "Remix Recipes",
     "featureForkDesc": "Create your own version of someone else's recipe and adapt it to your taste.",
-    "featureBranch": "Create Branches",
-    "featureBranchDesc": "Experiment on separate branches without changing the original. Perfect for vegan or gluten-free variants.",
-    "featureCommit": "Commit Your Changes",
-    "featureCommitDesc": "Every adjustment is saved as a commit — trace your cooking history without gaps.",
+    "featureBranch": "Create Variants",
+    "featureBranchDesc": "Experiment on separate variants without changing the original. Perfect for vegan or gluten-free versions.",
+    "featureCommit": "Save Your Versions",
+    "featureCommitDesc": "Every adjustment is saved as a version — trace your cooking history without gaps.",
     "featureMerge": "GourMerge Requests",
     "featureMergeDesc": "Offer your improvements to the original author. Together we cook better.",
     "howItWorks": "How It Works",
@@ -72,8 +72,8 @@
     "step1Desc": "Create your first recipe — like a new repository on GitHub.",
     "step2Title": "Edit Ingredients & Steps",
     "step2Desc": "Use the visual editor to add ingredients and write preparation steps.",
-    "step3Title": "Commit Changes",
-    "step3Desc": "Save your adjustments with a commit message — e.g., 'Reduced sugar'.",
+    "step3Title": "Save Your Version",
+    "step3Desc": "Save your adjustments with a version note — e.g., 'Reduced sugar'.",
     "step4Title": "Share & Collaborate",
     "step4Desc": "Share your recipe publicly or invite others to contribute via GourMerge Requests.",
     "ctaTitle": "Ready to Cook?",
@@ -83,7 +83,7 @@
     "welcome": "Welcome, {name}!",
     "subtitle": "Here's an overview of your recipes.",
     "emptyTitle": "No Recipes Yet",
-    "emptyDescription": "Create your first recipe and start your culinary Git journey.",
+    "emptyDescription": "Create your first recipe and start your culinary journey.",
     "createFirst": "Create First Recipe"
   },
   "recipe": {
@@ -104,7 +104,7 @@
     "public": "Public",
     "private": "Private",
     "createTitle": "Create New Recipe",
-    "createSubtitle": "Create a new recipe repository. You can add ingredients and steps right after.",
+    "createSubtitle": "Create a new recipe. You can add ingredients and steps right after.",
     "createButton": "Create Recipe",
     "createError": "Failed to create recipe",
     "notFound": "Recipe not found",
@@ -122,22 +122,22 @@
     "addStep": "Add Step",
     "stepPlaceholder": "Describe this preparation step...",
     "viewRecipe": "View Recipe",
-    "commitChanges": "Commit Changes",
-    "commitMessage": "Commit Message",
+    "commitChanges": "Save Version",
+    "commitMessage": "Version Note",
     "commitMessagePlaceholder": "e.g., Reduced sugar, added vanilla",
     "commitHint": "Briefly describe what you changed.",
-    "commit": "Commit",
+    "commit": "Save",
     "createIngredient": "Create \"{name}\"",
     "saveChanges": "Save Changes",
     "unsavedChanges": "You have unsaved changes. Leave without saving?",
-    "commitSuccess": "Changes committed successfully.",
-    "commitError": "Failed to commit changes.",
+    "commitSuccess": "Version saved successfully.",
+    "commitError": "Failed to save version.",
     "ingredientIncomplete": "Each ingredient needs a name and quantity.",
     "commitPlaceholder": "e.g., Reduced sugar, added vanilla",
-    "fork": "Fork",
-    "forkSuccess": "Recipe forked successfully.",
-    "forkError": "Could not fork recipe.",
-    "seoDescriptionFallback": "Discover and fork this recipe on GourMerge — the open-source platform for collaborative recipe development."
+    "fork": "Remix",
+    "forkSuccess": "Your remix is ready.",
+    "forkError": "Could not create your remix.",
+    "seoDescriptionFallback": "Discover and remix this recipe on GourMerge — the platform for collaborative recipe development."
   },
   "common": {
     "on": "on",
@@ -180,8 +180,8 @@
     "requestTitlePlaceholder": "e.g., Reduced sugar and added vanilla",
     "description": "Description",
     "descriptionPlaceholder": "Describe your changes and why they improve the recipe...",
-    "sourceBranch": "From branch (your changes)",
-    "targetBranch": "Into branch (target)",
+    "sourceBranch": "From variant (your changes)",
+    "targetBranch": "Into variant (target)",
     "submit": "Open GourMerge Request",
     "submitSuccess": "GourMerge Request opened.",
     "submitError": "Could not open GourMerge Request.",
@@ -196,7 +196,7 @@
     "addComment": "Add a comment",
     "commentPlaceholder": "Leave a comment...",
     "commentSubmit": "Comment",
-    "noDiff": "No changes detected between these branches.",
+    "noDiff": "No changes detected between these variants.",
     "diffTitle": "Changes",
     "backToList": "Back to GourMerge Requests",
     "by": "Opened by {author}",
@@ -214,12 +214,12 @@
     "details": "Technical Details"
   },
   "history": {
-    "title": "Commit History",
-    "viewDiff": "View Diff",
-    "initialCommit": "Initial Commit",
-    "empty": "No Commits",
-    "emptyDesc": "This branch has no commits yet.",
-    "diffError": "Failed to load diff."
+    "title": "Version History",
+    "viewDiff": "View Changes",
+    "initialCommit": "First Version",
+    "empty": "No Versions",
+    "emptyDesc": "This variant has no versions yet.",
+    "diffError": "Failed to load changes."
   },
   "glossary": {
     "seoDescription": "GourMerge glossary — understand git concepts explained as cooking terms.",
@@ -227,26 +227,26 @@
     "recipe": {
       "alias": "Recipe",
       "canonical": "Repository",
-      "description": "A recipe on GourMerge is a full repository: it has a title, ingredients, steps, branches, a commit history, and can be forked.",
+      "description": "A recipe on GourMerge is a full repository: it has a title, ingredients, steps, variants, a version history, and can be remixed.",
       "helpHint": "Recipes work like GitHub repositories. Everything you know about forking, branching, and committing applies here."
     },
     "fork": {
       "alias": "Remix",
       "canonical": "Fork",
       "description": "Create your own independent copy of someone else's recipe to adapt freely.",
-      "helpHint": "Forking creates a personal copy of a recipe. Your changes stay separate from the original unless you submit a GourMerge Request."
+      "helpHint": "Remixing creates a personal copy of a recipe. Your changes stay separate from the original unless you submit a GourMerge Request."
     },
     "branch": {
       "alias": "Variant",
       "canonical": "Branch",
       "description": "A parallel version of your recipe — experiment without changing the main version.",
-      "helpHint": "Think of a branch as a 'vegan variant' or 'gluten-free version'. Changes on a branch don't affect other branches until you merge."
+      "helpHint": "Think of a variant as a 'vegan version' or 'gluten-free variant'. Changes on a variant don't affect other variants until you merge."
     },
     "commit": {
       "alias": "Save Version",
       "canonical": "Commit",
       "description": "A named snapshot of your recipe at a specific point in time.",
-      "helpHint": "Every commit saves all ingredients and steps as a snapshot. You can always go back and see exactly what changed."
+      "helpHint": "Every saved version stores all ingredients and steps as a snapshot. You can always go back and see exactly what changed."
     },
     "merge": {
       "alias": "Combine",
@@ -264,13 +264,13 @@
       "alias": "Changes",
       "canonical": "Diff",
       "description": "A side-by-side view of exactly what changed between two versions of a recipe.",
-      "helpHint": "The diff shows added ingredients in green, removed ones in red, and modified ones highlighted. For step text, individual word changes are highlighted."
+      "helpHint": "The changes view shows added ingredients in green, removed ones in red, and modified ones highlighted. For step text, individual word changes are highlighted."
     },
     "history": {
       "alias": "Version History",
       "canonical": "Commit History",
       "description": "A timeline of all saved versions of this recipe, oldest to newest.",
-      "helpHint": "Every time you commit changes, a new entry appears here. Click any commit to see the full recipe at that point in time, or compare it to another version."
+      "helpHint": "Every time you save a version, a new entry appears here. Click any version to see the full recipe at that point in time, or compare it to another version."
     }
   },
   "profile": {
@@ -299,22 +299,22 @@
     "allDifficulties": "All difficulties",
     "sortStars": "Most starred",
     "sortNewest": "Newest",
-    "sortForks": "Most forked",
+    "sortForks": "Most remixed",
     "noResults": "No recipes found.",
     "loadMore": "Load more"
   },
   "branches": {
-    "title": "Branches",
-    "create": "New Branch",
-    "createTitle": "Create New Branch",
-    "name": "Branch Name",
+    "title": "Variants",
+    "create": "New Variant",
+    "createTitle": "Create New Variant",
+    "name": "Variant Name",
     "namePlaceholder": "e.g., vegan-variant",
     "from": "Based on",
-    "fromDefault": "Default branch (main)",
-    "created": "Branch created",
-    "deleted": "Branch deleted",
-    "viewHistory": "History",
-    "empty": "No branches found."
+    "fromDefault": "Default variant (main)",
+    "created": "Variant created",
+    "deleted": "Variant deleted",
+    "viewHistory": "Version History",
+    "empty": "No variants yet."
   },
   "onboarding": {
     "skipAll": "Skip",
@@ -330,7 +330,7 @@
       "fork": {
         "alias": "Remix / Own Version",
         "canonical": "Fork",
-        "desc": "Make your own copy of someone else's recipe and adapt it freely — original is unchanged."
+        "desc": "Make your own copy of someone else's recipe and adapt it freely — the original stays unchanged."
       },
       "branch": {
         "alias": "Variant",
@@ -345,7 +345,7 @@
       "merge": {
         "alias": "Combine",
         "canonical": "Merge",
-        "desc": "Merge changes from one branch into another — GourMerge handles conflicts for you."
+        "desc": "Merge changes from one variant into another — GourMerge handles conflicts for you."
       },
       "gourmergeRequest": {
         "alias": "Propose Changes",
@@ -366,11 +366,11 @@
       },
       "newRecipe": {
         "title": "Create a Recipe",
-        "desc": "Start a new recipe repository. Add ingredients, write step-by-step instructions, and commit your first version."
+        "desc": "Start a new recipe. Add ingredients, write step-by-step instructions, and save your first version."
       },
       "fork": {
         "title": "Remix It",
-        "desc": "Fork any public recipe to make your own copy. Experiment freely — the original stays untouched."
+        "desc": "Remix any public recipe to make your own copy. Experiment freely — the original stays untouched."
       },
       "star": {
         "title": "Star Recipes",
@@ -378,11 +378,11 @@
       },
       "history": {
         "title": "Version History",
-        "desc": "Every commit you make is saved here. Click any version to see the full recipe at that point in time."
+        "desc": "Every version you save is recorded here. Click any entry to see the full recipe at that point in time."
       },
       "gourmergeRequest": {
         "title": "Propose Changes",
-        "desc": "Open a GourMerge Request to propose your fork's changes back to the original recipe author."
+        "desc": "Open a GourMerge Request to propose your remix's changes back to the original recipe author."
       }
     }
   },

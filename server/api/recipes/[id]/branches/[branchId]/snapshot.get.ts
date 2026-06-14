@@ -4,7 +4,7 @@
  * Returns the head commit snapshot (ingredients + steps) for a given branch.
  * Used by the recipe editor when switching between branches.
  */
-import { eq, and } from 'drizzle-orm'
+import { eq, and, sql } from 'drizzle-orm'
 import {
   recipes,
   recipeBranches,
@@ -16,6 +16,8 @@ import {
 export default defineEventHandler(async (event) => {
   const recipeId = Number(getRouterParam(event, 'id'))
   const branchId = Number(getRouterParam(event, 'branchId'))
+  const { locale: rawLocale } = getQuery(event)
+  const locale = ['de', 'en'].includes(String(rawLocale)) ? String(rawLocale) : 'en'
 
   if (isNaN(recipeId) || isNaN(branchId)) {
     throw createError({ statusCode: 400, statusMessage: 'Invalid parameters' })
@@ -62,7 +64,7 @@ export default defineEventHandler(async (event) => {
       .select({
         id: recipeCommitIngredients.id,
         ingredientId: recipeCommitIngredients.ingredientId,
-        ingredientName: ingredientsTable.name,
+        ingredientName: sql<string>`COALESCE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(${ingredientsTable.nameTranslations}, ${`$.${locale}`})), 'null'), ${ingredientsTable.name})`,
         quantity: recipeCommitIngredients.quantity,
         unit: recipeCommitIngredients.unit,
         notes: recipeCommitIngredients.notes,

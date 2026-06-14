@@ -4,7 +4,7 @@
  * This is the primary lookup for GitHub-style URLs (/username/recipe-slug).
  * Returns the full recipe data with branches, ingredients, and steps.
  */
-import { eq, and } from 'drizzle-orm'
+import { eq, and, sql } from 'drizzle-orm'
 import {
   recipes,
   users,
@@ -18,6 +18,8 @@ import {
 export default defineEventHandler(async (event) => {
   const username = getRouterParam(event, 'username')
   const slug = getRouterParam(event, 'slug')
+  const { locale: rawLocale } = getQuery(event)
+  const locale = ['de', 'en'].includes(String(rawLocale)) ? String(rawLocale) : 'en'
 
   if (!username || !slug) {
     throw createError({ statusCode: 400, statusMessage: 'Username and slug are required' })
@@ -99,7 +101,7 @@ export default defineEventHandler(async (event) => {
     .select({
       id: recipeCommitIngredients.id,
       ingredientId: recipeCommitIngredients.ingredientId,
-      ingredientName: ingredients.name,
+      ingredientName: sql<string>`COALESCE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(${ingredients.nameTranslations}, ${`$.${locale}`})), 'null'), ${ingredients.name})`,
       quantity: recipeCommitIngredients.quantity,
       unit: recipeCommitIngredients.unit,
       notes: recipeCommitIngredients.notes,
