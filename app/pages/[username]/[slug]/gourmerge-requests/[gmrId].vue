@@ -46,8 +46,8 @@ async function executeMerge() {
       toast.error(t('gourmergeRequest.conflictsTitle'))
       await refresh()
     }
-  } catch (e: any) {
-    toast.error(e?.data?.statusMessage || t('gourmergeRequest.mergeError'))
+  } catch (e: unknown) {
+    toast.error((e as { data?: { statusMessage?: string } })?.data?.statusMessage || t('gourmergeRequest.mergeError'))
   } finally {
     mergePending.value = false
   }
@@ -62,8 +62,8 @@ async function updateStatus(status: 'open' | 'closed') {
       body: { status },
     })
     await refresh()
-  } catch (e: any) {
-    toast.error(e?.data?.statusMessage || t('common.error'))
+  } catch (e: unknown) {
+    toast.error((e as { data?: { statusMessage?: string } })?.data?.statusMessage || t('common.error'))
   } finally {
     closePending.value = false
   }
@@ -79,8 +79,8 @@ async function submitComment() {
     })
     commentBody.value = ''
     await refresh()
-  } catch (e: any) {
-    toast.error(e?.data?.statusMessage || t('common.error'))
+  } catch (e: unknown) {
+    toast.error((e as { data?: { statusMessage?: string } })?.data?.statusMessage || t('common.error'))
   } finally {
     commentPending.value = false
   }

@@ -61,33 +61,28 @@ export default defineEventHandler(async (event) => {
 
   // ── Get latest commit from default branch ───────────────────
   const defaultBranch = branches.find((b) => b.isDefault) || branches[0]
-  let currentIngredients: any[] = []
-  let currentSteps: any[] = []
+  const headCommitId = defaultBranch?.headCommitId
 
-  if (defaultBranch?.headCommitId) {
-    // Get ingredients for head commit
-    currentIngredients = await db
-      .select({
-        id: recipeCommitIngredients.id,
-        ingredientId: recipeCommitIngredients.ingredientId,
-        ingredientName: ingredients.name,
-        quantity: recipeCommitIngredients.quantity,
-        unit: recipeCommitIngredients.unit,
-        notes: recipeCommitIngredients.notes,
-        sortOrder: recipeCommitIngredients.sortOrder,
-      })
-      .from(recipeCommitIngredients)
-      .innerJoin(ingredients, eq(recipeCommitIngredients.ingredientId, ingredients.id))
-      .where(eq(recipeCommitIngredients.commitId, defaultBranch.headCommitId))
-      .orderBy(recipeCommitIngredients.sortOrder)
+  const currentIngredients = headCommitId ? await db
+    .select({
+      id: recipeCommitIngredients.id,
+      ingredientId: recipeCommitIngredients.ingredientId,
+      ingredientName: ingredients.name,
+      quantity: recipeCommitIngredients.quantity,
+      unit: recipeCommitIngredients.unit,
+      notes: recipeCommitIngredients.notes,
+      sortOrder: recipeCommitIngredients.sortOrder,
+    })
+    .from(recipeCommitIngredients)
+    .innerJoin(ingredients, eq(recipeCommitIngredients.ingredientId, ingredients.id))
+    .where(eq(recipeCommitIngredients.commitId, headCommitId))
+    .orderBy(recipeCommitIngredients.sortOrder) : []
 
-    // Get steps for head commit
-    currentSteps = await db
-      .select()
-      .from(recipeCommitSteps)
-      .where(eq(recipeCommitSteps.commitId, defaultBranch.headCommitId))
-      .orderBy(recipeCommitSteps.sortOrder)
-  }
+  const currentSteps = headCommitId ? await db
+    .select()
+    .from(recipeCommitSteps)
+    .where(eq(recipeCommitSteps.commitId, headCommitId))
+    .orderBy(recipeCommitSteps.sortOrder) : []
 
   return {
     ...recipe,

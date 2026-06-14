@@ -41,8 +41,8 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     await fetchSession()
     navigateTo('/dashboard')
   }
-  catch (err: any) {
-    error.value = err.data?.statusMessage || t('auth.loginError')
+  catch (err: unknown) {
+    error.value = (err as { data?: { statusMessage?: string } })?.data?.statusMessage || t('auth.loginError')
   }
   finally {
     loading.value = false

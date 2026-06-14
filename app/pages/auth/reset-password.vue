@@ -21,8 +21,8 @@ async function submit() {
   try {
     await $fetch('/auth/reset-password', { method: 'POST', body: { token: token.value, password: password.value } })
     done.value = true
-  } catch (e: any) {
-    toast.error(e?.data?.statusMessage || t('auth.resetPasswordError'))
+  } catch (e: unknown) {
+    toast.error((e as { data?: { statusMessage?: string } })?.data?.statusMessage || t('auth.resetPasswordError'))
   } finally {
     pending.value = false
   }

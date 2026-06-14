@@ -53,9 +53,9 @@ async function createBranch() {
     showCreateModal.value = false
     await refreshBranches()
   }
-  catch (err: any) {
+  catch (err: unknown) {
     toast.add({
-      title: err?.data?.statusMessage || t('common.error'),
+      title: (err as { data?: { statusMessage?: string } })?.data?.statusMessage || t('common.error'),
       color: 'error',
       icon: 'i-lucide-alert-circle',
     })
@@ -77,9 +77,9 @@ async function deleteBranch(branchId: number) {
     toast.add({ title: t('branches.deleted'), color: 'success', icon: 'i-lucide-check' })
     await refreshBranches()
   }
-  catch (err: any) {
+  catch (err: unknown) {
     toast.add({
-      title: err?.data?.statusMessage || t('common.error'),
+      title: (err as { data?: { statusMessage?: string } })?.data?.statusMessage || t('common.error'),
       color: 'error',
       icon: 'i-lucide-alert-circle',
     })
@@ -90,7 +90,7 @@ async function deleteBranch(branchId: number) {
 }
 
 const branchSourceOptions = computed(() =>
-  branches.value?.map((b: any) => ({
+  branches.value?.map((b) => ({
     label: b.name,
     value: b.id,
   })) || [],

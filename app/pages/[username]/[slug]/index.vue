@@ -58,8 +58,8 @@ async function forkRecipe() {
     )
     toast.success(t('recipe.forkSuccess'))
     await navigateTo(`/${res.owner.username}/${res.slug}`)
-  } catch (e: any) {
-    toast.error(e?.data?.statusMessage || t('recipe.forkError'))
+  } catch (e: unknown) {
+    toast.error((e as { data?: { statusMessage?: string } })?.data?.statusMessage || t('recipe.forkError'))
   } finally {
     forkPending.value = false
   }
@@ -86,9 +86,9 @@ useHead(() => {
   if (!recipe.value) return {}
   const r = recipe.value
   const ingredients = (r.currentIngredients || []).map(
-    (ing: any) => `${ing.quantity} ${ing.unit} ${ing.ingredientName}${ing.notes ? ` (${ing.notes})` : ''}`,
+    (ing) => `${ing.quantity} ${ing.unit} ${ing.ingredientName}${ing.notes ? ` (${ing.notes})` : ''}`,
   )
-  const steps = (r.currentSteps || []).map((s: any, i: number) => ({
+  const steps = (r.currentSteps || []).map((s, i) => ({
     '@type': 'HowToStep',
     position: i + 1,
     text: s.content,

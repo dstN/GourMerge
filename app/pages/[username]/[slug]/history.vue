@@ -5,6 +5,15 @@
  * URL: /:username/:slug/history
  */
 import type { RecipeDetail } from '~~/shared/types/recipe'
+import type { CommitDiff } from '~~/shared/types'
+
+interface CommitListItem {
+  id: number
+  message: string
+  parentCommitId: number | null
+  createdAt: string
+  author: { id: number; username: string; displayName: string | null; avatarUrl: string | null }
+}
 
 definePageMeta({ layout: 'dashboard', middleware: ['validate-recipe-route', 'auth'] })
 
@@ -29,14 +38,14 @@ const recipeId = computed(() => recipe.value!.id)
 const selectedBranchId = ref(recipe.value.defaultBranch?.id)
 
 const branchOptions = computed(() =>
-  recipe.value?.branches?.map((b: any) => ({
+  recipe.value?.branches?.map((b) => ({
     label: b.name + (b.isDefault ? ` (${t('recipe.defaultBranch')})` : ''),
     value: b.id,
   })) || [],
 )
 
 // ── Fetch commits for selected branch ────────────────────────
-const { data: commits, refresh: refreshCommits } = await useFetch(
+const { data: commits, refresh: refreshCommits } = await useFetch<CommitListItem[]>(
   () => `/api/recipes/${recipeId.value}/commits`,
   { query: { branchId: selectedBranchId } },
 )
@@ -46,10 +55,10 @@ watch(selectedBranchId, () => refreshCommits())
 // ── Diff modal ───────────────────────────────────────────────
 const showDiff = ref(false)
 const diffLoading = ref(false)
-const diffData = ref<any>(null)
-const diffCommits = ref<{ from: any; to: any }>({ from: null, to: null })
+const diffData = ref<CommitDiff | null>(null)
+const diffCommits = ref<{ from: CommitListItem | null; to: CommitListItem | null }>({ from: null, to: null })
 
-async function viewDiff(fromCommit: any, toCommit: any) {
+async function viewDiff(fromCommit: CommitListItem, toCommit: CommitListItem) {
   diffCommits.value = { from: fromCommit, to: toCommit }
   diffLoading.value = true
   showDiff.value = true
@@ -152,7 +161,7 @@ function formatDate(dateStr: string) {
               icon="i-lucide-diff"
               variant="outline"
               size="xs"
-              @click="viewDiff(commits![index + 1], commit)"
+              @click="viewDiff(commits![index + 1]!, commit)"
             />
             <UBadge
               v-else-if="!commit.parentCommitId"

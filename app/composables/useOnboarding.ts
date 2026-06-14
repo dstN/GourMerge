@@ -3,6 +3,14 @@
  * Reads from the user session; persists to the API + a cookie fallback for
  * not-yet-authenticated visitors.
  */
+
+declare module '#auth-utils' {
+  interface User {
+    onboardingCompletedAt?: string | null
+    tourDismissed?: boolean
+  }
+}
+
 export function useOnboarding() {
   const { user, loggedIn } = useUserSession()
   const cookie = useCookie<boolean>('gm_onboarding_done', {
@@ -13,13 +21,13 @@ export function useOnboarding() {
   // True if the user has completed or dismissed onboarding.
   const isDone = computed(() => {
     if (loggedIn.value && user.value) {
-      return !!(user.value as any).onboardingCompletedAt || !!(user.value as any).tourDismissed
+      return !!user.value.onboardingCompletedAt || !!user.value.tourDismissed
     }
     return !!cookie.value
   })
 
   const tourDismissed = computed(() =>
-    loggedIn.value ? !!(user.value as any).tourDismissed : !!cookie.value,
+    loggedIn.value ? !!user.value?.tourDismissed : !!cookie.value,
   )
 
   async function completeOnboarding() {

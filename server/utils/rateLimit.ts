@@ -1,4 +1,5 @@
 import { sql, and, eq } from 'drizzle-orm'
+import type { H3Event } from 'h3'
 import { rateLimitHits } from '~~/server/database/schema'
 
 interface RateLimitOptions {
@@ -46,7 +47,7 @@ export async function useRateLimit(key: string, options: RateLimitOptions): Prom
  * Build a rate-limit bucket key from the request IP + a route prefix.
  * Trusts X-Forwarded-For only for the first IP segment (Passenger / Apache proxy).
  */
-export function getRateLimitKey(event: any, prefix: string): string {
+export function getRateLimitKey(event: H3Event, prefix: string): string {
   const forwarded = getHeader(event, 'x-forwarded-for')
   const ip = forwarded?.split(',')[0]?.trim() || getHeader(event, 'x-real-ip') || 'unknown'
   return `${prefix}:${ip}`

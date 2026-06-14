@@ -6,9 +6,10 @@
  *   await requireVerifiedUser(event)
  */
 import { eq } from 'drizzle-orm'
+import type { H3Event } from 'h3'
 import { users } from '~~/server/database/schema'
 
-export async function requireVerifiedUser(event: Parameters<typeof defineEventHandler>[0] extends (ev: infer E) => any ? E : never): Promise<void> {
+export async function requireVerifiedUser(event: H3Event): Promise<void> {
   if (process.env.REQUIRE_EMAIL_VERIFICATION !== 'true') return
 
   const session = await getUserSession(event)

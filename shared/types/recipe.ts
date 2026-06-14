@@ -1,3 +1,5 @@
+import type { CommitDiff } from '~~/shared/types'
+
 export interface RecipeDetail {
   id: number
   title: string
@@ -46,7 +48,7 @@ export interface GourmergeRequestDetail {
   author: { username: string; displayName: string | null } | undefined
   sourceBranch: { id: number; name: string; headCommitId: number | null; recipeId: number; isDefault: boolean; createdAt: string } | null
   targetBranch: { id: number; name: string; headCommitId: number | null; recipeId: number; isDefault: boolean; createdAt: string } | null
-  diff: any
+  diff: CommitDiff | null
   canMerge: boolean
   comments: Array<{ id: number; body: string; authorId: number; authorUsername: string; authorDisplayName: string | null; createdAt: string }>
   createdAt: string

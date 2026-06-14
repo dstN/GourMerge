@@ -23,7 +23,7 @@ export default defineNitroPlugin((nitro) => {
 
   // Log server errors (5xx) at error level. 4xx are intentional — skip.
   nitro.hooks.hook('error', (error, { event }) => {
-    const statusCode = (error as any).statusCode ?? 500
+    const statusCode = (error as { statusCode?: number }).statusCode ?? 500
     if (statusCode >= 500) {
       logger.error('server error', {
         requestId: event?.context?.requestId ?? 'unknown',

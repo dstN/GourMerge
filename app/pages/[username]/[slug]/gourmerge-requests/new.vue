@@ -27,7 +27,7 @@ const form = reactive({
 })
 
 const targetBranches = computed(() =>
-  (recipe.value?.branches ?? []).filter((b: any) => b.isDefault || true)
+  (recipe.value?.branches ?? []).filter((b) => b.isDefault || true)
 )
 
 const submitting = ref(false)
@@ -48,8 +48,8 @@ async function submit() {
     })
     toast.success(t('gourmergeRequest.submitSuccess'))
     await navigateTo(`${recipeUrl.value}/gourmerge-requests/${res.id}`)
-  } catch (e: any) {
-    toast.error(e?.data?.statusMessage || t('gourmergeRequest.submitError'))
+  } catch (e: unknown) {
+    toast.error((e as { data?: { statusMessage?: string } })?.data?.statusMessage || t('gourmergeRequest.submitError'))
   } finally {
     submitting.value = false
   }

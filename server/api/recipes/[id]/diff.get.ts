@@ -8,13 +8,14 @@
  * Returns a structured CommitDiff with ingredient and step changes.
  */
 import { eq } from 'drizzle-orm'
+import type { CommitIngredient, CommitStep } from '~~/shared/types'
 import {
   recipeCommitIngredients,
   recipeCommitSteps,
   ingredients,
 } from '~~/server/database/schema'
 
-async function getCommitSnapshot(db: any, commitId: number) {
+async function getCommitSnapshot(db: NonNullable<ReturnType<typeof useDrizzle>>, commitId: number) {
   const commitIngredients = await db
     .select({
       id: recipeCommitIngredients.id,
@@ -61,6 +62,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const db = useDrizzle()
+  if (!db) throw createError({ statusCode: 503, statusMessage: 'Database unavailable.' })
 
   // Fetch both snapshots in parallel
   const [snapshotA, snapshotB] = await Promise.all([
@@ -68,8 +70,13 @@ export default defineEventHandler(async (event) => {
     getCommitSnapshot(db, toCommitId),
   ])
 
-  // Compute diff using our utility
-  const diff = computeCommitDiff(snapshotA, snapshotB)
+  // Quantity comes back as string from mysql2 decimals; CommitIngredient expects number.
+  // The diff engine compares by value and handles both; double-cast to satisfy types.
+  type DiffInput = { ingredients: CommitIngredient[]; steps: CommitStep[] }
+  const diff = computeCommitDiff(
+    snapshotA as unknown as DiffInput,
+    snapshotB as unknown as DiffInput,
+  )
 
   return diff
 })

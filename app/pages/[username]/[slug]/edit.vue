@@ -7,6 +7,7 @@
  */
 import type { IngredientRowData } from '~/components/recipe/IngredientRow.vue'
 import type { RecipeDetail } from '~~/shared/types/recipe'
+import type { CanonicalUnit } from '~~/shared/types'
 
 definePageMeta({ layout: 'dashboard', middleware: ['validate-recipe-route', 'auth'] })
 
@@ -36,7 +37,7 @@ const selectedBranchId = computed(() => {
 })
 
 const currentBranch = computed(() =>
-  recipe.value?.branches?.find((b: any) => b.id === selectedBranchId.value)
+  recipe.value?.branches?.find((b) => b.id === selectedBranchId.value)
     ?? recipe.value?.defaultBranch
 )
 
@@ -49,11 +50,11 @@ async function loadBranchSnapshot(branchId: number) {
   snapshotLoading.value = true
   try {
     const snapshot = await $fetch<{
-      ingredients: any[]
-      steps: any[]
+      ingredients: Array<{ ingredientId: number | null; ingredientName: string; quantity: string; unit: CanonicalUnit; notes: string | null; sortOrder: number }>
+      steps: Array<{ content: string }>
     }>(`/api/recipes/${recipe.value!.id}/branches/${branchId}/snapshot`)
 
-    ingredients.value = snapshot.ingredients.map((ing: any) => ({
+    ingredients.value = snapshot.ingredients.map((ing) => ({
       ingredientId: ing.ingredientId,
       name: ing.ingredientName,
       quantity: String(ing.quantity),
@@ -61,7 +62,7 @@ async function loadBranchSnapshot(branchId: number) {
       notes: ing.notes ?? '',
       sortOrder: ing.sortOrder,
     }))
-    steps.value = snapshot.steps.map((s: any) => ({ content: s.content }))
+    steps.value = snapshot.steps.map((s) => ({ content: s.content }))
   } catch {
     ingredients.value = []
     steps.value = []
@@ -184,9 +185,9 @@ async function commitChanges() {
     commitMessage.value = ''
     // Reset dirty tracking after successful commit
     initialSnapshot.value = JSON.stringify({ ingredients: ingredients.value, steps: steps.value })
-  } catch (err: any) {
+  } catch (err: unknown) {
     toast.add({
-      title: err.data?.statusMessage || t('recipe.commitError'),
+      title: (err as { data?: { statusMessage?: string } })?.data?.statusMessage || t('recipe.commitError'),
       icon: 'i-lucide-alert-circle',
       color: 'error',
     })
