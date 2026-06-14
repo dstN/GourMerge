@@ -143,5 +143,37 @@
     "open": "Offen",
     "closed": "Geschlossen",
     "merged": "Gemerged"
+  },
+  "error": {
+    "notFoundTitle": "Seite nicht gefunden",
+    "notFoundDescription": "Die angeforderte Seite existiert nicht oder wurde verschoben.",
+    "forbiddenTitle": "Zugriff verweigert",
+    "forbiddenDescription": "Du hast keine Berechtigung, diese Seite aufzurufen.",
+    "serverTitle": "Etwas ist schiefgelaufen",
+    "serverDescription": "Ein unerwarteter Fehler ist aufgetreten. Bitte versuche es später erneut.",
+    "goHome": "Zur Startseite",
+    "goBack": "Zurück",
+    "details": "Technische Details"
+  },
+  "history": {
+    "title": "Commit-Verlauf",
+    "viewDiff": "Diff anzeigen",
+    "initialCommit": "Erster Commit",
+    "empty": "Keine Commits",
+    "emptyDesc": "Dieser Branch hat noch keine Commits.",
+    "diffError": "Diff konnte nicht geladen werden."
+  },
+  "branches": {
+    "title": "Branches",
+    "create": "Neuer Branch",
+    "createTitle": "Neuen Branch erstellen",
+    "name": "Branch-Name",
+    "namePlaceholder": "z.B. vegan-variante",
+    "from": "Basierend auf",
+    "fromDefault": "Standard-Branch (main)",
+    "created": "Branch erstellt",
+    "deleted": "Branch gelöscht",
+    "viewHistory": "Verlauf",
+    "empty": "Keine Branches vorhanden."
   }
 }

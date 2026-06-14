@@ -143,5 +143,37 @@
     "open": "Open",
     "closed": "Closed",
     "merged": "Merged"
+  },
+  "error": {
+    "notFoundTitle": "Page Not Found",
+    "notFoundDescription": "The page you're looking for doesn't exist or has been moved.",
+    "forbiddenTitle": "Access Denied",
+    "forbiddenDescription": "You don't have permission to access this page.",
+    "serverTitle": "Something Went Wrong",
+    "serverDescription": "An unexpected error occurred. Please try again later.",
+    "goHome": "Go Home",
+    "goBack": "Go Back",
+    "details": "Technical Details"
+  },
+  "history": {
+    "title": "Commit History",
+    "viewDiff": "View Diff",
+    "initialCommit": "Initial Commit",
+    "empty": "No Commits",
+    "emptyDesc": "This branch has no commits yet.",
+    "diffError": "Failed to load diff."
+  },
+  "branches": {
+    "title": "Branches",
+    "create": "New Branch",
+    "createTitle": "Create New Branch",
+    "name": "Branch Name",
+    "namePlaceholder": "e.g., vegan-variant",
+    "from": "Based on",
+    "fromDefault": "Default branch (main)",
+    "created": "Branch created",
+    "deleted": "Branch deleted",
+    "viewHistory": "History",
+    "empty": "No branches found."
   }
 }
