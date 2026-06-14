@@ -8,6 +8,7 @@
  * Redacts sensitive fields so they never appear in log output.
  */
 import pino from 'pino'
+import PinoPretty from 'pino-pretty'
 import type { Logger } from 'pino'
 import { join } from 'node:path'
 import { mkdirSync } from 'node:fs'
@@ -42,13 +43,10 @@ export function getLogger(): Logger {
       sync: false,
     }))
   } else {
-    _logger = pino({
-      level: 'debug',
-      transport: {
-        target: 'pino-pretty',
-        options: { colorize: true, translateTime: 'SYS:standard', ignore: 'pid,hostname' },
-      },
-    })
+    // Use pino-pretty as a stream (not a transport worker) so it works in Nitro's
+    // bundled dev environment where worker-thread module resolution can fail.
+    const stream = PinoPretty({ colorize: true, translateTime: 'SYS:standard', ignore: 'pid,hostname' })
+    _logger = pino({ level: 'debug', redact: { paths: REDACT_PATHS, censor: '[REDACTED]' } }, stream)
   }
 
   return _logger
