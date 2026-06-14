@@ -1,11 +1,15 @@
 /**
  * POST /api/recipes — Create a new recipe (repository)
  *
- * Creates the recipe + default 'main' branch + initial empty commit.
- * This mirrors `git init` — every repo starts with a branch and a root commit.
+ * Creates the recipe + default 'main' branch + initial empty commit
+ * inside a single DB transaction. This mirrors `git init` — every
+ * repo starts with a branch and a root commit.
+ *
+ * Returns the owner username + slug for GitHub-style URL navigation.
  */
 import { z } from 'zod'
-import { recipes, recipeBranches, recipeCommits } from '~~/server/database/schema'
+import { eq, and } from 'drizzle-orm'
+import { recipes, recipeBranches, recipeCommits, users } from '~~/server/database/schema'
 
 const createRecipeSchema = z.object({
   title: z.string().min(2).max(300),
@@ -34,46 +38,82 @@ export default defineEventHandler(async (event) => {
   const data = result.data
   const db = useDrizzle()
 
-  // ── Create recipe ───────────────────────────────────────────
-  const [recipe] = await db.insert(recipes).values({
-    ownerId: session.user.id,
-    title: data.title,
-    description: data.description,
-    servings: data.servings,
-    prepTimeMinutes: data.prepTimeMinutes,
-    cookTimeMinutes: data.cookTimeMinutes,
-    difficulty: data.difficulty,
-    visibility: data.visibility,
-  }).$returningId()
+  // ── Generate unique slug ────────────────────────────────────
+  let slug = generateSlug(data.title)
+  let suffix = 0
 
-  // ── Create default "main" branch ────────────────────────────
-  const [branch] = await db.insert(recipeBranches).values({
-    recipeId: recipe.id,
-    name: 'main',
-    isDefault: true,
-  }).$returningId()
+  // Check for collisions and append -1, -2, etc. if needed
+  while (true) {
+    const candidate = suffix === 0 ? slug : `${slug}-${suffix}`
+    const [existing] = await db
+      .select({ id: recipes.id })
+      .from(recipes)
+      .where(and(
+        eq(recipes.ownerId, session.user.id),
+        eq(recipes.slug, candidate),
+      ))
+      .limit(1)
 
-  // ── Create initial (empty) commit ───────────────────────────
-  const [commit] = await db.insert(recipeCommits).values({
-    branchId: branch.id,
-    authorId: session.user.id,
-    message: 'Initial commit 🍳',
-    parentCommitId: null,
-  }).$returningId()
+    if (!existing) {
+      slug = candidate
+      break
+    }
+    suffix++
+  }
 
-  // ── Update branch head ──────────────────────────────────────
-  await db
-    .update(recipeBranches)
-    .set({ headCommitId: commit.id })
-    .where(eq(recipeBranches.id, branch.id))
+  // ── Get owner username for response ─────────────────────────
+  const [owner] = await db
+    .select({ username: users.username })
+    .from(users)
+    .where(eq(users.id, session.user.id))
+    .limit(1)
+
+  // ── Transaction: recipe + branch + commit ───────────────────
+  // All-or-nothing: if any step fails, everything rolls back.
+  const txResult = await db.transaction(async (tx) => {
+    // 1. Create recipe with slug
+    const [recipe] = await tx.insert(recipes).values({
+      ownerId: session.user.id,
+      title: data.title,
+      slug,
+      description: data.description,
+      servings: data.servings,
+      prepTimeMinutes: data.prepTimeMinutes,
+      cookTimeMinutes: data.cookTimeMinutes,
+      difficulty: data.difficulty,
+      visibility: data.visibility,
+    }).$returningId()
+
+    // 2. Create default "main" branch
+    const [branch] = await tx.insert(recipeBranches).values({
+      recipeId: recipe.id,
+      name: 'main',
+      isDefault: true,
+    }).$returningId()
+
+    // 3. Create initial (empty) commit
+    const [commit] = await tx.insert(recipeCommits).values({
+      branchId: branch.id,
+      authorId: session.user.id,
+      message: 'Initial commit 🍳',
+      parentCommitId: null,
+    }).$returningId()
+
+    // 4. Update branch head pointer
+    await tx
+      .update(recipeBranches)
+      .set({ headCommitId: commit.id })
+      .where(eq(recipeBranches.id, branch.id))
+
+    return {
+      id: recipe.id,
+      slug,
+      owner: { username: owner!.username },
+      branchId: branch.id,
+      commitId: commit.id,
+    }
+  })
 
   setResponseStatus(event, 201)
-  return {
-    id: recipe.id,
-    branchId: branch.id,
-    commitId: commit.id,
-  }
+  return txResult
 })
-
-// Need eq for the update
-import { eq } from 'drizzle-orm'

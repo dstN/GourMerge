@@ -1,0 +1,117 @@
+/**
+ * GET /api/recipes/by-slug/:username/:slug — Resolve a recipe by username + slug
+ *
+ * This is the primary lookup for GitHub-style URLs (/username/recipe-slug).
+ * Returns the full recipe data with branches, ingredients, and steps.
+ */
+import { eq, and } from 'drizzle-orm'
+import {
+  recipes,
+  users,
+  recipeBranches,
+  recipeCommitIngredients,
+  recipeCommitSteps,
+  ingredients,
+} from '~~/server/database/schema'
+
+export default defineEventHandler(async (event) => {
+  const username = getRouterParam(event, 'username')
+  const slug = getRouterParam(event, 'slug')
+
+  if (!username || !slug) {
+    throw createError({ statusCode: 400, statusMessage: 'Username and slug are required' })
+  }
+
+  const db = useDrizzle()
+
+  // ── Resolve owner ──────────────────────────────────────────
+  const [owner] = await db
+    .select({ id: users.id, username: users.username, displayName: users.displayName, avatarUrl: users.avatarUrl })
+    .from(users)
+    .where(eq(users.username, username))
+    .limit(1)
+
+  if (!owner) {
+    throw createError({ statusCode: 404, statusMessage: 'User not found' })
+  }
+
+  // ── Find recipe by owner + slug ────────────────────────────
+  const [recipe] = await db
+    .select({
+      id: recipes.id,
+      title: recipes.title,
+      slug: recipes.slug,
+      description: recipes.description,
+      visibility: recipes.visibility,
+      servings: recipes.servings,
+      prepTimeMinutes: recipes.prepTimeMinutes,
+      cookTimeMinutes: recipes.cookTimeMinutes,
+      difficulty: recipes.difficulty,
+      starCount: recipes.starCount,
+      forkCount: recipes.forkCount,
+      forkedFromRecipeId: recipes.forkedFromRecipeId,
+      createdAt: recipes.createdAt,
+      updatedAt: recipes.updatedAt,
+    })
+    .from(recipes)
+    .where(and(
+      eq(recipes.ownerId, owner.id),
+      eq(recipes.slug, slug),
+    ))
+    .limit(1)
+
+  if (!recipe) {
+    throw createError({ statusCode: 404, statusMessage: 'Recipe not found' })
+  }
+
+  // ── Check visibility ───────────────────────────────────────
+  if (recipe.visibility === 'private') {
+    const session = await getUserSession(event)
+    if (!session?.user || session.user.id !== owner.id) {
+      throw createError({ statusCode: 404, statusMessage: 'Recipe not found' })
+    }
+  }
+
+  // ── Get branches ───────────────────────────────────────────
+  const branches = await db
+    .select()
+    .from(recipeBranches)
+    .where(eq(recipeBranches.recipeId, recipe.id))
+
+  // ── Get latest commit from default branch ──────────────────
+  const defaultBranch = branches.find((b) => b.isDefault) || branches[0]
+  let currentIngredients: any[] = []
+  let currentSteps: any[] = []
+
+  if (defaultBranch?.headCommitId) {
+    currentIngredients = await db
+      .select({
+        id: recipeCommitIngredients.id,
+        ingredientId: recipeCommitIngredients.ingredientId,
+        ingredientName: ingredients.name,
+        quantity: recipeCommitIngredients.quantity,
+        unit: recipeCommitIngredients.unit,
+        notes: recipeCommitIngredients.notes,
+        sortOrder: recipeCommitIngredients.sortOrder,
+      })
+      .from(recipeCommitIngredients)
+      .innerJoin(ingredients, eq(recipeCommitIngredients.ingredientId, ingredients.id))
+      .where(eq(recipeCommitIngredients.commitId, defaultBranch.headCommitId))
+      .orderBy(recipeCommitIngredients.sortOrder)
+
+    currentSteps = await db
+      .select()
+      .from(recipeCommitSteps)
+      .where(eq(recipeCommitSteps.commitId, defaultBranch.headCommitId))
+      .orderBy(recipeCommitSteps.sortOrder)
+  }
+
+  return {
+    ...recipe,
+    owner,
+    branches,
+    defaultBranch,
+    currentIngredients,
+    currentSteps,
+  }
+})

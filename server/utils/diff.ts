@@ -9,7 +9,7 @@
  * 2. Text Diff — compares Markdown step content using diff-match-patch-es
  */
 
-import { diff_main, diff_cleanupSemantic } from 'diff-match-patch-es'
+import { diffMain, diffCleanupSemantic } from 'diff-match-patch-es'
 import type {
   CommitIngredient,
   CommitStep,
@@ -154,10 +154,10 @@ export function computeIngredientDiff(
  * - -1 = deletion (removed text)
  */
 export function computeTextDiff(oldText: string, newText: string): TextDiffSegment[] {
-  const rawDiffs = diff_main(oldText, newText)
+  const rawDiffs = diffMain(oldText, newText)
 
   // Clean up for human-readable output (merge adjacent equal segments, etc.)
-  diff_cleanupSemantic(rawDiffs)
+  diffCleanupSemantic(rawDiffs)
 
   return rawDiffs.map(([type, text]) => ({
     type: type as -1 | 0 | 1,

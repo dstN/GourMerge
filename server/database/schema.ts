@@ -59,6 +59,8 @@ export const recipes = mysqlTable('recipes', {
   id: int('id').primaryKey().autoincrement(),
   ownerId: int('owner_id').notNull().references(() => users.id),
   title: varchar('title', { length: 300 }).notNull(),
+  /** URL-safe slug, unique per owner (like GitHub repo names) */
+  slug: varchar('slug', { length: 300 }).notNull(),
   description: text('description'),
   visibility: mysqlEnum('visibility', ['public', 'private']).notNull().default('public'),
   /** NULL if this is an original recipe; set if this is a fork */
@@ -76,6 +78,7 @@ export const recipes = mysqlTable('recipes', {
   index('idx_recipes_owner').on(table.ownerId),
   index('idx_recipes_forked_from').on(table.forkedFromRecipeId),
   index('idx_recipes_visibility').on(table.visibility),
+  uniqueIndex('idx_recipes_owner_slug').on(table.ownerId, table.slug),
 ])
 
 // ═══════════════════════════════════════════════════════════════
@@ -235,17 +238,17 @@ export const gourmergeRequests = mysqlTable('gourmerge_requests', {
 // GOURMERGE REQUEST COMMENTS
 // ═══════════════════════════════════════════════════════════════
 
-export const gourmergeRequestComments = mysqlTable('gourmerge_request_comments', {
+export const gourmergeRequestComments = mysqlTable('gm_request_comments', {
   id: int('id').primaryKey().autoincrement(),
-  gourmergeRequestId: int('gourmerge_request_id').notNull().references(() => gourmergeRequests.id, { onDelete: 'cascade' }),
+  gourmergeRequestId: int('gm_request_id').notNull().references(() => gourmergeRequests.id, { onDelete: 'cascade' }),
   authorId: int('author_id').notNull().references(() => users.id),
   /** Markdown body */
   body: text('body').notNull(),
   createdAt: datetime('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
   updatedAt: timestamp('updated_at').notNull().default(sql`CURRENT_TIMESTAMP`).onUpdateNow(),
 }, (table) => [
-  index('idx_gourmerge_comments_request').on(table.gourmergeRequestId),
-  index('idx_gourmerge_comments_author').on(table.authorId),
+  index('idx_gm_comments_request').on(table.gourmergeRequestId),
+  index('idx_gm_comments_author').on(table.authorId),
 ])
 
 // ═══════════════════════════════════════════════════════════════

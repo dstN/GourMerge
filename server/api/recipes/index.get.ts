@@ -17,6 +17,7 @@ export default defineEventHandler(async (event) => {
       .select({
         id: recipes.id,
         title: recipes.title,
+        slug: recipes.slug,
         description: recipes.description,
         visibility: recipes.visibility,
         servings: recipes.servings,
@@ -50,6 +51,7 @@ export default defineEventHandler(async (event) => {
     .select({
       id: recipes.id,
       title: recipes.title,
+      slug: recipes.slug,
       description: recipes.description,
       visibility: recipes.visibility,
       servings: recipes.servings,
@@ -60,8 +62,15 @@ export default defineEventHandler(async (event) => {
       forkCount: recipes.forkCount,
       createdAt: recipes.createdAt,
       updatedAt: recipes.updatedAt,
+      owner: {
+        id: users.id,
+        username: users.username,
+        displayName: users.displayName,
+        avatarUrl: users.avatarUrl,
+      },
     })
     .from(recipes)
+    .innerJoin(users, eq(recipes.ownerId, users.id))
     .where(eq(recipes.ownerId, userId))
     .orderBy(desc(recipes.updatedAt))
 
