@@ -166,6 +166,7 @@
     "error": "Error",
     "loading": "Loading...",
     "unsaved": "Unsaved changes",
+    "leave": "Leave",
     "help": "Help"
   },
   "diff": {

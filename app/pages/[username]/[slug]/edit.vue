@@ -179,17 +179,31 @@ const isDirty = computed(() => {
   return current !== initialSnapshot.value
 })
 
+const showLeaveModal = ref(false)
+const pendingLeaveRoute = ref('')
+const allowLeave = ref(false)
+
 onBeforeRouteLeave((to, from, next) => {
-  if (isDirty.value) {
-    if (window.confirm(t('recipe.unsavedChanges'))) {
-      next()
-    } else {
-      next(false)
-    }
-  } else {
+  if (!isDirty.value || allowLeave.value) {
+    allowLeave.value = false
     next()
+    return
   }
+  pendingLeaveRoute.value = to.fullPath
+  showLeaveModal.value = true
+  next(false)
 })
+
+function confirmLeave() {
+  showLeaveModal.value = false
+  allowLeave.value = true
+  navigateTo(pendingLeaveRoute.value)
+}
+
+function cancelLeave() {
+  showLeaveModal.value = false
+  pendingLeaveRoute.value = ''
+}
 
 // ── Ingredient management ─────────────────────────────────────
 function addIngredient() {
@@ -639,5 +653,18 @@ useSeoMeta({
         </div>
       </UCard>
     </template>
+
+    <!-- Unsaved changes confirmation modal -->
+    <UModal v-model:open="showLeaveModal" :title="t('common.unsaved')">
+      <template #body>
+        <p class="text-sm">{{ t('recipe.unsavedChanges') }}</p>
+      </template>
+      <template #footer>
+        <div class="flex gap-2 justify-end w-full">
+          <UButton variant="outline" color="neutral" :label="t('common.cancel')" @click="cancelLeave" />
+          <UButton color="error" :label="t('common.leave')" @click="confirmLeave" />
+        </div>
+      </template>
+    </UModal>
   </div>
 </template>
