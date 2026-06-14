@@ -117,6 +117,21 @@ Key rules:
 
 ---
 
+## Observability
+
+- **Logs**: Pino → `logs/app.log` (rotating, redacts cookies/passwords) in production; pino-pretty in dev
+- **Errors**: Sentry.io client + server (`@sentry/nuxt`); set `NUXT_PUBLIC_SENTRY_DSN` in env
+- **Health**: `GET /api/health` → `{ status, db }` — monitored by UptimeRobot
+
+## Maintenance Scripts
+
+```bash
+# Recompute denormalized star/fork counters (run if counters drift):
+node scripts/reconcile-counters.mjs
+```
+
+---
+
 ## Project Status
 
 See [`.claude/ROADMAP.md`](.claude/ROADMAP.md) for the full v1 implementation plan.
