@@ -76,10 +76,13 @@ useSeoMeta({ title: `${t('settings.title')} — GourMerge` })
         <UFormField :label="t('settings.language')">
           <USelect
             v-model="form.preferredLocale"
-            :options="[
+            :items="[
               { label: 'Deutsch', value: 'de' },
               { label: 'English', value: 'en' },
+              { label: 'Français', value: 'fr' },
+              { label: 'Italiano', value: 'it' },
             ]"
+            value-key="value"
             class="w-full"
           />
         </UFormField>
@@ -87,10 +90,11 @@ useSeoMeta({ title: `${t('settings.title')} — GourMerge` })
         <UFormField :label="t('settings.measurement')">
           <USelect
             v-model="form.preferredMeasurementSystem"
-            :options="[
+            :items="[
               { label: t('settings.metric'), value: 'metric' },
               { label: t('settings.imperial'), value: 'imperial' },
             ]"
+            value-key="value"
             class="w-full"
           />
         </UFormField>

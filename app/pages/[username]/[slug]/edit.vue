@@ -39,7 +39,7 @@ const metaPrepTime = ref<number | null>(null)
 const metaCookTime = ref<number | null>(null)
 const metaDifficulty = ref('medium')
 const metaVisibility = ref('public')
-const selectedDietaryType = ref('')
+const selectedDietaryType = ref('none')
 const currentTags = ref<string[]>([])
 const tagInput = ref('')
 const metaTitleTranslations = ref<Record<'de' | 'en' | 'fr' | 'it', string>>({ de: '', en: '', fr: '', it: '' })
@@ -49,7 +49,7 @@ const metaTranslationsOpen = ref(false)
 const { data: availableTags } = useFetch<Array<{ id: number; name: string }>>('/api/tags')
 
 const dietaryOptions = computed(() => [
-  { label: t('recipe.dietaryUnspecified'), value: '' },
+  { label: t('recipe.dietaryUnspecified'), value: 'none' },
   { label: t('recipe.dietaryVegan'), value: 'vegan' },
   { label: t('recipe.dietaryVegetarian'), value: 'vegetarian' },
   { label: t('recipe.dietaryPescatarian'), value: 'pescatarian' },
@@ -77,7 +77,7 @@ watch(recipe, (r) => {
   metaCookTime.value = r.cookTimeMinutes ?? null
   metaDifficulty.value = r.difficulty ?? 'medium'
   metaVisibility.value = r.visibility ?? 'public'
-  selectedDietaryType.value = r.dietaryType ?? ''
+  selectedDietaryType.value = r.dietaryType ?? 'none'
   currentTags.value = r.tags ?? []
   metaTitleTranslations.value = (r.titleTranslations as Record<'de' | 'en' | 'fr' | 'it', string>) ?? { de: '', en: '', fr: '', it: '' }
   metaDescriptionTranslations.value = (r.descriptionTranslations as Record<'de' | 'en' | 'fr' | 'it', string>) ?? { de: '', en: '', fr: '', it: '' }
@@ -148,9 +148,12 @@ async function loadBranchSnapshot(branchId: number) {
       contentTranslations: (s.contentTranslations as Record<'de' | 'en' | 'fr' | 'it', string>) ?? { de: '', en: '', fr: '', it: '' },
       translationsOpen: false,
     }))
+    // Capture baseline for dirty tracking after both values are set
+    initialSnapshot.value = JSON.stringify({ ingredients: ingredients.value, steps: stepsForSnapshot.value })
   } catch {
     ingredients.value = []
     steps.value = []
+    initialSnapshot.value = JSON.stringify({ ingredients: [], steps: [] })
   } finally {
     snapshotLoading.value = false
   }
@@ -163,23 +166,18 @@ watch(selectedBranchId, (branchId) => {
 }, { immediate: true })
 
 // ── Dirty state tracking ──────────────────────────────────────
-const initialSnapshot = ref('')
-
 // Exclude translationsOpen (local UI state) from dirty tracking
 const stepsForSnapshot = computed(() =>
   steps.value.map(({ content, contentTranslations }) => ({ content, contentTranslations }))
 )
 
+// Start with empty baseline so isDirty is false before snapshot loads
+const initialSnapshot = ref(JSON.stringify({ ingredients: [], steps: [] }))
+
 const isDirty = computed(() => {
   const current = JSON.stringify({ ingredients: ingredients.value, steps: stepsForSnapshot.value })
   return current !== initialSnapshot.value
 })
-
-watch([ingredients, stepsForSnapshot], () => {
-  if (initialSnapshot.value === '') {
-    initialSnapshot.value = JSON.stringify({ ingredients: ingredients.value, steps: stepsForSnapshot.value })
-  }
-}, { deep: true, once: true })
 
 onBeforeRouteLeave((to, from, next) => {
   if (isDirty.value) {
@@ -292,7 +290,7 @@ async function commitChanges() {
           cookTimeMinutes: metaCookTime.value ?? null,
           difficulty: metaDifficulty.value as 'easy' | 'medium' | 'hard' || undefined,
           visibility: metaVisibility.value as 'public' | 'private' || undefined,
-          dietaryType: selectedDietaryType.value || null,
+          dietaryType: selectedDietaryType.value === 'none' ? null : selectedDietaryType.value,
           titleTranslations: (() => {
             const tr = Object.fromEntries(Object.entries(metaTitleTranslations.value).filter(([, v]) => v.trim() !== ''))
             return Object.keys(tr).length > 0 ? tr : null
@@ -385,12 +383,12 @@ useSeoMeta({
         <div class="space-y-4">
           <!-- Title -->
           <UFormField :label="t('recipe.title')">
-            <UInput v-model="metaTitle" :placeholder="t('recipe.titlePlaceholder')" />
+            <UInput v-model="metaTitle" :placeholder="t('recipe.titlePlaceholder')" class="w-full" />
           </UFormField>
 
           <!-- Description -->
           <UFormField :label="t('recipe.description')">
-            <UTextarea v-model="metaDescription" :placeholder="t('recipe.descriptionPlaceholder')" :rows="2" />
+            <UTextarea v-model="metaDescription" :placeholder="t('recipe.descriptionPlaceholder')" :rows="2" class="w-full" />
           </UFormField>
 
           <!-- Title & description translations -->
@@ -410,10 +408,10 @@ useSeoMeta({
             <div v-for="loc in (['de', 'en', 'fr', 'it'] as const)" :key="loc" class="space-y-2">
               <p class="text-xs font-semibold text-neutral-500 uppercase">{{ loc }}</p>
               <UFormField :label="t('recipe.title')">
-                <UInput v-model="metaTitleTranslations[loc]" :placeholder="t('recipe.titlePlaceholder')" />
+                <UInput v-model="metaTitleTranslations[loc]" :placeholder="t('recipe.titlePlaceholder')" class="w-full" />
               </UFormField>
               <UFormField :label="t('recipe.description')">
-                <UTextarea v-model="metaDescriptionTranslations[loc]" :placeholder="t('recipe.descriptionPlaceholder')" :rows="2" />
+                <UTextarea v-model="metaDescriptionTranslations[loc]" :placeholder="t('recipe.descriptionPlaceholder')" :rows="2" class="w-full" />
               </UFormField>
             </div>
           </div>

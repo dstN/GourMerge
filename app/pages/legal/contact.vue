@@ -104,6 +104,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
             :placeholder="t('legal.contactNamePlaceholder')"
             icon="i-lucide-user"
             size="lg"
+            class="w-full"
           />
         </UFormField>
 
@@ -114,6 +115,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
             :placeholder="t('legal.contactEmailPlaceholder')"
             icon="i-lucide-mail"
             size="lg"
+            class="w-full"
           />
         </UFormField>
 
@@ -123,6 +125,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
             :placeholder="t('legal.contactMessagePlaceholder')"
             :rows="6"
             size="lg"
+            class="w-full"
           />
         </UFormField>
 

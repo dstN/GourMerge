@@ -16,23 +16,28 @@ const items = computed(() => [
     label: user.value?.displayName || user.value?.username || '',
     type: 'label' as const,
     icon: 'i-lucide-user',
+    color: 'neutral' as const,
   }],
   [{
     label: t('nav.dashboard'),
     icon: 'i-lucide-layout-dashboard',
-    click: () => navigateTo('/dashboard'),
+    color: 'neutral' as const,
+    to: '/dashboard',
   }, {
     label: t('nav.myRecipes'),
     icon: 'i-lucide-book-open',
-    click: () => navigateTo('/dashboard'),
+    color: 'neutral' as const,
+    to: '/recipes',
   }, {
     label: t('nav.newRecipe'),
     icon: 'i-lucide-plus',
-    click: () => navigateTo('/recipes/new'),
+    color: 'neutral' as const,
+    to: '/recipes/new',
   }],
   [{
     label: t('auth.logout'),
     icon: 'i-lucide-log-out',
+    color: 'neutral' as const,
     click: handleLogout,
   }],
 ])

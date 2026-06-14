@@ -30,6 +30,7 @@ const settingContent = ref(false)
 
 const editor = useEditor({
   content: props.modelValue,
+  immediatelyRender: false,
   extensions: [
     StarterKit.configure({
       // Images are disabled project-wide (text-only v1)
@@ -47,12 +48,14 @@ const editor = useEditor({
   },
 })
 
-// Sync external modelValue → editor when parent loads/resets data.
-// The settingContent flag prevents onUpdate from re-emitting while we set content,
-// which would cause a cursor-reset loop on every keystroke.
+// Sync external modelValue → editor when parent loads/resets data (e.g. branch switch).
+// Treat '' and '<p></p>' as equivalent empty states to avoid calling setContent on
+// every tick, which would reset the cursor and block the user from typing.
 watch(() => props.modelValue, (newVal) => {
   if (!editor.value) return
   const currentHtml = editor.value.getHTML()
+  const isEmpty = (s: string) => !s || s === '<p></p>' || s === '<p><br></p>'
+  if (isEmpty(newVal) && isEmpty(currentHtml)) return
   if (newVal !== currentHtml) {
     settingContent.value = true
     editor.value.commands.setContent(newVal)

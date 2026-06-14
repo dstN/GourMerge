@@ -86,5 +86,44 @@ const localeSwitchItems = [
         <slot />
       </main>
     </div>
+
+    <!-- ── Footer ──────────────────────────────────────────── -->
+    <footer class="border-t border-[var(--ui-border)] mt-auto">
+      <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p class="text-sm text-[var(--ui-text-muted)]">
+            © {{ new Date().getFullYear() }} GourMerge — {{ t('app.slogan') }}
+          </p>
+          <div class="flex items-center gap-4">
+            <UButton
+              label="GitHub"
+              variant="ghost"
+              size="xs"
+              icon="i-simple-icons-github"
+              to="https://github.com"
+              target="_blank"
+            />
+            <UButton
+              :label="t('legal.impressum')"
+              variant="ghost"
+              size="xs"
+              to="/legal/impressum"
+            />
+            <UButton
+              :label="t('legal.datenschutz')"
+              variant="ghost"
+              size="xs"
+              to="/legal/datenschutz"
+            />
+            <UButton
+              :label="t('legal.contact')"
+              variant="ghost"
+              size="xs"
+              to="/legal/contact"
+            />
+          </div>
+        </div>
+      </div>
+    </footer>
   </div>
 </template>
