@@ -9,7 +9,7 @@
  * always included for dedup/ID purposes.
  */
 import { z } from 'zod'
-import { like } from 'drizzle-orm'
+import { like, or, sql } from 'drizzle-orm'
 import { ingredients } from '~~/server/database/schema'
 
 const querySchema = z.object({
@@ -37,7 +37,12 @@ export default defineEventHandler(async (event) => {
       category: ingredients.category,
     })
     .from(ingredients)
-    .where(like(ingredients.name, `${q}%`))
+    .where(
+      or(
+        like(ingredients.name, `${q}%`),
+        sql`JSON_UNQUOTE(JSON_EXTRACT(${ingredients.nameTranslations}, ${`$.${locale}`})) LIKE ${`${q}%`}`
+      )
+    )
     .limit(limit)
 
   return rows.map((row) => {
