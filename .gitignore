@@ -27,8 +27,8 @@ logs
 .vscode/*
 !.vscode/settings.json
 
-# Drizzle
-drizzle/meta
+# Drizzle — only ignore the meta snapshot; migration SQL files are versioned
+server/database/migrations/meta
 
 # Claude
 .claude
