@@ -20,13 +20,17 @@ export function useDatabase() {
   if (!_db) {
     const config = useRuntimeConfig()
 
+    // On Netcup shared hosting, Phusion Passenger spawns multiple Node processes.
+    // Each process has its own pool, so the effective total = processes × limit.
+    // Keep limit small (4) to stay well within Netcup's MySQL connection cap.
     _pool = mysql.createPool({
       uri: config.databaseUrl,
       waitForConnections: true,
-      connectionLimit: 10,
-      maxIdle: 10,
-      idleTimeout: 60000,
-      queueLimit: 0,
+      connectionLimit: 4,
+      maxIdle: 2,
+      idleTimeout: 30000,
+      connectTimeout: 10000,
+      queueLimit: 10,
     })
 
     _db = drizzle(_pool, {
