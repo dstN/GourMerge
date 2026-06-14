@@ -222,6 +222,14 @@
     "diffError": "Failed to load diff."
   },
   "glossary": {
+    "seoDescription": "GourMerge glossary — understand git concepts explained as cooking terms.",
+    "subtitle": "Git concepts explained as cooking terms. Git-savvy users will find the technical term in the badge.",
+    "recipe": {
+      "alias": "Recipe",
+      "canonical": "Repository",
+      "description": "A recipe on GourMerge is a full repository: it has a title, ingredients, steps, branches, a commit history, and can be forked.",
+      "helpHint": "Recipes work like GitHub repositories. Everything you know about forking, branching, and committing applies here."
+    },
     "fork": {
       "alias": "Remix",
       "canonical": "Fork",

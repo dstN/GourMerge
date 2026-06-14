@@ -222,6 +222,14 @@
     "diffError": "Diff konnte nicht geladen werden."
   },
   "glossary": {
+    "seoDescription": "GourMerge-Glossar — Git-Konzepte als Koch-Begriffe erklärt.",
+    "subtitle": "Git-Konzepte als Koch-Begriffe erklärt. Git-Kennern zeigt das Badge den technischen Begriff.",
+    "recipe": {
+      "alias": "Rezept",
+      "canonical": "Repository",
+      "description": "Ein Rezept auf GourMerge ist ein vollständiges Repository: Es hat Zutaten, Schritte, Branches, einen Commit-Verlauf und kann geforkt werden.",
+      "helpHint": "Rezepte funktionieren wie GitHub-Repositories. Alles, was du über Forken, Branchen und Committen weißt, gilt hier genauso."
+    },
     "fork": {
       "alias": "Remix",
       "canonical": "Fork",
