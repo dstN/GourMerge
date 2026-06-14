@@ -103,12 +103,19 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     </UForm>
 
     <template #footer>
-      <p class="text-sm text-center text-[var(--ui-text-muted)]">
-        {{ t('auth.noAccount') }}
-        <NuxtLink to="/auth/register" class="text-primary-500 font-medium hover:underline">
-          {{ t('auth.registerLink') }}
-        </NuxtLink>
-      </p>
+      <div class="space-y-2 text-center text-sm text-[var(--ui-text-muted)]">
+        <p>
+          {{ t('auth.noAccount') }}
+          <NuxtLink to="/auth/register" class="text-primary-500 font-medium hover:underline">
+            {{ t('auth.registerLink') }}
+          </NuxtLink>
+        </p>
+        <p>
+          <NuxtLink to="/auth/forgot-password" class="text-[var(--ui-text-muted)] hover:text-primary-500 hover:underline text-xs">
+            {{ t('auth.forgotPassword') }}
+          </NuxtLink>
+        </p>
+      </div>
     </template>
   </UCard>
 </template>

@@ -36,7 +36,22 @@
     "displayName": "Anzeigename",
     "displayNamePlaceholder": "Dein Name",
     "hasAccount": "Bereits ein Konto?",
-    "noAccount": "Noch kein Konto?"
+    "noAccount": "Noch kein Konto?",
+    "forgotPassword": "Passwort vergessen?",
+    "forgotPasswordError": "Reset-Link konnte nicht gesendet werden. Bitte erneut versuchen.",
+    "forgotPasswordSent": "Falls ein Konto mit dieser E-Mail existiert, wurde ein Reset-Link gesendet. Bitte prüfe deinen Posteingang.",
+    "sendResetLink": "Reset-Link senden",
+    "backToLogin": "Zurück zur Anmeldung",
+    "resetPassword": "Passwort zurücksetzen",
+    "resetPasswordError": "Passwort konnte nicht zurückgesetzt werden. Der Link ist möglicherweise abgelaufen.",
+    "resetPasswordDone": "Dein Passwort wurde zurückgesetzt. Du kannst dich jetzt mit deinem neuen Passwort anmelden.",
+    "resetTokenMissing": "Fehlender oder ungültiger Reset-Token.",
+    "newPassword": "Neues Passwort",
+    "confirmPassword": "Passwort bestätigen",
+    "passwordMismatch": "Passwörter stimmen nicht überein.",
+    "setNewPassword": "Neues Passwort setzen",
+    "verifiedTitle": "E-Mail bestätigt!",
+    "verifiedMessage": "Deine E-Mail-Adresse wurde bestätigt. Du kannst dich jetzt anmelden."
   },
   "landing": {
     "badge": "Git für Rezepte",
