@@ -11,7 +11,11 @@ const RESERVED_PATHS = new Set([
   'dashboard',
   'recipes',
   'settings',
+  'explore',
   'admin',
+  'login',
+  'register',
+  'logout',
   '_nuxt',
   '__nuxt',
 ])

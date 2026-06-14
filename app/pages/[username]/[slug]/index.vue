@@ -1,15 +1,10 @@
 <script setup lang="ts">
-/**
- * Recipe Detail Page — "Repository View"
- *
- * URL: /:username/:slug (GitHub-style)
- * Displays the recipe with its current ingredients and steps.
- */
 definePageMeta({ middleware: ['validate-recipe-route'] })
 
 const { t } = useI18n()
 const route = useRoute()
-const { user } = useUserSession()
+const { user, loggedIn } = useUserSession()
+const toast = useAppToast()
 
 const username = computed(() => route.params.username as string)
 const slug = computed(() => route.params.slug as string)
@@ -21,6 +16,52 @@ const { data: recipe, pending, error } = useFetch(
 
 const isOwner = computed(() => recipe.value?.owner?.id === user.value?.id)
 const recipeUrl = computed(() => recipe.value ? `/${recipe.value.owner.username}/${recipe.value.slug}` : '')
+
+// ── Star toggle ──────────────────────────────────────────────
+const starred = ref(false)
+const starCount = ref(0)
+const starPending = ref(false)
+
+watch(recipe, (r) => {
+  if (r) {
+    starred.value = r.isStarred ?? false
+    starCount.value = r.starCount ?? 0
+  }
+}, { immediate: true })
+
+async function toggleStar() {
+  if (!loggedIn.value || !recipe.value) return
+  starPending.value = true
+  try {
+    const res = await $fetch<{ starred: boolean }>(`/api/recipes/${recipe.value.id}/star`, { method: 'POST' })
+    starred.value = res.starred
+    starCount.value += res.starred ? 1 : -1
+  } catch {
+    toast.error(t('common.error'))
+  } finally {
+    starPending.value = false
+  }
+}
+
+// ── Fork ─────────────────────────────────────────────────────
+const forkPending = ref(false)
+
+async function forkRecipe() {
+  if (!loggedIn.value || !recipe.value) return
+  forkPending.value = true
+  try {
+    const res = await $fetch<{ slug: string; owner: { username: string } }>(
+      `/api/recipes/${recipe.value.id}/fork`,
+      { method: 'POST' },
+    )
+    toast.success(t('recipe.forkSuccess'))
+    await navigateTo(`/${res.owner.username}/${res.slug}`)
+  } catch (e: any) {
+    toast.error(e?.data?.statusMessage || t('recipe.forkError'))
+  } finally {
+    forkPending.value = false
+  }
+}
 
 useSeoMeta({
   title: () => recipe.value ? `${recipe.value.title} — GourMerge` : 'GourMerge',
@@ -62,13 +103,37 @@ useSeoMeta({
           </p>
         </div>
 
-        <div class="flex items-center gap-2 shrink-0">
+        <div class="flex items-center gap-2 shrink-0 flex-wrap">
           <UBadge
             v-if="recipe.visibility === 'private'"
             color="neutral"
             variant="subtle"
             icon="i-lucide-lock"
             :label="t('recipe.private')"
+          />
+          <!-- Star button (logged-in, not owner) -->
+          <UButton
+            v-if="loggedIn"
+            :icon="starred ? 'i-lucide-star' : 'i-lucide-star'"
+            :color="starred ? 'warning' : 'neutral'"
+            :variant="starred ? 'soft' : 'outline'"
+            size="sm"
+            :loading="starPending"
+            :label="`${starCount}`"
+            data-tour="star-button"
+            @click="toggleStar"
+          />
+          <!-- Fork button (logged-in, not owner) -->
+          <UButton
+            v-if="loggedIn && !isOwner"
+            icon="i-lucide-git-fork"
+            :label="t('recipe.fork')"
+            variant="outline"
+            color="neutral"
+            size="sm"
+            :loading="forkPending"
+            data-tour="fork-button"
+            @click="forkRecipe"
           />
           <UButton
             :label="t('branches.title')"
@@ -104,7 +169,7 @@ useSeoMeta({
         <UBadge :color="recipe.difficulty === 'easy' ? 'success' : recipe.difficulty === 'hard' ? 'error' : 'warning'" variant="subtle" :label="t(`recipe.${recipe.difficulty}`)" />
         <div class="ml-auto flex items-center gap-3 text-sm text-[var(--ui-text-dimmed)]">
           <span class="flex items-center gap-1">
-            <UIcon name="i-lucide-star" class="size-4" /> {{ recipe.starCount }}
+            <UIcon name="i-lucide-star" class="size-4" /> {{ starCount }}
           </span>
           <span class="flex items-center gap-1">
             <UIcon name="i-lucide-git-fork" class="size-4" /> {{ recipe.forkCount }}

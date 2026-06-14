@@ -118,7 +118,10 @@
     "commitSuccess": "Änderungen erfolgreich gespeichert.",
     "commitError": "Änderungen konnten nicht gespeichert werden.",
     "ingredientIncomplete": "Jede Zutat benötigt einen Namen und eine Menge.",
-    "commitPlaceholder": "z.B. Zucker reduziert, Vanille hinzugefügt"
+    "commitPlaceholder": "z.B. Zucker reduziert, Vanille hinzugefügt",
+    "fork": "Forken",
+    "forkSuccess": "Rezept erfolgreich geforkt.",
+    "forkError": "Rezept konnte nicht geforkt werden."
   },
   "common": {
     "on": "am",
@@ -215,6 +218,36 @@
       "description": "Eine Zeitlinie aller gespeicherten Versionen dieses Rezepts, von alt nach neu.",
       "helpHint": "Jedes Mal, wenn du Änderungen commitest, erscheint hier ein neuer Eintrag. Klicke auf einen Commit, um das Rezept zu diesem Zeitpunkt zu sehen oder es mit einer anderen Version zu vergleichen."
     }
+  },
+  "profile": {
+    "notFound": "Benutzer nicht gefunden",
+    "recipes": "Rezepte",
+    "starred": "Favoriten",
+    "noRecipes": "Noch keine Rezepte.",
+    "noStarred": "Noch keine Favoriten.",
+    "editSettings": "Einstellungen bearbeiten"
+  },
+  "settings": {
+    "title": "Einstellungen",
+    "bio": "Biografie",
+    "bioPlaceholder": "Erzähl uns von dir...",
+    "avatarUrl": "Avatar-URL",
+    "avatarUrlPlaceholder": "https://beispiel.com/avatar.png",
+    "language": "Sprache",
+    "measurement": "Maßsystem",
+    "metric": "Metrisch (g, ml)",
+    "imperial": "Imperial (oz, fl oz)",
+    "saved": "Einstellungen gespeichert.",
+    "saveError": "Einstellungen konnten nicht gespeichert werden."
+  },
+  "explore": {
+    "search": "Rezepte suchen...",
+    "allDifficulties": "Alle Schwierigkeiten",
+    "sortStars": "Meiste Sterne",
+    "sortNewest": "Neueste",
+    "sortForks": "Meiste Forks",
+    "noResults": "Keine Rezepte gefunden.",
+    "loadMore": "Mehr laden"
   },
   "branches": {
     "title": "Branches",

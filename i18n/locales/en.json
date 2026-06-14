@@ -118,7 +118,10 @@
     "commitSuccess": "Changes committed successfully.",
     "commitError": "Failed to commit changes.",
     "ingredientIncomplete": "Each ingredient needs a name and quantity.",
-    "commitPlaceholder": "e.g., Reduced sugar, added vanilla"
+    "commitPlaceholder": "e.g., Reduced sugar, added vanilla",
+    "fork": "Fork",
+    "forkSuccess": "Recipe forked successfully.",
+    "forkError": "Could not fork recipe."
   },
   "common": {
     "on": "on",
@@ -215,6 +218,36 @@
       "description": "A timeline of all saved versions of this recipe, oldest to newest.",
       "helpHint": "Every time you commit changes, a new entry appears here. Click any commit to see the full recipe at that point in time, or compare it to another version."
     }
+  },
+  "profile": {
+    "notFound": "User not found",
+    "recipes": "Recipes",
+    "starred": "Starred",
+    "noRecipes": "No recipes yet.",
+    "noStarred": "No starred recipes yet.",
+    "editSettings": "Edit Settings"
+  },
+  "settings": {
+    "title": "Settings",
+    "bio": "Bio",
+    "bioPlaceholder": "Tell us about yourself...",
+    "avatarUrl": "Avatar URL",
+    "avatarUrlPlaceholder": "https://example.com/avatar.png",
+    "language": "Language",
+    "measurement": "Measurement System",
+    "metric": "Metric (g, ml)",
+    "imperial": "Imperial (oz, fl oz)",
+    "saved": "Settings saved.",
+    "saveError": "Could not save settings."
+  },
+  "explore": {
+    "search": "Search recipes...",
+    "allDifficulties": "All difficulties",
+    "sortStars": "Most starred",
+    "sortNewest": "Newest",
+    "sortForks": "Most forked",
+    "noResults": "No recipes found.",
+    "loadMore": "Load more"
   },
   "branches": {
     "title": "Branches",

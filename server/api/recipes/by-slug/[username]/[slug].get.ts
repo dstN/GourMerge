@@ -12,6 +12,7 @@ import {
   recipeCommitIngredients,
   recipeCommitSteps,
   ingredients,
+  recipeStars,
 } from '~~/server/database/schema'
 
 export default defineEventHandler(async (event) => {
@@ -65,11 +66,22 @@ export default defineEventHandler(async (event) => {
   }
 
   // ── Check visibility ───────────────────────────────────────
+  const session = await getUserSession(event)
   if (recipe.visibility === 'private') {
-    const session = await getUserSession(event)
     if (!session?.user || session.user.id !== owner.id) {
       throw createError({ statusCode: 404, statusMessage: 'Recipe not found' })
     }
+  }
+
+  // ── Check if current user has starred this recipe ──────────
+  let isStarred = false
+  if (session?.user) {
+    const [star] = await db
+      .select({ id: recipeStars.id })
+      .from(recipeStars)
+      .where(and(eq(recipeStars.recipeId, recipe.id), eq(recipeStars.userId, session.user.id)))
+      .limit(1)
+    isStarred = !!star
   }
 
   // ── Get branches ───────────────────────────────────────────
@@ -113,5 +125,6 @@ export default defineEventHandler(async (event) => {
     defaultBranch,
     currentIngredients,
     currentSteps,
+    isStarred,
   }
 })
