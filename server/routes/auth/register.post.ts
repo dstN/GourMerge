@@ -22,7 +22,7 @@ const registerSchema = z.object({
 export default defineEventHandler(async (event) => {
   // ── Rate limit: 3 attempts per minute per IP ──────────────
   const key = getRateLimitKey(event, 'register')
-  useRateLimit(key, { max: 3, windowSeconds: 60 })
+  await useRateLimit(key, { max: 3, windowSeconds: 60 })
 
   const body = await readBody(event)
 
@@ -62,6 +62,9 @@ export default defineEventHandler(async (event) => {
     passwordHash,
     displayName: displayName || username,
   }).$returningId()
+
+  // ── Session rotation: clear any pre-existing session (prevents fixation) ──
+  await clearUserSession(event)
 
   // ── Set session ─────────────────────────────────────────────
   await setUserSession(event, {

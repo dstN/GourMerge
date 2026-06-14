@@ -1,43 +1,50 @@
-/**
- * useRateLimit — Simple in-memory rate limiter for Nitro event handlers
- *
- * Uses a Map<string, number[]> to track timestamps per key (IP address).
- * Entries auto-clean on each check. NOT suitable for distributed/multi-process
- * deployments — use Redis-backed rate limiting in production clusters.
- */
-const rateLimitStore = new Map<string, number[]>()
+import { sql, and, eq } from 'drizzle-orm'
+import { rateLimitHits } from '~~/server/database/schema'
 
 interface RateLimitOptions {
-  /** Maximum number of requests in the window */
   max: number
-  /** Window size in seconds */
   windowSeconds: number
 }
 
 /**
- * Check rate limit for a given key. Throws 429 if exceeded.
+ * DB-backed rate limiter — safe across Phusion Passenger multi-process.
+ *
+ * Uses atomic INSERT … ON DUPLICATE KEY UPDATE to increment a counter per
+ * (bucketKey, windowStart) pair. A SELECT after the upsert reads the count.
+ * The two-query approach has a negligible race window at the threshold boundary;
+ * at auth-endpoint scale (limit ≤ 10/min) this is acceptable without Redis.
  */
-export function useRateLimit(key: string, options: RateLimitOptions): void {
-  const now = Date.now()
-  const windowMs = options.windowSeconds * 1000
-  const cutoff = now - windowMs
+export async function useRateLimit(key: string, options: RateLimitOptions): Promise<void> {
+  const db = useDrizzle()
+  // If DB is not yet available, fail open (don't block all requests during startup).
+  if (!db) return
 
-  // Get existing timestamps and filter expired ones
-  const timestamps = (rateLimitStore.get(key) || []).filter((t) => t > cutoff)
+  const windowStart = Math.floor(Date.now() / 1000 / options.windowSeconds) * options.windowSeconds
 
-  if (timestamps.length >= options.max) {
+  // Atomic upsert: insert or increment
+  await db
+    .insert(rateLimitHits)
+    .values({ bucketKey: key, windowStart, count: 1 })
+    .onDuplicateKeyUpdate({ set: { count: sql`${rateLimitHits.count} + 1` } })
+
+  // Read back the current count
+  const [row] = await db
+    .select({ count: rateLimitHits.count })
+    .from(rateLimitHits)
+    .where(and(eq(rateLimitHits.bucketKey, key), eq(rateLimitHits.windowStart, windowStart)))
+    .limit(1)
+
+  if ((row?.count ?? 0) > options.max) {
     throw createError({
       statusCode: 429,
       statusMessage: 'Too many requests. Please try again later.',
     })
   }
-
-  timestamps.push(now)
-  rateLimitStore.set(key, timestamps)
 }
 
 /**
- * Get the IP address from a Nitro event for rate limiting.
+ * Build a rate-limit bucket key from the request IP + a route prefix.
+ * Trusts X-Forwarded-For only for the first IP segment (Passenger / Apache proxy).
  */
 export function getRateLimitKey(event: any, prefix: string): string {
   const forwarded = getHeader(event, 'x-forwarded-for')

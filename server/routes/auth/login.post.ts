@@ -15,7 +15,7 @@ const loginSchema = z.object({
 export default defineEventHandler(async (event) => {
   // ── Rate limit: 5 attempts per minute per IP ──────────────
   const key = getRateLimitKey(event, 'login')
-  useRateLimit(key, { max: 5, windowSeconds: 60 })
+  await useRateLimit(key, { max: 5, windowSeconds: 60 })
 
   const body = await readBody(event)
 
@@ -53,6 +53,9 @@ export default defineEventHandler(async (event) => {
       statusMessage: 'Invalid email or password',
     })
   }
+
+  // ── Session rotation: invalidate any pre-existing session (prevents fixation) ──
+  await clearUserSession(event)
 
   // ── Set session ─────────────────────────────────────────────
   await setUserSession(event, {

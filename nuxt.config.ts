@@ -72,9 +72,24 @@ export default defineNuxtConfig({
   // ── Runtime Config ──────────────────────────────────────────
   runtimeConfig: {
     databaseUrl: process.env.DATABASE_URL || 'mysql://root:password@localhost:3306/gourmerge',
+    appUrl: process.env.NUXT_PUBLIC_APP_URL || 'http://localhost:3000',
+    // nuxt-auth-utils reads runtimeConfig.session for H3 SessionConfig
+    // httpOnly + sameSite=lax blocks CSRF from cross-site browser requests.
+    // secure=true in prod ensures the cookie is only sent over HTTPS.
+    session: {
+      name: 'gourmerge_session',
+      password: process.env.NUXT_SESSION_PASSWORD || '',
+      cookie: {
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 60 * 60 * 24 * 14, // 14 days
+      },
+    },
     public: {
       appName: 'GourMerge',
       appSlogan: 'Fork the recipe, merge the flavor.',
+      appUrl: process.env.NUXT_PUBLIC_APP_URL || 'http://localhost:3000',
     },
   },
 
