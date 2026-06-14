@@ -136,6 +136,14 @@ useSeoMeta({
             @click="forkRecipe"
           />
           <UButton
+            :label="t('gourmergeRequest.titlePlural')"
+            icon="i-lucide-git-pull-request"
+            variant="outline"
+            color="neutral"
+            size="sm"
+            :to="`${recipeUrl}/gourmerge-requests`"
+          />
+          <UButton
             :label="t('branches.title')"
             icon="i-lucide-git-branch"
             variant="outline"

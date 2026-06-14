@@ -14,6 +14,7 @@ export default defineVitestConfig({
         branches: 70,
       },
     },
-    include: ['tests/**/*.{test,spec}.{ts,js}'],
+    include: ['tests/unit/**/*.{test,spec}.{ts,js}', 'tests/component/**/*.{test,spec}.{ts,js}'],
+    exclude: ['tests/e2e/**'],
   },
 })
