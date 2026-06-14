@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import IngredientAutocomplete from '~/components/recipe/IngredientAutocomplete.vue'
+
 const { t } = useI18n()
 
 export interface IngredientRowData {
@@ -70,10 +72,9 @@ function update(patch: Partial<IngredientRowData>) {
     <USelect
       :model-value="row.unit"
       :items="unitOptions"
-      value-attribute="value"
-      option-attribute="label"
+      value-key="value"
       class="w-24 shrink-0"
-      @update:model-value="(val: any) => update({ unit: val })"
+      @update:model-value="(val: string) => update({ unit: val as IngredientRowData['unit'] })"
     />
 
     <!-- Notes (optional) -->
