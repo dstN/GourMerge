@@ -4,7 +4,7 @@
  * This is the primary lookup for GitHub-style URLs (/username/recipe-slug).
  * Returns the full recipe data with branches, ingredients, and steps.
  */
-import { eq, and, sql } from 'drizzle-orm'
+import { eq, and, sql, inArray } from 'drizzle-orm'
 import {
   recipes,
   users,
@@ -12,14 +12,16 @@ import {
   recipeCommitIngredients,
   recipeCommitSteps,
   ingredients,
+  ingredientNutrition,
   recipeStars,
 } from '~~/server/database/schema'
+import { computeNutritionTotals, perServing } from '~~/server/utils/nutrition'
 
 export default defineEventHandler(async (event) => {
   const username = getRouterParam(event, 'username')
   const slug = getRouterParam(event, 'slug')
   const { locale: rawLocale } = getQuery(event)
-  const locale = ['de', 'en'].includes(String(rawLocale)) ? String(rawLocale) : 'en'
+  const locale = ['de', 'en', 'fr', 'it'].includes(String(rawLocale)) ? String(rawLocale) : 'en'
 
   if (!username || !slug) {
     throw createError({ statusCode: 400, statusMessage: 'Username and slug are required' })
@@ -118,6 +120,23 @@ export default defineEventHandler(async (event) => {
     .where(eq(recipeCommitSteps.commitId, headCommitId))
     .orderBy(recipeCommitSteps.sortOrder) : []
 
+  // ── Compute nutrition totals ───────────────────────────────
+  let nutritionTotal = null
+  let nutritionPerServing = null
+
+  if (currentIngredients.length > 0) {
+    const ingredientIds = [...new Set(currentIngredients.map((i) => i.ingredientId))]
+    const nutritionRows = await db
+      .select()
+      .from(ingredientNutrition)
+      .where(inArray(ingredientNutrition.ingredientId, ingredientIds))
+
+    const nutritionMap = new Map(nutritionRows.map((n) => [n.ingredientId, n]))
+    const totals = computeNutritionTotals(currentIngredients, nutritionMap)
+    nutritionTotal = totals
+    nutritionPerServing = perServing(totals, recipe.servings ?? 4)
+  }
+
   return {
     ...recipe,
     owner,
@@ -126,5 +145,7 @@ export default defineEventHandler(async (event) => {
     currentIngredients,
     currentSteps,
     isStarred,
+    nutritionTotal,
+    nutritionPerServing,
   }
 })

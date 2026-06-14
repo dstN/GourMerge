@@ -84,7 +84,9 @@
     "subtitle": "Hier sind deine Rezepte auf einen Blick.",
     "emptyTitle": "Noch keine Rezepte",
     "emptyDescription": "Erstelle dein erstes Rezept und starte deine kulinarische Reise.",
-    "createFirst": "Erstes Rezept erstellen"
+    "createFirst": "Erstes Rezept erstellen",
+    "errorTitle": "Sitzung abgelaufen",
+    "errorDescription": "Deine Sitzung ist abgelaufen. Bitte melde dich erneut an."
   },
   "recipe": {
     "title": "Titel",
@@ -394,5 +396,19 @@
   },
   "a11y": {
     "skipToContent": "Zum Hauptinhalt springen"
+  },
+  "nutrition": {
+    "title": "Nährwerte",
+    "approximate": "Näherungswert",
+    "perServing": "Pro Portion",
+    "total": "Gesamt",
+    "perServingLabel": "pro Portion ({n} Portionen)",
+    "totalLabel": "gesamt für {n} Portionen",
+    "protein": "Eiweiß",
+    "carbs": "Kohlenhydrate",
+    "fat": "Fett",
+    "fiber": "Ballaststoffe",
+    "saturatedFat": "Davon gesättigte Fettsäuren",
+    "missingCount": "Für {n} Zutat(en) sind keine Nährwerte verfügbar."
   }
 }

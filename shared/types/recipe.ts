@@ -1,5 +1,17 @@
 import type { CommitDiff } from '~~/shared/types'
 
+export interface NutritionTotals {
+  kcal: number
+  protein: number
+  carbs: number
+  fat: number
+  fiber: number
+  saturatedFat: number
+  isApproximate: boolean
+  missingCount: number
+  coveredCount: number
+}
+
 export interface RecipeDetail {
   id: number
   title: string
@@ -21,6 +33,8 @@ export interface RecipeDetail {
   currentIngredients: Array<{ id: number; ingredientId: number; ingredientName: string; quantity: string; unit: string; notes: string | null; sortOrder: number }>
   currentSteps: Array<{ id: number; commitId: number; sortOrder: number; content: string }>
   isStarred: boolean
+  nutritionTotal: NutritionTotals | null
+  nutritionPerServing: NutritionTotals | null
 }
 
 export interface UserProfile {

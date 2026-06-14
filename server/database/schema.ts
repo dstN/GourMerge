@@ -54,14 +54,64 @@ export const ingredients = mysqlTable('ingredients', {
   id: int('id').primaryKey().autoincrement(),
   /** Canonical name (English, used as fallback) */
   name: varchar('name', { length: 200 }).notNull(),
-  /** Localized names: { "en": "Flour", "de": "Mehl", "fr": "Farine" } */
+  /** Localized names: { "en": "Carrot", "de": "Karotte", "fr": "Carotte", "it": "Carota" } */
   nameTranslations: json('name_translations').notNull().default({}),
   /** Category for grouping: "dairy", "spice", "vegetable", etc. */
   category: varchar('category', { length: 100 }),
+  /** Per-locale synonyms from the Swiss BLV DB Synonyme field: { "de": ["Rüebli", "Möhre"] } */
+  synonyms: json('synonyms').notNull().default({}),
   createdAt: datetime('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
 }, (table) => [
   index('idx_ingredients_name').on(table.name),
   index('idx_ingredients_category').on(table.category),
+])
+
+// ═══════════════════════════════════════════════════════════════
+// INGREDIENT NUTRITION (1:1 with ingredients, per-100g-edible basis)
+// ═══════════════════════════════════════════════════════════════
+// Source: Swiss BLV Food Composition Database V7.0 (naehrwertdaten.ch)
+// All macro values are per 100 g or 100 ml of edible portion.
+// Missing values are NULL (Swiss DB marks these as "k.A.").
+
+export const ingredientNutrition = mysqlTable('ingredient_nutrition', {
+  ingredientId: int('ingredient_id').primaryKey().references(() => ingredients.id, { onDelete: 'cascade' }),
+
+  // ── Energy ─────────────────────────────────────────────────
+  energyKcal100g:    decimal('energy_kcal_100g',    { precision: 8, scale: 2 }),
+  energyKj100g:      decimal('energy_kj_100g',      { precision: 8, scale: 2 }),
+
+  // ── Macronutrients (g per 100 g) ───────────────────────────
+  fat100g:           decimal('fat_100g',            { precision: 8, scale: 2 }),
+  saturatedFat100g:  decimal('saturated_fat_100g',  { precision: 8, scale: 2 }),
+  carbs100g:         decimal('carbs_100g',          { precision: 8, scale: 2 }),
+  sugars100g:        decimal('sugars_100g',         { precision: 8, scale: 2 }),
+  starch100g:        decimal('starch_100g',         { precision: 8, scale: 2 }),
+  fiber100g:         decimal('fiber_100g',          { precision: 8, scale: 2 }),
+  protein100g:       decimal('protein_100g',        { precision: 8, scale: 2 }),
+  salt100g:          decimal('salt_100g',           { precision: 8, scale: 2 }),
+  alcohol100g:       decimal('alcohol_100g',        { precision: 8, scale: 2 }),
+  water100g:         decimal('water_100g',          { precision: 8, scale: 2 }),
+
+  // ── Unit conversions ────────────────────────────────────────
+  /** Density in g/mL (from Swiss `Dichte`). Used to convert ml→g for volume ingredients. */
+  densityGPerMl:     decimal('density_g_per_ml',    { precision: 6, scale: 3 }),
+  /** Approximate grams per 1 piece (e.g. egg ≈ 60 g). NULL if not applicable. */
+  gramsPerPiece:     int('grams_per_piece'),
+
+  // ── Micronutrients (JSON, vitamins + minerals long-tail) ───
+  /** { "vitamin_c_mg": 6.7, "calcium_mg": 33, ... } */
+  micros:            json('micros').default({}),
+
+  // ── Provenance ──────────────────────────────────────────────
+  /** Source identifier: 'swiss-blv-v7', 'off', 'usda', 'curated' */
+  source:            varchar('source', { length: 50 }).notNull().default('swiss-blv-v7'),
+  /** External ID from the source database (Swiss BLV numeric ID) */
+  externalId:        varchar('external_id', { length: 50 }),
+
+  createdAt: datetime('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp('updated_at').notNull().default(sql`CURRENT_TIMESTAMP`).onUpdateNow(),
+}, (table) => [
+  index('idx_nutrition_source_ext').on(table.source, table.externalId),
 ])
 
 // ═══════════════════════════════════════════════════════════════
@@ -341,8 +391,13 @@ export const usersRelations = relations(users, ({ many }) => ({
   stars: many(recipeStars),
 }))
 
-export const ingredientsRelations = relations(ingredients, ({ many }) => ({
+export const ingredientsRelations = relations(ingredients, ({ one, many }) => ({
+  nutrition: one(ingredientNutrition, { fields: [ingredients.id], references: [ingredientNutrition.ingredientId] }),
   commitIngredients: many(recipeCommitIngredients),
+}))
+
+export const ingredientNutritionRelations = relations(ingredientNutrition, ({ one }) => ({
+  ingredient: one(ingredients, { fields: [ingredientNutrition.ingredientId], references: [ingredients.id] }),
 }))
 
 export const recipesRelations = relations(recipes, ({ one, many }) => ({

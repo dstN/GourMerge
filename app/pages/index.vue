@@ -150,7 +150,7 @@ v-for="(step, idx) in [
     <!-- ── CTA Section ───────────────────────────────────── -->
     <section class="py-20">
       <div class="max-w-3xl mx-auto text-center px-4">
-        <UIcon name="i-lucide-chef-hat" class="size-16 text-primary-500 mx-auto mb-6" />
+        <CommonBrandLogo class="size-16 text-primary-500 mx-auto mb-6" />
         <h2 class="text-3xl sm:text-4xl font-bold mb-4">
           {{ t('landing.ctaTitle') }}
         </h2>

@@ -283,6 +283,14 @@ useHead(() => {
         </div>
       </UCard>
 
+      <!-- Nutrition Facts -->
+      <RecipeNutritionFacts
+        v-if="recipe.nutritionTotal && recipe.nutritionPerServing && recipe.nutritionTotal.coveredCount > 0"
+        :total="recipe.nutritionTotal"
+        :per-serving="recipe.nutritionPerServing"
+        :servings="recipe.servings ?? 4"
+      />
+
       <!-- Steps -->
       <UCard>
         <template #header>

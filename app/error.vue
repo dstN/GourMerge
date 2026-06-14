@@ -51,10 +51,7 @@ function handleClearError() {
     <div class="text-center max-w-md">
       <!-- Logo -->
       <NuxtLink to="/" class="inline-flex items-center gap-2 mb-8 group">
-        <UIcon
-          name="i-lucide-chef-hat"
-          class="size-8 text-primary-500 group-hover:text-primary-400 transition-colors"
-        />
+        <CommonBrandLogo class="size-8 text-primary-500 group-hover:text-primary-400 transition-colors" />
         <span class="text-xl font-bold">
           Gour<span class="text-primary-500">Merge</span>
         </span>

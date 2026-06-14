@@ -15,8 +15,8 @@ const navItems = computed(() => [
   {
     label: t('nav.myRecipes'),
     icon: 'i-lucide-book-open',
-    to: '/dashboard',
-    active: false,
+    to: '/recipes',
+    active: route.path === '/recipes',
   },
   {
     label: t('nav.explore'),

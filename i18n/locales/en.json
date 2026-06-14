@@ -84,7 +84,9 @@
     "subtitle": "Here's an overview of your recipes.",
     "emptyTitle": "No Recipes Yet",
     "emptyDescription": "Create your first recipe and start your culinary journey.",
-    "createFirst": "Create First Recipe"
+    "createFirst": "Create First Recipe",
+    "errorTitle": "Session Expired",
+    "errorDescription": "Your session has expired. Please log in again."
   },
   "recipe": {
     "title": "Title",
@@ -394,5 +396,19 @@
   },
   "a11y": {
     "skipToContent": "Skip to main content"
+  },
+  "nutrition": {
+    "title": "Nutrition Facts",
+    "approximate": "Approximate",
+    "perServing": "Per Serving",
+    "total": "Total",
+    "perServingLabel": "per serving ({n} servings)",
+    "totalLabel": "total for {n} servings",
+    "protein": "Protein",
+    "carbs": "Carbohydrates",
+    "fat": "Fat",
+    "fiber": "Fiber",
+    "saturatedFat": "Of which saturated fat",
+    "missingCount": "No nutrition data for {n} ingredient(s)."
   }
 }

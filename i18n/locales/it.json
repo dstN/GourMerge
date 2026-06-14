@@ -1,0 +1,414 @@
+{
+  "app": {
+    "slogan": "Fork the recipe, merge the flavor.",
+    "sloganDe": "Dove i migliori sapori si fondono."
+  },
+  "nav": {
+    "explore": "Esplora",
+    "myRecipes": "Le mie ricette",
+    "newRecipe": "Nuova ricetta",
+    "dashboard": "Dashboard",
+    "quickActions": "Azioni rapide"
+  },
+  "auth": {
+    "login": "Accedi",
+    "loginSubtitle": "Bentornato su GourMerge.",
+    "loginButton": "Accedi",
+    "loginError": "Accesso fallito. Controlla le tue credenziali.",
+    "loginLink": "Accedi ora",
+    "register": "Registrati",
+    "registerSubtitle": "Crea il tuo account GourMerge gratuito.",
+    "registerButton": "Crea account",
+    "registerError": "Registrazione fallita. Riprova.",
+    "registerLink": "Registrati ora",
+    "logout": "Esci",
+    "username": "Nome utente",
+    "usernamePlaceholder": "il-tuo-username",
+    "usernameMin": "Il nome utente deve contenere almeno 3 caratteri",
+    "usernameFormat": "Solo lettere, numeri, underscore e trattini",
+    "email": "E-mail",
+    "emailPlaceholder": "la-tua{'@'}email.it",
+    "emailInvalid": "Indirizzo e-mail non valido",
+    "password": "Password",
+    "passwordPlaceholder": "Almeno 8 caratteri",
+    "passwordMin": "La password deve contenere almeno 8 caratteri",
+    "passwordRequired": "La password è obbligatoria",
+    "displayName": "Nome visualizzato",
+    "displayNamePlaceholder": "Il tuo nome",
+    "hasAccount": "Hai già un account?",
+    "noAccount": "Non hai ancora un account?",
+    "forgotPassword": "Password dimenticata?",
+    "forgotPasswordError": "Impossibile inviare il link di reset. Riprova.",
+    "forgotPasswordSent": "Se esiste un account con questa e-mail, è stato inviato un link di reset. Controlla la posta in arrivo.",
+    "sendResetLink": "Invia link di reset",
+    "backToLogin": "Torna al login",
+    "resetPassword": "Reimposta password",
+    "resetPasswordError": "Impossibile reimpostare la password. Il link potrebbe essere scaduto.",
+    "resetPasswordDone": "La tua password è stata reimpostata. Puoi ora accedere con la nuova password.",
+    "resetTokenMissing": "Token di reset mancante o non valido.",
+    "newPassword": "Nuova password",
+    "confirmPassword": "Conferma password",
+    "passwordMismatch": "Le password non corrispondono.",
+    "setNewPassword": "Imposta nuova password",
+    "verifiedTitle": "E-mail confermata!",
+    "verifiedMessage": "Il tuo indirizzo e-mail è stato confermato. Puoi ora accedere."
+  },
+  "landing": {
+    "badge": "Git per le ricette",
+    "getStarted": "Inizia ora",
+    "learnMore": "Scopri di più",
+    "featuresTitle": "La meccanica Git per la cucina",
+    "featuresSubtitle": "Tutti gli strumenti per versionare, condividere e migliorare le ricette.",
+    "featureFork": "Rimixa le ricette",
+    "featureForkDesc": "Crea la tua versione di una ricetta altrui e adattala al tuo gusto.",
+    "featureBranch": "Crea varianti",
+    "featureBranchDesc": "Sperimenta su varianti separate senza modificare l'originale. Perfetto per versioni vegane o senza glutine.",
+    "featureCommit": "Salva le tue versioni",
+    "featureCommitDesc": "Ogni modifica viene salvata come versione — ripercorri la storia della tua cucina.",
+    "featureMerge": "GourMerge Requests",
+    "featureMergeDesc": "Proponi i tuoi miglioramenti all'autore originale. Cuciniamo meglio insieme.",
+    "howItWorks": "Come funziona",
+    "step1Title": "Crea una ricetta",
+    "step1Desc": "Crea la tua prima ricetta — come un nuovo repository su GitHub.",
+    "step2Title": "Modifica ingredienti e passaggi",
+    "step2Desc": "Usa l'editor visuale per aggiungere ingredienti e scrivere i passaggi di preparazione.",
+    "step3Title": "Salva la tua versione",
+    "step3Desc": "Salva le modifiche con una nota di versione — es. 'Zucchero ridotto'.",
+    "step4Title": "Condividi e collabora",
+    "step4Desc": "Condividi la tua ricetta pubblicamente o invita altri a contribuire tramite GourMerge Requests.",
+    "ctaTitle": "Pronto a cucinare?",
+    "ctaSubtitle": "Crea la tua prima ricetta e unisciti alla comunità GourMerge."
+  },
+  "dashboard": {
+    "welcome": "Benvenuto, {name}!",
+    "subtitle": "Ecco una panoramica delle tue ricette.",
+    "emptyTitle": "Nessuna ricetta",
+    "emptyDescription": "Crea la tua prima ricetta e inizia il tuo viaggio culinario.",
+    "createFirst": "Crea la prima ricetta",
+    "errorTitle": "Sessione scaduta",
+    "errorDescription": "La tua sessione è scaduta. Accedi di nuovo."
+  },
+  "recipe": {
+    "title": "Titolo",
+    "titlePlaceholder": "Torta di mele della nonna",
+    "titleRequired": "Il titolo è obbligatorio",
+    "description": "Descrizione",
+    "descriptionPlaceholder": "Una breve descrizione della tua ricetta...",
+    "servingsLabel": "Porzioni",
+    "prepTime": "Preparazione",
+    "cookTime": "Cottura",
+    "minutes": "min",
+    "difficultyLabel": "Difficoltà",
+    "easy": "Facile",
+    "medium": "Medio",
+    "hard": "Difficile",
+    "visibilityLabel": "Visibilità",
+    "public": "Pubblico",
+    "private": "Privato",
+    "createTitle": "Crea una nuova ricetta",
+    "createSubtitle": "Crea una nuova ricetta. Puoi aggiungere ingredienti e passaggi subito dopo.",
+    "createButton": "Crea ricetta",
+    "createError": "Impossibile creare la ricetta",
+    "notFound": "Ricetta non trovata",
+    "defaultBranch": "Predefinito",
+    "ingredients": "Ingredienti",
+    "noIngredients": "Nessun ingrediente aggiunto.",
+    "addIngredient": "Aggiungi ingrediente",
+    "ingredientName": "Nome ingrediente",
+    "quantity": "Quantità",
+    "notes": "Note",
+    "unitPiece": "Pezzo",
+    "unitPinch": "Pizzico",
+    "steps": "Passaggi",
+    "noSteps": "Nessun passaggio aggiunto.",
+    "addStep": "Aggiungi passaggio",
+    "stepPlaceholder": "Descrivi questo passaggio di preparazione...",
+    "viewRecipe": "Vedi ricetta",
+    "commitChanges": "Salva versione",
+    "commitMessage": "Nota di versione",
+    "commitMessagePlaceholder": "es. Zucchero ridotto, vaniglia aggiunta",
+    "commitHint": "Descrivi brevemente cosa hai modificato.",
+    "commit": "Salva",
+    "createIngredient": "Crea \"{name}\"",
+    "saveChanges": "Salva modifiche",
+    "unsavedChanges": "Hai modifiche non salvate. Uscire senza salvare?",
+    "commitSuccess": "Versione salvata con successo.",
+    "commitError": "Impossibile salvare la versione.",
+    "ingredientIncomplete": "Ogni ingrediente richiede un nome e una quantità.",
+    "commitPlaceholder": "es. Zucchero ridotto, vaniglia aggiunta",
+    "fork": "Remixa",
+    "forkSuccess": "Il tuo remix è pronto.",
+    "forkError": "Impossibile creare il remix.",
+    "seoDescriptionFallback": "Scopri e remixa questa ricetta su GourMerge — la piattaforma per lo sviluppo collaborativo di ricette."
+  },
+  "common": {
+    "on": "il",
+    "edit": "Modifica",
+    "cancel": "Annulla",
+    "save": "Salva",
+    "delete": "Elimina",
+    "error": "Errore",
+    "loading": "Caricamento...",
+    "unsaved": "Modifiche non salvate",
+    "help": "Aiuto"
+  },
+  "diff": {
+    "title": "Modifiche",
+    "ingredients": "Modifiche agli ingredienti",
+    "steps": "Modifiche ai passaggi",
+    "added": "Aggiunto",
+    "removed": "Rimosso",
+    "modified": "Modificato",
+    "unchanged": "Invariato",
+    "noChanges": "Nessuna modifica",
+    "ingredient": "Ingrediente",
+    "oldValue": "Vecchio",
+    "newValue": "Nuovo",
+    "viewUnified": "Vista unificata",
+    "viewSplit": "Vista divisa",
+    "stepNumber": "Passaggio {n}"
+  },
+  "gourmergeRequest": {
+    "title": "GourMerge Request",
+    "titlePlural": "GourMerge Requests",
+    "open": "Aperto",
+    "closed": "Chiuso",
+    "merged": "Unito",
+    "draft": "Bozza",
+    "new": "Nuovo GourMerge Request",
+    "createTitle": "Apri un GourMerge Request",
+    "createSubtitle": "Proponi le tue modifiche al proprietario della ricetta per la revisione.",
+    "requestTitle": "Titolo",
+    "requestTitlePlaceholder": "es. Zucchero ridotto e vaniglia aggiunta",
+    "description": "Descrizione",
+    "descriptionPlaceholder": "Descrivi le tue modifiche e perché migliorano la ricetta...",
+    "sourceBranch": "Dalla variante (le tue modifiche)",
+    "targetBranch": "Nella variante (destinazione)",
+    "submit": "Apri GourMerge Request",
+    "submitSuccess": "GourMerge Request aperto.",
+    "submitError": "Impossibile aprire il GourMerge Request.",
+    "noRequests": "Nessun GourMerge Request al momento.",
+    "mergeButton": "Unisci",
+    "mergeSuccess": "Unito con successo!",
+    "mergeError": "Impossibile unire.",
+    "closeButton": "Chiudi",
+    "reopenButton": "Riapri",
+    "conflictsTitle": "Conflitti di unione",
+    "conflictsDesc": "I seguenti conflitti devono essere risolti manualmente prima dell'unione.",
+    "addComment": "Aggiungi un commento",
+    "commentPlaceholder": "Lascia un commento...",
+    "commentSubmit": "Commenta",
+    "noDiff": "Nessuna modifica rilevata tra queste varianti.",
+    "diffTitle": "Modifiche",
+    "backToList": "Torna ai GourMerge Requests",
+    "by": "Aperto da {author}",
+    "cannotMerge": "Solo il proprietario della ricetta può unire."
+  },
+  "error": {
+    "notFoundTitle": "Pagina non trovata",
+    "notFoundDescription": "La pagina che stai cercando non esiste o è stata spostata.",
+    "forbiddenTitle": "Accesso negato",
+    "forbiddenDescription": "Non hai il permesso di accedere a questa pagina.",
+    "serverTitle": "Qualcosa è andato storto",
+    "serverDescription": "Si è verificato un errore imprevisto. Riprova più tardi.",
+    "goHome": "Home",
+    "goBack": "Indietro",
+    "details": "Dettagli tecnici"
+  },
+  "history": {
+    "title": "Cronologia versioni",
+    "viewDiff": "Vedi modifiche",
+    "initialCommit": "Prima versione",
+    "empty": "Nessuna versione",
+    "emptyDesc": "Questa variante non ha ancora versioni.",
+    "diffError": "Impossibile caricare le modifiche."
+  },
+  "glossary": {
+    "seoDescription": "Glossario GourMerge — i concetti Git spiegati in termini culinari.",
+    "subtitle": "I concetti Git spiegati in termini culinari. Gli utenti esperti di Git troveranno il termine tecnico nel badge.",
+    "recipe": {
+      "alias": "Ricetta",
+      "canonical": "Repository",
+      "description": "Una ricetta su GourMerge è un repository completo: ha ingredienti, passaggi, varianti, una cronologia e può essere remixata.",
+      "helpHint": "Le ricette funzionano come i repository GitHub. Tutto ciò che sai su fork, branch e commit si applica qui."
+    },
+    "fork": {
+      "alias": "Remix",
+      "canonical": "Fork",
+      "description": "Crea la tua copia indipendente di una ricetta altrui e adattala liberamente.",
+      "helpHint": "Il remix crea una copia personale di una ricetta. Le tue modifiche restano separate dall'originale a meno che non invii un GourMerge Request."
+    },
+    "branch": {
+      "alias": "Variante",
+      "canonical": "Branch",
+      "description": "Una versione parallela della tua ricetta — sperimenta senza modificare la versione principale.",
+      "helpHint": "Immagina una variante come una 'versione vegana' o una 'variante senza glutine'. Le modifiche su una variante non influiscono sulle altre finché non vengono unite."
+    },
+    "commit": {
+      "alias": "Salva versione",
+      "canonical": "Commit",
+      "description": "Uno snapshot nominato della tua ricetta in un momento specifico.",
+      "helpHint": "Ogni versione salvata archivia tutti gli ingredienti e i passaggi come snapshot. Puoi sempre tornare indietro e vedere esattamente cosa è cambiato."
+    },
+    "merge": {
+      "alias": "Unisci",
+      "canonical": "Merge",
+      "description": "Applica le modifiche da una variante a un'altra, combinando il meglio di entrambe.",
+      "helpHint": "Durante l'unione, GourMerge combina le modifiche agli ingredienti e ai passaggi. Se due persone hanno modificato lo stesso ingrediente diversamente, vedrai un conflitto da risolvere."
+    },
+    "gourmergeRequest": {
+      "alias": "Proposta di miglioramento",
+      "canonical": "GourMerge Request",
+      "description": "Proponi i tuoi miglioramenti all'autore della ricetta originale per revisione e unione.",
+      "helpHint": "Un GourMerge Request ti permette di condividere i tuoi miglioramenti con l'autore originale. Può revisionare, commentare e unire le tue modifiche."
+    },
+    "diff": {
+      "alias": "Modifiche",
+      "canonical": "Diff",
+      "description": "Una vista affiancata di esattamente cosa è cambiato tra due versioni di una ricetta.",
+      "helpHint": "La vista delle modifiche mostra gli ingredienti aggiunti in verde, quelli rimossi in rosso e quelli modificati evidenziati."
+    },
+    "history": {
+      "alias": "Cronologia",
+      "canonical": "Cronologia commit",
+      "description": "Una sequenza temporale di tutte le versioni salvate di questa ricetta, dalla più vecchia alla più recente.",
+      "helpHint": "Ogni volta che salvi una versione, qui appare una nuova voce. Clicca su qualsiasi versione per vedere la ricetta completa in quel momento."
+    }
+  },
+  "profile": {
+    "notFound": "Utente non trovato",
+    "recipes": "Ricette",
+    "starred": "Preferiti",
+    "noRecipes": "Nessuna ricetta al momento.",
+    "noStarred": "Nessuna ricetta nei preferiti.",
+    "editSettings": "Modifica impostazioni"
+  },
+  "settings": {
+    "title": "Impostazioni",
+    "bio": "Biografia",
+    "bioPlaceholder": "Raccontaci di te...",
+    "avatarUrl": "URL avatar",
+    "avatarUrlPlaceholder": "https://esempio.com/avatar.png",
+    "language": "Lingua",
+    "measurement": "Sistema di misura",
+    "metric": "Metrico (g, ml)",
+    "imperial": "Imperiale (oz, fl oz)",
+    "saved": "Impostazioni salvate.",
+    "saveError": "Impossibile salvare le impostazioni."
+  },
+  "explore": {
+    "search": "Cerca ricette...",
+    "allDifficulties": "Tutte le difficoltà",
+    "sortStars": "Più apprezzate",
+    "sortNewest": "Più recenti",
+    "sortForks": "Più remixate",
+    "noResults": "Nessuna ricetta trovata.",
+    "loadMore": "Carica altro"
+  },
+  "branches": {
+    "title": "Varianti",
+    "create": "Nuova variante",
+    "createTitle": "Crea nuova variante",
+    "name": "Nome variante",
+    "namePlaceholder": "es. variante-vegana",
+    "from": "Basato su",
+    "fromDefault": "Variante predefinita (main)",
+    "created": "Variante creata",
+    "deleted": "Variante eliminata",
+    "viewHistory": "Cronologia versioni",
+    "empty": "Nessuna variante al momento."
+  },
+  "onboarding": {
+    "skipAll": "Salta",
+    "gotIt": "Capito!",
+    "conceptIntro": {
+      "title": "Benvenuto su GourMerge",
+      "subtitle": "GourMerge è come GitHub per le ricette. Ecco una rapida panoramica:",
+      "recipe": {
+        "alias": "Ricetta",
+        "canonical": "Repository",
+        "desc": "Una ricetta è un repository completo con ingredienti, istruzioni passo-passo e una cronologia completa."
+      },
+      "fork": {
+        "alias": "Remix / Versione personale",
+        "canonical": "Fork",
+        "desc": "Crea la tua copia di una ricetta altrui e adattala liberamente — l'originale rimane invariato."
+      },
+      "branch": {
+        "alias": "Variante",
+        "canonical": "Branch",
+        "desc": "Prova una variazione della tua ricetta (es. versione vegana) senza toccare la versione principale."
+      },
+      "commit": {
+        "alias": "Salva versione",
+        "canonical": "Commit",
+        "desc": "Salva uno snapshot della tua ricetta. Puoi sempre tornare a qualsiasi versione precedente."
+      },
+      "merge": {
+        "alias": "Unisci",
+        "canonical": "Merge",
+        "desc": "Unisci le modifiche da una variante a un'altra — GourMerge gestisce i conflitti per te."
+      },
+      "gourmergeRequest": {
+        "alias": "Proponi modifiche",
+        "canonical": "GourMerge Request",
+        "desc": "Proponi le tue modifiche all'autore della ricetta originale — può rivedere, commentare e accettare."
+      }
+    }
+  },
+  "tour": {
+    "skip": "Salta il tour",
+    "next": "Avanti",
+    "prev": "Indietro",
+    "finish": "Fine",
+    "step": {
+      "explore": {
+        "title": "Scopri ricette",
+        "desc": "Sfoglia le ricette pubbliche della comunità — filtra per difficoltà, tag o ordina per popolarità."
+      },
+      "newRecipe": {
+        "title": "Crea una ricetta",
+        "desc": "Inizia una nuova ricetta. Aggiungi ingredienti, scrivi istruzioni passo-passo e salva la tua prima versione."
+      },
+      "fork": {
+        "title": "Remixa",
+        "desc": "Remixa qualsiasi ricetta pubblica per creare la tua copia. L'originale rimane intatto."
+      },
+      "star": {
+        "title": "Aggiungi ai preferiti",
+        "desc": "Aggiungi ai preferiti le ricette che ami. Ritrovala sulla tua pagina del profilo."
+      },
+      "history": {
+        "title": "Cronologia versioni",
+        "desc": "Ogni versione salvata è registrata qui. Clicca su qualsiasi voce per vedere la ricetta completa in quel momento."
+      },
+      "gourmergeRequest": {
+        "title": "Proponi modifiche",
+        "desc": "Apri un GourMerge Request per proporre le modifiche del tuo remix all'autore originale."
+      }
+    }
+  },
+  "help": {
+    "menu": "Aiuto",
+    "startTour": "Inizia il tour",
+    "resetOnboarding": "Ricomincia l'onboarding",
+    "glossary": "Glossario"
+  },
+  "a11y": {
+    "skipToContent": "Vai al contenuto principale"
+  },
+  "nutrition": {
+    "title": "Valori nutrizionali",
+    "approximate": "Valore approssimativo",
+    "perServing": "Per porzione",
+    "total": "Totale",
+    "perServingLabel": "per porzione ({n} porzioni)",
+    "totalLabel": "totale per {n} porzioni",
+    "protein": "Proteine",
+    "carbs": "Carboidrati",
+    "fat": "Grassi",
+    "fiber": "Fibre",
+    "saturatedFat": "Di cui acidi grassi saturi",
+    "missingCount": "Nessun valore nutrizionale disponibile per {n} ingrediente/i."
+  }
+}

@@ -23,10 +23,7 @@ const localeSwitchItems = [
         <div class="flex items-center justify-between h-16">
           <!-- Logo / Brand -->
           <NuxtLink to="/" class="flex items-center gap-2.5 group">
-            <UIcon
-              name="i-lucide-chef-hat"
-              class="size-7 text-primary-500 group-hover:text-primary-400 transition-colors"
-            />
+            <CommonBrandLogo class="size-7 text-primary-500 group-hover:text-primary-400 transition-colors" />
             <span class="text-xl font-bold tracking-tight">
               Gour<span class="text-primary-500">Merge</span>
             </span>

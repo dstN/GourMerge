@@ -14,10 +14,7 @@ const { loggedIn } = useUserSession()
         <div class="flex items-center justify-between h-16">
           <!-- Logo -->
           <NuxtLink to="/dashboard" class="flex items-center gap-2.5 group">
-            <UIcon
-              name="i-lucide-chef-hat"
-              class="size-7 text-primary-500 group-hover:text-primary-400 transition-colors"
-            />
+            <CommonBrandLogo class="size-7 text-primary-500 group-hover:text-primary-400 transition-colors" />
             <span class="text-xl font-bold tracking-tight">
               Gour<span class="text-primary-500">Merge</span>
             </span>
@@ -30,6 +27,12 @@ const { loggedIn } = useUserSession()
               variant="ghost"
               icon="i-lucide-layout-dashboard"
               to="/dashboard"
+            />
+            <UButton
+              :label="t('nav.myRecipes')"
+              variant="ghost"
+              icon="i-lucide-book-open"
+              to="/recipes"
             />
             <UButton
               :label="t('nav.explore')"
