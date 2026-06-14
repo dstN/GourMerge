@@ -111,7 +111,14 @@
     "commitMessage": "Commit Message",
     "commitMessagePlaceholder": "e.g., Reduced sugar, added vanilla",
     "commitHint": "Briefly describe what you changed.",
-    "commit": "Commit"
+    "commit": "Commit",
+    "createIngredient": "Create \"{name}\"",
+    "saveChanges": "Save Changes",
+    "unsavedChanges": "You have unsaved changes. Leave without saving?",
+    "commitSuccess": "Changes committed successfully.",
+    "commitError": "Failed to commit changes.",
+    "ingredientIncomplete": "Each ingredient needs a name and quantity.",
+    "commitPlaceholder": "e.g., Reduced sugar, added vanilla"
   },
   "common": {
     "on": "on",
@@ -120,7 +127,9 @@
     "save": "Save",
     "delete": "Delete",
     "error": "Error",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "unsaved": "Unsaved changes",
+    "help": "Help"
   },
   "diff": {
     "title": "Changes",
@@ -162,6 +171,50 @@
     "empty": "No Commits",
     "emptyDesc": "This branch has no commits yet.",
     "diffError": "Failed to load diff."
+  },
+  "glossary": {
+    "fork": {
+      "alias": "Remix",
+      "canonical": "Fork",
+      "description": "Create your own independent copy of someone else's recipe to adapt freely.",
+      "helpHint": "Forking creates a personal copy of a recipe. Your changes stay separate from the original unless you submit a GourMerge Request."
+    },
+    "branch": {
+      "alias": "Variant",
+      "canonical": "Branch",
+      "description": "A parallel version of your recipe — experiment without changing the main version.",
+      "helpHint": "Think of a branch as a 'vegan variant' or 'gluten-free version'. Changes on a branch don't affect other branches until you merge."
+    },
+    "commit": {
+      "alias": "Save Version",
+      "canonical": "Commit",
+      "description": "A named snapshot of your recipe at a specific point in time.",
+      "helpHint": "Every commit saves all ingredients and steps as a snapshot. You can always go back and see exactly what changed."
+    },
+    "merge": {
+      "alias": "Combine",
+      "canonical": "Merge",
+      "description": "Apply changes from one variant into another, combining the best of both.",
+      "helpHint": "When you merge, GourMerge combines the ingredient and step changes. If two people changed the same ingredient differently, you'll see a conflict to resolve."
+    },
+    "gourmergeRequest": {
+      "alias": "Improvement Proposal",
+      "canonical": "GourMerge Request",
+      "description": "Propose your improvements to the original recipe author for review and merging.",
+      "helpHint": "A GourMerge Request lets you share your recipe improvements with the original author. They can review your changes, leave comments, and merge them into the original."
+    },
+    "diff": {
+      "alias": "Changes",
+      "canonical": "Diff",
+      "description": "A side-by-side view of exactly what changed between two versions of a recipe.",
+      "helpHint": "The diff shows added ingredients in green, removed ones in red, and modified ones highlighted. For step text, individual word changes are highlighted."
+    },
+    "history": {
+      "alias": "Version History",
+      "canonical": "Commit History",
+      "description": "A timeline of all saved versions of this recipe, oldest to newest.",
+      "helpHint": "Every time you commit changes, a new entry appears here. Click any commit to see the full recipe at that point in time, or compare it to another version."
+    }
   },
   "branches": {
     "title": "Branches",

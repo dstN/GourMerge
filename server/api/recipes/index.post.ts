@@ -10,6 +10,7 @@
 import { z } from 'zod'
 import { eq, and } from 'drizzle-orm'
 import { recipes, recipeBranches, recipeCommits, users } from '~~/server/database/schema'
+import { generatePublicId, bufferToUuid } from '~~/server/utils/uuid'
 
 const createRecipeSchema = z.object({
   title: z.string().min(2).max(300),
@@ -71,8 +72,9 @@ export default defineEventHandler(async (event) => {
   // ── Transaction: recipe + branch + commit ───────────────────
   // All-or-nothing: if any step fails, everything rolls back.
   const txResult = await db.transaction(async (tx) => {
-    // 1. Create recipe with slug
+    // 1. Create recipe with slug + UUIDv7 public_id
     const [recipe] = await tx.insert(recipes).values({
+      publicId: generatePublicId(),
       ownerId: session.user.id,
       title: data.title,
       slug,

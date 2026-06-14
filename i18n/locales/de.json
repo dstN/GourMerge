@@ -111,7 +111,14 @@
     "commitMessage": "Commit-Nachricht",
     "commitMessagePlaceholder": "z.B. Zucker reduziert, Vanille hinzugefügt",
     "commitHint": "Beschreibe kurz, was du geändert hast.",
-    "commit": "Committen"
+    "commit": "Committen",
+    "createIngredient": "\"{name}\" erstellen",
+    "saveChanges": "Änderungen speichern",
+    "unsavedChanges": "Du hast ungespeicherte Änderungen. Trotzdem verlassen?",
+    "commitSuccess": "Änderungen erfolgreich gespeichert.",
+    "commitError": "Änderungen konnten nicht gespeichert werden.",
+    "ingredientIncomplete": "Jede Zutat benötigt einen Namen und eine Menge.",
+    "commitPlaceholder": "z.B. Zucker reduziert, Vanille hinzugefügt"
   },
   "common": {
     "on": "am",
@@ -120,7 +127,9 @@
     "save": "Speichern",
     "delete": "Löschen",
     "error": "Fehler",
-    "loading": "Laden..."
+    "loading": "Laden...",
+    "unsaved": "Ungespeicherte Änderungen",
+    "help": "Hilfe"
   },
   "diff": {
     "title": "Änderungen",
@@ -162,6 +171,50 @@
     "empty": "Keine Commits",
     "emptyDesc": "Dieser Branch hat noch keine Commits.",
     "diffError": "Diff konnte nicht geladen werden."
+  },
+  "glossary": {
+    "fork": {
+      "alias": "Remix",
+      "canonical": "Fork",
+      "description": "Erstelle deine eigene unabhängige Kopie eines fremden Rezepts und passe es frei an.",
+      "helpHint": "Beim Forken entsteht eine persönliche Kopie eines Rezepts. Deine Änderungen bleiben getrennt vom Original – außer du stellst einen GourMerge Request."
+    },
+    "branch": {
+      "alias": "Variante",
+      "canonical": "Branch",
+      "description": "Eine parallele Version deines Rezepts – experimentiere, ohne die Hauptversion zu verändern.",
+      "helpHint": "Stell dir einen Branch wie eine 'vegane Variante' oder 'glutenfreie Version' vor. Änderungen auf einem Branch wirken sich erst auf andere aus, wenn du mergst."
+    },
+    "commit": {
+      "alias": "Version speichern",
+      "canonical": "Commit",
+      "description": "Ein benannter Schnappschuss deines Rezepts zu einem bestimmten Zeitpunkt.",
+      "helpHint": "Jeder Commit speichert alle Zutaten und Schritte als Snapshot. Du kannst jederzeit zurückblättern und sehen, was sich genau geändert hat."
+    },
+    "merge": {
+      "alias": "Zusammenführen",
+      "canonical": "Merge",
+      "description": "Übernimm Änderungen von einer Variante in eine andere und kombiniere das Beste aus beiden.",
+      "helpHint": "Beim Mergen kombiniert GourMerge die Zutaten- und Schrittänderungen. Wenn zwei Personen dieselbe Zutat unterschiedlich geändert haben, siehst du einen Konflikt."
+    },
+    "gourmergeRequest": {
+      "alias": "Verbesserungsvorschlag",
+      "canonical": "GourMerge Request",
+      "description": "Schlage deine Verbesserungen dem Original-Autor zur Prüfung und Übernahme vor.",
+      "helpHint": "Ein GourMerge Request ermöglicht es dir, deine Rezeptverbesserungen mit dem Original-Autor zu teilen. Er kann deine Änderungen prüfen, kommentieren und in das Original übernehmen."
+    },
+    "diff": {
+      "alias": "Änderungen",
+      "canonical": "Diff",
+      "description": "Eine Gegenüberstellung, was sich genau zwischen zwei Versionen eines Rezepts verändert hat.",
+      "helpHint": "Der Diff zeigt hinzugefügte Zutaten grün, entfernte rot und geänderte hervorgehoben. Bei Schritttexten werden einzelne Wortänderungen markiert."
+    },
+    "history": {
+      "alias": "Versionsverlauf",
+      "canonical": "Commit-Verlauf",
+      "description": "Eine Zeitlinie aller gespeicherten Versionen dieses Rezepts, von alt nach neu.",
+      "helpHint": "Jedes Mal, wenn du Änderungen commitest, erscheint hier ein neuer Eintrag. Klicke auf einen Commit, um das Rezept zu diesem Zeitpunkt zu sehen oder es mit einer anderen Version zu vergleichen."
+    }
   },
   "branches": {
     "title": "Branches",
