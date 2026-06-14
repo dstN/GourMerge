@@ -56,6 +56,8 @@ export default defineEventHandler(async (event) => {
       cookTimeMinutes: recipes.cookTimeMinutes,
       difficulty: recipes.difficulty,
       dietaryType: recipes.dietaryType,
+      titleTranslations: recipes.titleTranslations,
+      descriptionTranslations: recipes.descriptionTranslations,
       starCount: recipes.starCount,
       forkCount: recipes.forkCount,
       forkedFromRecipeId: recipes.forkedFromRecipeId,

@@ -105,7 +105,7 @@ const localeSwitchItems = [
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
           <p class="text-sm text-[var(--ui-text-muted)]">
-            © {{ new Date().getFullYear() }} GourMerge — {{ t('app.sloganDe') }}
+            © {{ new Date().getFullYear() }} GourMerge — {{ t('app.slogan') }}
           </p>
           <div class="flex items-center gap-4">
             <UButton

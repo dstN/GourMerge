@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { RecipeDetail } from '~~/shared/types/recipe'
+import type { RecipeDetail, StepTranslations } from '~~/shared/types/recipe'
 import { marked } from 'marked'
 
 definePageMeta({ middleware: ['validate-recipe-route'] })
@@ -10,6 +10,19 @@ function renderStep(content: string): string {
   if (content.trimStart().startsWith('<')) return content
   // Legacy Markdown stored before the HTML switch — parse it
   return marked.parse(content, { async: false }) as string
+}
+
+function resolveStepContent(step: { content: string; contentTranslations: StepTranslations | null }): string {
+  const loc = locale.value as keyof StepTranslations
+  const translated = step.contentTranslations?.[loc]
+  const effective = translated && translated.trim() !== '' ? translated : step.content
+  return renderStep(effective)
+}
+
+function resolveTranslation(translations: StepTranslations | null | undefined, fallback: string): string {
+  const loc = locale.value as keyof StepTranslations
+  const translated = translations?.[loc]
+  return translated && translated.trim() !== '' ? translated : fallback
 }
 
 const { t, locale } = useI18n()
@@ -90,10 +103,10 @@ async function forkRecipe() {
 const appUrl = useRuntimeConfig().public.appUrl as string
 
 useSeoMeta({
-  title: () => recipe.value ? `${recipe.value.title} — GourMerge` : 'GourMerge',
-  description: () => recipe.value?.description || t('recipe.seoDescriptionFallback'),
-  ogTitle: () => recipe.value ? `${recipe.value.title} — GourMerge` : 'GourMerge',
-  ogDescription: () => recipe.value?.description || t('recipe.seoDescriptionFallback'),
+  title: () => recipe.value ? `${resolveTranslation(recipe.value.titleTranslations, recipe.value.title)} — GourMerge` : 'GourMerge',
+  description: () => recipe.value ? resolveTranslation(recipe.value.descriptionTranslations, recipe.value.description ?? '') || t('recipe.seoDescriptionFallback') : t('recipe.seoDescriptionFallback'),
+  ogTitle: () => recipe.value ? `${resolveTranslation(recipe.value.titleTranslations, recipe.value.title)} — GourMerge` : 'GourMerge',
+  ogDescription: () => recipe.value ? resolveTranslation(recipe.value.descriptionTranslations, recipe.value.description ?? '') || t('recipe.seoDescriptionFallback') : t('recipe.seoDescriptionFallback'),
   ogUrl: () => recipe.value ? `${appUrl}/${recipe.value.owner.username}/${recipe.value.slug}` : appUrl,
   ogType: 'website',
   ogSiteName: 'GourMerge',
@@ -173,9 +186,9 @@ useHead(() => {
             <span>/</span>
             <span class="font-semibold text-[var(--ui-text)]">{{ recipe.slug }}</span>
           </div>
-          <h1 class="text-3xl font-bold mb-2">{{ recipe.title }}</h1>
+          <h1 class="text-3xl font-bold mb-2">{{ resolveTranslation(recipe.titleTranslations, recipe.title) }}</h1>
           <p v-if="recipe.description" class="text-[var(--ui-text-muted)] text-lg">
-            {{ recipe.description }}
+            {{ resolveTranslation(recipe.descriptionTranslations, recipe.description) }}
           </p>
         </div>
 
@@ -348,7 +361,7 @@ useHead(() => {
             <div class="shrink-0 w-8 h-8 rounded-full bg-primary-500/10 text-primary-500 flex items-center justify-center font-bold text-sm">
               {{ step.sortOrder }}
             </div>
-            <div class="flex-1 prose prose-sm dark:prose-invert max-w-none pt-1" v-html="renderStep(step.content)" />
+            <div class="flex-1 prose prose-sm dark:prose-invert max-w-none pt-1" v-html="resolveStepContent(step)" />
           </div>
         </div>
       </UCard>

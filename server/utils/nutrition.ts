@@ -38,6 +38,7 @@ export interface CommitIngredientInput {
   ingredientId: number
   quantity:     string  // DECIMAL stored as string by mysql2
   unit:         CommitUnit
+  ingredientName?: string
 }
 
 /**
@@ -104,12 +105,14 @@ export function computeNutritionTotals(
   let missingCount = 0
   let coveredCount = 0
   const microsTotal: Record<string, number> = {}
+  const missingIngredientNames: string[] = []
 
   for (const ci of commitIngredients) {
     const n = nutritionByIngredientId.get(ci.ingredientId)
     if (!n || n.energyKcal100g === null) {
       missingCount++
       isApproximate = true
+      if (ci.ingredientName) missingIngredientNames.push(ci.ingredientName)
       continue
     }
 
@@ -163,6 +166,7 @@ export function computeNutritionTotals(
     missingCount,
     coveredCount,
     micros: Object.keys(micros).length > 0 ? micros : undefined,
+    missingIngredients: missingIngredientNames.length > 0 ? missingIngredientNames : undefined,
   }
 }
 

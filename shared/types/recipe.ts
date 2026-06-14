@@ -1,5 +1,7 @@
 import type { CommitDiff } from '~~/shared/types'
 
+export type StepTranslations = Partial<Record<'de' | 'en' | 'fr' | 'it', string>>
+
 export interface NutritionTotals {
   kcal: number
   protein: number
@@ -11,6 +13,7 @@ export interface NutritionTotals {
   missingCount: number
   coveredCount: number
   micros?: Record<string, number>
+  missingIngredients?: string[]
 }
 
 export interface RecipeDetail {
@@ -34,7 +37,9 @@ export interface RecipeDetail {
   branches: Array<{ id: number; recipeId: number; name: string; headCommitId: number | null; isDefault: boolean; createdAt: string }>
   defaultBranch: { id: number; recipeId: number; name: string; headCommitId: number | null; isDefault: boolean; createdAt: string } | undefined
   currentIngredients: Array<{ id: number; ingredientId: number; ingredientName: string; quantity: string; unit: string; notes: string | null; sortOrder: number }>
-  currentSteps: Array<{ id: number; commitId: number; sortOrder: number; content: string }>
+  currentSteps: Array<{ id: number; commitId: number; sortOrder: number; content: string; contentTranslations: StepTranslations | null }>
+  titleTranslations: StepTranslations | null
+  descriptionTranslations: StepTranslations | null
   isStarred: boolean
   nutritionTotal: NutritionTotals | null
   nutritionPerServing: NutritionTotals | null

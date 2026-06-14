@@ -139,6 +139,8 @@ export const recipes = mysqlTable('recipes', {
   difficulty: mysqlEnum('difficulty', ['easy', 'medium', 'hard']).notNull().default('medium'),
   /** Dietary label: null = unspecified */
   dietaryType: varchar('dietary_type', { length: 50 }),
+  titleTranslations: json('title_translations').default(null),
+  descriptionTranslations: json('description_translations').default(null),
   /** Denormalized counters for performance */
   starCount: int('star_count').notNull().default(0),
   forkCount: int('fork_count').notNull().default(0),
@@ -274,6 +276,7 @@ export const recipeCommitSteps = mysqlTable('recipe_commit_steps', {
    * May contain inline image references: ![desc](img::<uuid>)
    */
   content: text('content').notNull(),
+  contentTranslations: json('content_translations').default(null),
 }, (table) => [
   index('idx_commit_steps_commit').on(table.commitId),
   index('idx_commit_steps_order').on(table.commitId, table.sortOrder),

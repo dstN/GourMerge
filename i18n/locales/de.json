@@ -1,7 +1,6 @@
 {
   "app": {
-    "slogan": "Fork the recipe, merge the flavor.",
-    "sloganDe": "Wo bester Geschmack verschmilzt."
+    "slogan": "Wo bester Geschmack verschmilzt."
   },
   "nav": {
     "explore": "Entdecken",
@@ -134,6 +133,11 @@
     "noSteps": "Noch keine Schritte hinzugefügt.",
     "addStep": "Schritt hinzufügen",
     "stepPlaceholder": "Beschreibe diesen Zubereitungsschritt...",
+    "metaTranslationsHint": "Optional: Titel und Beschreibung in anderen Sprachen hinzufügen.",
+    "addTranslations": "Übersetzungen hinzufügen",
+    "hideTranslations": "Übersetzungen ausblenden",
+    "translationsHint": "Optional: Übersetze diesen Schritt für andere Sprachen.",
+    "translationPlaceholder": "Schritt auf {locale} übersetzen...",
     "viewRecipe": "Rezept ansehen",
     "commitChanges": "Version speichern",
     "commitMessage": "Versions-Notiz",
@@ -423,7 +427,8 @@
     "vitamins": "Vitamine",
     "minerals": "Mineralstoffe",
     "showMicros": "Mikronährstoffe",
-    "missingCount": "Für {n} Zutat(en) sind keine Nährwerte verfügbar."
+    "missingCount": "Für {n} Zutat(en) sind keine Nährwerte verfügbar.",
+    "missingIngredientsTitle": "Zutaten ohne Nährwerte"
   },
   "legal": {
     "impressum": "Impressum",

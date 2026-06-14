@@ -1,0 +1,1 @@
+ALTER TABLE `recipe_commit_steps` ADD `content_translations` json DEFAULT ('null');

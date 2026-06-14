@@ -17,7 +17,7 @@ export default defineEventHandler(async (event) => {
   const recipeId = Number(getRouterParam(event, 'id'))
   const branchId = Number(getRouterParam(event, 'branchId'))
   const { locale: rawLocale } = getQuery(event)
-  const locale = ['de', 'en'].includes(String(rawLocale)) ? String(rawLocale) : 'en'
+  const locale = ['de', 'en', 'fr', 'it'].includes(String(rawLocale)) ? String(rawLocale) : 'en'
 
   if (isNaN(recipeId) || isNaN(branchId)) {
     throw createError({ statusCode: 400, statusMessage: 'Invalid parameters' })

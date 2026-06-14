@@ -5,6 +5,13 @@ import { z } from 'zod'
 import { eq } from 'drizzle-orm'
 import { recipes } from '~~/server/database/schema'
 
+const localeTranslationsSchema = z.object({
+  de: z.string().optional(),
+  en: z.string().optional(),
+  fr: z.string().optional(),
+  it: z.string().optional(),
+}).optional().nullable()
+
 const updateRecipeSchema = z.object({
   title: z.string().min(2).max(300).optional(),
   description: z.string().max(5000).optional(),
@@ -14,6 +21,8 @@ const updateRecipeSchema = z.object({
   difficulty: z.enum(['easy', 'medium', 'hard']).optional(),
   visibility: z.enum(['public', 'private']).optional(),
   dietaryType: z.enum(['vegan', 'vegetarian', 'pescatarian', 'omnivore']).optional().nullable(),
+  titleTranslations: localeTranslationsSchema,
+  descriptionTranslations: localeTranslationsSchema,
 })
 
 export default defineEventHandler(async (event) => {

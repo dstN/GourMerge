@@ -1,7 +1,6 @@
 {
   "app": {
-    "slogan": "Fork the recipe, merge the flavor.",
-    "sloganDe": "Dove i migliori sapori si fondono."
+    "slogan": "Dove i migliori sapori si fondono."
   },
   "nav": {
     "explore": "Esplora",
@@ -134,6 +133,11 @@
     "noSteps": "Nessun passaggio aggiunto.",
     "addStep": "Aggiungi passaggio",
     "stepPlaceholder": "Descrivi questo passaggio di preparazione...",
+    "metaTranslationsHint": "Facoltativo: aggiungi il titolo e la descrizione in altre lingue.",
+    "addTranslations": "Aggiungi traduzioni",
+    "hideTranslations": "Nascondi traduzioni",
+    "translationsHint": "Facoltativo: traduci questo passaggio in altre lingue.",
+    "translationPlaceholder": "Traduci il passaggio in {locale}...",
     "viewRecipe": "Vedi ricetta",
     "commitChanges": "Salva versione",
     "commitMessage": "Nota di versione",
@@ -423,7 +427,8 @@
     "vitamins": "Vitamine",
     "minerals": "Minerali",
     "showMicros": "Micronutrienti",
-    "missingCount": "Nessun valore nutrizionale disponibile per {n} ingrediente/i."
+    "missingCount": "Nessun valore nutrizionale disponibile per {n} ingrediente/i.",
+    "missingIngredientsTitle": "Ingredienti senza dati nutrizionali"
   },
   "legal": {
     "impressum": "Note legali",

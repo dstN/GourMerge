@@ -25,6 +25,12 @@ const ingredientSchema = z.object({
 const stepSchema = z.object({
   sortOrder: z.number().int().min(1),
   content: z.string().min(1),
+  contentTranslations: z.object({
+    de: z.string().optional(),
+    en: z.string().optional(),
+    fr: z.string().optional(),
+    it: z.string().optional(),
+  }).optional().nullable(),
 })
 
 const commitSchema = z.object({
@@ -111,6 +117,7 @@ export default defineEventHandler(async (event) => {
         commitId: commit.id,
         sortOrder: step.sortOrder,
         content: step.content,
+        contentTranslations: step.contentTranslations ?? null,
       })),
     )
   }

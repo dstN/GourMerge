@@ -42,6 +42,9 @@ const metaVisibility = ref('public')
 const selectedDietaryType = ref('')
 const currentTags = ref<string[]>([])
 const tagInput = ref('')
+const metaTitleTranslations = ref<Record<'de' | 'en' | 'fr' | 'it', string>>({ de: '', en: '', fr: '', it: '' })
+const metaDescriptionTranslations = ref<Record<'de' | 'en' | 'fr' | 'it', string>>({ de: '', en: '', fr: '', it: '' })
+const metaTranslationsOpen = ref(false)
 
 const { data: availableTags } = useFetch<Array<{ id: number; name: string }>>('/api/tags')
 
@@ -76,6 +79,8 @@ watch(recipe, (r) => {
   metaVisibility.value = r.visibility ?? 'public'
   selectedDietaryType.value = r.dietaryType ?? ''
   currentTags.value = r.tags ?? []
+  metaTitleTranslations.value = (r.titleTranslations as Record<'de' | 'en' | 'fr' | 'it', string>) ?? { de: '', en: '', fr: '', it: '' }
+  metaDescriptionTranslations.value = (r.descriptionTranslations as Record<'de' | 'en' | 'fr' | 'it', string>) ?? { de: '', en: '', fr: '', it: '' }
 }, { immediate: true })
 
 function addTag(raw: string) {
@@ -111,7 +116,13 @@ const currentBranch = computed(() =>
 
 // ── Load branch snapshot when branch changes ──────────────────
 const ingredients = ref<IngredientRowData[]>([])
-const steps = ref<{ content: string }[]>([])
+
+interface EditStep {
+  content: string
+  contentTranslations: Record<'de' | 'en' | 'fr' | 'it', string>
+  translationsOpen: boolean
+}
+const steps = ref<EditStep[]>([])
 const snapshotLoading = ref(false)
 
 async function loadBranchSnapshot(branchId: number) {
@@ -119,7 +130,7 @@ async function loadBranchSnapshot(branchId: number) {
   try {
     const snapshot = await $fetch<{
       ingredients: Array<{ ingredientId: number | null; ingredientName: string; quantity: string; unit: CanonicalUnit; notes: string | null; sortOrder: number }>
-      steps: Array<{ content: string }>
+      steps: Array<{ content: string; contentTranslations: Record<string, string> | null }>
     }>(`/api/recipes/${recipe.value!.id}/branches/${branchId}/snapshot`, {
       query: { locale: locale.value },
     })
@@ -132,7 +143,11 @@ async function loadBranchSnapshot(branchId: number) {
       notes: ing.notes ?? '',
       sortOrder: ing.sortOrder,
     }))
-    steps.value = snapshot.steps.map((s) => ({ content: s.content }))
+    steps.value = snapshot.steps.map((s) => ({
+      content: s.content,
+      contentTranslations: (s.contentTranslations as Record<'de' | 'en' | 'fr' | 'it', string>) ?? { de: '', en: '', fr: '', it: '' },
+      translationsOpen: false,
+    }))
   } catch {
     ingredients.value = []
     steps.value = []
@@ -149,14 +164,20 @@ watch(selectedBranchId, (branchId) => {
 
 // ── Dirty state tracking ──────────────────────────────────────
 const initialSnapshot = ref('')
+
+// Exclude translationsOpen (local UI state) from dirty tracking
+const stepsForSnapshot = computed(() =>
+  steps.value.map(({ content, contentTranslations }) => ({ content, contentTranslations }))
+)
+
 const isDirty = computed(() => {
-  const current = JSON.stringify({ ingredients: ingredients.value, steps: steps.value })
+  const current = JSON.stringify({ ingredients: ingredients.value, steps: stepsForSnapshot.value })
   return current !== initialSnapshot.value
 })
 
-watch([ingredients, steps], () => {
+watch([ingredients, stepsForSnapshot], () => {
   if (initialSnapshot.value === '') {
-    initialSnapshot.value = JSON.stringify({ ingredients: ingredients.value, steps: steps.value })
+    initialSnapshot.value = JSON.stringify({ ingredients: ingredients.value, steps: stepsForSnapshot.value })
   }
 }, { deep: true, once: true })
 
@@ -194,7 +215,7 @@ function updateIngredient(index: number, value: IngredientRowData) {
 
 // ── Step management ───────────────────────────────────────────
 function addStep() {
-  steps.value.push({ content: '' })
+  steps.value.push({ content: '', contentTranslations: { de: '', en: '', fr: '', it: '' }, translationsOpen: false })
 }
 
 function removeStep(index: number) {
@@ -204,6 +225,11 @@ function removeStep(index: number) {
 function updateStepContent(index: number, content: string) {
   const step = steps.value[index]
   if (step) step.content = content
+}
+
+function updateStepTranslation(i: number, loc: 'de' | 'en' | 'fr' | 'it', val: string) {
+  const step = steps.value[i]
+  if (step) step.contentTranslations[loc] = val
 }
 
 // ── Commit ────────────────────────────────────────────────────
@@ -246,6 +272,10 @@ async function commitChanges() {
         steps: steps.value.map((s, i) => ({
           sortOrder: i + 1,
           content: s.content,
+          contentTranslations: (() => {
+            const translations = Object.fromEntries(Object.entries(s.contentTranslations).filter(([, v]) => v.trim() !== ''))
+            return Object.keys(translations).length > 0 ? translations : null
+          })(),
         })),
       },
     })
@@ -263,6 +293,14 @@ async function commitChanges() {
           difficulty: metaDifficulty.value as 'easy' | 'medium' | 'hard' || undefined,
           visibility: metaVisibility.value as 'public' | 'private' || undefined,
           dietaryType: selectedDietaryType.value || null,
+          titleTranslations: (() => {
+            const tr = Object.fromEntries(Object.entries(metaTitleTranslations.value).filter(([, v]) => v.trim() !== ''))
+            return Object.keys(tr).length > 0 ? tr : null
+          })(),
+          descriptionTranslations: (() => {
+            const tr = Object.fromEntries(Object.entries(metaDescriptionTranslations.value).filter(([, v]) => v.trim() !== ''))
+            return Object.keys(tr).length > 0 ? tr : null
+          })(),
         },
       }),
       $fetch(`/api/recipes/${recipe.value.id}/tags`, {
@@ -278,7 +316,7 @@ async function commitChanges() {
     })
     commitMessage.value = ''
     // Reset dirty tracking after successful commit
-    initialSnapshot.value = JSON.stringify({ ingredients: ingredients.value, steps: steps.value })
+    initialSnapshot.value = JSON.stringify({ ingredients: ingredients.value, steps: stepsForSnapshot.value })
   } catch (err: unknown) {
     toast.add({
       title: (err as { data?: { statusMessage?: string } })?.data?.statusMessage || t('recipe.commitError'),
@@ -354,6 +392,31 @@ useSeoMeta({
           <UFormField :label="t('recipe.description')">
             <UTextarea v-model="metaDescription" :placeholder="t('recipe.descriptionPlaceholder')" :rows="2" />
           </UFormField>
+
+          <!-- Title & description translations -->
+          <div>
+            <UButton
+              size="xs"
+              variant="ghost"
+              color="neutral"
+              :icon="metaTranslationsOpen ? 'i-lucide-chevron-up' : 'i-lucide-languages'"
+              :label="metaTranslationsOpen ? t('recipe.hideTranslations') : t('recipe.addTranslations')"
+              @click="metaTranslationsOpen = !metaTranslationsOpen"
+            />
+          </div>
+
+          <div v-if="metaTranslationsOpen" class="ml-4 border-l-2 border-primary-500/20 pl-3 space-y-4">
+            <p class="text-xs text-neutral-400">{{ t('recipe.metaTranslationsHint') }}</p>
+            <div v-for="loc in (['de', 'en', 'fr', 'it'] as const)" :key="loc" class="space-y-2">
+              <p class="text-xs font-semibold text-neutral-500 uppercase">{{ loc }}</p>
+              <UFormField :label="t('recipe.title')">
+                <UInput v-model="metaTitleTranslations[loc]" :placeholder="t('recipe.titlePlaceholder')" />
+              </UFormField>
+              <UFormField :label="t('recipe.description')">
+                <UTextarea v-model="metaDescriptionTranslations[loc]" :placeholder="t('recipe.descriptionPlaceholder')" :rows="2" />
+              </UFormField>
+            </div>
+          </div>
 
           <!-- Times, servings, difficulty, visibility -->
           <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
@@ -503,14 +566,39 @@ useSeoMeta({
 
         <div v-else class="space-y-3">
           <ClientOnly>
-            <StepEditor
-              v-for="(step, i) in steps"
-              :key="i"
-              :model-value="step.content"
-              :index="i"
-              @update:model-value="updateStepContent(i, $event)"
-              @remove="removeStep(i)"
-            />
+            <div v-for="(step, i) in steps" :key="i" class="space-y-1">
+              <StepEditor
+                :model-value="step.content"
+                :index="i"
+                @update:model-value="updateStepContent(i, $event)"
+                @remove="removeStep(i)"
+              />
+
+              <div class="pl-1">
+                <UButton
+                  size="xs"
+                  variant="ghost"
+                  color="neutral"
+                  :icon="step.translationsOpen ? 'i-lucide-chevron-up' : 'i-lucide-languages'"
+                  :label="step.translationsOpen ? t('recipe.hideTranslations') : t('recipe.addTranslations')"
+                  @click="step.translationsOpen = !step.translationsOpen"
+                />
+              </div>
+
+              <div v-if="step.translationsOpen" class="ml-4 space-y-2 border-l-2 border-primary-500/20 pl-3">
+                <p class="text-xs text-neutral-400">{{ t('recipe.translationsHint') }}</p>
+                <div v-for="loc in (['de', 'en', 'fr', 'it'] as const)" :key="loc">
+                  <p class="text-xs font-medium text-neutral-500 mb-1 uppercase">{{ loc }}</p>
+                  <StepEditor
+                    :model-value="step.contentTranslations[loc]"
+                    :index="i"
+                    :placeholder="t('recipe.translationPlaceholder', { locale: loc })"
+                    @update:model-value="updateStepTranslation(i, loc, $event)"
+                    @remove="updateStepTranslation(i, loc, '')"
+                  />
+                </div>
+              </div>
+            </div>
             <template #fallback>
               <div
                 v-for="(step, i) in steps"

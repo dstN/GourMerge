@@ -137,10 +137,27 @@ const hasMicros = computed(() => vitamins.value.length > 0 || minerals.value.len
 
       <!-- Micros toggle + coverage -->
       <div class="ml-auto flex items-center gap-3">
-        <p v-if="total.missingCount > 0" class="text-xs text-[var(--ui-text-dimmed)] hidden sm:flex items-center gap-1">
-          <UIcon name="i-lucide-info" class="size-3 shrink-0" />
-          {{ t('nutrition.missingCount', { n: total.missingCount }) }}
-        </p>
+        <UPopover v-if="total.missingCount > 0" mode="hover" class="hidden sm:flex">
+          <button class="flex items-center gap-1 text-xs text-[var(--ui-text-dimmed)] hover:text-[var(--ui-text-muted)] transition-colors">
+            <UIcon name="i-lucide-info" class="size-3 shrink-0" />
+            {{ t('nutrition.missingCount', { n: total.missingCount }) }}
+          </button>
+          <template #content>
+            <div class="p-3 max-w-xs">
+              <p class="text-xs font-semibold mb-2">{{ t('nutrition.missingIngredientsTitle') }}</p>
+              <ul class="space-y-0.5">
+                <li
+                  v-for="name in total.missingIngredients"
+                  :key="name"
+                  class="text-xs text-[var(--ui-text-muted)] flex items-center gap-1.5"
+                >
+                  <span class="inline-block size-1.5 rounded-full bg-[var(--ui-text-dimmed)] shrink-0" />
+                  {{ name }}
+                </li>
+              </ul>
+            </div>
+          </template>
+        </UPopover>
         <button
           v-if="hasMicros"
           class="flex items-center gap-1 text-xs text-primary-500 hover:text-primary-400 transition-colors shrink-0"
@@ -303,13 +320,27 @@ const hasMicros = computed(() => vitamins.value.length > 0 || minerals.value.len
       </div>
     </template>
 
-    <!-- Coverage disclaimer -->
-    <p
-      v-if="total.missingCount > 0"
-      class="mt-4 text-xs text-[var(--ui-text-dimmed)] flex items-center gap-1"
-    >
-      <UIcon name="i-lucide-info" class="size-3.5 shrink-0" />
-      {{ t('nutrition.missingCount', { n: total.missingCount }) }}
-    </p>
+    <!-- Coverage disclaimer with popover -->
+    <UPopover v-if="total.missingCount > 0" mode="hover" class="mt-4">
+      <button class="flex items-center gap-1 text-xs text-[var(--ui-text-dimmed)] hover:text-[var(--ui-text-muted)] transition-colors">
+        <UIcon name="i-lucide-info" class="size-3.5 shrink-0" />
+        {{ t('nutrition.missingCount', { n: total.missingCount }) }}
+      </button>
+      <template #content>
+        <div class="p-3 max-w-xs">
+          <p class="text-xs font-semibold mb-2">{{ t('nutrition.missingIngredientsTitle') }}</p>
+          <ul class="space-y-0.5">
+            <li
+              v-for="name in total.missingIngredients"
+              :key="name"
+              class="text-xs text-[var(--ui-text-muted)] flex items-center gap-1.5"
+            >
+              <span class="inline-block size-1.5 rounded-full bg-[var(--ui-text-dimmed)] shrink-0" />
+              {{ name }}
+            </li>
+          </ul>
+        </div>
+      </template>
+    </UPopover>
   </UCard>
 </template>

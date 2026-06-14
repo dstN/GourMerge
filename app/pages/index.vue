@@ -60,11 +60,8 @@ const features = computed(() => [
           Gour<span class="text-primary-500">Merge</span>
         </h1>
 
-        <p class="text-2xl sm:text-3xl text-[var(--ui-text-muted)] font-light mb-3">
+        <p class="text-2xl sm:text-3xl text-[var(--ui-text-muted)] font-light mb-10">
           {{ t('app.slogan') }}
-        </p>
-        <p class="text-lg text-[var(--ui-text-dimmed)] italic mb-10">
-          {{ t('app.sloganDe') }}
         </p>
 
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
