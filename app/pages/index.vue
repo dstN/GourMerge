@@ -128,7 +128,8 @@ const features = computed(() => [
         </div>
 
         <div class="space-y-8">
-          <div v-for="(step, idx) in [
+          <div
+v-for="(step, idx) in [
             { icon: 'i-lucide-plus-circle', title: t('landing.step1Title'), desc: t('landing.step1Desc') },
             { icon: 'i-lucide-pencil', title: t('landing.step2Title'), desc: t('landing.step2Desc') },
             { icon: 'i-lucide-save', title: t('landing.step3Title'), desc: t('landing.step3Desc') },

@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import { eq, and, isNull, gt } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 import { emailVerificationTokens, users } from '~~/server/database/schema'
 
 export default defineEventHandler(async (event) => {

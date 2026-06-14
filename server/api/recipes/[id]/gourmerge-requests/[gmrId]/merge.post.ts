@@ -12,7 +12,7 @@
  *   6. Advance target branch head to merge commit
  *   7. Set GourMerge Request status = 'merged'
  */
-import { eq, and, sql } from 'drizzle-orm'
+import { eq, and } from 'drizzle-orm'
 import {
   recipes,
   recipeBranches,

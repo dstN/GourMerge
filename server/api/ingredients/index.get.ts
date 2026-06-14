@@ -9,7 +9,7 @@
  * always included for dedup/ID purposes.
  */
 import { z } from 'zod'
-import { like, or, eq } from 'drizzle-orm'
+import { like } from 'drizzle-orm'
 import { ingredients } from '~~/server/database/schema'
 
 const querySchema = z.object({

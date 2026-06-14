@@ -9,7 +9,6 @@
  */
 import { eq } from 'drizzle-orm'
 import {
-  recipeCommits,
   recipeCommitIngredients,
   recipeCommitSteps,
   ingredients,

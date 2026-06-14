@@ -4,8 +4,8 @@
  * For authenticated users: returns their own recipes.
  * With ?public=true: returns public recipes (for explore page).
  */
-import { eq, desc, and } from 'drizzle-orm'
-import { recipes, users, recipeBranches } from '~~/server/database/schema'
+import { eq, desc } from 'drizzle-orm'
+import { recipes, users } from '~~/server/database/schema'
 
 export default defineEventHandler(async (event) => {
   const query = getQuery(event)

@@ -5,7 +5,7 @@ definePageMeta({ middleware: ['validate-recipe-route'] })
 
 const { t } = useI18n()
 const route = useRoute()
-const { user, loggedIn } = useUserSession()
+const { loggedIn } = useUserSession()
 
 const username = computed(() => route.params.username as string)
 const slug = computed(() => route.params.slug as string)
@@ -20,7 +20,7 @@ const statusFilter = ref('open')
 
 const recipeId = computed(() => recipe.value?.id ?? 0)
 
-const { data: requests, pending, refresh } = useFetch<GourmergeRequestListItem[]>(
+const { data: requests, pending } = useFetch<GourmergeRequestListItem[]>(
   () => `/api/recipes/${recipeId.value}/gourmerge-requests`,
   {
     headers: useRequestHeaders(['cookie']),

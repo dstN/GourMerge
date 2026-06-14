@@ -4,7 +4,7 @@
  */
 
 const { t, locale, setLocale } = useI18n()
-const { loggedIn, user } = useUserSession()
+const { loggedIn } = useUserSession()
 
 const localeSwitchItems = [
   { label: 'Deutsch', value: 'de' },

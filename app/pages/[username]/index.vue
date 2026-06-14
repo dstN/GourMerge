@@ -5,7 +5,6 @@ definePageMeta({ middleware: ['validate-recipe-route'] })
 
 const { t } = useI18n()
 const route = useRoute()
-const { user: currentUser } = useUserSession()
 
 const username = computed(() => route.params.username as string)
 
@@ -35,7 +34,7 @@ useSeoMeta({
       <!-- Profile header -->
       <div class="flex items-start gap-6 mb-8">
         <div class="w-20 h-20 rounded-full bg-primary-500/10 flex items-center justify-center shrink-0 overflow-hidden">
-          <img v-if="profile.user.avatarUrl" :src="profile.user.avatarUrl" :alt="profile.user.username" class="w-full h-full object-cover" />
+          <img v-if="profile.user.avatarUrl" :src="profile.user.avatarUrl" :alt="profile.user.username" class="w-full h-full object-cover" >
           <UIcon v-else name="i-lucide-user-circle" class="size-12 text-primary-500" />
         </div>
         <div class="flex-1">

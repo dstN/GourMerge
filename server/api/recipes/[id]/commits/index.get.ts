@@ -5,7 +5,7 @@
  * - branchId (required): which branch to list commits for
  */
 import { eq, desc } from 'drizzle-orm'
-import { recipeCommits, users, recipeBranches } from '~~/server/database/schema'
+import { recipeCommits, users } from '~~/server/database/schema'
 
 export default defineEventHandler(async (event) => {
   const recipeId = Number(getRouterParam(event, 'id'))

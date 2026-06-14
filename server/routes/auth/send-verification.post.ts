@@ -1,5 +1,5 @@
 import { randomBytes, createHash } from 'node:crypto'
-import { eq, and, isNull, gt } from 'drizzle-orm'
+import { eq, and, isNull } from 'drizzle-orm'
 import { emailVerificationTokens, users } from '~~/server/database/schema'
 import { useRateLimit, getRateLimitKey } from '~~/server/utils/rateLimit'
 import { sendMail } from '~~/server/utils/mailer'

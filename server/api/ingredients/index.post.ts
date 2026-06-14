@@ -9,7 +9,7 @@
  * that doesn't exist in the master table yet.
  */
 import { z } from 'zod'
-import { eq, sql } from 'drizzle-orm'
+import { sql } from 'drizzle-orm'
 import { ingredients } from '~~/server/database/schema'
 
 const createIngredientSchema = z.object({

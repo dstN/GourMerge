@@ -5,7 +5,6 @@ definePageMeta({ middleware: ['validate-recipe-route'], auth: true })
 
 const { t } = useI18n()
 const route = useRoute()
-const { user } = useUserSession()
 const toast = useAppToast()
 
 const username = computed(() => route.params.username as string)
@@ -25,12 +24,6 @@ const form = reactive({
   sourceBranchId: null as number | null,
   targetBranchId: null as number | null,
   sourceRecipeId: null as number | null,
-})
-
-// Fetch the current user's forked version (if any)
-const { data: myRecipes } = useFetch('/api/recipes', {
-  headers: useRequestHeaders(['cookie']),
-  query: { owned: true },
 })
 
 const targetBranches = computed(() =>

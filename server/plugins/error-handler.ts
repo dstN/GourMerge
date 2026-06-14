@@ -9,7 +9,7 @@ export default defineNitroPlugin((nitro) => {
   })
 
   // Log all requests at info level
-  nitro.hooks.hook('afterResponse', (event, { body }) => {
+  nitro.hooks.hook('afterResponse', (event, { body: _body }) => {
     const statusCode = event.node.res.statusCode ?? 200
     if (statusCode < 400) {
       logger.info('request', {

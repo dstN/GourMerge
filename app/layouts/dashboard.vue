@@ -3,13 +3,7 @@
  * Dashboard Layout — Authenticated layout with sidebar and user header
  */
 const { t } = useI18n()
-const { loggedIn, user, clear } = useUserSession()
-
-async function handleLogout() {
-  await $fetch('/auth/logout', { method: 'POST' })
-  await clear()
-  navigateTo('/')
-}
+const { loggedIn } = useUserSession()
 </script>
 
 <template>

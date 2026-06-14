@@ -1,8 +1,8 @@
 /**
  * GET /api/recipes/:id — Get a single recipe with branches
  */
-import { eq, and } from 'drizzle-orm'
-import { recipes, users, recipeBranches, recipeCommits, recipeCommitIngredients, recipeCommitSteps, ingredients } from '~~/server/database/schema'
+import { eq } from 'drizzle-orm'
+import { recipes, users, recipeBranches, recipeCommitIngredients, recipeCommitSteps, ingredients } from '~~/server/database/schema'
 
 export default defineEventHandler(async (event) => {
   const id = Number(getRouterParam(event, 'id'))

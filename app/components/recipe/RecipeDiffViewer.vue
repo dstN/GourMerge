@@ -12,7 +12,7 @@
  * <RecipeDiffViewer :diff="commitDiffData" />
  */
 
-import type { CommitDiff, IngredientDiffEntry, StepDiffEntry, TextDiffSegment } from '~~/shared/types'
+import type { CommitDiff } from '~~/shared/types'
 
 const { t } = useI18n()
 

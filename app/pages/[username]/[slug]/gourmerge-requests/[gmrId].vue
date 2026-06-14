@@ -5,7 +5,7 @@ definePageMeta({ middleware: ['validate-recipe-route'] })
 
 const { t } = useI18n()
 const route = useRoute()
-const { user, loggedIn } = useUserSession()
+const { loggedIn } = useUserSession()
 const toast = useAppToast()
 
 const username = computed(() => route.params.username as string)

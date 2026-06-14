@@ -51,7 +51,7 @@ watch([tour.active, tour.currentIndex], () => {
 }, { immediate: true })
 
 // Remove highlight when tour ends or step changes
-watch(tour.currentIndex, (_, oldIdx) => {
+watch(tour.currentIndex, (_, _oldIdx) => {
   if (typeof document === 'undefined') return
   const steps = document.querySelectorAll('[data-tour]')
   steps.forEach((el) => el.classList.remove('tour-highlight'))

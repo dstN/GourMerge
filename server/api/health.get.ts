@@ -8,7 +8,7 @@ import { sql } from 'drizzle-orm'
 
 export default defineEventHandler(async () => {
   // Basic DB connectivity check
-  let dbStatus = 'unknown'
+  let dbStatus: string
   try {
     const db = useDrizzle()
     if (!db) {

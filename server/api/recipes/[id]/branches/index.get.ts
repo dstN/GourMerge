@@ -2,7 +2,7 @@
  * GET /api/recipes/:id/branches — List all branches for a recipe
  */
 import { eq } from 'drizzle-orm'
-import { recipeBranches, recipeCommits, users } from '~~/server/database/schema'
+import { recipeBranches } from '~~/server/database/schema'
 
 export default defineEventHandler(async (event) => {
   const recipeId = Number(getRouterParam(event, 'id'))
