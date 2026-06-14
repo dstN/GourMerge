@@ -292,5 +292,84 @@
     "deleted": "Branch deleted",
     "viewHistory": "History",
     "empty": "No branches found."
+  },
+  "onboarding": {
+    "skipAll": "Skip",
+    "gotIt": "Got it!",
+    "conceptIntro": {
+      "title": "Welcome to GourMerge",
+      "subtitle": "GourMerge is like GitHub for recipes. Here is a quick overview of what you can do:",
+      "recipe": {
+        "alias": "Recipe",
+        "canonical": "Repository",
+        "desc": "A recipe is a full repository with ingredients, step-by-step instructions, and a complete version history."
+      },
+      "fork": {
+        "alias": "Remix / Own Version",
+        "canonical": "Fork",
+        "desc": "Make your own copy of someone else's recipe and adapt it freely — original is unchanged."
+      },
+      "branch": {
+        "alias": "Variant",
+        "canonical": "Branch",
+        "desc": "Try a variation of your recipe (e.g., vegan version) without touching the main version."
+      },
+      "commit": {
+        "alias": "Save Version",
+        "canonical": "Commit",
+        "desc": "Save a snapshot of your recipe at any point. You can always go back to any earlier version."
+      },
+      "merge": {
+        "alias": "Combine",
+        "canonical": "Merge",
+        "desc": "Merge changes from one branch into another — GourMerge handles conflicts for you."
+      },
+      "gourmergeRequest": {
+        "alias": "Propose Changes",
+        "canonical": "GourMerge Request",
+        "desc": "Propose your changes to the original recipe's author — they can review, comment, and accept."
+      }
+    }
+  },
+  "tour": {
+    "skip": "Skip tour",
+    "next": "Next",
+    "prev": "Back",
+    "finish": "Done",
+    "step": {
+      "explore": {
+        "title": "Discover Recipes",
+        "desc": "Browse public recipes from the community — filter by difficulty, tags, or sort by popularity."
+      },
+      "newRecipe": {
+        "title": "Create a Recipe",
+        "desc": "Start a new recipe repository. Add ingredients, write step-by-step instructions, and commit your first version."
+      },
+      "fork": {
+        "title": "Remix It",
+        "desc": "Fork any public recipe to make your own copy. Experiment freely — the original stays untouched."
+      },
+      "star": {
+        "title": "Star Recipes",
+        "desc": "Star recipes you love. Find them again on your profile page."
+      },
+      "history": {
+        "title": "Version History",
+        "desc": "Every commit you make is saved here. Click any version to see the full recipe at that point in time."
+      },
+      "gourmergeRequest": {
+        "title": "Propose Changes",
+        "desc": "Open a GourMerge Request to propose your fork's changes back to the original recipe author."
+      }
+    }
+  },
+  "help": {
+    "menu": "Help",
+    "startTour": "Start tour",
+    "resetOnboarding": "Restart onboarding",
+    "glossary": "Glossary"
+  },
+  "a11y": {
+    "skipToContent": "Skip to main content"
   }
 }

@@ -131,7 +131,11 @@ export default defineNuxtConfig({
       org: process.env.SENTRY_ORG || '',
       project: process.env.SENTRY_PROJECT || 'gourmerge',
       authToken: process.env.SENTRY_AUTH_TOKEN || '',
+      // Only upload source maps in CI where the auth token is set.
+      telemetry: false,
     },
+    // Disable source map upload locally (no auth token in dev).
+    autoInjectServerSentry: process.env.SENTRY_AUTH_TOKEN ? 'top-level-import' : false,
   },
 
   // ── Head / Fonts ───────────────────────────────────────────

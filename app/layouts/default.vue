@@ -14,6 +14,9 @@ const localeSwitchItems = [
 
 <template>
   <div class="min-h-screen bg-[var(--ui-bg)] text-[var(--ui-text)]">
+    <!-- Skip-to-content for keyboard/screen reader users -->
+    <a href="#main-content" class="skip-link">{{ t('a11y.skipToContent') }}</a>
+
     <!-- ── Header ──────────────────────────────────────────── -->
     <header class="sticky top-0 z-50 backdrop-blur-xl bg-[var(--ui-bg)]/80 border-b border-[var(--ui-border)]">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -42,6 +45,7 @@ const localeSwitchItems = [
               variant="ghost"
               icon="i-lucide-compass"
               to="/"
+              data-tour="nav-explore"
             />
             <UButton
               :label="t('nav.newRecipe')"
@@ -49,6 +53,7 @@ const localeSwitchItems = [
               icon="i-lucide-plus"
               color="primary"
               to="/recipes/new"
+              data-tour="new-recipe-btn"
             />
           </nav>
 
@@ -63,6 +68,7 @@ const localeSwitchItems = [
               @update:model-value="setLocale($event as string)"
             />
             <UColorModeButton />
+            <OnboardingHelpMenu />
 
             <!-- Auth buttons for logged-out users -->
             <template v-if="!loggedIn">
@@ -85,9 +91,15 @@ const localeSwitchItems = [
     </header>
 
     <!-- ── Main Content ────────────────────────────────────── -->
-    <main>
+    <main id="main-content" tabindex="-1">
       <slot />
     </main>
+
+    <!-- ── Onboarding overlays (client-only, non-blocking) ── -->
+    <ClientOnly>
+      <OnboardingConceptIntro />
+      <OnboardingTourOverlay />
+    </ClientOnly>
 
     <!-- ── Footer ──────────────────────────────────────────── -->
     <footer class="border-t border-[var(--ui-border)] mt-auto">

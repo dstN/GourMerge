@@ -100,3 +100,43 @@ html {
   border-radius: 0.2em;
   text-decoration: line-through;
 }
+
+/* ── Accessibility: visible focus ring for keyboard nav ───── */
+/* Nuxt UI already provides focus rings; this ensures non-UI elements */
+/* also have a clear focus indicator. */
+:focus-visible {
+  outline: 2px solid var(--color-primary-500, #f97316);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ── Skip-to-content link (screen readers + keyboard) ──────── */
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 0;
+  z-index: 9999;
+  padding: 0.5rem 1rem;
+  background: var(--color-primary-500);
+  color: white;
+  border-radius: 0 0 4px 4px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: top 0.1s;
+}
+.skip-link:focus {
+  top: 0;
+}
+
+/* ── Responsive: collapse nav on small screens ─────────────── */
+@media (max-width: 640px) {
+  .prose { font-size: 0.9375rem; }
+}
+
+/* ── Color mode transition (prevents flash) ────────────────── */
+html.dark, html.light {
+  color-scheme: dark;
+}
+html.light {
+  color-scheme: light;
+}

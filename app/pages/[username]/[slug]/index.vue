@@ -194,6 +194,7 @@ useHead(() => {
             color="neutral"
             size="sm"
             :to="`${recipeUrl}/gourmerge-requests`"
+            data-tour="gourmerge-requests-link"
           />
           <UButton
             :label="t('branches.title')"
@@ -210,6 +211,7 @@ useHead(() => {
             color="neutral"
             size="sm"
             :to="`${recipeUrl}/history`"
+            data-tour="history-link"
           />
           <UButton
             v-if="isOwner"

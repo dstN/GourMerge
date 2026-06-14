@@ -292,5 +292,84 @@
     "deleted": "Branch gelöscht",
     "viewHistory": "Verlauf",
     "empty": "Keine Branches vorhanden."
+  },
+  "onboarding": {
+    "skipAll": "Überspringen",
+    "gotIt": "Verstanden!",
+    "conceptIntro": {
+      "title": "Willkommen bei GourMerge",
+      "subtitle": "GourMerge ist wie GitHub für Rezepte. Hier ein kurzer Überblick:",
+      "recipe": {
+        "alias": "Rezept",
+        "canonical": "Repository",
+        "desc": "Ein Rezept ist ein vollständiges Repository mit Zutaten, Schritt-für-Schritt-Anleitung und vollständigem Versionsverlauf."
+      },
+      "fork": {
+        "alias": "Eigene Version / Remix",
+        "canonical": "Fork",
+        "desc": "Erstelle eine eigene Kopie eines fremden Rezepts und passe sie frei an — das Original bleibt unverändert."
+      },
+      "branch": {
+        "alias": "Variante",
+        "canonical": "Branch",
+        "desc": "Probiere eine Variation deines Rezepts (z.B. vegane Version) aus, ohne die Hauptversion zu berühren."
+      },
+      "commit": {
+        "alias": "Version speichern",
+        "canonical": "Commit",
+        "desc": "Speichere einen Schnappschuss deines Rezepts. Du kannst jederzeit zu einer früheren Version zurückkehren."
+      },
+      "merge": {
+        "alias": "Zusammenführen",
+        "canonical": "Merge",
+        "desc": "Führe Änderungen aus einer Variante in eine andere zusammen — GourMerge behandelt Konflikte automatisch."
+      },
+      "gourmergeRequest": {
+        "alias": "Änderungen vorschlagen",
+        "canonical": "GourMerge Request",
+        "desc": "Schlage deine Änderungen dem Autor des Originalrezepts vor — er kann sie prüfen, kommentieren und annehmen."
+      }
+    }
+  },
+  "tour": {
+    "skip": "Tour überspringen",
+    "next": "Weiter",
+    "prev": "Zurück",
+    "finish": "Fertig",
+    "step": {
+      "explore": {
+        "title": "Rezepte entdecken",
+        "desc": "Stöbere in öffentlichen Rezepten der Community — filtere nach Schwierigkeit, Tags oder sortiere nach Beliebtheit."
+      },
+      "newRecipe": {
+        "title": "Rezept erstellen",
+        "desc": "Starte ein neues Rezept-Repository. Füge Zutaten hinzu, schreibe Schritt-für-Schritt-Anweisungen und speichere deine erste Version."
+      },
+      "fork": {
+        "title": "Remix starten",
+        "desc": "Forke ein öffentliches Rezept, um deine eigene Kopie zu erstellen. Das Original bleibt unberührt."
+      },
+      "star": {
+        "title": "Rezepte markieren",
+        "desc": "Markiere Rezepte, die du liebst. Du findest sie auf deiner Profilseite wieder."
+      },
+      "history": {
+        "title": "Versionsverlauf",
+        "desc": "Jeder Commit wird hier gespeichert. Klicke auf eine Version, um das Rezept zu diesem Zeitpunkt zu sehen."
+      },
+      "gourmergeRequest": {
+        "title": "Änderungen vorschlagen",
+        "desc": "Öffne einen GourMerge Request, um die Änderungen deines Forks dem Original-Autor vorzuschlagen."
+      }
+    }
+  },
+  "help": {
+    "menu": "Hilfe",
+    "startTour": "Tour starten",
+    "resetOnboarding": "Onboarding neu starten",
+    "glossary": "Glossar"
+  },
+  "a11y": {
+    "skipToContent": "Zum Hauptinhalt springen"
   }
 }
