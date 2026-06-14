@@ -8,6 +8,7 @@ const props = defineProps<{
   recipe: {
     id: number
     title: string
+    slug: string
     description?: string | null
     difficulty: string
     starCount: number
@@ -42,7 +43,7 @@ const totalTime = computed(() => {
 </script>
 
 <template>
-  <NuxtLink :to="`/recipes/${recipe.id}`" class="block group">
+  <NuxtLink :to="recipe.owner ? `/${recipe.owner.username}/${recipe.slug}` : `/recipes/${recipe.id}`" class="block group">
     <UCard class="h-full hover:border-primary-500/50 transition-all hover:shadow-lg hover:shadow-primary-500/5">
       <div class="flex flex-col h-full">
         <!-- Header -->

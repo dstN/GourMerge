@@ -58,7 +58,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       method: 'POST',
       body: event.data,
     })
-    navigateTo(`/recipes/${result.id}/edit`)
+    navigateTo(`/${result.owner.username}/${result.slug}/edit`)
   }
   catch (err: any) {
     error.value = err.data?.statusMessage || t('recipe.createError')
