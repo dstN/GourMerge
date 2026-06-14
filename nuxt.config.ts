@@ -11,6 +11,7 @@ export default defineNuxtConfig({
     '@nuxtjs/i18n',
     '@vite-pwa/nuxt',
     'nuxt-auth-utils',
+    '@nuxt/eslint',
   ],
 
   css: ['~/assets/css/main.css'],
