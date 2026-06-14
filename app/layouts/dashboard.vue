@@ -17,7 +17,7 @@ const localeSwitchItems = [
   <div class="min-h-screen bg-[var(--ui-bg)] text-[var(--ui-text)]">
     <!-- ── Header ──────────────────────────────────────────── -->
     <header class="sticky top-0 z-50 backdrop-blur-xl bg-[var(--ui-bg)]/80 border-b border-[var(--ui-border)]">
-      <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16">
           <!-- Logo -->
           <NuxtLink to="/dashboard" class="flex items-center gap-2.5 group">
@@ -89,7 +89,7 @@ const localeSwitchItems = [
 
     <!-- ── Footer ──────────────────────────────────────────── -->
     <footer class="border-t border-[var(--ui-border)] mt-auto">
-      <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
           <p class="text-sm text-[var(--ui-text-muted)]">
             © {{ new Date().getFullYear() }} GourMerge — {{ t('app.slogan') }}
