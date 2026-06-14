@@ -8,6 +8,7 @@
  * - Emits Markdown string on every content change
  */
 import { useEditor, EditorContent } from '@tiptap/vue-3'
+import { nextTick } from 'vue'
 import { StarterKit } from '@tiptap/starter-kit'
 import { Markdown } from '@tiptap/markdown'
 
@@ -24,6 +25,9 @@ const emit = defineEmits<{
   'remove': []
 }>()
 
+// Prevents onUpdate from re-emitting when we programmatically set content from a prop change
+const settingContent = ref(false)
+
 const editor = useEditor({
   content: props.modelValue,
   extensions: [
@@ -39,17 +43,20 @@ const editor = useEditor({
     },
   },
   onUpdate: ({ editor: ed }) => {
-    const md = ed.getMarkdown?.() ?? ed.getText()
-    emit('update:modelValue', md)
+    if (!settingContent.value) emit('update:modelValue', ed.getHTML())
   },
 })
 
-// Sync external modelValue → editor (e.g. when parent resets or loads initial data)
+// Sync external modelValue → editor when parent loads/resets data.
+// The settingContent flag prevents onUpdate from re-emitting while we set content,
+// which would cause a cursor-reset loop on every keystroke.
 watch(() => props.modelValue, (newVal) => {
   if (!editor.value) return
-  const currentMd = editor.value.getMarkdown?.() ?? ''
-  if (newVal !== currentMd) {
+  const currentHtml = editor.value.getHTML()
+  if (newVal !== currentHtml) {
+    settingContent.value = true
     editor.value.commands.setContent(newVal)
+    nextTick(() => { settingContent.value = false })
   }
 })
 

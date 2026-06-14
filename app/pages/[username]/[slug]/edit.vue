@@ -32,8 +32,15 @@ if (!recipe.value) {
 }
 
 // ── Metadata state ────────────────────────────────────────────
-const selectedDietaryType = ref<string>(recipe.value?.dietaryType ?? '')
-const currentTags = ref<string[]>(recipe.value?.tags ?? [])
+const metaTitle = ref('')
+const metaDescription = ref('')
+const metaServings = ref<number>(1)
+const metaPrepTime = ref<number | null>(null)
+const metaCookTime = ref<number | null>(null)
+const metaDifficulty = ref('medium')
+const metaVisibility = ref('public')
+const selectedDietaryType = ref('')
+const currentTags = ref<string[]>([])
 const tagInput = ref('')
 
 const { data: availableTags } = useFetch<Array<{ id: number; name: string }>>('/api/tags')
@@ -45,6 +52,31 @@ const dietaryOptions = computed(() => [
   { label: t('recipe.dietaryPescatarian'), value: 'pescatarian' },
   { label: t('recipe.dietaryOmnivore'), value: 'omnivore' },
 ])
+
+const difficultyOptions = computed(() => [
+  { label: t('recipe.easy'), value: 'easy' },
+  { label: t('recipe.medium'), value: 'medium' },
+  { label: t('recipe.hard'), value: 'hard' },
+])
+
+const visibilityOptions = computed(() => [
+  { label: t('recipe.public'), value: 'public' },
+  { label: t('recipe.private'), value: 'private' },
+])
+
+// Sync all metadata from recipe when it loads
+watch(recipe, (r) => {
+  if (!r) return
+  metaTitle.value = r.title ?? ''
+  metaDescription.value = r.description ?? ''
+  metaServings.value = r.servings ?? 1
+  metaPrepTime.value = r.prepTimeMinutes ?? null
+  metaCookTime.value = r.cookTimeMinutes ?? null
+  metaDifficulty.value = r.difficulty ?? 'medium'
+  metaVisibility.value = r.visibility ?? 'public'
+  selectedDietaryType.value = r.dietaryType ?? ''
+  currentTags.value = r.tags ?? []
+}, { immediate: true })
 
 function addTag(raw: string) {
   const tag = raw.trim().toLowerCase()
@@ -109,13 +141,11 @@ async function loadBranchSnapshot(branchId: number) {
   }
 }
 
-// On initial load, use the default branch data from the by-slug fetch
-watchEffect(() => {
-  if (!recipe.value) return
-  const branchId = selectedBranchId.value
+// Load snapshot when branch selection changes (or on initial mount)
+watch(selectedBranchId, (branchId) => {
   if (!branchId) return
   loadBranchSnapshot(branchId)
-})
+}, { immediate: true })
 
 // ── Dirty state tracking ──────────────────────────────────────
 const initialSnapshot = ref('')
@@ -220,11 +250,20 @@ async function commitChanges() {
       },
     })
 
-    // Save dietary type and tags alongside the commit
+    // Save recipe metadata and tags alongside the commit
     await Promise.all([
       $fetch(`/api/recipes/${recipe.value.id}`, {
         method: 'PATCH',
-        body: { dietaryType: selectedDietaryType.value || null },
+        body: {
+          title: metaTitle.value.trim() || undefined,
+          description: metaDescription.value.trim() || undefined,
+          servings: metaServings.value || undefined,
+          prepTimeMinutes: metaPrepTime.value ?? null,
+          cookTimeMinutes: metaCookTime.value ?? null,
+          difficulty: metaDifficulty.value as 'easy' | 'medium' | 'hard' || undefined,
+          visibility: metaVisibility.value as 'public' | 'private' || undefined,
+          dietaryType: selectedDietaryType.value || null,
+        },
       }),
       $fetch(`/api/recipes/${recipe.value.id}/tags`, {
         method: 'POST',
@@ -305,47 +344,72 @@ useSeoMeta({
             <h2 class="font-semibold">{{ t('recipe.metadata') }}</h2>
           </div>
         </template>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <UFormField :label="t('recipe.dietaryType')">
-            <USelect
-              v-model="selectedDietaryType"
-              :items="dietaryOptions"
-              value-key="value"
-            />
+        <div class="space-y-4">
+          <!-- Title -->
+          <UFormField :label="t('recipe.title')">
+            <UInput v-model="metaTitle" :placeholder="t('recipe.titlePlaceholder')" />
           </UFormField>
-          <UFormField label="Tags">
-            <!-- Current tag chips -->
-            <div class="flex flex-wrap gap-1 mb-2">
-              <span
-                v-for="tag in currentTags"
-                :key="tag"
-                class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-primary-500/10 text-primary-600 border border-primary-500/20"
-              >
-                {{ tag }}
-                <button type="button" class="hover:text-error-500 transition-colors" @click="removeTag(tag)">
-                  <UIcon name="i-lucide-x" class="size-3" />
-                </button>
-              </span>
-            </div>
-            <!-- Tag input -->
-            <UInput
-              v-model="tagInput"
-              placeholder="Tag hinzufügen, Enter drücken"
-              size="sm"
-              @keydown="onTagInputKeydown"
-              @blur="tagInput.trim() && addTag(tagInput)"
-            />
-            <!-- Suggestions from existing tags -->
-            <div v-if="availableTags?.length" class="flex flex-wrap gap-1 mt-2">
-              <button
-                v-for="suggestion in availableTags.filter(s => !currentTags.includes(s.name)).slice(0, 10)"
-                :key="suggestion.id"
-                type="button"
-                class="text-xs px-2 py-0.5 rounded-full border border-[var(--ui-border)] text-[var(--ui-text-muted)] hover:border-primary-500/50 transition-colors"
-                @click="addTag(suggestion.name)"
-              >+ {{ suggestion.name }}</button>
-            </div>
+
+          <!-- Description -->
+          <UFormField :label="t('recipe.description')">
+            <UTextarea v-model="metaDescription" :placeholder="t('recipe.descriptionPlaceholder')" :rows="2" />
           </UFormField>
+
+          <!-- Times, servings, difficulty, visibility -->
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            <UFormField :label="t('recipe.servingsLabel')">
+              <UInput v-model.number="metaServings" type="number" min="1" max="100" />
+            </UFormField>
+            <UFormField :label="`${t('recipe.prepTime')} (min)`">
+              <UInput v-model.number="metaPrepTime" type="number" min="0" />
+            </UFormField>
+            <UFormField :label="`${t('recipe.cookTime')} (min)`">
+              <UInput v-model.number="metaCookTime" type="number" min="0" />
+            </UFormField>
+            <UFormField :label="t('recipe.difficultyLabel')">
+              <USelect v-model="metaDifficulty" :items="difficultyOptions" value-key="value" />
+            </UFormField>
+            <UFormField :label="t('recipe.visibilityLabel')">
+              <USelect v-model="metaVisibility" :items="visibilityOptions" value-key="value" />
+            </UFormField>
+          </div>
+
+          <!-- Dietary type + Tags -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <UFormField :label="t('recipe.dietaryType')">
+              <USelect v-model="selectedDietaryType" :items="dietaryOptions" value-key="value" />
+            </UFormField>
+            <UFormField label="Tags">
+              <div class="flex flex-wrap gap-1 mb-2">
+                <span
+                  v-for="tag in currentTags"
+                  :key="tag"
+                  class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-primary-500/10 text-primary-600 border border-primary-500/20"
+                >
+                  {{ tag }}
+                  <button type="button" class="hover:text-error-500 transition-colors" @click="removeTag(tag)">
+                    <UIcon name="i-lucide-x" class="size-3" />
+                  </button>
+                </span>
+              </div>
+              <UInput
+                v-model="tagInput"
+                placeholder="Tag hinzufügen, Enter drücken"
+                size="sm"
+                @keydown="onTagInputKeydown"
+                @blur="tagInput.trim() && addTag(tagInput)"
+              />
+              <div v-if="availableTags?.length" class="flex flex-wrap gap-1 mt-2">
+                <button
+                  v-for="suggestion in availableTags.filter(s => !currentTags.includes(s.name)).slice(0, 10)"
+                  :key="suggestion.id"
+                  type="button"
+                  class="text-xs px-2 py-0.5 rounded-full border border-[var(--ui-border)] text-[var(--ui-text-muted)] hover:border-primary-500/50 transition-colors"
+                  @click="addTag(suggestion.name)"
+                >+ {{ suggestion.name }}</button>
+              </div>
+            </UFormField>
+          </div>
         </div>
       </UCard>
 

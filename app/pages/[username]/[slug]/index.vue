@@ -1,7 +1,16 @@
 <script setup lang="ts">
 import type { RecipeDetail } from '~~/shared/types/recipe'
+import { marked } from 'marked'
 
 definePageMeta({ middleware: ['validate-recipe-route'] })
+
+function renderStep(content: string): string {
+  if (!content) return ''
+  // Already HTML (TipTap getHTML output from new saves)
+  if (content.trimStart().startsWith('<')) return content
+  // Legacy Markdown stored before the HTML switch — parse it
+  return marked.parse(content, { async: false }) as string
+}
 
 const { t, locale } = useI18n()
 
@@ -239,11 +248,12 @@ useHead(() => {
       </div>
 
       <!-- Meta badges -->
-      <div class="flex flex-wrap items-center gap-3 mb-8">
+      <div class="flex flex-wrap items-center gap-3 mb-4">
         <UBadge color="neutral" variant="outline" icon="i-lucide-users" :label="`${recipe.servings} ${t('recipe.servingsLabel')}`" />
         <UBadge v-if="recipe.prepTimeMinutes" color="neutral" variant="outline" icon="i-lucide-clock" :label="`${recipe.prepTimeMinutes} min ${t('recipe.prepTime')}`" />
         <UBadge v-if="recipe.cookTimeMinutes" color="neutral" variant="outline" icon="i-lucide-flame" :label="`${recipe.cookTimeMinutes} min ${t('recipe.cookTime')}`" />
         <UBadge :color="recipe.difficulty === 'easy' ? 'success' : recipe.difficulty === 'hard' ? 'error' : 'warning'" variant="subtle" :label="t(`recipe.${recipe.difficulty}`)" />
+        <RecipeDietaryBadge v-if="recipe.dietaryType" :type="recipe.dietaryType" />
         <div class="ml-auto flex items-center gap-3 text-sm text-[var(--ui-text-dimmed)]">
           <span class="flex items-center gap-1">
             <UIcon name="i-lucide-star" class="size-4" /> {{ starCount }}
@@ -253,6 +263,16 @@ useHead(() => {
           </span>
         </div>
       </div>
+
+      <!-- Tags row -->
+      <div v-if="recipe.tags?.length" class="flex flex-wrap gap-2 mb-6">
+        <span
+          v-for="tag in recipe.tags"
+          :key="tag"
+          class="text-xs px-2.5 py-1 rounded-full bg-[var(--ui-bg-elevated)] border border-[var(--ui-border)] text-[var(--ui-text-muted)]"
+        >{{ tag }}</span>
+      </div>
+      <div v-else class="mb-6" />
 
       <!-- Branch info -->
       <UCard v-if="recipe.defaultBranch" class="mb-6">
@@ -328,7 +348,7 @@ useHead(() => {
             <div class="shrink-0 w-8 h-8 rounded-full bg-primary-500/10 text-primary-500 flex items-center justify-center font-bold text-sm">
               {{ step.sortOrder }}
             </div>
-            <div class="flex-1 prose prose-sm dark:prose-invert max-w-none pt-1" v-html="step.content" />
+            <div class="flex-1 prose prose-sm dark:prose-invert max-w-none pt-1" v-html="renderStep(step.content)" />
           </div>
         </div>
       </UCard>
