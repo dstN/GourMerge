@@ -409,6 +409,9 @@
     "fat": "Lipides",
     "fiber": "Fibres",
     "saturatedFat": "Dont acides gras saturés",
+    "vitamins": "Vitamines",
+    "minerals": "Minéraux",
+    "showMicros": "Micronutriments",
     "missingCount": "Aucune valeur nutritionnelle disponible pour {n} ingrédient(s)."
   }
 }

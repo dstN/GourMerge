@@ -10,6 +10,7 @@ export interface NutritionTotals {
   isApproximate: boolean
   missingCount: number
   coveredCount: number
+  micros?: Record<string, number>
 }
 
 export interface RecipeDetail {

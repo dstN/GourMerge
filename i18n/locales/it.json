@@ -409,6 +409,9 @@
     "fat": "Grassi",
     "fiber": "Fibre",
     "saturatedFat": "Di cui acidi grassi saturi",
+    "vitamins": "Vitamine",
+    "minerals": "Minerali",
+    "showMicros": "Micronutrienti",
     "missingCount": "Nessun valore nutrizionale disponibile per {n} ingrediente/i."
   }
 }

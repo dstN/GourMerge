@@ -70,7 +70,7 @@ const { data: recipes, pending, error } = useFetch<DashboardRecipe[]>('/api/reci
     </UCard>
 
     <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <RecipeRecipeCard
+      <RecipeCard
         v-for="recipe in recipes"
         :key="recipe.id"
         :recipe="recipe"

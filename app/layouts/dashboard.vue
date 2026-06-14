@@ -2,8 +2,15 @@
 /**
  * Dashboard Layout — Authenticated layout with sidebar and user header
  */
-const { t } = useI18n()
+const { t, locale, setLocale } = useI18n()
 const { loggedIn } = useUserSession()
+
+const localeSwitchItems = [
+  { label: 'Deutsch', value: 'de' },
+  { label: 'English', value: 'en' },
+  { label: 'Français', value: 'fr' },
+  { label: 'Italiano', value: 'it' },
+]
 </script>
 
 <template>
@@ -51,6 +58,14 @@ const { loggedIn } = useUserSession()
 
           <!-- Right side -->
           <div class="flex items-center gap-2">
+            <USelect
+              :model-value="locale"
+              :items="localeSwitchItems"
+              value-key="value"
+              size="sm"
+              class="w-28"
+              @update:model-value="setLocale($event as 'de' | 'en' | 'fr' | 'it')"
+            />
             <UColorModeButton />
             <LayoutUserDropdown v-if="loggedIn" />
           </div>

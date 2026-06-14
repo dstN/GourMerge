@@ -409,6 +409,9 @@
     "fat": "Fat",
     "fiber": "Fiber",
     "saturatedFat": "Of which saturated fat",
+    "vitamins": "Vitamins",
+    "minerals": "Minerals",
+    "showMicros": "Micronutrients",
     "missingCount": "No nutrition data for {n} ingredient(s)."
   }
 }

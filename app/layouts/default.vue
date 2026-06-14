@@ -9,6 +9,8 @@ const { loggedIn } = useUserSession()
 const localeSwitchItems = [
   { label: 'Deutsch', value: 'de' },
   { label: 'English', value: 'en' },
+  { label: 'Français', value: 'fr' },
+  { label: 'Italiano', value: 'it' },
 ]
 </script>
 
@@ -62,7 +64,7 @@ const localeSwitchItems = [
               value-key="value"
               size="sm"
               class="w-28"
-              @update:model-value="setLocale($event as 'en' | 'de')"
+              @update:model-value="setLocale($event as 'de' | 'en' | 'fr' | 'it')"
             />
             <UColorModeButton />
             <OnboardingHelpMenu />

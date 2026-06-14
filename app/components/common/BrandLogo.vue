@@ -12,7 +12,7 @@ defineProps<{
     fill="currentColor"
     aria-hidden="true"
   >
-    <g transform="translate(0,1536) scale(0.1,-0.1)">
+    <g transform="translate(0,1536) scale(0.1,-0.1)" stroke="currentColor" stroke-width="400" paint-order="stroke fill" stroke-linejoin="round" stroke-linecap="round">
       <path
 d="M13805 13934 c-470 -73 -869 -292 -1167 -643 -50 -58 -96 -112 -103
 -119 -9 -11 -25 -9 -84 7 -149 41 -273 54 -476 48 -265 -7 -402 -41 -625 -151

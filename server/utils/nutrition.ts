@@ -31,6 +31,7 @@ export interface IngredientNutritionRow {
   sugar100g?:       string | null
   densityGPerMl:    string | null
   gramsPerPiece:    number | null
+  micros?:          unknown
 }
 
 export interface CommitIngredientInput {
@@ -102,6 +103,7 @@ export function computeNutritionTotals(
   let isApproximate = false
   let missingCount = 0
   let coveredCount = 0
+  const microsTotal: Record<string, number> = {}
 
   for (const ci of commitIngredients) {
     const n = nutritionByIngredientId.get(ci.ingredientId)
@@ -132,9 +134,23 @@ export function computeNutritionTotals(
     fiber       += (parseFloat(n.fiber100g        ?? '0')) * factor
     saturatedFat+= (parseFloat(n.saturatedFat100g ?? '0')) * factor
     coveredCount++
+
+    const micros = n.micros as Record<string, number | null> | null
+    if (micros) {
+      for (const [key, val] of Object.entries(micros)) {
+        if (typeof val === 'number' && isFinite(val)) {
+          microsTotal[key] = (microsTotal[key] ?? 0) + val * factor
+        }
+      }
+    }
   }
 
   const round2 = (v: number) => Math.round(v * 100) / 100
+  const micros = Object.fromEntries(
+    Object.entries(microsTotal)
+      .filter(([, v]) => v > 0)
+      .map(([k, v]) => [k, round2(v)]),
+  )
 
   return {
     kcal:         round2(kcal),
@@ -146,6 +162,7 @@ export function computeNutritionTotals(
     isApproximate,
     missingCount,
     coveredCount,
+    micros: Object.keys(micros).length > 0 ? micros : undefined,
   }
 }
 
@@ -165,5 +182,8 @@ export function perServing(totals: NutritionTotals, servings: number): Nutrition
     isApproximate: totals.isApproximate,
     missingCount:  totals.missingCount,
     coveredCount:  totals.coveredCount,
+    micros: totals.micros
+      ? Object.fromEntries(Object.entries(totals.micros).map(([k, v]) => [k, d(v)]))
+      : undefined,
   }
 }

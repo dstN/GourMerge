@@ -409,6 +409,9 @@
     "fat": "Fett",
     "fiber": "Ballaststoffe",
     "saturatedFat": "Davon gesättigte Fettsäuren",
+    "vitamins": "Vitamine",
+    "minerals": "Mineralstoffe",
+    "showMicros": "Mikronährstoffe",
     "missingCount": "Für {n} Zutat(en) sind keine Nährwerte verfügbar."
   }
 }
