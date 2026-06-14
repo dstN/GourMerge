@@ -1,0 +1,27 @@
+# GourMerge — Apache / Phusion Passenger configuration
+# Netcup Webhosting shared-hosting setup.
+
+# ── Passenger ───────────────────────────────────────────────
+PassengerAppType node
+PassengerStartupFile app.js
+PassengerAppEnv production
+# Select the Node version available on your Netcup plan (adjust as needed):
+# PassengerNodejs /usr/local/bin/node
+
+# ── HTTPS / HSTS ────────────────────────────────────────────
+# Force HTTPS; Nitro handles HSTS header once behind SSL.
+RewriteEngine On
+RewriteCond %{HTTPS} off
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+
+# ── Static assets (served directly by Apache, bypass Passenger) ─────
+# Passenger serves everything by default; this ensures .output/public
+# and the root /public are served efficiently without hitting Node.
+# Uncomment if Netcup Webhosting allows serving from a subdirectory alias.
+# AliasMatch ^/_nuxt/(.*)$ /path/to/app/.output/public/_nuxt/$1
+
+# ── Block direct access to sensitive directories/files ──────
+RedirectMatch 403 /\.env
+RedirectMatch 403 /\.git
+RedirectMatch 403 /server/
+RedirectMatch 403 /node_modules/

@@ -1,0 +1,85 @@
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: [CI]
+    branches: [master]
+    types: [completed]
+
+jobs:
+  deploy:
+    name: Deploy to Netcup
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    environment: production
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: gourmerge-output-${{ github.event.workflow_run.head_sha }}
+          path: .output/
+          # artifact is uploaded by the CI workflow for the same commit
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Deploy artifact to Netcup via rsync
+        uses: burnett01/rsync-deployments@7.0.1
+        with:
+          switches: -avz --delete --exclude='.env' --exclude='logs/'
+          path: .output/
+          remote_path: ${{ secrets.DEPLOY_PATH }}/.output/
+          remote_host: ${{ secrets.DEPLOY_HOST }}
+          remote_user: ${{ secrets.DEPLOY_USER }}
+          remote_key: ${{ secrets.DEPLOY_SSH_KEY }}
+
+      - name: Copy startup shim
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            cp ${{ secrets.DEPLOY_PATH }}/app.js ${{ secrets.DEPLOY_PATH }}/app.js.bak 2>/dev/null || true
+
+      - name: Upload app.js startup shim
+        uses: burnett01/rsync-deployments@7.0.1
+        with:
+          switches: -avz
+          path: app.js
+          remote_path: ${{ secrets.DEPLOY_PATH }}/app.js
+          remote_host: ${{ secrets.DEPLOY_HOST }}
+          remote_user: ${{ secrets.DEPLOY_USER }}
+          remote_key: ${{ secrets.DEPLOY_SSH_KEY }}
+
+      - name: Run migrations and restart Passenger
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            set -e
+            cd ${{ secrets.DEPLOY_PATH }}
+
+            # Run Drizzle migrations against the production database
+            DATABASE_URL="${{ secrets.DATABASE_URL }}" npx drizzle-kit migrate
+
+            # Signal Passenger to restart the app
+            mkdir -p tmp
+            touch tmp/restart.txt
+
+            echo "Deploy complete."
+
+      - name: Smoke test
+        run: |
+          sleep 10  # give Passenger a moment to reload
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://${{ secrets.DEPLOY_DOMAIN }}/api/health")
+          if [ "$STATUS" != "200" ]; then
+            echo "Health check failed with status $STATUS"
+            exit 1
+          fi
+          echo "Health check passed (HTTP $STATUS)"

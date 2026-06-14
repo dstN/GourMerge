@@ -121,7 +121,8 @@
     "commitPlaceholder": "z.B. Zucker reduziert, Vanille hinzugefügt",
     "fork": "Forken",
     "forkSuccess": "Rezept erfolgreich geforkt.",
-    "forkError": "Rezept konnte nicht geforkt werden."
+    "forkError": "Rezept konnte nicht geforkt werden.",
+    "seoDescriptionFallback": "Entdecke und forke dieses Rezept auf GourMerge — die Plattform für kollaborative Rezeptentwicklung."
   },
   "common": {
     "on": "am",

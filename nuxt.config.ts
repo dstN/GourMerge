@@ -12,6 +12,7 @@ export default defineNuxtConfig({
     '@vite-pwa/nuxt',
     'nuxt-auth-utils',
     '@nuxt/eslint',
+    '@sentry/nuxt/module',
   ],
 
   css: ['~/assets/css/main.css'],
@@ -55,15 +56,41 @@ export default defineNuxtConfig({
       background_color: '#0f172a',
       display: 'standalone',
       icons: [
+        // SVG icon for modern browsers; replace with PNG for universal support.
+        // Run: npx @vite-pwa/assets-generator to generate PNG from icon.svg.
+        {
+          src: '/icon.svg',
+          sizes: 'any',
+          type: 'image/svg+xml',
+          purpose: 'any maskable',
+        },
         {
           src: '/icon-192x192.png',
           sizes: '192x192',
           type: 'image/png',
+          purpose: 'any',
         },
         {
           src: '/icon-512x512.png',
           sizes: '512x512',
           type: 'image/png',
+          purpose: 'maskable',
+        },
+      ],
+    },
+    workbox: {
+      // Cache the app shell and navigation routes for offline use (P5-005).
+      navigateFallback: '/',
+      globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
+      runtimeCaching: [
+        {
+          // Cache API responses for viewed recipes for offline reading.
+          urlPattern: /^\/api\/recipes\/by-slug\/.*/i,
+          handler: 'StaleWhileRevalidate',
+          options: {
+            cacheName: 'recipe-api-cache',
+            expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 * 7 },
+          },
         },
       ],
     },
@@ -90,6 +117,20 @@ export default defineNuxtConfig({
       appName: 'GourMerge',
       appSlogan: 'Fork the recipe, merge the flavor.',
       appUrl: process.env.NUXT_PUBLIC_APP_URL || 'http://localhost:3000',
+      sentry: {
+        dsn: process.env.NUXT_PUBLIC_SENTRY_DSN || '',
+        environment: process.env.NODE_ENV || 'development',
+        release: process.env.NUXT_SENTRY_RELEASE || '',
+      },
+    },
+  },
+
+  // ── Sentry ───────────────────────────────────────────────────
+  sentry: {
+    sourceMapsUploadOptions: {
+      org: process.env.SENTRY_ORG || '',
+      project: process.env.SENTRY_PROJECT || 'gourmerge',
+      authToken: process.env.SENTRY_AUTH_TOKEN || '',
     },
   },
 
@@ -97,6 +138,8 @@ export default defineNuxtConfig({
   app: {
     head: {
       link: [
+        { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
+        { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
         { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
         { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
         {
@@ -105,6 +148,44 @@ export default defineNuxtConfig({
         },
       ],
     },
+  },
+
+  // ── Security Headers + CSP (P6-001) ─────────────────────────
+  // Applied to all routes. CSP allows TipTap (needs 'unsafe-inline' for style),
+  // Google Fonts, and the Sentry reporting endpoint.
+  routeRules: {
+    '/**': {
+      headers: {
+        'X-Content-Type-Options': 'nosniff',
+        'X-Frame-Options': 'DENY',
+        'Referrer-Policy': 'strict-origin-when-cross-origin',
+        'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+        // HSTS is set in production only via Passenger / .htaccess to avoid
+        // breaking local HTTP dev. Uncomment when behind HTTPS:
+        // 'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+        'Content-Security-Policy': [
+          "default-src 'self'",
+          // TipTap requires unsafe-inline for inline styles on the prosemirror editor
+          "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+          "font-src 'self' https://fonts.gstatic.com",
+          "img-src 'self' data: https:",
+          // Scripts: self + Sentry CDN bundle (loaded via @sentry/nuxt)
+          "script-src 'self' 'unsafe-inline' https://browser.sentry-cdn.com",
+          "connect-src 'self' https://*.sentry.io",
+          "frame-ancestors 'none'",
+          "base-uri 'self'",
+          "form-action 'self'",
+        ].join('; '),
+      },
+    },
+    // API and auth routes: no page headers needed, disable CSP header inheritance
+    '/api/**': { headers: {} },
+    '/auth/**': { headers: {} },
+  },
+
+  // ── Nitro server preset (Passenger uses node-server) ────────
+  nitro: {
+    preset: 'node-server',
   },
 
   // ── Dev Tools ───────────────────────────────────────────────

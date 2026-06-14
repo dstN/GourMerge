@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <!-- Background -->
+  <rect width="512" height="512" rx="96" fill="#0f172a"/>
+  <!-- Fork tines -->
+  <line x1="180" y1="80" x2="180" y2="160" stroke="#f97316" stroke-width="28" stroke-linecap="round"/>
+  <line x1="240" y1="80" x2="240" y2="160" stroke="#f97316" stroke-width="28" stroke-linecap="round"/>
+  <!-- Fork handle curve -->
+  <path d="M180 160 Q180 210 210 210 Q240 210 240 160" stroke="#f97316" stroke-width="28" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Fork handle -->
+  <line x1="210" y1="210" x2="210" y2="340" stroke="#f97316" stroke-width="28" stroke-linecap="round"/>
+  <!-- Git merge dot left -->
+  <circle cx="315" cy="160" r="24" fill="#38bdf8"/>
+  <!-- Git merge dot right (branch) -->
+  <circle cx="395" cy="240" r="24" fill="#38bdf8"/>
+  <!-- Git merge dot bottom (merged) -->
+  <circle cx="315" cy="340" r="24" fill="#38bdf8"/>
+  <!-- Branch line down -->
+  <line x1="315" y1="184" x2="315" y2="316" stroke="#38bdf8" stroke-width="16" stroke-linecap="round"/>
+  <!-- Branch curve out -->
+  <path d="M315 184 Q315 210 395 240" stroke="#38bdf8" stroke-width="16" fill="none" stroke-linecap="round"/>
+  <!-- Branch curve in -->
+  <path d="M395 240 Q395 310 315 316" stroke="#38bdf8" stroke-width="16" fill="none" stroke-linecap="round"/>
+</svg>

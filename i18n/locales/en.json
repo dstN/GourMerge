@@ -121,7 +121,8 @@
     "commitPlaceholder": "e.g., Reduced sugar, added vanilla",
     "fork": "Fork",
     "forkSuccess": "Recipe forked successfully.",
-    "forkError": "Could not fork recipe."
+    "forkError": "Could not fork recipe.",
+    "seoDescriptionFallback": "Discover and fork this recipe on GourMerge — the open-source platform for collaborative recipe development."
   },
   "common": {
     "on": "on",

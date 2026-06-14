@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /auth/
+
+# Private recipe pages are already gated server-side (404 for unauthenticated),
+# but noindex meta is also set on the page itself for defense-in-depth.
+
+Sitemap: https://gourmerge.app/sitemap.xml

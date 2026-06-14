@@ -1,0 +1,70 @@
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: [master]
+
+jobs:
+  ci:
+    name: Lint → Typecheck → i18n → Test → Build
+    runs-on: ubuntu-latest
+
+    services:
+      mariadb:
+        image: mariadb:11
+        env:
+          MARIADB_ROOT_PASSWORD: testpassword
+          MARIADB_DATABASE: gourmerge_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "healthcheck.sh --connect --innodb_initialized"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      NODE_ENV: test
+      DATABASE_URL: mysql://root:testpassword@127.0.0.1:3306/gourmerge_test
+      NUXT_SESSION_PASSWORD: ci-test-session-password-32-chars-min
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: i18n bilingual gate
+        run: node scripts/i18n-check.mjs
+
+      - name: Run database migrations
+        run: npx drizzle-kit migrate
+
+      - name: Unit & component tests
+        run: npm test -- --reporter=verbose
+
+      - name: Build
+        run: npm run build
+
+      - name: Upload build artifact
+        if: github.ref == 'refs/heads/master'
+        uses: actions/upload-artifact@v4
+        with:
+          name: gourmerge-output-${{ github.sha }}
+          path: .output/
+          retention-days: 7

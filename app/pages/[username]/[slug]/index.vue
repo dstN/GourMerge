@@ -63,8 +63,60 @@ async function forkRecipe() {
   }
 }
 
+const appUrl = useRuntimeConfig().public.appUrl as string
+
 useSeoMeta({
   title: () => recipe.value ? `${recipe.value.title} — GourMerge` : 'GourMerge',
+  description: () => recipe.value?.description || t('recipe.seoDescriptionFallback'),
+  ogTitle: () => recipe.value ? `${recipe.value.title} — GourMerge` : 'GourMerge',
+  ogDescription: () => recipe.value?.description || t('recipe.seoDescriptionFallback'),
+  ogUrl: () => recipe.value ? `${appUrl}/${recipe.value.owner.username}/${recipe.value.slug}` : appUrl,
+  ogType: 'website',
+  ogSiteName: 'GourMerge',
+  twitterCard: 'summary',
+  twitterTitle: () => recipe.value ? `${recipe.value.title} — GourMerge` : 'GourMerge',
+  twitterDescription: () => recipe.value?.description || t('recipe.seoDescriptionFallback'),
+  robots: () => recipe.value?.visibility === 'private' ? 'noindex,nofollow' : 'index,follow',
+})
+
+// Recipe schema.org JSON-LD structured data
+useHead(() => {
+  if (!recipe.value) return {}
+  const r = recipe.value
+  const ingredients = (r.currentIngredients || []).map(
+    (ing: any) => `${ing.quantity} ${ing.unit} ${ing.ingredientName}${ing.notes ? ` (${ing.notes})` : ''}`,
+  )
+  const steps = (r.currentSteps || []).map((s: any, i: number) => ({
+    '@type': 'HowToStep',
+    position: i + 1,
+    text: s.content,
+  }))
+  return {
+    script: [
+      {
+        type: 'application/ld+json',
+        innerHTML: JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'Recipe',
+          name: r.title,
+          description: r.description || undefined,
+          author: {
+            '@type': 'Person',
+            name: r.owner?.displayName || r.owner?.username,
+            url: `${appUrl}/${r.owner?.username}`,
+          },
+          url: `${appUrl}/${r.owner?.username}/${r.slug}`,
+          datePublished: r.createdAt,
+          recipeYield: r.servings ? `${r.servings} ${t('recipe.servingsLabel')}` : undefined,
+          prepTime: r.prepTimeMinutes ? `PT${r.prepTimeMinutes}M` : undefined,
+          cookTime: r.cookTimeMinutes ? `PT${r.cookTimeMinutes}M` : undefined,
+          recipeDifficulty: r.difficulty,
+          recipeIngredient: ingredients.length ? ingredients : undefined,
+          recipeInstructions: steps.length ? steps : undefined,
+        }),
+      },
+    ],
+  }
 })
 </script>
 
