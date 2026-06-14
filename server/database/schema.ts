@@ -12,8 +12,14 @@
  *    Use "GourMerge Request" / "gourmerge_request" exclusively.
  */
 
-import { mysqlTable, int, varchar, text, datetime, timestamp, mysqlEnum, json, decimal, boolean, index, uniqueIndex } from 'drizzle-orm/mysql-core'
+import { mysqlTable, int, varchar, text, datetime, timestamp, mysqlEnum, json, decimal, boolean, index, uniqueIndex, customType } from 'drizzle-orm/mysql-core'
 import { relations, sql } from 'drizzle-orm'
+
+// BINARY(16) custom type for UUIDv7 external identifiers.
+// We store as raw bytes (most compact, index-friendly) and convert to/from hex string at the boundary.
+const binary16 = customType<{ data: Buffer; driverData: Buffer }>({
+  dataType() { return 'BINARY(16)' },
+})
 
 // ═══════════════════════════════════════════════════════════════
 // USERS
@@ -29,6 +35,12 @@ export const users = mysqlTable('users', {
   bio: text('bio'),
   preferredLocale: varchar('preferred_locale', { length: 10 }).notNull().default('de'),
   preferredMeasurementSystem: mysqlEnum('preferred_measurement_system', ['metric', 'imperial']).notNull().default('metric'),
+  /** Set when user confirms their email address. NULL = unverified. */
+  emailVerifiedAt: datetime('email_verified_at'),
+  /** Set when user completes or explicitly dismisses the onboarding tour. NULL = not yet shown. */
+  onboardingCompletedAt: datetime('onboarding_completed_at'),
+  /** True if the user clicked "Don't show again" on the tour offer. */
+  tourDismissed: boolean('tour_dismissed').notNull().default(false),
   createdAt: datetime('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
   updatedAt: timestamp('updated_at').notNull().default(sql`CURRENT_TIMESTAMP`).onUpdateNow(),
 })
@@ -57,6 +69,11 @@ export const ingredients = mysqlTable('ingredients', {
 
 export const recipes = mysqlTable('recipes', {
   id: int('id').primaryKey().autoincrement(),
+  /**
+   * External opaque identifier (UUIDv7, time-ordered → dense B-tree index).
+   * Used in public URLs/API responses — never expose the internal INT id.
+   */
+  publicId: binary16('public_id').notNull(),
   ownerId: int('owner_id').notNull().references(() => users.id),
   title: varchar('title', { length: 300 }).notNull(),
   /** URL-safe slug, unique per owner (like GitHub repo names) */
@@ -75,9 +92,12 @@ export const recipes = mysqlTable('recipes', {
   createdAt: datetime('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
   updatedAt: timestamp('updated_at').notNull().default(sql`CURRENT_TIMESTAMP`).onUpdateNow(),
 }, (table) => [
+  uniqueIndex('idx_recipes_public_id').on(table.publicId),
   index('idx_recipes_owner').on(table.ownerId),
   index('idx_recipes_forked_from').on(table.forkedFromRecipeId),
   index('idx_recipes_visibility').on(table.visibility),
+  index('idx_recipes_visibility_stars').on(table.visibility, table.starCount),
+  index('idx_recipes_visibility_created').on(table.visibility, table.createdAt),
   uniqueIndex('idx_recipes_owner_slug').on(table.ownerId, table.slug),
 ])
 
@@ -142,6 +162,10 @@ export const recipeCommits = mysqlTable('recipe_commits', {
   authorId: int('author_id').notNull().references(() => users.id),
   /** Human-readable commit message, e.g. "Zucker reduziert" */
   message: varchar('message', { length: 500 }).notNull(),
+  /** True for commits created by merging a GourMerge Request. */
+  isMerge: boolean('is_merge').notNull().default(false),
+  /** For merge commits: the second parent (from the source branch). Primary parent is parentCommitId. */
+  mergeSourceCommitId: int('merge_source_commit_id'),
   createdAt: datetime('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
 }, (table) => [
   index('idx_commits_branch').on(table.branchId),
@@ -209,6 +233,10 @@ export const recipeCommitSteps = mysqlTable('recipe_commit_steps', {
 
 export const gourmergeRequests = mysqlTable('gourmerge_requests', {
   id: int('id').primaryKey().autoincrement(),
+  /**
+   * External opaque identifier (UUIDv7). Used in shareable GourMerge Request URLs.
+   */
+  publicId: binary16('public_id').notNull(),
   /** The recipe this GourMerge Request belongs to (target repo) */
   recipeId: int('recipe_id').notNull().references(() => recipes.id, { onDelete: 'cascade' }),
   authorId: int('author_id').notNull().references(() => users.id),
@@ -227,6 +255,7 @@ export const gourmergeRequests = mysqlTable('gourmerge_requests', {
   createdAt: datetime('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
   updatedAt: timestamp('updated_at').notNull().default(sql`CURRENT_TIMESTAMP`).onUpdateNow(),
 }, (table) => [
+  uniqueIndex('idx_gourmerge_requests_public_id').on(table.publicId),
   index('idx_gourmerge_requests_recipe').on(table.recipeId),
   index('idx_gourmerge_requests_author').on(table.authorId),
   index('idx_gourmerge_requests_status').on(table.status),
@@ -249,6 +278,55 @@ export const gourmergeRequestComments = mysqlTable('gm_request_comments', {
 }, (table) => [
   index('idx_gm_comments_request').on(table.gourmergeRequestId),
   index('idx_gm_comments_author').on(table.authorId),
+])
+
+// ═══════════════════════════════════════════════════════════════
+// EMAIL VERIFICATION TOKENS
+// ═══════════════════════════════════════════════════════════════
+// Tokens are CSPRNG — NOT UUIDv7 (predictable prefix would weaken them).
+
+export const emailVerificationTokens = mysqlTable('email_verification_tokens', {
+  id: int('id').primaryKey().autoincrement(),
+  userId: int('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  /** bcrypt hash of the CSPRNG token sent to the user */
+  tokenHash: varchar('token_hash', { length: 255 }).notNull().unique(),
+  expiresAt: datetime('expires_at').notNull(),
+  usedAt: datetime('used_at'),
+  createdAt: datetime('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => [
+  index('idx_email_tokens_user').on(table.userId),
+])
+
+// ═══════════════════════════════════════════════════════════════
+// PASSWORD RESET TOKENS
+// ═══════════════════════════════════════════════════════════════
+
+export const passwordResetTokens = mysqlTable('password_reset_tokens', {
+  id: int('id').primaryKey().autoincrement(),
+  userId: int('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  tokenHash: varchar('token_hash', { length: 255 }).notNull().unique(),
+  expiresAt: datetime('expires_at').notNull(),
+  usedAt: datetime('used_at'),
+  createdAt: datetime('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => [
+  index('idx_reset_tokens_user').on(table.userId),
+])
+
+// ═══════════════════════════════════════════════════════════════
+// RATE LIMIT HITS (DB-backed — safe for multi-process Passenger)
+// ═══════════════════════════════════════════════════════════════
+// In-memory rate limiting is not safe when Passenger spawns multiple processes.
+// This table replaces the in-memory Map with a DB counter per bucket+window.
+
+export const rateLimitHits = mysqlTable('rate_limit_hits', {
+  id: int('id').primaryKey().autoincrement(),
+  /** Composite key: "route:ip" e.g. "auth:login:1.2.3.4" */
+  bucketKey: varchar('bucket_key', { length: 200 }).notNull(),
+  /** Window start (UNIX seconds, truncated to window size) */
+  windowStart: int('window_start').notNull(),
+  count: int('count').notNull().default(1),
+}, (table) => [
+  uniqueIndex('idx_rate_limit_bucket_window').on(table.bucketKey, table.windowStart),
 ])
 
 // ═══════════════════════════════════════════════════════════════
