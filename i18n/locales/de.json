@@ -434,7 +434,7 @@
     "contactName": "Name",
     "contactNamePlaceholder": "Dein Name",
     "contactEmail": "E-Mail",
-    "contactEmailPlaceholder": "deine@email.de",
+    "contactEmailPlaceholder": "deine{'@'}email.de",
     "contactMessage": "Nachricht",
     "contactMessagePlaceholder": "Deine Nachricht...",
     "contactSend": "Absenden",
