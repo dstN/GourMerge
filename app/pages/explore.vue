@@ -49,12 +49,7 @@ useSeoMeta({ title: `${t('nav.explore')} — GourMerge` })
 
     <!-- Filters -->
     <div class="flex flex-wrap gap-3 mb-6">
-      <UInput
-        v-model="search"
-        :placeholder="t('explore.search')"
-        icon="i-lucide-search"
-        class="w-64"
-      />
+      <UInput v-model="search" :placeholder="t('explore.search')" icon="i-lucide-search" class="w-64" />
 
       <USelect
         v-model="difficulty"
@@ -96,11 +91,19 @@ useSeoMeta({ title: `${t('nav.explore')} — GourMerge` })
         v-for="tag in allTags"
         :key="tag.name"
         class="text-xs px-3 py-1 rounded-full border transition-colors"
-        :class="selectedTag === tag.name
-          ? 'bg-primary-500 border-primary-500 text-white'
-          : 'border-[var(--ui-border)] hover:border-primary-500/50 text-[var(--ui-text-muted)]'"
-        @click="selectedTag = selectedTag === tag.name ? '' : tag.name; page = 1; refresh()"
-      >{{ tag.name }}</button>
+        :class="
+          selectedTag === tag.name
+            ? 'bg-primary-500 border-primary-500 text-white'
+            : 'border-[var(--ui-border)] hover:border-primary-500/50 text-[var(--ui-text-muted)]'
+        "
+        @click="
+          selectedTag = selectedTag === tag.name ? '' : tag.name
+          page = 1
+          refresh()
+        "
+      >
+        {{ tag.name }}
+      </button>
     </div>
 
     <!-- Results -->
@@ -127,7 +130,10 @@ useSeoMeta({ title: `${t('nav.explore')} — GourMerge` })
         :label="t('explore.loadMore')"
         variant="outline"
         color="neutral"
-        @click="page++; refresh()"
+        @click="
+          page++
+          refresh()
+        "
       />
     </div>
   </div>

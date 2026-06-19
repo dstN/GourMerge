@@ -19,11 +19,7 @@ export default defineEventHandler(async (event) => {
   if (!db) throw createError({ statusCode: 503, statusMessage: 'Database unavailable.' })
 
   // ── Verify ownership ───────────────────────────────────────
-  const [recipe] = await db
-    .select({ ownerId: recipes.ownerId })
-    .from(recipes)
-    .where(eq(recipes.id, recipeId))
-    .limit(1)
+  const [recipe] = await db.select({ ownerId: recipes.ownerId }).from(recipes).where(eq(recipes.id, recipeId)).limit(1)
 
   if (!recipe || recipe.ownerId !== session.user.id) {
     throw createError({ statusCode: 403, statusMessage: 'Forbidden' })
@@ -33,10 +29,7 @@ export default defineEventHandler(async (event) => {
   const [branch] = await db
     .select()
     .from(recipeBranches)
-    .where(and(
-      eq(recipeBranches.id, branchId),
-      eq(recipeBranches.recipeId, recipeId),
-    ))
+    .where(and(eq(recipeBranches.id, branchId), eq(recipeBranches.recipeId, recipeId)))
     .limit(1)
 
   if (!branch) {
@@ -48,9 +41,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // ── Delete (cascades to commits, ingredients, steps) ───────
-  await db
-    .delete(recipeBranches)
-    .where(eq(recipeBranches.id, branchId))
+  await db.delete(recipeBranches).where(eq(recipeBranches.id, branchId))
 
   return { success: true }
 })

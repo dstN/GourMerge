@@ -26,11 +26,7 @@ export default defineEventHandler(async (event) => {
   if (!db) throw createError({ statusCode: 503, statusMessage: 'Database unavailable.' })
 
   // ── Verify ownership ────────────────────────────────────────
-  const [recipe] = await db
-    .select({ ownerId: recipes.ownerId })
-    .from(recipes)
-    .where(eq(recipes.id, id))
-    .limit(1)
+  const [recipe] = await db.select({ ownerId: recipes.ownerId }).from(recipes).where(eq(recipes.id, id)).limit(1)
 
   if (!recipe) {
     throw createError({ statusCode: 404, statusMessage: 'Recipe not found' })
@@ -42,10 +38,7 @@ export default defineEventHandler(async (event) => {
   // ── Pre-delete: orphan forks ────────────────────────────────
   // Forks that referenced this recipe as their origin would block deletion.
   // Clearing the pointer orphans them (they remain as standalone recipes).
-  await db
-    .update(recipes)
-    .set({ forkedFromRecipeId: null })
-    .where(eq(recipes.forkedFromRecipeId, id))
+  await db.update(recipes).set({ forkedFromRecipeId: null }).where(eq(recipes.forkedFromRecipeId, id))
 
   // ── Pre-delete: cross-recipe GMRs referencing this recipe's branches ──
   // source_branch_id / target_branch_id / source_recipe_id have NO ACTION
@@ -60,18 +53,13 @@ export default defineEventHandler(async (event) => {
     await db
       .delete(gourmergeRequests)
       .where(
-        or(
-          inArray(gourmergeRequests.sourceBranchId, branchIds),
-          inArray(gourmergeRequests.targetBranchId, branchIds),
-        ),
+        or(inArray(gourmergeRequests.sourceBranchId, branchIds), inArray(gourmergeRequests.targetBranchId, branchIds))
       )
   }
 
   // Also remove GMRs with source_recipe_id pointing here
   // (cross-recipe GMRs where this is the fork / source side)
-  await db
-    .delete(gourmergeRequests)
-    .where(eq(gourmergeRequests.sourceRecipeId, id))
+  await db.delete(gourmergeRequests).where(eq(gourmergeRequests.sourceRecipeId, id))
 
   // ── Delete (remaining cascades via foreign keys) ─────────────
   await db.delete(recipes).where(eq(recipes.id, id))

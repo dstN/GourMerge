@@ -48,10 +48,14 @@ const features = computed(() => [
     <!-- ── Hero Section ──────────────────────────────────── -->
     <section class="relative overflow-hidden py-20 sm:py-32">
       <!-- Background gradient -->
-      <div class="absolute inset-0 bg-gradient-to-br from-primary-500/5 via-transparent to-secondary-500/5 pointer-events-none" />
+      <div
+        class="absolute inset-0 bg-gradient-to-br from-primary-500/5 via-transparent to-secondary-500/5 pointer-events-none"
+      />
 
       <div class="relative text-center max-w-4xl mx-auto px-4">
-        <div class="inline-flex items-center gap-2 bg-primary-500/10 text-primary-500 rounded-full px-4 py-1.5 text-sm font-medium mb-6">
+        <div
+          class="inline-flex items-center gap-2 bg-primary-500/10 text-primary-500 rounded-full px-4 py-1.5 text-sm font-medium mb-6"
+        >
           <UIcon name="i-lucide-sparkles" class="size-4" />
           {{ t('landing.badge') }}
         </div>
@@ -102,7 +106,9 @@ const features = computed(() => [
             class="group hover:border-primary-500/50 transition-colors"
           >
             <div class="flex items-start gap-4">
-              <div class="shrink-0 w-12 h-12 rounded-xl bg-primary-500/10 flex items-center justify-center group-hover:bg-primary-500/20 transition-colors">
+              <div
+                class="shrink-0 w-12 h-12 rounded-xl bg-primary-500/10 flex items-center justify-center group-hover:bg-primary-500/20 transition-colors"
+              >
                 <UIcon :name="feature.icon" class="size-6 text-primary-500" />
               </div>
               <div>
@@ -126,13 +132,18 @@ const features = computed(() => [
 
         <div class="space-y-8">
           <div
-v-for="(step, idx) in [
-            { icon: 'i-lucide-plus-circle', title: t('landing.step1Title'), desc: t('landing.step1Desc') },
-            { icon: 'i-lucide-pencil', title: t('landing.step2Title'), desc: t('landing.step2Desc') },
-            { icon: 'i-lucide-save', title: t('landing.step3Title'), desc: t('landing.step3Desc') },
-            { icon: 'i-lucide-share-2', title: t('landing.step4Title'), desc: t('landing.step4Desc') },
-          ]" :key="idx" class="flex items-start gap-6">
-            <div class="shrink-0 w-10 h-10 rounded-full bg-primary-500 text-white flex items-center justify-center font-bold text-lg">
+            v-for="(step, idx) in [
+              { icon: 'i-lucide-plus-circle', title: t('landing.step1Title'), desc: t('landing.step1Desc') },
+              { icon: 'i-lucide-pencil', title: t('landing.step2Title'), desc: t('landing.step2Desc') },
+              { icon: 'i-lucide-save', title: t('landing.step3Title'), desc: t('landing.step3Desc') },
+              { icon: 'i-lucide-share-2', title: t('landing.step4Title'), desc: t('landing.step4Desc') },
+            ]"
+            :key="idx"
+            class="flex items-start gap-6"
+          >
+            <div
+              class="shrink-0 w-10 h-10 rounded-full bg-primary-500 text-white flex items-center justify-center font-bold text-lg"
+            >
               {{ idx + 1 }}
             </div>
             <div>

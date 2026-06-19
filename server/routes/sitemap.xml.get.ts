@@ -25,7 +25,12 @@ export default defineEventHandler(async (event) => {
     .orderBy(recipes.updatedAt)
     .limit(5000)
 
-  interface SitemapUrl { loc: string; lastmod?: string; priority: string; changefreq: string }
+  interface SitemapUrl {
+    loc: string
+    lastmod?: string
+    priority: string
+    changefreq: string
+  }
 
   const staticUrls: SitemapUrl[] = [
     { loc: `${appUrl}/`, priority: '1.0', changefreq: 'daily' },
@@ -43,11 +48,15 @@ export default defineEventHandler(async (event) => {
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${allUrls.map((u) => `  <url>
+${allUrls
+  .map(
+    (u) => `  <url>
     <loc>${u.loc}</loc>${u.lastmod ? `\n    <lastmod>${u.lastmod}</lastmod>` : ''}
     <changefreq>${u.changefreq}</changefreq>
     <priority>${u.priority}</priority>
-  </url>`).join('\n')}
+  </url>`
+  )
+  .join('\n')}
 </urlset>`
 
   return xml

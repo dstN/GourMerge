@@ -17,9 +17,7 @@ const slug = computed(() => route.params.slug as string)
 const recipeUrl = computed(() => `/${username.value}/${slug.value}`)
 
 // ── Fetch recipe ─────────────────────────────────────────────
-const { data: recipe } = await useFetch<RecipeDetail>(
-  () => `/api/recipes/by-slug/${username.value}/${slug.value}`,
-)
+const { data: recipe } = await useFetch<RecipeDetail>(() => `/api/recipes/by-slug/${username.value}/${slug.value}`)
 if (!recipe.value) {
   throw createError({ statusCode: 404, statusMessage: 'Recipe not found' })
 }
@@ -27,9 +25,7 @@ if (!recipe.value) {
 const recipeId = computed(() => recipe.value!.id)
 
 // ── Fetch branches ───────────────────────────────────────────
-const { data: branches, refresh: refreshBranches } = await useFetch(
-  () => `/api/recipes/${recipeId.value}/branches`,
-)
+const { data: branches, refresh: refreshBranches } = await useFetch(() => `/api/recipes/${recipeId.value}/branches`)
 
 // ── Create branch ────────────────────────────────────────────
 const showCreateModal = ref(false)
@@ -52,15 +48,13 @@ async function createBranch() {
     newBranchName.value = ''
     showCreateModal.value = false
     await refreshBranches()
-  }
-  catch (err: unknown) {
+  } catch (err: unknown) {
     toast.add({
       title: (err as { data?: { statusMessage?: string } })?.data?.statusMessage || t('common.error'),
       color: 'error',
       icon: 'i-lucide-alert-circle',
     })
-  }
-  finally {
+  } finally {
     creating.value = false
   }
 }
@@ -76,24 +70,23 @@ async function deleteBranch(branchId: number) {
     })
     toast.add({ title: t('branches.deleted'), color: 'success', icon: 'i-lucide-check' })
     await refreshBranches()
-  }
-  catch (err: unknown) {
+  } catch (err: unknown) {
     toast.add({
       title: (err as { data?: { statusMessage?: string } })?.data?.statusMessage || t('common.error'),
       color: 'error',
       icon: 'i-lucide-alert-circle',
     })
-  }
-  finally {
+  } finally {
     deleting.value = null
   }
 }
 
-const branchSourceOptions = computed(() =>
-  branches.value?.map((b) => ({
-    label: b.name,
-    value: b.id,
-  })) || [],
+const branchSourceOptions = computed(
+  () =>
+    branches.value?.map((b) => ({
+      label: b.name,
+      value: b.id,
+    })) || []
 )
 </script>
 
@@ -115,20 +108,12 @@ const branchSourceOptions = computed(() =>
         </h1>
       </div>
 
-      <UButton
-        :label="t('branches.create')"
-        icon="i-lucide-plus"
-        @click="showCreateModal = true"
-      />
+      <UButton :label="t('branches.create')" icon="i-lucide-plus" @click="showCreateModal = true" />
     </div>
 
     <!-- Branches list -->
     <div class="space-y-3">
-      <UCard
-        v-for="branch in branches"
-        :key="branch.id"
-        :ui="{ root: 'overflow-hidden' }"
-      >
+      <UCard v-for="branch in branches" :key="branch.id" :ui="{ root: 'overflow-hidden' }">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
             <UIcon
@@ -191,11 +176,7 @@ const branchSourceOptions = computed(() =>
       <template #body>
         <div class="space-y-4">
           <UFormField :label="t('branches.name')">
-            <UInput
-              v-model="newBranchName"
-              :placeholder="t('branches.namePlaceholder')"
-              icon="i-lucide-git-branch"
-            />
+            <UInput v-model="newBranchName" :placeholder="t('branches.namePlaceholder')" icon="i-lucide-git-branch" />
           </UFormField>
 
           <UFormField :label="t('branches.from')">
@@ -212,12 +193,7 @@ const branchSourceOptions = computed(() =>
 
       <template #footer>
         <div class="flex justify-end gap-2">
-          <UButton
-            :label="t('common.cancel')"
-            variant="outline"
-            color="neutral"
-            @click="showCreateModal = false"
-          />
+          <UButton :label="t('common.cancel')" variant="outline" color="neutral" @click="showCreateModal = false" />
           <UButton
             :label="t('branches.create')"
             icon="i-lucide-plus"

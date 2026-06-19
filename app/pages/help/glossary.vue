@@ -6,10 +6,7 @@ useSeoMeta({
   description: () => t('glossary.seoDescription'),
 })
 
-const terms = [
-  'recipe', 'fork', 'branch', 'commit', 'merge', 'gourmergeRequest',
-  'diff', 'history',
-] as const
+const terms = ['recipe', 'fork', 'branch', 'commit', 'merge', 'gourmergeRequest', 'diff', 'history'] as const
 </script>
 
 <template>
@@ -23,14 +20,23 @@ const terms = [
       <UCard v-for="term in terms" :key="term">
         <div class="flex items-start gap-4">
           <UIcon
-            :name="term === 'recipe' ? 'i-lucide-book-open'
-              : term === 'fork' ? 'i-lucide-git-fork'
-              : term === 'branch' ? 'i-lucide-git-branch'
-              : term === 'commit' ? 'i-lucide-save'
-              : term === 'merge' ? 'i-lucide-git-merge'
-              : term === 'gourmergeRequest' ? 'i-lucide-git-pull-request'
-              : term === 'diff' ? 'i-lucide-diff'
-              : 'i-lucide-history'"
+            :name="
+              term === 'recipe'
+                ? 'i-lucide-book-open'
+                : term === 'fork'
+                  ? 'i-lucide-git-fork'
+                  : term === 'branch'
+                    ? 'i-lucide-git-branch'
+                    : term === 'commit'
+                      ? 'i-lucide-save'
+                      : term === 'merge'
+                        ? 'i-lucide-git-merge'
+                        : term === 'gourmergeRequest'
+                          ? 'i-lucide-git-pull-request'
+                          : term === 'diff'
+                            ? 'i-lucide-diff'
+                            : 'i-lucide-history'
+            "
             class="size-6 text-primary-500 shrink-0 mt-0.5"
           />
           <div class="flex-1">

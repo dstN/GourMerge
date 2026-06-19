@@ -48,11 +48,9 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     })
     await fetchSession()
     navigateTo('/dashboard')
-  }
-  catch (err: unknown) {
+  } catch (err: unknown) {
     error.value = (err as { data?: { statusMessage?: string } })?.data?.statusMessage || t('auth.registerError')
-  }
-  finally {
+  } finally {
     loading.value = false
   }
 }
@@ -77,7 +75,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         variant="subtle"
         icon="i-lucide-alert-circle"
         :title="error"
-        :close-button="{ onClick: () => error = '' }"
+        :close-button="{ onClick: () => (error = '') }"
       />
 
       <UFormField :label="t('auth.displayName')" name="displayName">

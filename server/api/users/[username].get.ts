@@ -54,9 +54,7 @@ export default defineEventHandler(async (event) => {
     })
     .from(recipes)
     .where(
-      isOwnProfile
-        ? eq(recipes.ownerId, user.id)
-        : and(eq(recipes.ownerId, user.id), eq(recipes.visibility, 'public'))
+      isOwnProfile ? eq(recipes.ownerId, user.id) : and(eq(recipes.ownerId, user.id), eq(recipes.visibility, 'public'))
     )
     .orderBy(desc(recipes.createdAt))
     .limit(50)
@@ -72,10 +70,7 @@ export default defineEventHandler(async (event) => {
       ownerId: recipes.ownerId,
     })
     .from(recipeStars)
-    .innerJoin(recipes, and(
-      eq(recipeStars.recipeId, recipes.id),
-      eq(recipes.visibility, 'public'),
-    ))
+    .innerJoin(recipes, and(eq(recipeStars.recipeId, recipes.id), eq(recipes.visibility, 'public')))
     .where(eq(recipeStars.userId, user.id))
     .orderBy(desc(recipeStars.createdAt))
     .limit(20)

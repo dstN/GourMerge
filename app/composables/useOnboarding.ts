@@ -26,9 +26,7 @@ export function useOnboarding() {
     return !!cookie.value
   })
 
-  const tourDismissed = computed(() =>
-    loggedIn.value ? !!user.value?.tourDismissed : !!cookie.value,
-  )
+  const tourDismissed = computed(() => (loggedIn.value ? !!user.value?.tourDismissed : !!cookie.value))
 
   async function completeOnboarding() {
     cookie.value = true

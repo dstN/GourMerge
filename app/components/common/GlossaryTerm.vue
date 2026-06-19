@@ -27,13 +27,16 @@ const props = defineProps<{
 const alias = computed(() => t(`glossary.${props.term}.alias`))
 const canonicalTerm = computed(() => t(`glossary.${props.term}.canonical`))
 const description = computed(() => t(`glossary.${props.term}.description`))
-const displayText = computed(() => props.canonical ? canonicalTerm.value : alias.value)
+const displayText = computed(() => (props.canonical ? canonicalTerm.value : alias.value))
 </script>
 
 <template>
   <UTooltip :text="`${canonicalTerm} — ${description}`" :delay-duration="300">
     <span
-      :class="['inline-flex items-center gap-0.5 cursor-help border-b border-dashed border-current/40 hover:border-current/80 transition-colors', props.class]"
+      :class="[
+        'inline-flex items-center gap-0.5 cursor-help border-b border-dashed border-current/40 hover:border-current/80 transition-colors',
+        props.class,
+      ]"
       role="term"
       :aria-label="`${displayText} (${canonicalTerm})`"
     >

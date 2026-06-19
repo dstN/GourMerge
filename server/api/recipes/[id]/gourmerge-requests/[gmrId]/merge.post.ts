@@ -52,7 +52,11 @@ async function loadSnapshot(db: ReturnType<typeof useDrizzle>, headCommitId: num
   return { ingredients: ings as MergeSnapshot['ingredients'], steps }
 }
 
-async function getAncestors(db: ReturnType<typeof useDrizzle>, startCommitId: number | null, limit = MAX_ANCESTOR_WALK): Promise<Set<number>> {
+async function getAncestors(
+  db: ReturnType<typeof useDrizzle>,
+  startCommitId: number | null,
+  limit = MAX_ANCESTOR_WALK
+): Promise<Set<number>> {
   const visited = new Set<number>()
   let current: number | null = startCommitId
   while (current !== null && visited.size < limit && db) {
@@ -77,14 +81,11 @@ export default defineEventHandler(async (event) => {
   if (!db) throw createError({ statusCode: 503, statusMessage: 'Database unavailable.' })
 
   // Verify recipe ownership
-  const [recipe] = await db
-    .select({ ownerId: recipes.ownerId })
-    .from(recipes)
-    .where(eq(recipes.id, recipeId))
-    .limit(1)
+  const [recipe] = await db.select({ ownerId: recipes.ownerId }).from(recipes).where(eq(recipes.id, recipeId)).limit(1)
 
   if (!recipe) throw createError({ statusCode: 404, statusMessage: 'Recipe not found' })
-  if (recipe.ownerId !== session.user.id) throw createError({ statusCode: 403, statusMessage: 'Only the recipe owner can merge' })
+  if (recipe.ownerId !== session.user.id)
+    throw createError({ statusCode: 403, statusMessage: 'Only the recipe owner can merge' })
 
   // Load the GourMerge Request
   const [gmr] = await db
@@ -94,7 +95,8 @@ export default defineEventHandler(async (event) => {
     .limit(1)
 
   if (!gmr) throw createError({ statusCode: 404, statusMessage: 'GourMerge Request not found' })
-  if (gmr.status !== 'open') throw createError({ statusCode: 422, statusMessage: `Cannot merge a ${gmr.status} GourMerge Request` })
+  if (gmr.status !== 'open')
+    throw createError({ statusCode: 422, statusMessage: `Cannot merge a ${gmr.status} GourMerge Request` })
 
   // Resolve branches
   const [sourceBranch, targetBranch] = await Promise.all([
@@ -114,7 +116,10 @@ export default defineEventHandler(async (event) => {
   let current: number | null = targetHeadId
   let steps = 0
   while (current !== null && steps < MAX_ANCESTOR_WALK) {
-    if (sourceAncestors.has(current)) { baseCommitId = current; break }
+    if (sourceAncestors.has(current)) {
+      baseCommitId = current
+      break
+    }
     const [commit] = await db
       .select({ parentCommitId: recipeCommits.parentCommitId })
       .from(recipeCommits)
@@ -145,14 +150,17 @@ export default defineEventHandler(async (event) => {
   // Execute merge in a transaction
   await db.transaction(async (tx) => {
     // 1. Create merge commit on target branch
-    const [mergeCommit] = await tx.insert(recipeCommits).values({
-      branchId: gmr.targetBranchId,
-      authorId: session.user.id,
-      message: `Merge: ${gmr.title}`,
-      parentCommitId: targetHeadId,
-      isMerge: true,
-      mergeSourceCommitId: sourceHeadId,
-    }).$returningId()
+    const [mergeCommit] = await tx
+      .insert(recipeCommits)
+      .values({
+        branchId: gmr.targetBranchId,
+        authorId: session.user.id,
+        message: `Merge: ${gmr.title}`,
+        parentCommitId: targetHeadId,
+        isMerge: true,
+        mergeSourceCommitId: sourceHeadId,
+      })
+      .$returningId()
 
     if (!mergeCommit) throw createError({ statusCode: 500, statusMessage: 'Insert failed.' })
 
@@ -188,10 +196,7 @@ export default defineEventHandler(async (event) => {
       .where(eq(recipeBranches.id, gmr.targetBranchId))
 
     // 5. Mark GourMerge Request as merged (immutable after this)
-    await tx
-      .update(gourmergeRequests)
-      .set({ status: 'merged' })
-      .where(eq(gourmergeRequests.id, gmrId))
+    await tx.update(gourmergeRequests).set({ status: 'merged' }).where(eq(gourmergeRequests.id, gmrId))
   })
 
   return { success: true, hasConflicts: false }

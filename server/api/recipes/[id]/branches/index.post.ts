@@ -9,8 +9,10 @@ import { eq, and } from 'drizzle-orm'
 import { recipes, recipeBranches } from '~~/server/database/schema'
 
 const createBranchSchema = z.object({
-  name: z.string()
-    .min(1).max(100)
+  name: z
+    .string()
+    .min(1)
+    .max(100)
     .regex(/^[a-zA-Z0-9_-]+$/, 'Branch name can only contain letters, numbers, underscores, and hyphens'),
   /** Branch to fork from (defaults to the default branch) */
   fromBranchId: z.number().int().optional(),
@@ -38,11 +40,7 @@ export default defineEventHandler(async (event) => {
   if (!db) throw createError({ statusCode: 503, statusMessage: 'Database unavailable.' })
 
   // ── Verify ownership ───────────────────────────────────────
-  const [recipe] = await db
-    .select({ ownerId: recipes.ownerId })
-    .from(recipes)
-    .where(eq(recipes.id, recipeId))
-    .limit(1)
+  const [recipe] = await db.select({ ownerId: recipes.ownerId }).from(recipes).where(eq(recipes.id, recipeId)).limit(1)
 
   if (!recipe || recipe.ownerId !== session.user.id) {
     throw createError({ statusCode: 403, statusMessage: 'Forbidden' })
@@ -52,10 +50,7 @@ export default defineEventHandler(async (event) => {
   const [existingBranch] = await db
     .select({ id: recipeBranches.id })
     .from(recipeBranches)
-    .where(and(
-      eq(recipeBranches.recipeId, recipeId),
-      eq(recipeBranches.name, name),
-    ))
+    .where(and(eq(recipeBranches.recipeId, recipeId), eq(recipeBranches.name, name)))
     .limit(1)
 
   if (existingBranch) {
@@ -68,10 +63,7 @@ export default defineEventHandler(async (event) => {
     const [found] = await db
       .select()
       .from(recipeBranches)
-      .where(and(
-        eq(recipeBranches.id, fromBranchId),
-        eq(recipeBranches.recipeId, recipeId),
-      ))
+      .where(and(eq(recipeBranches.id, fromBranchId), eq(recipeBranches.recipeId, recipeId)))
       .limit(1)
     sourceBranch = found
   } else {
@@ -79,10 +71,7 @@ export default defineEventHandler(async (event) => {
     const [found] = await db
       .select()
       .from(recipeBranches)
-      .where(and(
-        eq(recipeBranches.recipeId, recipeId),
-        eq(recipeBranches.isDefault, true),
-      ))
+      .where(and(eq(recipeBranches.recipeId, recipeId), eq(recipeBranches.isDefault, true)))
       .limit(1)
     sourceBranch = found
   }
@@ -92,12 +81,15 @@ export default defineEventHandler(async (event) => {
   }
 
   // ── Create the new branch pointing at the same head commit ─
-  const [branch] = await db.insert(recipeBranches).values({
-    recipeId,
-    name,
-    headCommitId: sourceBranch.headCommitId,
-    isDefault: false,
-  }).$returningId()
+  const [branch] = await db
+    .insert(recipeBranches)
+    .values({
+      recipeId,
+      name,
+      headCommitId: sourceBranch.headCommitId,
+      isDefault: false,
+    })
+    .$returningId()
 
   if (!branch) throw createError({ statusCode: 500, statusMessage: 'Insert failed.' })
 

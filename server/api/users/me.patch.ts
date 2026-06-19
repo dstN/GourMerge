@@ -36,7 +36,8 @@ export default defineEventHandler(async (event) => {
   if (result.data.bio !== undefined) updates.bio = result.data.bio ?? undefined
   if (result.data.avatarUrl !== undefined) updates.avatarUrl = result.data.avatarUrl ?? undefined
   if (result.data.preferredLocale !== undefined) updates.preferredLocale = result.data.preferredLocale
-  if (result.data.preferredMeasurementSystem !== undefined) updates.preferredMeasurementSystem = result.data.preferredMeasurementSystem
+  if (result.data.preferredMeasurementSystem !== undefined)
+    updates.preferredMeasurementSystem = result.data.preferredMeasurementSystem
   if (result.data.onboardingCompletedAt !== undefined) {
     updates.onboardingCompletedAt = result.data.onboardingCompletedAt
       ? new Date(result.data.onboardingCompletedAt)

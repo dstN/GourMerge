@@ -33,15 +33,22 @@ export function getLogger(): Logger {
 
   if (isProd) {
     const logsDir = join(process.cwd(), 'logs')
-    try { mkdirSync(logsDir, { recursive: true }) } catch { /* already exists */ }
+    try {
+      mkdirSync(logsDir, { recursive: true })
+    } catch {
+      /* already exists */
+    }
 
-    _logger = pino({
-      level: process.env.LOG_LEVEL || 'info',
-      redact: { paths: REDACT_PATHS, censor: '[REDACTED]' },
-    }, pino.destination({
-      dest: join(logsDir, 'app.log'),
-      sync: false,
-    }))
+    _logger = pino(
+      {
+        level: process.env.LOG_LEVEL || 'info',
+        redact: { paths: REDACT_PATHS, censor: '[REDACTED]' },
+      },
+      pino.destination({
+        dest: join(logsDir, 'app.log'),
+        sync: false,
+      })
+    )
   } else {
     // Use pino-pretty as a stream (not a transport worker) so it works in Nitro's
     // bundled dev environment where worker-thread module resolution can fail.

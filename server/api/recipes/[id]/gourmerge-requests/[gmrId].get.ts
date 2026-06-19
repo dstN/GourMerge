@@ -14,7 +14,10 @@ import {
 } from '~~/server/database/schema'
 import type { CommitIngredient, CommitStep } from '~~/shared/types'
 
-async function loadSnapshot(db: ReturnType<typeof useDrizzle>, headCommitId: number | null): Promise<{ ingredients: CommitIngredient[]; steps: CommitStep[] }> {
+async function loadSnapshot(
+  db: ReturnType<typeof useDrizzle>,
+  headCommitId: number | null
+): Promise<{ ingredients: CommitIngredient[]; steps: CommitStep[] }> {
   if (!headCommitId || !db) return { ingredients: [], steps: [] }
   const [ings, steps] = await Promise.all([
     db
@@ -42,7 +45,13 @@ async function loadSnapshot(db: ReturnType<typeof useDrizzle>, headCommitId: num
     ingredients: ings.map((ing) => ({
       ...ing,
       quantity: typeof ing.quantity === 'string' ? parseFloat(ing.quantity) : ing.quantity,
-      ingredient: { id: ing.ingredient.id, name: ing.ingredient.name, nameTranslations: {}, category: null, createdAt: '' },
+      ingredient: {
+        id: ing.ingredient.id,
+        name: ing.ingredient.name,
+        nameTranslations: {},
+        category: null,
+        createdAt: '',
+      },
     })),
     steps,
   }

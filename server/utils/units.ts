@@ -62,10 +62,7 @@ const FROM_METRIC: Record<string, { factor: number; sourceUnit: CanonicalUnit }>
  * toMetric(500, 'g')   → { quantity: 500, unit: 'g' }    // already canonical
  * toMetric(3, 'piece') → { quantity: 3, unit: 'piece' }  // passthrough
  */
-export function toMetric(
-  quantity: number,
-  unit: DisplayUnit,
-): { quantity: number; unit: CanonicalUnit } {
+export function toMetric(quantity: number, unit: DisplayUnit): { quantity: number; unit: CanonicalUnit } {
   // Already canonical?
   if (unit === 'g' || unit === 'ml' || unit === 'piece' || unit === 'pinch') {
     return { quantity, unit }
@@ -98,7 +95,7 @@ export function toMetric(
 export function fromMetric(
   quantity: number,
   canonicalUnit: CanonicalUnit,
-  targetUnit: DisplayUnit,
+  targetUnit: DisplayUnit
 ): { quantity: number; unit: DisplayUnit } {
   // Same unit? No conversion.
   if (canonicalUnit === targetUnit) {
@@ -124,7 +121,7 @@ export function fromMetric(
 export function getBestDisplayUnit(
   quantity: number,
   canonicalUnit: CanonicalUnit,
-  system: MeasurementSystem,
+  system: MeasurementSystem
 ): { quantity: number; unit: DisplayUnit } {
   if (canonicalUnit === 'piece' || canonicalUnit === 'pinch') {
     return { quantity, unit: canonicalUnit }
@@ -170,11 +167,7 @@ export function getBestDisplayUnit(
  * formatQuantityUnit(250, 'g', 'en')  → "250 g"
  * formatQuantityUnit(1.5, 'kg', 'de') → "1,5 kg"
  */
-export function formatQuantityUnit(
-  quantity: number,
-  unit: DisplayUnit,
-  locale: string = 'en',
-): string {
+export function formatQuantityUnit(quantity: number, unit: DisplayUnit, locale: string = 'en'): string {
   const formatted = new Intl.NumberFormat(locale, {
     maximumFractionDigits: 2,
     minimumFractionDigits: 0,

@@ -52,9 +52,7 @@ function handleClearError() {
       <!-- Logo -->
       <NuxtLink to="/" class="inline-flex items-center gap-2 mb-8 group">
         <CommonBrandLogo class="size-8 text-primary-500 group-hover:text-primary-400 transition-colors" />
-        <span class="text-xl font-bold">
-          Gour<span class="text-primary-500">Merge</span>
-        </span>
+        <span class="text-xl font-bold"> Gour<span class="text-primary-500">Merge</span> </span>
       </NuxtLink>
 
       <!-- Error Code -->
@@ -63,10 +61,7 @@ function handleClearError() {
       </div>
 
       <!-- Icon -->
-      <UIcon
-        :name="errorConfig.icon"
-        :class="['size-16 mx-auto mb-4', errorConfig.color]"
-      />
+      <UIcon :name="errorConfig.icon" :class="['size-16 mx-auto mb-4', errorConfig.color]" />
 
       <!-- Title & Description -->
       <h1 class="text-2xl font-bold mb-2">
@@ -78,12 +73,7 @@ function handleClearError() {
 
       <!-- Actions -->
       <div class="flex items-center justify-center gap-3">
-        <UButton
-          :label="t('error.goHome')"
-          icon="i-lucide-home"
-          size="lg"
-          @click="handleClearError"
-        />
+        <UButton :label="t('error.goHome')" icon="i-lucide-home" size="lg" @click="handleClearError" />
         <UButton
           :label="t('error.goBack')"
           icon="i-lucide-arrow-left"
@@ -99,7 +89,10 @@ function handleClearError() {
         <summary class="text-xs text-[var(--ui-text-dimmed)] cursor-pointer hover:text-[var(--ui-text-muted)]">
           {{ t('error.details') }}
         </summary>
-        <pre class="mt-2 p-4 rounded-lg bg-[var(--ui-bg-elevated)] text-xs text-[var(--ui-text-muted)] overflow-x-auto">{{ error.statusMessage }}</pre>
+        <pre
+          class="mt-2 p-4 rounded-lg bg-[var(--ui-bg-elevated)] text-xs text-[var(--ui-text-muted)] overflow-x-auto"
+          >{{ error.statusMessage }}</pre
+        >
       </details>
     </div>
   </div>

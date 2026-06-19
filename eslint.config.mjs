@@ -26,5 +26,5 @@ export default withNuxt(
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
     },
-  },
+  }
 )

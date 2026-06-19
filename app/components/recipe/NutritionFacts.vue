@@ -13,7 +13,7 @@ const props = defineProps<{
 const activeTab = ref<'serving' | 'total'>('serving')
 const showMicros = ref(false)
 
-const current = computed(() => activeTab.value === 'serving' ? props.perServing : props.total)
+const current = computed(() => (activeTab.value === 'serving' ? props.perServing : props.total))
 
 function fmt(n: number | null | undefined, decimals = 1) {
   if (n === null || n === undefined) return '–'
@@ -21,11 +21,17 @@ function fmt(n: number | null | undefined, decimals = 1) {
 }
 
 const macros = computed(() => [
-  { key: 'protein',     label: t('nutrition.protein'),     value: current.value.protein,     unit: 'g',   color: 'bg-blue-500' },
-  { key: 'carbs',       label: t('nutrition.carbs'),       value: current.value.carbs,       unit: 'g',   color: 'bg-amber-500' },
-  { key: 'fat',         label: t('nutrition.fat'),         value: current.value.fat,         unit: 'g',   color: 'bg-orange-500' },
-  { key: 'fiber',       label: t('nutrition.fiber'),       value: current.value.fiber,       unit: 'g',   color: 'bg-green-500' },
-  { key: 'saturatedFat',label: t('nutrition.saturatedFat'),value: current.value.saturatedFat,unit: 'g',   color: 'bg-red-400' },
+  { key: 'protein', label: t('nutrition.protein'), value: current.value.protein, unit: 'g', color: 'bg-blue-500' },
+  { key: 'carbs', label: t('nutrition.carbs'), value: current.value.carbs, unit: 'g', color: 'bg-amber-500' },
+  { key: 'fat', label: t('nutrition.fat'), value: current.value.fat, unit: 'g', color: 'bg-orange-500' },
+  { key: 'fiber', label: t('nutrition.fiber'), value: current.value.fiber, unit: 'g', color: 'bg-green-500' },
+  {
+    key: 'saturatedFat',
+    label: t('nutrition.saturatedFat'),
+    value: current.value.saturatedFat,
+    unit: 'g',
+    color: 'bg-red-400',
+  },
 ])
 
 // Macro energy ratio bars (protein 4 kcal/g, carbs 4 kcal/g, fat 9 kcal/g)
@@ -37,32 +43,56 @@ const macroKcal = computed(() => {
   return { protein: (p / total) * 100, carbs: (c / total) * 100, fat: (f / total) * 100 }
 })
 
-const VITAMIN_KEYS = ['vit_a_re_mcg', 'retinol_mcg', 'vit_b1_mg', 'vit_b2_mg', 'vit_b6_mg', 'vit_b12_mcg', 'niacin_mg', 'folate_mcg', 'pantothenic_mg', 'vit_c_mg', 'vit_d_mcg', 'vit_e_mg']
-const MINERAL_KEYS = ['potassium_mg', 'sodium_mg', 'chloride_mg', 'calcium_mg', 'magnesium_mg', 'phosphorus_mg', 'iron_mg', 'iodine_mcg', 'zinc_mg', 'selenium_mcg']
+const VITAMIN_KEYS = [
+  'vit_a_re_mcg',
+  'retinol_mcg',
+  'vit_b1_mg',
+  'vit_b2_mg',
+  'vit_b6_mg',
+  'vit_b12_mcg',
+  'niacin_mg',
+  'folate_mcg',
+  'pantothenic_mg',
+  'vit_c_mg',
+  'vit_d_mcg',
+  'vit_e_mg',
+]
+const MINERAL_KEYS = [
+  'potassium_mg',
+  'sodium_mg',
+  'chloride_mg',
+  'calcium_mg',
+  'magnesium_mg',
+  'phosphorus_mg',
+  'iron_mg',
+  'iodine_mcg',
+  'zinc_mg',
+  'selenium_mcg',
+]
 
 const MICRO_LABELS: Record<string, string> = {
-  vit_a_re_mcg:   'Vit. A',
-  retinol_mcg:    'Retinol',
-  vit_b1_mg:      'Vit. B1',
-  vit_b2_mg:      'Vit. B2',
-  vit_b6_mg:      'Vit. B6',
-  vit_b12_mcg:    'Vit. B12',
-  niacin_mg:      'Niacin',
-  folate_mcg:     'Folat',
+  vit_a_re_mcg: 'Vit. A',
+  retinol_mcg: 'Retinol',
+  vit_b1_mg: 'Vit. B1',
+  vit_b2_mg: 'Vit. B2',
+  vit_b6_mg: 'Vit. B6',
+  vit_b12_mcg: 'Vit. B12',
+  niacin_mg: 'Niacin',
+  folate_mcg: 'Folat',
   pantothenic_mg: 'Vit. B5',
-  vit_c_mg:       'Vit. C',
-  vit_d_mcg:      'Vit. D',
-  vit_e_mg:       'Vit. E',
-  potassium_mg:   'Kalium',
-  sodium_mg:      'Natrium',
-  chloride_mg:    'Chlorid',
-  calcium_mg:     'Calcium',
-  magnesium_mg:   'Magnesium',
-  phosphorus_mg:  'Phosphor',
-  iron_mg:        'Eisen',
-  iodine_mcg:     'Jod',
-  zinc_mg:        'Zink',
-  selenium_mcg:   'Selen',
+  vit_c_mg: 'Vit. C',
+  vit_d_mcg: 'Vit. D',
+  vit_e_mg: 'Vit. E',
+  potassium_mg: 'Kalium',
+  sodium_mg: 'Natrium',
+  chloride_mg: 'Chlorid',
+  calcium_mg: 'Calcium',
+  magnesium_mg: 'Magnesium',
+  phosphorus_mg: 'Phosphor',
+  iron_mg: 'Eisen',
+  iodine_mcg: 'Jod',
+  zinc_mg: 'Zink',
+  selenium_mcg: 'Selen',
 }
 
 function unitFromKey(key: string): string {
@@ -75,8 +105,8 @@ function microItems(keys: string[]) {
   const m = current.value.micros
   if (!m) return []
   return keys
-    .filter(k => m[k] !== undefined && m[k] > 0)
-    .map(k => ({ key: k, label: MICRO_LABELS[k] ?? k, value: m[k], unit: unitFromKey(k) }))
+    .filter((k) => m[k] !== undefined && m[k] > 0)
+    .map((k) => ({ key: k, label: MICRO_LABELS[k] ?? k, value: m[k], unit: unitFromKey(k) }))
 }
 
 const vitamins = computed(() => microItems(VITAMIN_KEYS))
@@ -86,10 +116,7 @@ const hasMicros = computed(() => vitamins.value.length > 0 || minerals.value.len
 
 <template>
   <!-- ── Compact bar ──────────────────────────────────────── -->
-  <div
-    v-if="compact"
-    class="rounded-xl border border-[var(--ui-border)] bg-[var(--ui-bg-elevated)] px-4 py-3 mb-6"
-  >
+  <div v-if="compact" class="rounded-xl border border-[var(--ui-border)] bg-[var(--ui-bg-elevated)] px-4 py-3 mb-6">
     <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
       <!-- Energy -->
       <div class="flex items-center gap-1.5 shrink-0">
@@ -138,7 +165,9 @@ const hasMicros = computed(() => vitamins.value.length > 0 || minerals.value.len
       <!-- Micros toggle + coverage -->
       <div class="ml-auto flex items-center gap-3">
         <UPopover v-if="total.missingCount > 0" mode="hover" class="hidden sm:flex">
-          <button class="flex items-center gap-1 text-xs text-[var(--ui-text-dimmed)] hover:text-[var(--ui-text-muted)] transition-colors">
+          <button
+            class="flex items-center gap-1 text-xs text-[var(--ui-text-dimmed)] hover:text-[var(--ui-text-muted)] transition-colors"
+          >
             <UIcon name="i-lucide-info" class="size-3 shrink-0" />
             {{ t('nutrition.missingCount', { n: total.missingCount }) }}
           </button>
@@ -173,20 +202,30 @@ const hasMicros = computed(() => vitamins.value.length > 0 || minerals.value.len
     <template v-if="showMicros && hasMicros">
       <div class="mt-3 pt-3 border-t border-[var(--ui-border)] grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3">
         <div v-if="vitamins.length > 0">
-          <p class="text-xs font-semibold uppercase tracking-wide text-[var(--ui-text-dimmed)] mb-1.5">{{ t('nutrition.vitamins') }}</p>
+          <p class="text-xs font-semibold uppercase tracking-wide text-[var(--ui-text-dimmed)] mb-1.5">
+            {{ t('nutrition.vitamins') }}
+          </p>
           <div class="grid grid-cols-3 sm:grid-cols-4 gap-1.5">
             <div v-for="m in vitamins" :key="m.key" class="rounded bg-[var(--ui-bg)] px-2 py-1">
               <div class="text-xs text-[var(--ui-text-muted)] truncate">{{ m.label }}</div>
-              <div class="text-xs font-medium">{{ fmt(m.value, m.unit === 'mg' ? 1 : 2) }}<span class="text-[var(--ui-text-dimmed)]"> {{ m.unit }}</span></div>
+              <div class="text-xs font-medium">
+                {{ fmt(m.value, m.unit === 'mg' ? 1 : 2)
+                }}<span class="text-[var(--ui-text-dimmed)]"> {{ m.unit }}</span>
+              </div>
             </div>
           </div>
         </div>
         <div v-if="minerals.length > 0">
-          <p class="text-xs font-semibold uppercase tracking-wide text-[var(--ui-text-dimmed)] mb-1.5">{{ t('nutrition.minerals') }}</p>
+          <p class="text-xs font-semibold uppercase tracking-wide text-[var(--ui-text-dimmed)] mb-1.5">
+            {{ t('nutrition.minerals') }}
+          </p>
           <div class="grid grid-cols-3 sm:grid-cols-4 gap-1.5">
             <div v-for="m in minerals" :key="m.key" class="rounded bg-[var(--ui-bg)] px-2 py-1">
               <div class="text-xs text-[var(--ui-text-muted)] truncate">{{ m.label }}</div>
-              <div class="text-xs font-medium">{{ fmt(m.value, m.unit === 'mg' ? 1 : 2) }}<span class="text-[var(--ui-text-dimmed)]"> {{ m.unit }}</span></div>
+              <div class="text-xs font-medium">
+                {{ fmt(m.value, m.unit === 'mg' ? 1 : 2)
+                }}<span class="text-[var(--ui-text-dimmed)]"> {{ m.unit }}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -214,13 +253,19 @@ const hasMicros = computed(() => vitamins.value.length > 0 || minerals.value.len
         <!-- Per-serving / Total toggle -->
         <div class="flex rounded-lg overflow-hidden border border-[var(--ui-border)] text-sm">
           <button
-            :class="['px-3 py-1 transition-colors', activeTab === 'serving' ? 'bg-primary-500 text-white' : 'hover:bg-[var(--ui-bg-elevated)]']"
+            :class="[
+              'px-3 py-1 transition-colors',
+              activeTab === 'serving' ? 'bg-primary-500 text-white' : 'hover:bg-[var(--ui-bg-elevated)]',
+            ]"
             @click="activeTab = 'serving'"
           >
             {{ t('nutrition.perServing') }}
           </button>
           <button
-            :class="['px-3 py-1 transition-colors', activeTab === 'total' ? 'bg-primary-500 text-white' : 'hover:bg-[var(--ui-bg-elevated)]']"
+            :class="[
+              'px-3 py-1 transition-colors',
+              activeTab === 'total' ? 'bg-primary-500 text-white' : 'hover:bg-[var(--ui-bg-elevated)]',
+            ]"
             @click="activeTab = 'total'"
           >
             {{ t('nutrition.total') }}
@@ -251,11 +296,7 @@ const hasMicros = computed(() => vitamins.value.length > 0 || minerals.value.len
 
     <!-- Macros grid -->
     <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-      <div
-        v-for="m in macros"
-        :key="m.key"
-        class="rounded-lg bg-[var(--ui-bg-elevated)] px-3 py-2"
-      >
+      <div v-for="m in macros" :key="m.key" class="rounded-lg bg-[var(--ui-bg-elevated)] px-3 py-2">
         <div class="flex items-center gap-1.5 mb-0.5">
           <span class="inline-block size-2 rounded-full" :class="m.color" />
           <span class="text-xs text-[var(--ui-text-muted)]">{{ m.label }}</span>
@@ -283,11 +324,7 @@ const hasMicros = computed(() => vitamins.value.length > 0 || minerals.value.len
               {{ t('nutrition.vitamins') }}
             </p>
             <div class="grid grid-cols-3 sm:grid-cols-4 gap-2">
-              <div
-                v-for="m in vitamins"
-                :key="m.key"
-                class="rounded bg-[var(--ui-bg-elevated)] px-2 py-1.5"
-              >
+              <div v-for="m in vitamins" :key="m.key" class="rounded bg-[var(--ui-bg-elevated)] px-2 py-1.5">
                 <div class="text-xs text-[var(--ui-text-muted)] truncate">{{ m.label }}</div>
                 <div class="text-sm font-medium leading-tight">
                   {{ fmt(m.value, m.unit === 'mg' ? 1 : 2) }}
@@ -303,11 +340,7 @@ const hasMicros = computed(() => vitamins.value.length > 0 || minerals.value.len
               {{ t('nutrition.minerals') }}
             </p>
             <div class="grid grid-cols-3 sm:grid-cols-4 gap-2">
-              <div
-                v-for="m in minerals"
-                :key="m.key"
-                class="rounded bg-[var(--ui-bg-elevated)] px-2 py-1.5"
-              >
+              <div v-for="m in minerals" :key="m.key" class="rounded bg-[var(--ui-bg-elevated)] px-2 py-1.5">
                 <div class="text-xs text-[var(--ui-text-muted)] truncate">{{ m.label }}</div>
                 <div class="text-sm font-medium leading-tight">
                   {{ fmt(m.value, m.unit === 'mg' ? 1 : 2) }}
@@ -322,7 +355,9 @@ const hasMicros = computed(() => vitamins.value.length > 0 || minerals.value.len
 
     <!-- Coverage disclaimer with popover -->
     <UPopover v-if="total.missingCount > 0" mode="hover" class="mt-4">
-      <button class="flex items-center gap-1 text-xs text-[var(--ui-text-dimmed)] hover:text-[var(--ui-text-muted)] transition-colors">
+      <button
+        class="flex items-center gap-1 text-xs text-[var(--ui-text-dimmed)] hover:text-[var(--ui-text-muted)] transition-colors"
+      >
         <UIcon name="i-lucide-info" class="size-3.5 shrink-0" />
         {{ t('nutrition.missingCount', { n: total.missingCount }) }}
       </button>

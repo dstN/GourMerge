@@ -37,11 +37,7 @@ export default defineEventHandler(async (event) => {
   const db = useDrizzle()
   if (!db) throw createError({ statusCode: 503, statusMessage: 'Database unavailable.' })
 
-  const [recipe] = await db
-    .select({ ownerId: recipes.ownerId })
-    .from(recipes)
-    .where(eq(recipes.id, recipeId))
-    .limit(1)
+  const [recipe] = await db.select({ ownerId: recipes.ownerId }).from(recipes).where(eq(recipes.id, recipeId)).limit(1)
 
   if (!recipe) throw createError({ statusCode: 404, statusMessage: 'Recipe not found' })
 
@@ -65,7 +61,10 @@ export default defineEventHandler(async (event) => {
     }
     const allowed = ALLOWED_TRANSITIONS[gmr.status] ?? []
     if (!allowed.includes(result.data.status)) {
-      throw createError({ statusCode: 422, statusMessage: `Cannot transition from '${gmr.status}' to '${result.data.status}'` })
+      throw createError({
+        statusCode: 422,
+        statusMessage: `Cannot transition from '${gmr.status}' to '${result.data.status}'`,
+      })
     }
     updates.status = result.data.status
   }
@@ -74,10 +73,7 @@ export default defineEventHandler(async (event) => {
 
   if (Object.keys(updates).length === 0) return { success: true }
 
-  await db
-    .update(gourmergeRequests)
-    .set(updates)
-    .where(eq(gourmergeRequests.id, gmrId))
+  await db.update(gourmergeRequests).set(updates).where(eq(gourmergeRequests.id, gmrId))
 
   return { success: true }
 })

@@ -14,7 +14,12 @@ export default defineEventHandler(async (event) => {
   if (!db) throw createError({ statusCode: 503, statusMessage: 'Database unavailable.' })
 
   const [row] = await db
-    .select({ id: emailVerificationTokens.id, userId: emailVerificationTokens.userId, expiresAt: emailVerificationTokens.expiresAt, usedAt: emailVerificationTokens.usedAt })
+    .select({
+      id: emailVerificationTokens.id,
+      userId: emailVerificationTokens.userId,
+      expiresAt: emailVerificationTokens.expiresAt,
+      usedAt: emailVerificationTokens.usedAt,
+    })
     .from(emailVerificationTokens)
     .where(eq(emailVerificationTokens.tokenHash, tokenHash))
     .limit(1)
@@ -25,13 +30,9 @@ export default defineEventHandler(async (event) => {
 
   // Mark token as used + set emailVerifiedAt on user (same transaction for safety).
   await db.transaction(async (tx) => {
-    await tx.update(emailVerificationTokens)
-      .set({ usedAt: new Date() })
-      .where(eq(emailVerificationTokens.id, row.id))
+    await tx.update(emailVerificationTokens).set({ usedAt: new Date() }).where(eq(emailVerificationTokens.id, row.id))
 
-    await tx.update(users)
-      .set({ emailVerifiedAt: new Date() })
-      .where(eq(users.id, row.userId))
+    await tx.update(users).set({ emailVerifiedAt: new Date() }).where(eq(users.id, row.userId))
   })
 
   // Redirect to success page.

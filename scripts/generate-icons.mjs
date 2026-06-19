@@ -34,9 +34,7 @@ const ORANGE = '#f97316'
 // The source uses fill="#000000"; we swap it to ORANGE and change the
 // internal g transform to use the correct coordinate system.
 const sourceSvg = readFileSync(resolve(ROOT, 'public/logo_gourmerge.svg'), 'utf8')
-const orangeSvg = sourceSvg
-  .replace(/fill="#000000"/g, `fill="${ORANGE}"`)
-  .replace(/fill="black"/gi, `fill="${ORANGE}"`)
+const orangeSvg = sourceSvg.replace(/fill="#000000"/g, `fill="${ORANGE}"`).replace(/fill="black"/gi, `fill="${ORANGE}"`)
 
 // ── Maskable SVG: add 18% safe-zone padding by scaling down the glyph ────────
 // For maskable icons, the glyph must fit within the central 80% circle.
@@ -57,14 +55,14 @@ const maskableSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${MASKABLE_S
 
 // ── Outputs ──────────────────────────────────────────────────────────────────
 const outputs = [
-  { file: 'public/favicon.svg',                  type: 'svg',  svg: orangeSvg },
-  { file: 'public/icon.svg',                     type: 'svg',  svg: orangeSvg },
-  { file: 'public/pwa-64x64.png',                type: 'png',  size: 64,  svg: orangeSvg },
-  { file: 'public/pwa-192x192.png',              type: 'png',  size: 192, svg: orangeSvg },
-  { file: 'public/pwa-512x512.png',              type: 'png',  size: 512, svg: orangeSvg },
-  { file: 'public/apple-touch-icon-180x180.png', type: 'png',  size: 180, svg: orangeSvg },
-  { file: 'public/maskable-icon-512x512.png',    type: 'png',  size: 512, svg: maskableSvg },
-  { file: 'public/favicon.ico',                  type: 'ico',  size: 32,  svg: orangeSvg },
+  { file: 'public/favicon.svg', type: 'svg', svg: orangeSvg },
+  { file: 'public/icon.svg', type: 'svg', svg: orangeSvg },
+  { file: 'public/pwa-64x64.png', type: 'png', size: 64, svg: orangeSvg },
+  { file: 'public/pwa-192x192.png', type: 'png', size: 192, svg: orangeSvg },
+  { file: 'public/pwa-512x512.png', type: 'png', size: 512, svg: orangeSvg },
+  { file: 'public/apple-touch-icon-180x180.png', type: 'png', size: 180, svg: orangeSvg },
+  { file: 'public/maskable-icon-512x512.png', type: 'png', size: 512, svg: maskableSvg },
+  { file: 'public/favicon.ico', type: 'ico', size: 32, svg: orangeSvg },
 ]
 
 async function generatePng(svgContent, size) {
@@ -77,7 +75,8 @@ async function generatePng(svgContent, size) {
 async function main() {
   console.log(`GourMerge Icon Generator — orange glyph on transparent bg`)
   if (isDryRun) {
-    for (const o of outputs) console.log(`  DRY-RUN: would write ${o.file} (${o.type}${o.size ? ` ${o.size}×${o.size}` : ''})`)
+    for (const o of outputs)
+      console.log(`  DRY-RUN: would write ${o.file} (${o.type}${o.size ? ` ${o.size}×${o.size}` : ''})`)
     console.log(`DRY-RUN complete — ${outputs.length} files would be generated`)
     return
   }
@@ -112,22 +111,25 @@ function buildIco(pngBuffer, size) {
   const imageOffset = HEADER_SIZE + ENTRY_SIZE
 
   const header = Buffer.alloc(HEADER_SIZE)
-  header.writeUInt16LE(0, 0)     // Reserved
-  header.writeUInt16LE(1, 2)     // Type: ICO
-  header.writeUInt16LE(1, 4)     // Image count: 1
+  header.writeUInt16LE(0, 0) // Reserved
+  header.writeUInt16LE(1, 2) // Type: ICO
+  header.writeUInt16LE(1, 4) // Image count: 1
 
   const entry = Buffer.alloc(ENTRY_SIZE)
   const dim = size >= 256 ? 0 : size
-  entry.writeUInt8(dim, 0)            // Width (0 = 256)
-  entry.writeUInt8(dim, 1)            // Height (0 = 256)
-  entry.writeUInt8(0, 2)              // Color count
-  entry.writeUInt8(0, 3)              // Reserved
-  entry.writeUInt16LE(1, 4)           // Color planes
-  entry.writeUInt16LE(32, 6)          // Bits per pixel
-  entry.writeUInt32LE(pngBuffer.length, 8)   // Image data size
-  entry.writeUInt32LE(imageOffset, 12)       // Offset to image data
+  entry.writeUInt8(dim, 0) // Width (0 = 256)
+  entry.writeUInt8(dim, 1) // Height (0 = 256)
+  entry.writeUInt8(0, 2) // Color count
+  entry.writeUInt8(0, 3) // Reserved
+  entry.writeUInt16LE(1, 4) // Color planes
+  entry.writeUInt16LE(32, 6) // Bits per pixel
+  entry.writeUInt32LE(pngBuffer.length, 8) // Image data size
+  entry.writeUInt32LE(imageOffset, 12) // Offset to image data
 
   return Buffer.concat([header, entry, pngBuffer])
 }
 
-main().catch(e => { console.error(e); process.exit(1) })
+main().catch((e) => {
+  console.error(e)
+  process.exit(1)
+})

@@ -26,7 +26,9 @@ function loadEnv() {
       const m = line.match(/^([A-Z_][A-Z0-9_]*)=(.*)$/)
       if (m && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/^["']|["']$/g, '')
     }
-  } catch { /* no .env file — rely on environment */ }
+  } catch {
+    /* no .env file — rely on environment */
+  }
 }
 loadEnv()
 
@@ -40,8 +42,19 @@ if (!DATABASE_URL) {
 // Tag list: { name (canonical EN), nameTranslations }
 // ────────────────────────────────────────────────────────────
 const TAGS = [
-  { name: 'Quick', nameTranslations: { de: 'Schnell (<30 Min)', en: 'Quick (<30 min)', fr: 'Rapide (<30 min)', it: 'Veloce (<30 min)' } },
-  { name: 'Meal Prep', nameTranslations: { de: 'Meal Prep', en: 'Meal Prep', fr: 'Préparation repas', it: 'Meal Prep' } },
+  {
+    name: 'Quick',
+    nameTranslations: {
+      de: 'Schnell (<30 Min)',
+      en: 'Quick (<30 min)',
+      fr: 'Rapide (<30 min)',
+      it: 'Veloce (<30 min)',
+    },
+  },
+  {
+    name: 'Meal Prep',
+    nameTranslations: { de: 'Meal Prep', en: 'Meal Prep', fr: 'Préparation repas', it: 'Meal Prep' },
+  },
   { name: 'Baking', nameTranslations: { de: 'Backen', en: 'Baking', fr: 'Pâtisserie', it: 'Pasticceria' } },
   { name: 'One Pot', nameTranslations: { de: 'Ein-Topf', en: 'One Pot', fr: 'Un seul pot', it: 'Un tegame' } },
   { name: 'Soup', nameTranslations: { de: 'Suppe', en: 'Soup', fr: 'Soupe', it: 'Zuppa' } },
@@ -51,7 +64,10 @@ const TAGS = [
   { name: 'BBQ', nameTranslations: { de: 'Grillen', en: 'BBQ', fr: 'BBQ', it: 'Barbecue' } },
   { name: 'Budget', nameTranslations: { de: 'Günstig', en: 'Budget', fr: 'Économique', it: 'Economico' } },
   { name: 'Spicy', nameTranslations: { de: 'Scharf', en: 'Spicy', fr: 'Épicé', it: 'Piccante' } },
-  { name: 'Street Food', nameTranslations: { de: 'Street Food', en: 'Street Food', fr: 'Street Food', it: 'Street Food' } },
+  {
+    name: 'Street Food',
+    nameTranslations: { de: 'Street Food', en: 'Street Food', fr: 'Street Food', it: 'Street Food' },
+  },
 ]
 
 // ────────────────────────────────────────────────────────────
@@ -71,10 +87,10 @@ try {
       continue
     }
 
-    const [result] = await conn.execute(
-      'INSERT IGNORE INTO tags (name, name_translations) VALUES (?, ?)',
-      [tag.name, nameTranslations]
-    )
+    const [result] = await conn.execute('INSERT IGNORE INTO tags (name, name_translations) VALUES (?, ?)', [
+      tag.name,
+      nameTranslations,
+    ])
 
     if (result.affectedRows > 0) {
       inserted++

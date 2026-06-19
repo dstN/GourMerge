@@ -2,7 +2,14 @@
  * GET /api/recipes/:id — Get a single recipe with branches
  */
 import { eq } from 'drizzle-orm'
-import { recipes, users, recipeBranches, recipeCommitIngredients, recipeCommitSteps, ingredients } from '~~/server/database/schema'
+import {
+  recipes,
+  users,
+  recipeBranches,
+  recipeCommitIngredients,
+  recipeCommitSteps,
+  ingredients,
+} from '~~/server/database/schema'
 
 export default defineEventHandler(async (event) => {
   const id = Number(getRouterParam(event, 'id'))
@@ -54,35 +61,36 @@ export default defineEventHandler(async (event) => {
   }
 
   // ── Get branches ────────────────────────────────────────────
-  const branches = await db
-    .select()
-    .from(recipeBranches)
-    .where(eq(recipeBranches.recipeId, id))
+  const branches = await db.select().from(recipeBranches).where(eq(recipeBranches.recipeId, id))
 
   // ── Get latest commit from default branch ───────────────────
   const defaultBranch = branches.find((b) => b.isDefault) || branches[0]
   const headCommitId = defaultBranch?.headCommitId
 
-  const currentIngredients = headCommitId ? await db
-    .select({
-      id: recipeCommitIngredients.id,
-      ingredientId: recipeCommitIngredients.ingredientId,
-      ingredientName: ingredients.name,
-      quantity: recipeCommitIngredients.quantity,
-      unit: recipeCommitIngredients.unit,
-      notes: recipeCommitIngredients.notes,
-      sortOrder: recipeCommitIngredients.sortOrder,
-    })
-    .from(recipeCommitIngredients)
-    .innerJoin(ingredients, eq(recipeCommitIngredients.ingredientId, ingredients.id))
-    .where(eq(recipeCommitIngredients.commitId, headCommitId))
-    .orderBy(recipeCommitIngredients.sortOrder) : []
+  const currentIngredients = headCommitId
+    ? await db
+        .select({
+          id: recipeCommitIngredients.id,
+          ingredientId: recipeCommitIngredients.ingredientId,
+          ingredientName: ingredients.name,
+          quantity: recipeCommitIngredients.quantity,
+          unit: recipeCommitIngredients.unit,
+          notes: recipeCommitIngredients.notes,
+          sortOrder: recipeCommitIngredients.sortOrder,
+        })
+        .from(recipeCommitIngredients)
+        .innerJoin(ingredients, eq(recipeCommitIngredients.ingredientId, ingredients.id))
+        .where(eq(recipeCommitIngredients.commitId, headCommitId))
+        .orderBy(recipeCommitIngredients.sortOrder)
+    : []
 
-  const currentSteps = headCommitId ? await db
-    .select()
-    .from(recipeCommitSteps)
-    .where(eq(recipeCommitSteps.commitId, headCommitId))
-    .orderBy(recipeCommitSteps.sortOrder) : []
+  const currentSteps = headCommitId
+    ? await db
+        .select()
+        .from(recipeCommitSteps)
+        .where(eq(recipeCommitSteps.commitId, headCommitId))
+        .orderBy(recipeCommitSteps.sortOrder)
+    : []
 
   return {
     ...recipe,

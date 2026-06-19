@@ -26,7 +26,9 @@ function loadEnv() {
       const m = line.match(/^([A-Z_][A-Z0-9_]*)=(.*)$/)
       if (m && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/^["']|["']$/g, '')
     }
-  } catch { /* no .env file — rely on environment */ }
+  } catch {
+    /* no .env file — rely on environment */
+  }
 }
 loadEnv()
 
@@ -67,19 +69,17 @@ try {
       continue
     }
 
-    const [existing] = await conn.execute(
-      'SELECT id FROM ingredients WHERE LOWER(name) = LOWER(?)',
-      [ing.name]
-    )
+    const [existing] = await conn.execute('SELECT id FROM ingredients WHERE LOWER(name) = LOWER(?)', [ing.name])
     if (existing.length > 0) {
       skipped++
       continue
     }
 
-    await conn.execute(
-      'INSERT INTO ingredients (name, name_translations, category) VALUES (?, ?, ?)',
-      [ing.name, nameTranslations, ing.category]
-    )
+    await conn.execute('INSERT INTO ingredients (name, name_translations, category) VALUES (?, ?, ?)', [
+      ing.name,
+      nameTranslations,
+      ing.category,
+    ])
     inserted++
   }
 

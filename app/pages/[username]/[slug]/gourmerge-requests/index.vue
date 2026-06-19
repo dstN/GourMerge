@@ -11,10 +11,9 @@ const username = computed(() => route.params.username as string)
 const slug = computed(() => route.params.slug as string)
 const recipeUrl = computed(() => `/${username.value}/${slug.value}`)
 
-const { data: recipe } = useFetch<RecipeDetail>(
-  () => `/api/recipes/by-slug/${username.value}/${slug.value}`,
-  { headers: useRequestHeaders(['cookie']) },
-)
+const { data: recipe } = useFetch<RecipeDetail>(() => `/api/recipes/by-slug/${username.value}/${slug.value}`, {
+  headers: useRequestHeaders(['cookie']),
+})
 
 const statusFilter = ref('open')
 
@@ -26,7 +25,7 @@ const { data: requests, pending } = useFetch<GourmergeRequestListItem[]>(
     headers: useRequestHeaders(['cookie']),
     query: computed(() => ({ status: statusFilter.value })),
     watch: [statusFilter, recipeId],
-  },
+  }
 )
 
 const statusColors: Record<string, 'success' | 'neutral' | 'primary' | 'warning'> = {
@@ -37,7 +36,7 @@ const statusColors: Record<string, 'success' | 'neutral' | 'primary' | 'warning'
 }
 
 useSeoMeta({
-  title: () => recipe.value ? `${t('gourmergeRequest.titlePlural')} — ${recipe.value.title}` : 'GourMerge',
+  title: () => (recipe.value ? `${t('gourmergeRequest.titlePlural')} — ${recipe.value.title}` : 'GourMerge'),
 })
 </script>
 
@@ -97,7 +96,12 @@ useSeoMeta({
         <div class="flex items-start justify-between gap-4">
           <div class="flex-1 min-w-0">
             <div class="flex items-center gap-2 mb-1">
-              <UBadge :color="statusColors[r.status]" variant="subtle" :label="t(`gourmergeRequest.${r.status}`)" size="xs" />
+              <UBadge
+                :color="statusColors[r.status]"
+                variant="subtle"
+                :label="t(`gourmergeRequest.${r.status}`)"
+                size="xs"
+              />
               <span class="font-semibold truncate">{{ r.title }}</span>
             </div>
             <p class="text-sm text-[var(--ui-text-muted)]">

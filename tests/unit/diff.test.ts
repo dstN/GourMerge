@@ -2,7 +2,12 @@ import { describe, it, expect } from 'vitest'
 import { computeIngredientDiff, computeTextDiff, computeStepsDiff, computeCommitDiff } from '../../server/utils/diff'
 import type { CommitIngredient, CommitStep } from '../../shared/types'
 
-function makeIngredient(id: number, quantity: number, unit: CommitIngredient['unit'] = 'g', name = `Ingredient ${id}`): CommitIngredient {
+function makeIngredient(
+  id: number,
+  quantity: number,
+  unit: CommitIngredient['unit'] = 'g',
+  name = `Ingredient ${id}`
+): CommitIngredient {
   return {
     id: id * 100,
     commitId: 1,
@@ -105,8 +110,8 @@ describe('computeTextDiff', () => {
     const result = computeTextDiff('Add salt and pepper', 'Add salt and sugar')
     const types = new Set(result.map((s) => s.type))
     expect(types).toContain(-1) // deletion of "pepper"
-    expect(types).toContain(1)  // insertion of "sugar"
-    expect(types).toContain(0)  // unchanged "Add salt and "
+    expect(types).toContain(1) // insertion of "sugar"
+    expect(types).toContain(0) // unchanged "Add salt and "
   })
 })
 
@@ -161,10 +166,10 @@ describe('computeCommitDiff', () => {
     }
     const diff = computeCommitDiff(commitA, commitB)
     expect(diff.summary.ingredientsModified).toBe(1) // ingredient 1 changed quantity
-    expect(diff.summary.ingredientsRemoved).toBe(1)  // ingredient 2 removed
-    expect(diff.summary.ingredientsAdded).toBe(1)    // ingredient 3 added
-    expect(diff.summary.stepsModified).toBe(1)       // step 1 modified
-    expect(diff.summary.stepsAdded).toBe(1)          // step 3 added
+    expect(diff.summary.ingredientsRemoved).toBe(1) // ingredient 2 removed
+    expect(diff.summary.ingredientsAdded).toBe(1) // ingredient 3 added
+    expect(diff.summary.stepsModified).toBe(1) // step 1 modified
+    expect(diff.summary.stepsAdded).toBe(1) // step 3 added
   })
 
   it('returns zero summary for identical commits', () => {

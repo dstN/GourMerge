@@ -65,10 +65,7 @@ export default defineEventHandler(async (event) => {
       updatedAt: recipes.updatedAt,
     })
     .from(recipes)
-    .where(and(
-      eq(recipes.ownerId, owner.id),
-      eq(recipes.slug, slug),
-    ))
+    .where(and(eq(recipes.ownerId, owner.id), eq(recipes.slug, slug)))
     .limit(1)
 
   if (!recipe) {
@@ -95,35 +92,36 @@ export default defineEventHandler(async (event) => {
   }
 
   // ── Get branches ───────────────────────────────────────────
-  const branches = await db
-    .select()
-    .from(recipeBranches)
-    .where(eq(recipeBranches.recipeId, recipe.id))
+  const branches = await db.select().from(recipeBranches).where(eq(recipeBranches.recipeId, recipe.id))
 
   // ── Get latest commit from default branch ──────────────────
   const defaultBranch = branches.find((b) => b.isDefault) || branches[0]
   const headCommitId = defaultBranch?.headCommitId
 
-  const currentIngredients = headCommitId ? await db
-    .select({
-      id: recipeCommitIngredients.id,
-      ingredientId: recipeCommitIngredients.ingredientId,
-      ingredientName: sql<string>`COALESCE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(${ingredients.nameTranslations}, ${`$.${locale}`})), 'null'), ${ingredients.name})`,
-      quantity: recipeCommitIngredients.quantity,
-      unit: recipeCommitIngredients.unit,
-      notes: recipeCommitIngredients.notes,
-      sortOrder: recipeCommitIngredients.sortOrder,
-    })
-    .from(recipeCommitIngredients)
-    .innerJoin(ingredients, eq(recipeCommitIngredients.ingredientId, ingredients.id))
-    .where(eq(recipeCommitIngredients.commitId, headCommitId))
-    .orderBy(recipeCommitIngredients.sortOrder) : []
+  const currentIngredients = headCommitId
+    ? await db
+        .select({
+          id: recipeCommitIngredients.id,
+          ingredientId: recipeCommitIngredients.ingredientId,
+          ingredientName: sql<string>`COALESCE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(${ingredients.nameTranslations}, ${`$.${locale}`})), 'null'), ${ingredients.name})`,
+          quantity: recipeCommitIngredients.quantity,
+          unit: recipeCommitIngredients.unit,
+          notes: recipeCommitIngredients.notes,
+          sortOrder: recipeCommitIngredients.sortOrder,
+        })
+        .from(recipeCommitIngredients)
+        .innerJoin(ingredients, eq(recipeCommitIngredients.ingredientId, ingredients.id))
+        .where(eq(recipeCommitIngredients.commitId, headCommitId))
+        .orderBy(recipeCommitIngredients.sortOrder)
+    : []
 
-  const currentSteps = headCommitId ? await db
-    .select()
-    .from(recipeCommitSteps)
-    .where(eq(recipeCommitSteps.commitId, headCommitId))
-    .orderBy(recipeCommitSteps.sortOrder) : []
+  const currentSteps = headCommitId
+    ? await db
+        .select()
+        .from(recipeCommitSteps)
+        .where(eq(recipeCommitSteps.commitId, headCommitId))
+        .orderBy(recipeCommitSteps.sortOrder)
+    : []
 
   // ── Compute nutrition totals ───────────────────────────────
   let nutritionTotal = null

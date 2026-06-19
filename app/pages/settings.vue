@@ -20,13 +20,17 @@ const { data: profile } = useFetch<UserProfile>(() => `/api/users/${user.value?.
   headers: useRequestHeaders(['cookie']),
 })
 
-watch(profile, (p) => {
-  if (p?.user) {
-    form.displayName = p.user.displayName || ''
-    form.bio = p.user.bio || ''
-    form.avatarUrl = p.user.avatarUrl || ''
-  }
-}, { immediate: true })
+watch(
+  profile,
+  (p) => {
+    if (p?.user) {
+      form.displayName = p.user.displayName || ''
+      form.bio = p.user.bio || ''
+      form.avatarUrl = p.user.avatarUrl || ''
+    }
+  },
+  { immediate: true }
+)
 
 const saving = ref(false)
 
@@ -102,12 +106,7 @@ useSeoMeta({ title: `${t('settings.title')} — GourMerge` })
 
       <template #footer>
         <div class="flex justify-end">
-          <UButton
-            :label="t('common.save')"
-            icon="i-lucide-save"
-            :loading="saving"
-            @click="save"
-          />
+          <UButton :label="t('common.save')" icon="i-lucide-save" :loading="saving" @click="save" />
         </div>
       </template>
     </UCard>

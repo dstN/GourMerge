@@ -40,11 +40,9 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     })
     await fetchSession()
     navigateTo('/dashboard')
-  }
-  catch (err: unknown) {
+  } catch (err: unknown) {
     error.value = (err as { data?: { statusMessage?: string } })?.data?.statusMessage || t('auth.loginError')
-  }
-  finally {
+  } finally {
     loading.value = false
   }
 }
@@ -69,7 +67,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         variant="subtle"
         icon="i-lucide-alert-circle"
         :title="error"
-        :close-button="{ onClick: () => error = '' }"
+        :close-button="{ onClick: () => (error = '') }"
       />
 
       <UFormField :label="t('auth.email')" name="email" required>
@@ -92,14 +90,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         />
       </UFormField>
 
-      <UButton
-        type="submit"
-        :label="t('auth.loginButton')"
-        icon="i-lucide-log-in"
-        size="lg"
-        block
-        :loading="loading"
-      />
+      <UButton type="submit" :label="t('auth.loginButton')" icon="i-lucide-log-in" size="lg" block :loading="loading" />
     </UForm>
 
     <template #footer>
@@ -111,7 +102,10 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           </NuxtLink>
         </p>
         <p>
-          <NuxtLink to="/auth/forgot-password" class="text-[var(--ui-text-muted)] hover:text-primary-500 hover:underline text-xs">
+          <NuxtLink
+            to="/auth/forgot-password"
+            class="text-[var(--ui-text-muted)] hover:text-primary-500 hover:underline text-xs"
+          >
             {{ t('auth.forgotPassword') }}
           </NuxtLink>
         </p>

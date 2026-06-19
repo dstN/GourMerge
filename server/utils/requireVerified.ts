@@ -25,6 +25,9 @@ export async function requireVerifiedUser(event: H3Event): Promise<void> {
     .limit(1)
 
   if (!user?.emailVerifiedAt) {
-    throw createError({ statusCode: 403, statusMessage: 'Email not verified. Please verify your email to perform this action.' })
+    throw createError({
+      statusCode: 403,
+      statusMessage: 'Email not verified. Please verify your email to perform this action.',
+    })
   }
 }

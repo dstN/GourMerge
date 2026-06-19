@@ -39,7 +39,12 @@ export default defineEventHandler(async (event) => {
 
   // Try to find existing by exact normalized name (case-insensitive via LOWER())
   const [existing] = await db
-    .select({ id: ingredients.id, name: ingredients.name, nameTranslations: ingredients.nameTranslations, category: ingredients.category })
+    .select({
+      id: ingredients.id,
+      name: ingredients.name,
+      nameTranslations: ingredients.nameTranslations,
+      category: ingredients.category,
+    })
     .from(ingredients)
     .where(sql`LOWER(${ingredients.name}) = ${normalizedName}`)
     .limit(1)

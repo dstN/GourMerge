@@ -22,31 +22,14 @@ const localeSwitchItems = [
           <!-- Logo -->
           <NuxtLink to="/dashboard" class="flex items-center gap-2.5 group">
             <CommonBrandLogo class="size-7 text-primary-500 group-hover:text-primary-400 transition-colors" />
-            <span class="text-xl font-bold tracking-tight">
-              Gour<span class="text-primary-500">Merge</span>
-            </span>
+            <span class="text-xl font-bold tracking-tight"> Gour<span class="text-primary-500">Merge</span> </span>
           </NuxtLink>
 
           <!-- Center nav -->
           <nav class="hidden md:flex items-center gap-1">
-            <UButton
-              :label="t('nav.dashboard')"
-              variant="ghost"
-              icon="i-lucide-layout-dashboard"
-              to="/dashboard"
-            />
-            <UButton
-              :label="t('nav.myRecipes')"
-              variant="ghost"
-              icon="i-lucide-book-open"
-              to="/recipes"
-            />
-            <UButton
-              :label="t('nav.explore')"
-              variant="ghost"
-              icon="i-lucide-compass"
-              to="/explore"
-            />
+            <UButton :label="t('nav.dashboard')" variant="ghost" icon="i-lucide-layout-dashboard" to="/dashboard" />
+            <UButton :label="t('nav.myRecipes')" variant="ghost" icon="i-lucide-book-open" to="/recipes" />
+            <UButton :label="t('nav.explore')" variant="ghost" icon="i-lucide-compass" to="/explore" />
             <UButton
               :label="t('nav.newRecipe')"
               variant="soft"
@@ -103,24 +86,9 @@ const localeSwitchItems = [
               to="https://github.com"
               target="_blank"
             />
-            <UButton
-              :label="t('legal.impressum')"
-              variant="ghost"
-              size="xs"
-              to="/legal/impressum"
-            />
-            <UButton
-              :label="t('legal.datenschutz')"
-              variant="ghost"
-              size="xs"
-              to="/legal/datenschutz"
-            />
-            <UButton
-              :label="t('legal.contact')"
-              variant="ghost"
-              size="xs"
-              to="/legal/contact"
-            />
+            <UButton :label="t('legal.impressum')" variant="ghost" size="xs" to="/legal/impressum" />
+            <UButton :label="t('legal.datenschutz')" variant="ghost" size="xs" to="/legal/datenschutz" />
+            <UButton :label="t('legal.contact')" variant="ghost" size="xs" to="/legal/contact" />
           </div>
         </div>
       </div>

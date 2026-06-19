@@ -19,12 +19,8 @@ const props = defineProps<{
   size?: 'xs' | 'sm' | 'md'
 }>()
 
-const helpText = computed(() =>
-  props.text ?? (props.i18nKey ? t(props.i18nKey) : '')
-)
-const titleText = computed(() =>
-  props.title ? (props.title.includes('.') ? t(props.title) : props.title) : undefined
-)
+const helpText = computed(() => props.text ?? (props.i18nKey ? t(props.i18nKey) : ''))
+const titleText = computed(() => (props.title ? (props.title.includes('.') ? t(props.title) : props.title) : undefined))
 
 const open = ref(false)
 </script>

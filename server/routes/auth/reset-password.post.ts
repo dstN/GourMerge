@@ -22,12 +22,16 @@ export default defineEventHandler(async (event) => {
   const db = useDrizzle()
   if (!db) throw createError({ statusCode: 503, statusMessage: 'Database unavailable.' })
 
-  const [row] = await db.select({
-    id: passwordResetTokens.id,
-    userId: passwordResetTokens.userId,
-    expiresAt: passwordResetTokens.expiresAt,
-    usedAt: passwordResetTokens.usedAt,
-  }).from(passwordResetTokens).where(eq(passwordResetTokens.tokenHash, tokenHash)).limit(1)
+  const [row] = await db
+    .select({
+      id: passwordResetTokens.id,
+      userId: passwordResetTokens.userId,
+      expiresAt: passwordResetTokens.expiresAt,
+      usedAt: passwordResetTokens.usedAt,
+    })
+    .from(passwordResetTokens)
+    .where(eq(passwordResetTokens.tokenHash, tokenHash))
+    .limit(1)
 
   if (!row) throw createError({ statusCode: 400, statusMessage: 'Invalid or expired token.' })
   if (row.usedAt) throw createError({ statusCode: 400, statusMessage: 'Token already used.' })
@@ -36,13 +40,9 @@ export default defineEventHandler(async (event) => {
   const newPasswordHash = await hashPassword(parsed.data.password)
 
   await db.transaction(async (tx) => {
-    await tx.update(passwordResetTokens)
-      .set({ usedAt: new Date() })
-      .where(eq(passwordResetTokens.id, row.id))
+    await tx.update(passwordResetTokens).set({ usedAt: new Date() }).where(eq(passwordResetTokens.id, row.id))
 
-    await tx.update(users)
-      .set({ passwordHash: newPasswordHash })
-      .where(eq(users.id, row.userId))
+    await tx.update(users).set({ passwordHash: newPasswordHash }).where(eq(users.id, row.userId))
   })
 
   // Clear the session so the user must log in with the new password.

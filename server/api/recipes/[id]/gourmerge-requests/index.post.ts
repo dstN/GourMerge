@@ -71,17 +71,20 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 422, statusMessage: 'Source and target branch cannot be the same' })
   }
 
-  const [inserted] = await db.insert(gourmergeRequests).values({
-    publicId: generatePublicId(),
-    recipeId: targetRecipeId,
-    authorId: session.user.id,
-    title,
-    description,
-    status: 'open',
-    sourceBranchId,
-    targetBranchId,
-    sourceRecipeId: sourceRecipeId ?? null,
-  }).$returningId()
+  const [inserted] = await db
+    .insert(gourmergeRequests)
+    .values({
+      publicId: generatePublicId(),
+      recipeId: targetRecipeId,
+      authorId: session.user.id,
+      title,
+      description,
+      status: 'open',
+      sourceBranchId,
+      targetBranchId,
+      sourceRecipeId: sourceRecipeId ?? null,
+    })
+    .$returningId()
 
   if (!inserted) throw createError({ statusCode: 500, statusMessage: 'Insert failed.' })
 

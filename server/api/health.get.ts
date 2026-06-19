@@ -17,8 +17,7 @@ export default defineEventHandler(async () => {
       await db.execute(sql`SELECT 1`)
       dbStatus = 'connected'
     }
-  }
-  catch {
+  } catch {
     dbStatus = 'disconnected'
   }
 

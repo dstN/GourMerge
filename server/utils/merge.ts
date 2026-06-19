@@ -74,11 +74,7 @@ function ingFullKey(i: MergeIngredient): string {
 
 // ── Merge implementation ─────────────────────────────────────────
 
-export function threeWayMerge(
-  base: MergeSnapshot,
-  source: MergeSnapshot,
-  target: MergeSnapshot,
-): MergeResult {
+export function threeWayMerge(base: MergeSnapshot, source: MergeSnapshot, target: MergeSnapshot): MergeResult {
   const conflicts: MergeConflict[] = []
   const mergedIngredients: MergeIngredient[] = []
   const mergedSteps: MergeStep[] = []
@@ -89,19 +85,15 @@ export function threeWayMerge(
   const targetIngMap = new Map(target.ingredients.map((i) => [i.ingredientId, i]))
 
   // Collect all ingredient IDs from all three snapshots
-  const allIngIds = new Set([
-    ...baseIngMap.keys(),
-    ...sourceIngMap.keys(),
-    ...targetIngMap.keys(),
-  ])
+  const allIngIds = new Set([...baseIngMap.keys(), ...sourceIngMap.keys(), ...targetIngMap.keys()])
 
   for (const id of allIngIds) {
     const b = baseIngMap.get(id) ?? null
     const s = sourceIngMap.get(id) ?? null
     const t = targetIngMap.get(id) ?? null
 
-    const sourceChanged = b === null ? s !== null : (s === null || ingFullKey(b) !== ingFullKey(s))
-    const targetChanged = b === null ? t !== null : (t === null || ingFullKey(b) !== ingFullKey(t))
+    const sourceChanged = b === null ? s !== null : s === null || ingFullKey(b) !== ingFullKey(s)
+    const targetChanged = b === null ? t !== null : t === null || ingFullKey(b) !== ingFullKey(t)
 
     if (!sourceChanged && !targetChanged) {
       // Neither changed — keep base (= target = source)
@@ -125,11 +117,12 @@ export function threeWayMerge(
           type: 'ingredient',
           ingredientId: id,
           ingredientName: s?.ingredientName ?? t?.ingredientName ?? b?.ingredientName ?? String(id),
-          description: s === null
-            ? `Source deleted this ingredient, but target modified it`
-            : t === null
-              ? `Target deleted this ingredient, but source modified it`
-              : `Both source and target modified this ingredient differently`,
+          description:
+            s === null
+              ? `Source deleted this ingredient, but target modified it`
+              : t === null
+                ? `Target deleted this ingredient, but source modified it`
+                : `Both source and target modified this ingredient differently`,
           sourceVersion: s,
           targetVersion: t,
         })
@@ -148,19 +141,15 @@ export function threeWayMerge(
   const sourceStepMap = new Map(source.steps.map((s) => [s.sortOrder, s]))
   const targetStepMap = new Map(target.steps.map((s) => [s.sortOrder, s]))
 
-  const allStepOrders = new Set([
-    ...baseStepMap.keys(),
-    ...sourceStepMap.keys(),
-    ...targetStepMap.keys(),
-  ])
+  const allStepOrders = new Set([...baseStepMap.keys(), ...sourceStepMap.keys(), ...targetStepMap.keys()])
 
   for (const order of allStepOrders) {
     const b = baseStepMap.get(order) ?? null
     const s = sourceStepMap.get(order) ?? null
     const t = targetStepMap.get(order) ?? null
 
-    const sourceChanged = b === null ? s !== null : (s === null || b.content !== s.content)
-    const targetChanged = b === null ? t !== null : (t === null || b.content !== t.content)
+    const sourceChanged = b === null ? s !== null : s === null || b.content !== s.content
+    const targetChanged = b === null ? t !== null : t === null || b.content !== t.content
 
     if (!sourceChanged && !targetChanged) {
       if (b !== null) mergedSteps.push(b)
@@ -179,11 +168,12 @@ export function threeWayMerge(
         conflicts.push({
           type: 'step',
           stepSortOrder: order,
-          description: s === null
-            ? `Source deleted step ${order}, but target modified it`
-            : t === null
-              ? `Target deleted step ${order}, but source modified it`
-              : `Both source and target modified step ${order} differently`,
+          description:
+            s === null
+              ? `Source deleted step ${order}, but target modified it`
+              : t === null
+                ? `Target deleted step ${order}, but source modified it`
+                : `Both source and target modified step ${order} differently`,
           sourceVersion: s,
           targetVersion: t,
         })

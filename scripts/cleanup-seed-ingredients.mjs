@@ -27,7 +27,9 @@ function loadEnv() {
       const m = line.match(/^([A-Z_][A-Z0-9_]*)=(.*)$/)
       if (m && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/^["']|["']$/g, '')
     }
-  } catch { /* rely on environment */ }
+  } catch {
+    /* rely on environment */
+  }
 }
 loadEnv()
 
@@ -61,10 +63,9 @@ try {
   const referenced = []
 
   for (const row of candidates) {
-    const [refs] = await conn.execute(
-      'SELECT COUNT(*) AS cnt FROM recipe_commit_ingredients WHERE ingredient_id = ?',
-      [row.id]
-    )
+    const [refs] = await conn.execute('SELECT COUNT(*) AS cnt FROM recipe_commit_ingredients WHERE ingredient_id = ?', [
+      row.id,
+    ])
     if (refs[0].cnt > 0) {
       referenced.push({ ...row, usedIn: refs[0].cnt })
     } else {
@@ -94,7 +95,7 @@ try {
     process.exit(0)
   }
 
-  const ids = safe.map(r => r.id)
+  const ids = safe.map((r) => r.id)
   const placeholders = ids.map(() => '?').join(',')
   await conn.execute(`DELETE FROM ingredients WHERE id IN (${placeholders})`, ids)
   console.log(`✓ Deleted ${safe.length} ingredient(s).`)

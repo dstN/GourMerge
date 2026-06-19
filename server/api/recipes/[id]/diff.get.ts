@@ -9,11 +9,7 @@
  */
 import { eq } from 'drizzle-orm'
 import type { CommitIngredient, CommitStep } from '~~/shared/types'
-import {
-  recipeCommitIngredients,
-  recipeCommitSteps,
-  ingredients,
-} from '~~/server/database/schema'
+import { recipeCommitIngredients, recipeCommitSteps, ingredients } from '~~/server/database/schema'
 
 async function getCommitSnapshot(db: NonNullable<ReturnType<typeof useDrizzle>>, commitId: number) {
   const commitIngredients = await db
@@ -73,10 +69,7 @@ export default defineEventHandler(async (event) => {
   // Quantity comes back as string from mysql2 decimals; CommitIngredient expects number.
   // The diff engine compares by value and handles both; double-cast to satisfy types.
   type DiffInput = { ingredients: CommitIngredient[]; steps: CommitStep[] }
-  const diff = computeCommitDiff(
-    snapshotA as unknown as DiffInput,
-    snapshotB as unknown as DiffInput,
-  )
+  const diff = computeCommitDiff(snapshotA as unknown as DiffInput, snapshotB as unknown as DiffInput)
 
   return diff
 })

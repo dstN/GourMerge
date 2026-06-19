@@ -82,7 +82,7 @@ for (const code of LOCALES) {
 }
 
 // ── Summary ──────────────────────────────────────────────────────────────────
-const counts = LOCALES.map(c => `${Object.keys(flatLocales[c]).length} ${c.toUpperCase()}`).join(', ')
+const counts = LOCALES.map((c) => `${Object.keys(flatLocales[c]).length} ${c.toUpperCase()}`).join(', ')
 
 if (errors === 0) {
   console.log(`[i18n] ✓ OK — ${counts} — all in parity, no empty values.`)

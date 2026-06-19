@@ -9,16 +9,16 @@ A git-like recipe platform. Recipes are repositories — they have branches, com
 
 ## Tech Stack
 
-| Layer | Technology |
-| --- | --- |
-| Framework | Nuxt 4 (Vue 3 Composition API) |
-| UI | Nuxt UI v4 (Reka UI + Tailwind CSS v4) |
-| Database | MariaDB via Drizzle ORM (mysql2) |
-| Auth | nuxt-auth-utils (session-based) |
-| i18n | @nuxtjs/i18n — DE (default), EN, FR, IT |
-| Editor | TipTap 3 (Markdown output, no images) |
-| Diff | diff-match-patch-es |
-| PWA | @vite-pwa/nuxt |
+| Layer      | Technology                                     |
+| ---------- | ---------------------------------------------- |
+| Framework  | Nuxt 4 (Vue 3 Composition API)                 |
+| UI         | Nuxt UI v4 (Reka UI + Tailwind CSS v4)         |
+| Database   | MariaDB via Drizzle ORM (mysql2)               |
+| Auth       | nuxt-auth-utils (session-based)                |
+| i18n       | @nuxtjs/i18n — DE (default), EN, FR, IT        |
+| Editor     | TipTap 3 (Markdown output, no images)          |
+| Diff       | diff-match-patch-es                            |
+| PWA        | @vite-pwa/nuxt                                 |
 | Deployment | Netcup Webhosting + Phusion Passenger (Apache) |
 
 ---
@@ -62,22 +62,22 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Scripts
 
-| Command | Description |
-| --- | --- |
-| `npm run dev` | Start dev server |
-| `npm run build` | Build for production (Nitro node-server) |
-| `npm run typecheck` | TypeScript type check |
-| `npm run lint` | ESLint |
-| `npm run lint:fix` | ESLint auto-fix |
-| `npm run format` | Prettier format |
-| `npm test` | Vitest unit + component tests |
-| `npm run test:e2e` | Playwright E2E tests |
-| `npm run i18n:check` | 4-way locale parity gate (DE/EN/FR/IT) |
-| `npm run db:generate` | Generate a new Drizzle migration |
-| `npm run db:migrate` | Apply pending migrations |
-| `npm run db:studio` | Drizzle Studio (visual DB explorer) |
-| `npm run seed:swiss` | Import Swiss BLV Food Composition Database V7.0 |
-| `npm run generate:icons` | Regenerate PWA/favicon assets from brand SVG |
+| Command                  | Description                                     |
+| ------------------------ | ----------------------------------------------- |
+| `npm run dev`            | Start dev server                                |
+| `npm run build`          | Build for production (Nitro node-server)        |
+| `npm run typecheck`      | TypeScript type check                           |
+| `npm run lint`           | ESLint                                          |
+| `npm run lint:fix`       | ESLint auto-fix                                 |
+| `npm run format`         | Prettier format                                 |
+| `npm test`               | Vitest unit + component tests                   |
+| `npm run test:e2e`       | Playwright E2E tests                            |
+| `npm run i18n:check`     | 4-way locale parity gate (DE/EN/FR/IT)          |
+| `npm run db:generate`    | Generate a new Drizzle migration                |
+| `npm run db:migrate`     | Apply pending migrations                        |
+| `npm run db:studio`      | Drizzle Studio (visual DB explorer)             |
+| `npm run seed:swiss`     | Import Swiss BLV Food Composition Database V7.0 |
+| `npm run generate:icons` | Regenerate PWA/favicon assets from brand SVG    |
 
 > **Never run `npm run db:push` against production.** It mutates the DB directly without a migration file.
 

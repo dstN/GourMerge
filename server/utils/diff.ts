@@ -55,7 +55,7 @@ function normalizeIngredients(ingredients: CommitIngredient[]): IngredientSnapsh
  */
 export function computeIngredientDiff(
   oldIngredients: CommitIngredient[],
-  newIngredients: CommitIngredient[],
+  newIngredients: CommitIngredient[]
 ): IngredientDiffEntry[] {
   const oldMap = new Map<number, IngredientSnapshot>()
   const newMap = new Map<number, IngredientSnapshot>()
@@ -174,10 +174,7 @@ export function computeTextDiff(oldText: string, newText: string): TextDiffSegme
  * - If old has a step at position N but new doesn't → step removed
  * - If new has a step at position N but old doesn't → step added
  */
-export function computeStepsDiff(
-  oldSteps: CommitStep[],
-  newSteps: CommitStep[],
-): StepDiffEntry[] {
+export function computeStepsDiff(oldSteps: CommitStep[], newSteps: CommitStep[]): StepDiffEntry[] {
   // Sort by sortOrder for alignment
   const oldSorted = [...oldSteps].sort((a, b) => a.sortOrder - b.sortOrder)
   const newSorted = [...newSteps].sort((a, b) => a.sortOrder - b.sortOrder)
@@ -253,7 +250,7 @@ export function computeStepsDiff(
  */
 export function computeCommitDiff(
   commitA: { ingredients: CommitIngredient[]; steps: CommitStep[] },
-  commitB: { ingredients: CommitIngredient[]; steps: CommitStep[] },
+  commitB: { ingredients: CommitIngredient[]; steps: CommitStep[] }
 ): CommitDiff {
   const ingredientDiffs = computeIngredientDiff(commitA.ingredients, commitB.ingredients)
   const stepDiffs = computeStepsDiff(commitA.steps, commitB.steps)

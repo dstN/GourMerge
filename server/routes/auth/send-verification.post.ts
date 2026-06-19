@@ -12,8 +12,11 @@ export default defineEventHandler(async (event) => {
 
   const db = useDrizzle()
   if (!db) throw createError({ statusCode: 503, statusMessage: 'Database unavailable.' })
-  const [dbUser] = await db.select({ id: users.id, email: users.email, emailVerifiedAt: users.emailVerifiedAt })
-    .from(users).where(eq(users.id, user.id)).limit(1)
+  const [dbUser] = await db
+    .select({ id: users.id, email: users.email, emailVerifiedAt: users.emailVerifiedAt })
+    .from(users)
+    .where(eq(users.id, user.id))
+    .limit(1)
 
   if (!dbUser) throw createError({ statusCode: 401 })
   if (dbUser.emailVerifiedAt) {
@@ -21,7 +24,8 @@ export default defineEventHandler(async (event) => {
   }
 
   // Invalidate any existing unused tokens for this user.
-  await db.delete(emailVerificationTokens)
+  await db
+    .delete(emailVerificationTokens)
     .where(and(eq(emailVerificationTokens.userId, dbUser.id), isNull(emailVerificationTokens.usedAt)))
 
   // Generate a CSPRNG token — NOT UUIDv7 (timestamp prefix weakens unguessability).

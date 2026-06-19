@@ -25,12 +25,15 @@ const ingredientSchema = z.object({
 const stepSchema = z.object({
   sortOrder: z.number().int().min(1),
   content: z.string().min(1),
-  contentTranslations: z.object({
-    de: z.string().optional(),
-    en: z.string().optional(),
-    fr: z.string().optional(),
-    it: z.string().optional(),
-  }).optional().nullable(),
+  contentTranslations: z
+    .object({
+      de: z.string().optional(),
+      en: z.string().optional(),
+      fr: z.string().optional(),
+      it: z.string().optional(),
+    })
+    .optional()
+    .nullable(),
 })
 
 const commitSchema = z.object({
@@ -62,11 +65,7 @@ export default defineEventHandler(async (event) => {
   if (!db) throw createError({ statusCode: 503, statusMessage: 'Database unavailable.' })
 
   // ── Verify recipe ownership ─────────────────────────────────
-  const [recipe] = await db
-    .select({ ownerId: recipes.ownerId })
-    .from(recipes)
-    .where(eq(recipes.id, recipeId))
-    .limit(1)
+  const [recipe] = await db.select({ ownerId: recipes.ownerId }).from(recipes).where(eq(recipes.id, recipeId)).limit(1)
 
   if (!recipe || recipe.ownerId !== session.user.id) {
     throw createError({ statusCode: 403, statusMessage: 'Forbidden' })
@@ -76,10 +75,7 @@ export default defineEventHandler(async (event) => {
   const [branch] = await db
     .select()
     .from(recipeBranches)
-    .where(and(
-      eq(recipeBranches.id, branchId),
-      eq(recipeBranches.recipeId, recipeId),
-    ))
+    .where(and(eq(recipeBranches.id, branchId), eq(recipeBranches.recipeId, recipeId)))
     .limit(1)
 
   if (!branch) {
@@ -87,12 +83,15 @@ export default defineEventHandler(async (event) => {
   }
 
   // ── Create commit ───────────────────────────────────────────
-  const [commit] = await db.insert(recipeCommits).values({
-    branchId,
-    parentCommitId: branch.headCommitId,
-    authorId: session.user.id,
-    message,
-  }).$returningId()
+  const [commit] = await db
+    .insert(recipeCommits)
+    .values({
+      branchId,
+      parentCommitId: branch.headCommitId,
+      authorId: session.user.id,
+      message,
+    })
+    .$returningId()
 
   if (!commit) throw createError({ statusCode: 500, statusMessage: 'Insert failed.' })
 
@@ -106,7 +105,7 @@ export default defineEventHandler(async (event) => {
         unit: ing.unit,
         notes: ing.notes,
         sortOrder: ing.sortOrder,
-      })),
+      }))
     )
   }
 
@@ -118,15 +117,12 @@ export default defineEventHandler(async (event) => {
         sortOrder: step.sortOrder,
         content: step.content,
         contentTranslations: step.contentTranslations ?? null,
-      })),
+      }))
     )
   }
 
   // ── Update branch head pointer ──────────────────────────────
-  await db
-    .update(recipeBranches)
-    .set({ headCommitId: commit.id })
-    .where(eq(recipeBranches.id, branchId))
+  await db.update(recipeBranches).set({ headCommitId: commit.id }).where(eq(recipeBranches.id, branchId))
 
   setResponseStatus(event, 201)
   return { commitId: commit.id }

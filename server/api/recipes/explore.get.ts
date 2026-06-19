@@ -17,8 +17,12 @@ export default defineEventHandler(async (event) => {
   const query = getQuery(event)
   const q = String(query.q || '').trim()
   const difficulty = query.difficulty as string | undefined
-  const dietaryTypeFilter = String(query.dietaryType || '').trim().toLowerCase()
-  const tagFilter = String(query.tag || '').trim().toLowerCase()
+  const dietaryTypeFilter = String(query.dietaryType || '')
+    .trim()
+    .toLowerCase()
+  const tagFilter = String(query.tag || '')
+    .trim()
+    .toLowerCase()
   const sort = String(query.sort || 'stars')
   const page = Math.max(1, Number(query.page) || 1)
   const limit = Math.min(50, Math.max(1, Number(query.limit) || 20))
@@ -30,10 +34,7 @@ export default defineEventHandler(async (event) => {
   const conditions = [eq(recipes.visibility, 'public')]
 
   if (q) {
-    conditions.push(or(
-      like(recipes.title, `%${q}%`),
-      like(recipes.description, `%${q}%`),
-    )!)
+    conditions.push(or(like(recipes.title, `%${q}%`), like(recipes.description, `%${q}%`))!)
   }
 
   if (difficulty && ['easy', 'medium', 'hard'].includes(difficulty)) {
@@ -46,11 +47,7 @@ export default defineEventHandler(async (event) => {
 
   // Tag filter: join recipe_tags + tags
   if (tagFilter) {
-    const [tag] = await db
-      .select({ id: tags.id })
-      .from(tags)
-      .where(like(tags.name, tagFilter))
-      .limit(1)
+    const [tag] = await db.select({ id: tags.id }).from(tags).where(like(tags.name, tagFilter)).limit(1)
 
     if (!tag) {
       return { recipes: [], total: 0, page, limit }
@@ -74,11 +71,8 @@ export default defineEventHandler(async (event) => {
 
   const whereClause = conditions.length === 1 ? conditions[0]! : and(...conditions)!
 
-  const orderBy = sort === 'newest'
-    ? desc(recipes.createdAt)
-    : sort === 'forks'
-      ? desc(recipes.forkCount)
-      : desc(recipes.starCount)
+  const orderBy =
+    sort === 'newest' ? desc(recipes.createdAt) : sort === 'forks' ? desc(recipes.forkCount) : desc(recipes.starCount)
 
   const rows = await db
     .select({

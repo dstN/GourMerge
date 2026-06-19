@@ -12,9 +12,7 @@ const { t } = useI18n()
       <div class="text-center mb-8">
         <NuxtLink to="/" class="inline-flex items-center gap-2.5 group">
           <CommonBrandLogo class="size-10 text-primary-500 group-hover:text-primary-400 transition-colors" />
-          <span class="text-3xl font-bold tracking-tight">
-            Gour<span class="text-primary-500">Merge</span>
-          </span>
+          <span class="text-3xl font-bold tracking-tight"> Gour<span class="text-primary-500">Merge</span> </span>
         </NuxtLink>
       </div>
 
@@ -23,9 +21,7 @@ const { t } = useI18n()
 
       <!-- Footer -->
       <div class="mt-8 flex flex-col items-center gap-2">
-        <p class="text-center text-sm text-[var(--ui-text-dimmed)]">
-          © {{ new Date().getFullYear() }} GourMerge
-        </p>
+        <p class="text-center text-sm text-[var(--ui-text-dimmed)]">© {{ new Date().getFullYear() }} GourMerge</p>
         <div class="flex items-center gap-3 flex-wrap justify-center">
           <NuxtLink
             to="/legal/impressum"

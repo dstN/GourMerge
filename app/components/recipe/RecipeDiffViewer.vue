@@ -43,9 +43,14 @@ const filteredSteps = computed(() => {
 const hasChanges = computed(() => {
   const s = props.diff.summary
   return (
-    s.ingredientsAdded + s.ingredientsRemoved + s.ingredientsModified +
-    s.stepsAdded + s.stepsRemoved + s.stepsModified
-  ) > 0
+    s.ingredientsAdded +
+      s.ingredientsRemoved +
+      s.ingredientsModified +
+      s.stepsAdded +
+      s.stepsRemoved +
+      s.stepsModified >
+    0
+  )
 })
 
 // ── Tab items ─────────────────────────────────────────────────
@@ -67,37 +72,52 @@ const tabItems = computed(() => [
 
 function getDiffIcon(type: string): string {
   switch (type) {
-    case 'added': return 'i-lucide-plus'
-    case 'removed': return 'i-lucide-minus'
-    case 'modified': return 'i-lucide-pencil'
-    default: return 'i-lucide-equal'
+    case 'added':
+      return 'i-lucide-plus'
+    case 'removed':
+      return 'i-lucide-minus'
+    case 'modified':
+      return 'i-lucide-pencil'
+    default:
+      return 'i-lucide-equal'
   }
 }
 
 type BadgeColor = 'success' | 'primary' | 'secondary' | 'info' | 'warning' | 'error' | 'neutral'
 function getDiffColor(type: string): BadgeColor {
   switch (type) {
-    case 'added': return 'success'
-    case 'removed': return 'error'
-    case 'modified': return 'warning'
-    default: return 'neutral'
+    case 'added':
+      return 'success'
+    case 'removed':
+      return 'error'
+    case 'modified':
+      return 'warning'
+    default:
+      return 'neutral'
   }
 }
 
 function getDiffRowClass(type: string): string {
   switch (type) {
-    case 'added': return 'diff-added'
-    case 'removed': return 'diff-removed'
-    case 'modified': return 'diff-modified'
-    default: return ''
+    case 'added':
+      return 'diff-added'
+    case 'removed':
+      return 'diff-removed'
+    case 'modified':
+      return 'diff-modified'
+    default:
+      return ''
   }
 }
 
 function getSegmentClass(type: number): string {
   switch (type) {
-    case 1: return 'diff-inline-added'
-    case -1: return 'diff-inline-removed'
-    default: return ''
+    case 1:
+      return 'diff-inline-added'
+    case -1:
+      return 'diff-inline-removed'
+    default:
+      return ''
   }
 }
 </script>
@@ -105,10 +125,7 @@ function getSegmentClass(type: number): string {
 <template>
   <div id="recipe-diff-viewer" class="w-full">
     <!-- ── Summary Header ──────────────────────────────────── -->
-    <UCard
-      v-if="hasChanges"
-      class="mb-6"
-    >
+    <UCard v-if="hasChanges" class="mb-6">
       <template #header>
         <div class="flex items-center gap-3">
           <UIcon name="i-lucide-git-compare" class="text-primary-500 size-5" />
@@ -174,25 +191,19 @@ function getSegmentClass(type: number): string {
     </UCard>
 
     <!-- ── Tabbed Diff View ────────────────────────────────── -->
-    <UTabs
-      v-if="hasChanges"
-      v-model="activeTab"
-      :items="tabItems"
-      class="w-full"
-    >
+    <UTabs v-if="hasChanges" v-model="activeTab" :items="tabItems" class="w-full">
       <template #content="{ item }">
         <!-- ── Ingredient Diff Tab ─────────────────────────── -->
         <div v-if="item.value === 'ingredients'" class="mt-4">
-          <div
-            v-if="filteredIngredients.length === 0"
-            class="text-center py-6 text-[var(--ui-text-muted)]"
-          >
+          <div v-if="filteredIngredients.length === 0" class="text-center py-6 text-[var(--ui-text-muted)]">
             {{ t('diff.noChanges') }}
           </div>
 
           <div v-else class="rounded-lg border border-[var(--ui-border)] overflow-hidden">
             <!-- Table Header -->
-            <div class="grid grid-cols-12 gap-0 bg-[var(--ui-bg-elevated)] border-b border-[var(--ui-border)] px-4 py-2.5 text-sm font-semibold text-[var(--ui-text-muted)]">
+            <div
+              class="grid grid-cols-12 gap-0 bg-[var(--ui-bg-elevated)] border-b border-[var(--ui-border)] px-4 py-2.5 text-sm font-semibold text-[var(--ui-text-muted)]"
+            >
               <div class="col-span-1" />
               <div class="col-span-4">
                 {{ t('diff.ingredient') }}
@@ -200,9 +211,7 @@ function getSegmentClass(type: number): string {
               <div class="col-span-3 text-right">
                 {{ t('diff.oldValue') }}
               </div>
-              <div class="col-span-1 text-center">
-                →
-              </div>
+              <div class="col-span-1 text-center">→</div>
               <div class="col-span-3">
                 {{ t('diff.newValue') }}
               </div>
@@ -219,12 +228,7 @@ function getSegmentClass(type: number): string {
             >
               <!-- Status icon -->
               <div class="col-span-1 flex items-center">
-                <UBadge
-                  :color="getDiffColor(entry.type)"
-                  variant="subtle"
-                  :icon="getDiffIcon(entry.type)"
-                  size="xs"
-                />
+                <UBadge :color="getDiffColor(entry.type)" variant="subtle" :icon="getDiffIcon(entry.type)" size="xs" />
               </div>
 
               <!-- Ingredient name -->
@@ -247,19 +251,13 @@ function getSegmentClass(type: number): string {
 
               <!-- Arrow -->
               <div class="col-span-1 flex items-center justify-center text-[var(--ui-text-dimmed)]">
-                <UIcon
-                  v-if="entry.type === 'modified'"
-                  name="i-lucide-arrow-right"
-                  class="size-4"
-                />
+                <UIcon v-if="entry.type === 'modified'" name="i-lucide-arrow-right" class="size-4" />
               </div>
 
               <!-- New value -->
               <div class="col-span-3 flex items-center font-mono text-sm">
                 <template v-if="entry.type === 'added' || entry.type === 'modified'">
-                  <span class="font-semibold">
-                    {{ entry.newQuantity }} {{ entry.newUnit }}
-                  </span>
+                  <span class="font-semibold"> {{ entry.newQuantity }} {{ entry.newUnit }} </span>
                 </template>
                 <template v-else-if="entry.type === 'unchanged'">
                   {{ entry.newQuantity }} {{ entry.newUnit }}
@@ -292,10 +290,7 @@ function getSegmentClass(type: number): string {
             </UFieldGroup>
           </div>
 
-          <div
-            v-if="filteredSteps.length === 0"
-            class="text-center py-6 text-[var(--ui-text-muted)]"
-          >
+          <div v-if="filteredSteps.length === 0" class="text-center py-6 text-[var(--ui-text-muted)]">
             {{ t('diff.noChanges') }}
           </div>
 
@@ -348,14 +343,12 @@ function getSegmentClass(type: number): string {
                     v-for="(segment, segIdx) in step.segments"
                     :key="`seg-${segIdx}`"
                     :class="getSegmentClass(segment.type)"
-                  >{{ segment.text }}</span>
+                    >{{ segment.text }}</span
+                  >
                 </div>
 
                 <!-- Unchanged step -->
-                <div
-                  v-else
-                  class="p-3 rounded-md font-mono text-sm whitespace-pre-wrap opacity-60"
-                >
+                <div v-else class="p-3 rounded-md font-mono text-sm whitespace-pre-wrap opacity-60">
                   {{ step.oldContent }}
                 </div>
               </div>
@@ -364,7 +357,9 @@ function getSegmentClass(type: number): string {
               <div v-else class="grid grid-cols-2 gap-4">
                 <!-- Old (left) -->
                 <div class="rounded-md border border-[var(--ui-border)] overflow-hidden">
-                  <div class="px-3 py-1.5 bg-[var(--ui-bg-elevated)] text-xs font-semibold text-[var(--ui-text-muted)] border-b border-[var(--ui-border)]">
+                  <div
+                    class="px-3 py-1.5 bg-[var(--ui-bg-elevated)] text-xs font-semibold text-[var(--ui-text-muted)] border-b border-[var(--ui-border)]"
+                  >
                     {{ t('diff.oldValue') }}
                   </div>
                   <div class="p-3 font-mono text-sm whitespace-pre-wrap">
@@ -379,7 +374,9 @@ function getSegmentClass(type: number): string {
 
                 <!-- New (right) -->
                 <div class="rounded-md border border-[var(--ui-border)] overflow-hidden">
-                  <div class="px-3 py-1.5 bg-[var(--ui-bg-elevated)] text-xs font-semibold text-[var(--ui-text-muted)] border-b border-[var(--ui-border)]">
+                  <div
+                    class="px-3 py-1.5 bg-[var(--ui-bg-elevated)] text-xs font-semibold text-[var(--ui-text-muted)] border-b border-[var(--ui-border)]"
+                  >
                     {{ t('diff.newValue') }}
                   </div>
                   <div class="p-3 font-mono text-sm whitespace-pre-wrap">

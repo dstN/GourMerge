@@ -13,7 +13,7 @@ const recipeUrl = computed(() => `/${username.value}/${slug.value}`)
 
 const { data: recipe } = useFetch<Pick<RecipeDetail, 'id' | 'branches' | 'title' | 'owner'>>(
   () => `/api/recipes/by-slug/${username.value}/${slug.value}`,
-  { headers: useRequestHeaders(['cookie']), pick: ['id', 'branches', 'title', 'owner'] },
+  { headers: useRequestHeaders(['cookie']), pick: ['id', 'branches', 'title', 'owner'] }
 )
 
 // If the user is looking at another user's recipe, they need their own forked recipe's branches
@@ -26,9 +26,7 @@ const form = reactive({
   sourceRecipeId: null as number | null,
 })
 
-const targetBranches = computed(() =>
-  (recipe.value?.branches ?? []).filter((b) => b.isDefault || true)
-)
+const targetBranches = computed(() => (recipe.value?.branches ?? []).filter((b) => b.isDefault || true))
 
 const submitting = ref(false)
 
@@ -79,11 +77,7 @@ useSeoMeta({ title: () => `${t('gourmergeRequest.new')} — GourMerge` })
 
       <div class="space-y-5">
         <UFormField :label="t('gourmergeRequest.requestTitle')" required>
-          <UInput
-            v-model="form.title"
-            :placeholder="t('gourmergeRequest.requestTitlePlaceholder')"
-            class="w-full"
-          />
+          <UInput v-model="form.title" :placeholder="t('gourmergeRequest.requestTitlePlaceholder')" class="w-full" />
         </UFormField>
 
         <UFormField :label="t('gourmergeRequest.description')">

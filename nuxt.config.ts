@@ -6,14 +6,7 @@ export default defineNuxtConfig({
     compatibilityVersion: 4,
   },
 
-  modules: [
-    '@nuxt/ui',
-    '@nuxtjs/i18n',
-    '@vite-pwa/nuxt',
-    'nuxt-auth-utils',
-    '@nuxt/eslint',
-    '@sentry/nuxt/module',
-  ],
+  modules: ['@nuxt/ui', '@nuxtjs/i18n', '@vite-pwa/nuxt', 'nuxt-auth-utils', '@nuxt/eslint', '@sentry/nuxt/module'],
 
   css: ['~/assets/css/main.css'],
 
@@ -28,10 +21,10 @@ export default defineNuxtConfig({
   // ── i18n ────────────────────────────────────────────────────
   i18n: {
     locales: [
-      { code: 'de', name: 'Deutsch',   file: 'de.json' },
-      { code: 'en', name: 'English',   file: 'en.json' },
-      { code: 'fr', name: 'Français',  file: 'fr.json' },
-      { code: 'it', name: 'Italiano',  file: 'it.json' },
+      { code: 'de', name: 'Deutsch', file: 'de.json' },
+      { code: 'en', name: 'English', file: 'en.json' },
+      { code: 'fr', name: 'Français', file: 'fr.json' },
+      { code: 'it', name: 'Italiano', file: 'it.json' },
     ],
     defaultLocale: 'de',
     lazy: true,

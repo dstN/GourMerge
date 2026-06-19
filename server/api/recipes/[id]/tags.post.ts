@@ -29,11 +29,7 @@ export default defineEventHandler(async (event) => {
   if (!db) throw createError({ statusCode: 503, statusMessage: 'Database unavailable.' })
 
   // Verify ownership
-  const [recipe] = await db
-    .select({ ownerId: recipes.ownerId })
-    .from(recipes)
-    .where(eq(recipes.id, recipeId))
-    .limit(1)
+  const [recipe] = await db.select({ ownerId: recipes.ownerId }).from(recipes).where(eq(recipes.id, recipeId)).limit(1)
 
   if (!recipe) {
     throw createError({ statusCode: 404, statusMessage: 'Recipe not found' })
@@ -47,11 +43,7 @@ export default defineEventHandler(async (event) => {
   // Upsert each tag and collect IDs
   const tagIds: number[] = []
   for (const tagName of tagNames) {
-    const [existing] = await db
-      .select({ id: tags.id })
-      .from(tags)
-      .where(eq(tags.name, tagName))
-      .limit(1)
+    const [existing] = await db.select({ id: tags.id }).from(tags).where(eq(tags.name, tagName)).limit(1)
 
     if (existing) {
       tagIds.push(existing.id)

@@ -57,10 +57,7 @@ watch(query, (q) => {
         (r) => r.name.toLowerCase() === q.toLowerCase() || r.localeName.toLowerCase() === q.toLowerCase()
       )
       if (!exactMatch && q.trim().length > 0) {
-        options.value = [
-          ...results,
-          { id: null, name: q.trim(), localeName: q.trim(), category: null, isNew: true },
-        ]
+        options.value = [...results, { id: null, name: q.trim(), localeName: q.trim(), category: null, isNew: true }]
       }
     } catch {
       options.value = []
@@ -77,11 +74,15 @@ function onSelect(option: IngredientOption) {
   isFocused.value = false
 }
 
-watch(() => props.modelValue, (val) => {
-  if (val && query.value !== (val.name ?? '')) {
-    query.value = val.name ?? ''
-  }
-}, { immediate: true })
+watch(
+  () => props.modelValue,
+  (val) => {
+    if (val && query.value !== (val.name ?? '')) {
+      query.value = val.name ?? ''
+    }
+  },
+  { immediate: true }
+)
 </script>
 
 <template>

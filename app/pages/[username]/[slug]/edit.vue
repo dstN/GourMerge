@@ -24,7 +24,7 @@ const slug = computed(() => route.params.slug as string)
 // ── Fetch recipe ──────────────────────────────────────────────
 const { data: recipe, pending } = await useFetch<RecipeDetail>(
   () => `/api/recipes/by-slug/${username.value}/${slug.value}`,
-  { headers: useRequestHeaders(['cookie']) },
+  { headers: useRequestHeaders(['cookie']) }
 )
 
 if (!recipe.value) {
@@ -68,20 +68,34 @@ const visibilityOptions = computed(() => [
 ])
 
 // Sync all metadata from recipe when it loads
-watch(recipe, (r) => {
-  if (!r) return
-  metaTitle.value = r.title ?? ''
-  metaDescription.value = r.description ?? ''
-  metaServings.value = r.servings ?? 1
-  metaPrepTime.value = r.prepTimeMinutes ?? null
-  metaCookTime.value = r.cookTimeMinutes ?? null
-  metaDifficulty.value = r.difficulty ?? 'medium'
-  metaVisibility.value = r.visibility ?? 'public'
-  selectedDietaryType.value = r.dietaryType ?? 'none'
-  currentTags.value = r.tags ?? []
-  metaTitleTranslations.value = (r.titleTranslations as Record<'de' | 'en' | 'fr' | 'it', string>) ?? { de: '', en: '', fr: '', it: '' }
-  metaDescriptionTranslations.value = (r.descriptionTranslations as Record<'de' | 'en' | 'fr' | 'it', string>) ?? { de: '', en: '', fr: '', it: '' }
-}, { immediate: true })
+watch(
+  recipe,
+  (r) => {
+    if (!r) return
+    metaTitle.value = r.title ?? ''
+    metaDescription.value = r.description ?? ''
+    metaServings.value = r.servings ?? 1
+    metaPrepTime.value = r.prepTimeMinutes ?? null
+    metaCookTime.value = r.cookTimeMinutes ?? null
+    metaDifficulty.value = r.difficulty ?? 'medium'
+    metaVisibility.value = r.visibility ?? 'public'
+    selectedDietaryType.value = r.dietaryType ?? 'none'
+    currentTags.value = r.tags ?? []
+    metaTitleTranslations.value = (r.titleTranslations as Record<'de' | 'en' | 'fr' | 'it', string>) ?? {
+      de: '',
+      en: '',
+      fr: '',
+      it: '',
+    }
+    metaDescriptionTranslations.value = (r.descriptionTranslations as Record<'de' | 'en' | 'fr' | 'it', string>) ?? {
+      de: '',
+      en: '',
+      fr: '',
+      it: '',
+    }
+  },
+  { immediate: true }
+)
 
 function addTag(raw: string) {
   const tag = raw.trim().toLowerCase()
@@ -109,9 +123,8 @@ const selectedBranchId = computed(() => {
   return recipe.value?.defaultBranch?.id
 })
 
-const currentBranch = computed(() =>
-  recipe.value?.branches?.find((b) => b.id === selectedBranchId.value)
-    ?? recipe.value?.defaultBranch
+const currentBranch = computed(
+  () => recipe.value?.branches?.find((b) => b.id === selectedBranchId.value) ?? recipe.value?.defaultBranch
 )
 
 // ── Load branch snapshot when branch changes ──────────────────
@@ -129,7 +142,14 @@ async function loadBranchSnapshot(branchId: number) {
   snapshotLoading.value = true
   try {
     const snapshot = await $fetch<{
-      ingredients: Array<{ ingredientId: number | null; ingredientName: string; quantity: string; unit: CanonicalUnit; notes: string | null; sortOrder: number }>
+      ingredients: Array<{
+        ingredientId: number | null
+        ingredientName: string
+        quantity: string
+        unit: CanonicalUnit
+        notes: string | null
+        sortOrder: number
+      }>
       steps: Array<{ content: string; contentTranslations: Record<string, string> | null }>
     }>(`/api/recipes/${recipe.value!.id}/branches/${branchId}/snapshot`, {
       query: { locale: locale.value },
@@ -145,7 +165,12 @@ async function loadBranchSnapshot(branchId: number) {
     }))
     steps.value = snapshot.steps.map((s) => ({
       content: s.content,
-      contentTranslations: (s.contentTranslations as Record<'de' | 'en' | 'fr' | 'it', string>) ?? { de: '', en: '', fr: '', it: '' },
+      contentTranslations: (s.contentTranslations as Record<'de' | 'en' | 'fr' | 'it', string>) ?? {
+        de: '',
+        en: '',
+        fr: '',
+        it: '',
+      },
       translationsOpen: false,
     }))
     // Capture baseline for dirty tracking after both values are set
@@ -160,10 +185,14 @@ async function loadBranchSnapshot(branchId: number) {
 }
 
 // Load snapshot when branch selection changes (or on initial mount)
-watch(selectedBranchId, (branchId) => {
-  if (!branchId) return
-  loadBranchSnapshot(branchId)
-}, { immediate: true })
+watch(
+  selectedBranchId,
+  (branchId) => {
+    if (!branchId) return
+    loadBranchSnapshot(branchId)
+  },
+  { immediate: true }
+)
 
 // ── Dirty state tracking ──────────────────────────────────────
 // Exclude translationsOpen (local UI state) from dirty tracking
@@ -284,14 +313,26 @@ async function commitChanges() {
     const resolvedIngredients = await Promise.all(
       ingredients.value.map(async (ing, i) => {
         if (ing.ingredientId !== null) {
-          return { ingredientId: ing.ingredientId, quantity: ing.quantity, unit: ing.unit, notes: ing.notes || null, sortOrder: i }
+          return {
+            ingredientId: ing.ingredientId,
+            quantity: ing.quantity,
+            unit: ing.unit,
+            notes: ing.notes || null,
+            sortOrder: i,
+          }
         }
         // Create the new ingredient
         const created = await $fetch<{ id: number }>('/api/ingredients', {
           method: 'POST',
           body: { name: ing.name },
         })
-        return { ingredientId: created.id, quantity: ing.quantity, unit: ing.unit, notes: ing.notes || null, sortOrder: i }
+        return {
+          ingredientId: created.id,
+          quantity: ing.quantity,
+          unit: ing.unit,
+          notes: ing.notes || null,
+          sortOrder: i,
+        }
       })
     )
 
@@ -305,7 +346,9 @@ async function commitChanges() {
           sortOrder: i + 1,
           content: s.content,
           contentTranslations: (() => {
-            const translations = Object.fromEntries(Object.entries(s.contentTranslations).filter(([, v]) => v.trim() !== ''))
+            const translations = Object.fromEntries(
+              Object.entries(s.contentTranslations).filter(([, v]) => v.trim() !== '')
+            )
             return Object.keys(translations).length > 0 ? translations : null
           })(),
         })),
@@ -322,15 +365,19 @@ async function commitChanges() {
           servings: metaServings.value || undefined,
           prepTimeMinutes: metaPrepTime.value ?? null,
           cookTimeMinutes: metaCookTime.value ?? null,
-          difficulty: metaDifficulty.value as 'easy' | 'medium' | 'hard' || undefined,
-          visibility: metaVisibility.value as 'public' | 'private' || undefined,
+          difficulty: (metaDifficulty.value as 'easy' | 'medium' | 'hard') || undefined,
+          visibility: (metaVisibility.value as 'public' | 'private') || undefined,
           dietaryType: selectedDietaryType.value === 'none' ? null : selectedDietaryType.value,
           titleTranslations: (() => {
-            const tr = Object.fromEntries(Object.entries(metaTitleTranslations.value).filter(([, v]) => v.trim() !== ''))
+            const tr = Object.fromEntries(
+              Object.entries(metaTitleTranslations.value).filter(([, v]) => v.trim() !== '')
+            )
             return Object.keys(tr).length > 0 ? tr : null
           })(),
           descriptionTranslations: (() => {
-            const tr = Object.fromEntries(Object.entries(metaDescriptionTranslations.value).filter(([, v]) => v.trim() !== ''))
+            const tr = Object.fromEntries(
+              Object.entries(metaDescriptionTranslations.value).filter(([, v]) => v.trim() !== '')
+            )
             return Object.keys(tr).length > 0 ? tr : null
           })(),
         },
@@ -361,7 +408,7 @@ async function commitChanges() {
 }
 
 useSeoMeta({
-  title: () => recipe.value ? `${t('common.edit')}: ${recipe.value.title} — GourMerge` : 'GourMerge',
+  title: () => (recipe.value ? `${t('common.edit')}: ${recipe.value.title} — GourMerge` : 'GourMerge'),
 })
 </script>
 
@@ -430,7 +477,12 @@ useSeoMeta({
 
           <!-- Description -->
           <UFormField :label="t('recipe.description')">
-            <UTextarea v-model="metaDescription" :placeholder="t('recipe.descriptionPlaceholder')" :rows="2" class="w-full" />
+            <UTextarea
+              v-model="metaDescription"
+              :placeholder="t('recipe.descriptionPlaceholder')"
+              :rows="2"
+              class="w-full"
+            />
           </UFormField>
 
           <!-- Title & description translations -->
@@ -447,13 +499,22 @@ useSeoMeta({
 
           <div v-if="metaTranslationsOpen" class="ml-4 border-l-2 border-primary-500/20 pl-3 space-y-4">
             <p class="text-xs text-neutral-400">{{ t('recipe.metaTranslationsHint') }}</p>
-            <div v-for="loc in (['de', 'en', 'fr', 'it'] as const)" :key="loc" class="space-y-2">
+            <div v-for="loc in ['de', 'en', 'fr', 'it'] as const" :key="loc" class="space-y-2">
               <p class="text-xs font-semibold text-neutral-500 uppercase">{{ loc }}</p>
               <UFormField :label="t('recipe.title')">
-                <UInput v-model="metaTitleTranslations[loc]" :placeholder="t('recipe.titlePlaceholder')" class="w-full" />
+                <UInput
+                  v-model="metaTitleTranslations[loc]"
+                  :placeholder="t('recipe.titlePlaceholder')"
+                  class="w-full"
+                />
               </UFormField>
               <UFormField :label="t('recipe.description')">
-                <UTextarea v-model="metaDescriptionTranslations[loc]" :placeholder="t('recipe.descriptionPlaceholder')" :rows="2" class="w-full" />
+                <UTextarea
+                  v-model="metaDescriptionTranslations[loc]"
+                  :placeholder="t('recipe.descriptionPlaceholder')"
+                  :rows="2"
+                  class="w-full"
+                />
               </UFormField>
             </div>
           </div>
@@ -504,12 +565,14 @@ useSeoMeta({
               />
               <div v-if="availableTags?.length" class="flex flex-wrap gap-1 mt-2">
                 <button
-                  v-for="suggestion in availableTags.filter(s => !currentTags.includes(s.name)).slice(0, 10)"
+                  v-for="suggestion in availableTags.filter((s) => !currentTags.includes(s.name)).slice(0, 10)"
                   :key="suggestion.id"
                   type="button"
                   class="text-xs px-2 py-0.5 rounded-full border border-[var(--ui-border)] text-[var(--ui-text-muted)] hover:border-primary-500/50 transition-colors"
                   @click="addTag(suggestion.name)"
-                >+ {{ suggestion.name }}</button>
+                >
+                  + {{ suggestion.name }}
+                </button>
               </div>
             </UFormField>
           </div>
@@ -523,7 +586,9 @@ useSeoMeta({
             <div class="flex items-center gap-2">
               <UIcon name="i-lucide-shopping-basket" class="size-5 text-primary-500" />
               <h2 class="font-semibold">{{ t('recipe.ingredients') }}</h2>
-              <UBadge v-if="ingredients.length > 0" size="xs" color="neutral" variant="soft">{{ ingredients.length }}</UBadge>
+              <UBadge v-if="ingredients.length > 0" size="xs" color="neutral" variant="soft">{{
+                ingredients.length
+              }}</UBadge>
             </div>
             <UButton
               :label="t('recipe.addIngredient')"
@@ -551,7 +616,9 @@ useSeoMeta({
 
         <div v-else class="space-y-2">
           <!-- Column headers -->
-          <div class="grid grid-cols-[1.5rem_1fr_5rem_6rem_8rem_1.5rem] gap-2 px-1 text-xs text-neutral-400 font-medium hidden sm:grid">
+          <div
+            class="grid grid-cols-[1.5rem_1fr_5rem_6rem_8rem_1.5rem] gap-2 px-1 text-xs text-neutral-400 font-medium hidden sm:grid"
+          >
             <span />
             <span>{{ t('recipe.ingredientName') }}</span>
             <span>{{ t('recipe.quantity') }}</span>
@@ -627,7 +694,7 @@ useSeoMeta({
 
               <div v-if="step.translationsOpen" class="ml-4 space-y-2 border-l-2 border-primary-500/20 pl-3">
                 <p class="text-xs text-neutral-400">{{ t('recipe.translationsHint') }}</p>
-                <div v-for="loc in (['de', 'en', 'fr', 'it'] as const)" :key="loc">
+                <div v-for="loc in ['de', 'en', 'fr', 'it'] as const" :key="loc">
                   <p class="text-xs font-medium text-neutral-500 mb-1 uppercase">{{ loc }}</p>
                   <StepEditor
                     :model-value="step.contentTranslations[loc]"
@@ -689,8 +756,20 @@ useSeoMeta({
       </template>
       <template #footer>
         <div class="flex gap-2 justify-end w-full">
-          <UButton variant="outline" color="neutral" :label="t('common.cancel')" :disabled="deleting" @click="showDeleteModal = false" />
-          <UButton color="error" icon="i-lucide-trash-2" :label="t('common.delete')" :loading="deleting" @click="deleteRecipe" />
+          <UButton
+            variant="outline"
+            color="neutral"
+            :label="t('common.cancel')"
+            :disabled="deleting"
+            @click="showDeleteModal = false"
+          />
+          <UButton
+            color="error"
+            icon="i-lucide-trash-2"
+            :label="t('common.delete')"
+            :loading="deleting"
+            @click="deleteRecipe"
+          />
         </div>
       </template>
     </UModal>

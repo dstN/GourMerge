@@ -41,7 +41,9 @@ function loadEnv() {
       const m = line.match(/^([A-Z_][A-Z0-9_]*)=(.*)$/)
       if (m && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/^["']|["']$/g, '')
     }
-  } catch { /* rely on environment */ }
+  } catch {
+    /* rely on environment */
+  }
 }
 loadEnv()
 
@@ -54,52 +56,52 @@ if (!process.env.DATABASE_URL) {
 // Each row has: value col | Herleitung | Quelle  (triplet per nutrient).
 // We read only the value column; skip Herleitung/Quelle.
 const COL = {
-  ID:              'A',
-  NAME:            'D',
-  SYNONYME:        'E',
-  KATEGORIE:       'F',
-  DICHTE:          'G',
+  ID: 'A',
+  NAME: 'D',
+  SYNONYME: 'E',
+  KATEGORIE: 'F',
+  DICHTE: 'G',
   // Nutrients (value column only)
-  KJ:              'I',
-  KCAL:            'L',
-  FAT:             'O',
-  SAT_FAT:         'R',
-  MONO_FAT:        'U',
-  POLY_FAT:        'X',
-  CHOLESTEROL:     'AM',
-  CARBS:           'AP',
-  SUGARS:          'AS',
-  STARCH:          'AV',
-  FIBER:           'AY',
-  PROTEIN:         'BB',
-  SALT:            'BE',
-  ALCOHOL:         'BH',
-  WATER:           'BK',
+  KJ: 'I',
+  KCAL: 'L',
+  FAT: 'O',
+  SAT_FAT: 'R',
+  MONO_FAT: 'U',
+  POLY_FAT: 'X',
+  CHOLESTEROL: 'AM',
+  CARBS: 'AP',
+  SUGARS: 'AS',
+  STARCH: 'AV',
+  FIBER: 'AY',
+  PROTEIN: 'BB',
+  SALT: 'BE',
+  ALCOHOL: 'BH',
+  WATER: 'BK',
   // Vitamins
-  VIT_A_RE:        'BN',
-  RETINOL:         'BT',
-  BETA_CAROTENE:   'BZ',
-  VIT_B1:          'CC',
-  VIT_B2:          'CF',
-  VIT_B6:          'CI',
-  VIT_B12:         'CL',
-  NIACIN:          'CO',
-  FOLATE:          'CR',
-  PANTOTHENIC:     'CU',
-  VIT_C:           'CX',
-  VIT_D:           'DA',
-  VIT_E:           'DD',
+  VIT_A_RE: 'BN',
+  RETINOL: 'BT',
+  BETA_CAROTENE: 'BZ',
+  VIT_B1: 'CC',
+  VIT_B2: 'CF',
+  VIT_B6: 'CI',
+  VIT_B12: 'CL',
+  NIACIN: 'CO',
+  FOLATE: 'CR',
+  PANTOTHENIC: 'CU',
+  VIT_C: 'CX',
+  VIT_D: 'DA',
+  VIT_E: 'DD',
   // Minerals
-  POTASSIUM:       'DG',
-  SODIUM:          'DJ',
-  CHLORIDE:        'DM',
-  CALCIUM:         'DP',
-  MAGNESIUM:       'DS',
-  PHOSPHORUS:      'DV',
-  IRON:            'DY',
-  IODINE:          'EB',
-  ZINC:            'EE',
-  SELENIUM:        'EH',
+  POTASSIUM: 'DG',
+  SODIUM: 'DJ',
+  CHLORIDE: 'DM',
+  CALCIUM: 'DP',
+  MAGNESIUM: 'DS',
+  PHOSPHORUS: 'DV',
+  IRON: 'DY',
+  IODINE: 'EB',
+  ZINC: 'EE',
+  SELENIUM: 'EH',
 }
 
 // Language code detection from the actual Swiss BLV export filenames:
@@ -112,7 +114,7 @@ function detectLanguage(filename) {
   if (name.startsWith('swiss_') || name.includes('_composition_') || name.includes('_database')) return 'en'
   if (name.startsWith('base_de_') || name.includes('_nutritives') || name.includes('_donnees_')) return 'fr'
   if (name.startsWith('banca_') || name.includes('_nutritivi') || name.includes('_svizzera_')) return 'it'
-  return 'de'  // default: Schweizer_Nahrwertdatenbank.xlsx
+  return 'de' // default: Schweizer_Nahrwertdatenbank.xlsx
 }
 
 // ── Parse a Swiss XLSX file ──────────────────────────────────────────────────
@@ -123,7 +125,7 @@ const GENERIC_SHEET_NAMES = ['Generische Lebensmittel', 'Generic Foods', 'Alimen
 
 function parseXlsx(filePath) {
   const wb = XLSX.readFile(filePath, { type: 'buffer', cellDates: false })
-  const sheetName = GENERIC_SHEET_NAMES.find(n => wb.Sheets[n])
+  const sheetName = GENERIC_SHEET_NAMES.find((n) => wb.Sheets[n])
   if (!sheetName) throw new Error(`No generic-foods sheet found in ${filePath}. Available: ${wb.SheetNames.join(', ')}`)
   const sheet = wb.Sheets[sheetName]
 
@@ -133,7 +135,7 @@ function parseXlsx(filePath) {
   // Row 1 = title banner, Row 2 = header, data starts at Row 3 (index 2)
   for (let r = 2; r <= range.e.r; r++) {
     const get = (col) => {
-      const addr = col + (r + 1)  // XLSX rows are 1-indexed
+      const addr = col + (r + 1) // XLSX rows are 1-indexed
       const cell = sheet[addr]
       if (!cell) return null
       const v = cell.v
@@ -143,7 +145,7 @@ function parseXlsx(filePath) {
     }
 
     const id = get(COL.ID)
-    if (!id) continue  // skip blank rows
+    if (!id) continue // skip blank rows
 
     const name = get(COL.NAME)
     if (!name) continue
@@ -155,42 +157,42 @@ function parseXlsx(filePath) {
       kategorie: get(COL.KATEGORIE) ? String(get(COL.KATEGORIE)).trim() : null,
       dichte: parseFloat(get(COL.DICHTE)) || null,
       nutrition: {
-        energyKj:     numOrNull(get(COL.KJ)),
-        energyKcal:   numOrNull(get(COL.KCAL)),
-        fat:          numOrNull(get(COL.FAT)),
+        energyKj: numOrNull(get(COL.KJ)),
+        energyKcal: numOrNull(get(COL.KCAL)),
+        fat: numOrNull(get(COL.FAT)),
         saturatedFat: numOrNull(get(COL.SAT_FAT)),
-        carbs:        numOrNull(get(COL.CARBS)),
-        sugars:       numOrNull(get(COL.SUGARS)),
-        starch:       numOrNull(get(COL.STARCH)),
-        fiber:        numOrNull(get(COL.FIBER)),
-        protein:      numOrNull(get(COL.PROTEIN)),
-        salt:         numOrNull(get(COL.SALT)),
-        alcohol:      numOrNull(get(COL.ALCOHOL)),
-        water:        numOrNull(get(COL.WATER)),
+        carbs: numOrNull(get(COL.CARBS)),
+        sugars: numOrNull(get(COL.SUGARS)),
+        starch: numOrNull(get(COL.STARCH)),
+        fiber: numOrNull(get(COL.FIBER)),
+        protein: numOrNull(get(COL.PROTEIN)),
+        salt: numOrNull(get(COL.SALT)),
+        alcohol: numOrNull(get(COL.ALCOHOL)),
+        water: numOrNull(get(COL.WATER)),
         micros: {
-          vit_a_re_mcg:     numOrNull(get(COL.VIT_A_RE)),
-          retinol_mcg:      numOrNull(get(COL.RETINOL)),
-          beta_carotene_mcg:numOrNull(get(COL.BETA_CAROTENE)),
-          vit_b1_mg:        numOrNull(get(COL.VIT_B1)),
-          vit_b2_mg:        numOrNull(get(COL.VIT_B2)),
-          vit_b6_mg:        numOrNull(get(COL.VIT_B6)),
-          vit_b12_mcg:      numOrNull(get(COL.VIT_B12)),
-          niacin_mg:        numOrNull(get(COL.NIACIN)),
-          folate_mcg:       numOrNull(get(COL.FOLATE)),
-          pantothenic_mg:   numOrNull(get(COL.PANTOTHENIC)),
-          vit_c_mg:         numOrNull(get(COL.VIT_C)),
-          vit_d_mcg:        numOrNull(get(COL.VIT_D)),
-          vit_e_mg:         numOrNull(get(COL.VIT_E)),
-          potassium_mg:     numOrNull(get(COL.POTASSIUM)),
-          sodium_mg:        numOrNull(get(COL.SODIUM)),
-          chloride_mg:      numOrNull(get(COL.CHLORIDE)),
-          calcium_mg:       numOrNull(get(COL.CALCIUM)),
-          magnesium_mg:     numOrNull(get(COL.MAGNESIUM)),
-          phosphorus_mg:    numOrNull(get(COL.PHOSPHORUS)),
-          iron_mg:          numOrNull(get(COL.IRON)),
-          iodine_mcg:       numOrNull(get(COL.IODINE)),
-          zinc_mg:          numOrNull(get(COL.ZINC)),
-          selenium_mcg:     numOrNull(get(COL.SELENIUM)),
+          vit_a_re_mcg: numOrNull(get(COL.VIT_A_RE)),
+          retinol_mcg: numOrNull(get(COL.RETINOL)),
+          beta_carotene_mcg: numOrNull(get(COL.BETA_CAROTENE)),
+          vit_b1_mg: numOrNull(get(COL.VIT_B1)),
+          vit_b2_mg: numOrNull(get(COL.VIT_B2)),
+          vit_b6_mg: numOrNull(get(COL.VIT_B6)),
+          vit_b12_mcg: numOrNull(get(COL.VIT_B12)),
+          niacin_mg: numOrNull(get(COL.NIACIN)),
+          folate_mcg: numOrNull(get(COL.FOLATE)),
+          pantothenic_mg: numOrNull(get(COL.PANTOTHENIC)),
+          vit_c_mg: numOrNull(get(COL.VIT_C)),
+          vit_d_mcg: numOrNull(get(COL.VIT_D)),
+          vit_e_mg: numOrNull(get(COL.VIT_E)),
+          potassium_mg: numOrNull(get(COL.POTASSIUM)),
+          sodium_mg: numOrNull(get(COL.SODIUM)),
+          chloride_mg: numOrNull(get(COL.CHLORIDE)),
+          calcium_mg: numOrNull(get(COL.CALCIUM)),
+          magnesium_mg: numOrNull(get(COL.MAGNESIUM)),
+          phosphorus_mg: numOrNull(get(COL.PHOSPHORUS)),
+          iron_mg: numOrNull(get(COL.IRON)),
+          iodine_mcg: numOrNull(get(COL.IODINE)),
+          zinc_mg: numOrNull(get(COL.ZINC)),
+          selenium_mcg: numOrNull(get(COL.SELENIUM)),
         },
       },
     })
@@ -214,25 +216,25 @@ function extractCategory(kategorie) {
 // ── Map Swiss top-level category DE → internal English category key ──────────
 const CATEGORY_MAP = {
   // Swiss BLV V7.0 top-level Kategorie values (German)
-  'Alkoholhaltige Getränke':                                       'alcohol',
-  'Alkoholfreie Getränke':                                         'beverage',
-  'Brote, Flocken und Frühstückscerealien':                        'grain',
-  'Eier':                                                          'egg',
-  'Fette und Öle':                                                 'oil',
-  'Fisch':                                                         'fish',
-  'Fleisch und Innereien':                                         'meat',
-  'Fleisch- und Wurstwaren':                                       'meat',
-  'Früchte':                                                       'fruit',
-  'Gemüse':                                                        'vegetable',
-  'Gerichte':                                                      'other',
-  'Getreideprodukte, Hülsenfrüchte und Kartoffeln':               'grain',
-  'Milch und Milchprodukte':                                       'dairy',
-  'Nüsse, Samen und Ölfrüchte':                                    'nut',
+  'Alkoholhaltige Getränke': 'alcohol',
+  'Alkoholfreie Getränke': 'beverage',
+  'Brote, Flocken und Frühstückscerealien': 'grain',
+  Eier: 'egg',
+  'Fette und Öle': 'oil',
+  Fisch: 'fish',
+  'Fleisch und Innereien': 'meat',
+  'Fleisch- und Wurstwaren': 'meat',
+  Früchte: 'fruit',
+  Gemüse: 'vegetable',
+  Gerichte: 'other',
+  'Getreideprodukte, Hülsenfrüchte und Kartoffeln': 'grain',
+  'Milch und Milchprodukte': 'dairy',
+  'Nüsse, Samen und Ölfrüchte': 'nut',
   'Pflanzliche Proteinlieferanten und Alternativen zu tierischen Produkten': 'legume',
-  'Salzige Snacks':                                                'snack',
-  'Speziallebensmittel':                                           'other',
-  'Süssigkeiten':                                                  'sweet',
-  'Verschiedenes':                                                 'other',
+  'Salzige Snacks': 'snack',
+  Speziallebensmittel: 'other',
+  Süssigkeiten: 'sweet',
+  Verschiedenes: 'other',
 }
 
 function mapCategory(kategorie) {
@@ -249,8 +251,8 @@ async function main() {
   // Sort so DE is always first — category strings (Kategorie) come from DE and are the CATEGORY_MAP keys.
   const LANG_ORDER = { de: 0, en: 1, fr: 2, it: 3 }
   const xlsxFiles = readdirSync(DATA_DIR)
-    .filter(f => f.toLowerCase().endsWith('.xlsx'))
-    .map(f => ({ file: resolve(DATA_DIR, f), lang: detectLanguage(f) }))
+    .filter((f) => f.toLowerCase().endsWith('.xlsx'))
+    .map((f) => ({ file: resolve(DATA_DIR, f), lang: detectLanguage(f) }))
     .sort((a, b) => (LANG_ORDER[a.lang] ?? 9) - (LANG_ORDER[b.lang] ?? 9))
 
   if (xlsxFiles.length === 0) {
@@ -264,7 +266,7 @@ async function main() {
 
   // Parse all language files; primary = first German file
   const byLang = {}
-  const byId = {}  // id → merged row
+  const byId = {} // id → merged row
 
   for (const { file, lang } of xlsxFiles) {
     console.log(`Parsing [${lang}]...`)
@@ -287,7 +289,10 @@ async function main() {
       // Add this language's name and synonyms
       byId[row.id].names[lang] = row.name
       if (row.synonyme) {
-        byId[row.id].synonyms[lang] = row.synonyme.split(';').map(s => s.trim()).filter(Boolean)
+        byId[row.id].synonyms[lang] = row.synonyme
+          .split(';')
+          .map((s) => s.trim())
+          .filter(Boolean)
       }
     }
   }
@@ -300,7 +305,9 @@ async function main() {
     for (const row of sample) {
       const canonical = row.names.en || row.names.de || `Swiss-${row.id}`
       const cat = mapCategory(row.kategorie)
-      console.log(`  [${row.id}] "${canonical}" — cat: ${cat} — kcal: ${row.nutrition.energyKcal} — density: ${row.dichte}`)
+      console.log(
+        `  [${row.id}] "${canonical}" — cat: ${cat} — kcal: ${row.nutrition.energyKcal} — density: ${row.dichte}`
+      )
       console.log(`    names: ${JSON.stringify(row.names)}`)
       if (Object.keys(row.synonyms).length > 0) console.log(`    synonyms: ${JSON.stringify(row.synonyms)}`)
     }
@@ -353,9 +360,7 @@ async function main() {
 
       // ── Upsert ingredient_nutrition ────────────────────────────
       const n = row.nutrition
-      const micros = JSON.stringify(
-        Object.fromEntries(Object.entries(n.micros).filter(([, v]) => v !== null))
-      )
+      const micros = JSON.stringify(Object.fromEntries(Object.entries(n.micros).filter(([, v]) => v !== null)))
 
       await conn.execute(
         `INSERT INTO ingredient_nutrition
@@ -382,9 +387,21 @@ async function main() {
            external_id      = VALUES(external_id)`,
         [
           ingredientId,
-          n.energyKcal, n.energyKj, n.fat, n.saturatedFat,
-          n.carbs, n.sugars, n.starch, n.fiber, n.protein, n.salt,
-          n.alcohol, n.water, row.dichte, micros, row.id,
+          n.energyKcal,
+          n.energyKj,
+          n.fat,
+          n.saturatedFat,
+          n.carbs,
+          n.sugars,
+          n.starch,
+          n.fiber,
+          n.protein,
+          n.salt,
+          n.alcohol,
+          n.water,
+          row.dichte,
+          micros,
+          row.id,
         ]
       )
 
@@ -397,4 +414,7 @@ async function main() {
   }
 }
 
-main().catch(e => { console.error(e); process.exit(1) })
+main().catch((e) => {
+  console.error(e)
+  process.exit(1)
+})

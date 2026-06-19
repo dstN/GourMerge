@@ -50,10 +50,7 @@ export default defineEventHandler(async (event) => {
     const [existing] = await db
       .select({ id: recipes.id })
       .from(recipes)
-      .where(and(
-        eq(recipes.ownerId, session.user.id),
-        eq(recipes.slug, candidate),
-      ))
+      .where(and(eq(recipes.ownerId, session.user.id), eq(recipes.slug, candidate)))
       .limit(1)
 
     if (!existing) {
@@ -74,45 +71,51 @@ export default defineEventHandler(async (event) => {
   // All-or-nothing: if any step fails, everything rolls back.
   const txResult = await db.transaction(async (tx) => {
     // 1. Create recipe with slug + UUIDv7 public_id
-    const [recipe] = await tx.insert(recipes).values({
-      publicId: generatePublicId(),
-      ownerId: session.user.id,
-      title: data.title,
-      slug,
-      description: data.description,
-      servings: data.servings,
-      prepTimeMinutes: data.prepTimeMinutes,
-      cookTimeMinutes: data.cookTimeMinutes,
-      difficulty: data.difficulty,
-      visibility: data.visibility,
-    }).$returningId()
+    const [recipe] = await tx
+      .insert(recipes)
+      .values({
+        publicId: generatePublicId(),
+        ownerId: session.user.id,
+        title: data.title,
+        slug,
+        description: data.description,
+        servings: data.servings,
+        prepTimeMinutes: data.prepTimeMinutes,
+        cookTimeMinutes: data.cookTimeMinutes,
+        difficulty: data.difficulty,
+        visibility: data.visibility,
+      })
+      .$returningId()
 
     if (!recipe) throw createError({ statusCode: 500, statusMessage: 'Insert failed.' })
 
     // 2. Create default "main" branch
-    const [branch] = await tx.insert(recipeBranches).values({
-      recipeId: recipe.id,
-      name: 'main',
-      isDefault: true,
-    }).$returningId()
+    const [branch] = await tx
+      .insert(recipeBranches)
+      .values({
+        recipeId: recipe.id,
+        name: 'main',
+        isDefault: true,
+      })
+      .$returningId()
 
     if (!branch) throw createError({ statusCode: 500, statusMessage: 'Insert failed.' })
 
     // 3. Create initial (empty) commit
-    const [commit] = await tx.insert(recipeCommits).values({
-      branchId: branch.id,
-      authorId: session.user.id,
-      message: 'Initial commit 🍳',
-      parentCommitId: null,
-    }).$returningId()
+    const [commit] = await tx
+      .insert(recipeCommits)
+      .values({
+        branchId: branch.id,
+        authorId: session.user.id,
+        message: 'Initial commit 🍳',
+        parentCommitId: null,
+      })
+      .$returningId()
 
     if (!commit) throw createError({ statusCode: 500, statusMessage: 'Insert failed.' })
 
     // 4. Update branch head pointer
-    await tx
-      .update(recipeBranches)
-      .set({ headCommitId: commit.id })
-      .where(eq(recipeBranches.id, branch.id))
+    await tx.update(recipeBranches).set({ headCommitId: commit.id }).where(eq(recipeBranches.id, branch.id))
 
     return {
       id: recipe.id,

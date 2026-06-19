@@ -25,17 +25,17 @@ In all code, UI labels, database columns, API endpoints, comments, commit messag
 
 ## 2. Tech Stack (fixed — do not substitute)
 
-| Layer | Technology |
-| --- | --- |
-| Framework | **Nuxt 4** (Vue 3 Composition API) |
-| UI Library | **Nuxt UI v4** (Reka UI + Tailwind CSS v4 + Tailwind Variants) |
-| Styling | **Tailwind CSS v4** (CSS-first config via `@theme`) |
-| Database | **MariaDB** (exclusively) |
-| ORM | **Drizzle ORM** with `mysql2` driver |
-| i18n | **@nuxtjs/i18n** (lazy-loaded, DE default + EN + FR + IT) |
-| WYSIWYG Editor | **TipTap 3.x** with `@tiptap/markdown` |
-| Text Diffing | **diff-match-patch-es** |
-| PWA | **@vite-pwa/nuxt** |
+| Layer          | Technology                                                     |
+| -------------- | -------------------------------------------------------------- |
+| Framework      | **Nuxt 4** (Vue 3 Composition API)                             |
+| UI Library     | **Nuxt UI v4** (Reka UI + Tailwind CSS v4 + Tailwind Variants) |
+| Styling        | **Tailwind CSS v4** (CSS-first config via `@theme`)            |
+| Database       | **MariaDB** (exclusively)                                      |
+| ORM            | **Drizzle ORM** with `mysql2` driver                           |
+| i18n           | **@nuxtjs/i18n** (lazy-loaded, DE default + EN + FR + IT)      |
+| WYSIWYG Editor | **TipTap 3.x** with `@tiptap/markdown`                         |
+| Text Diffing   | **diff-match-patch-es**                                        |
+| PWA            | **@vite-pwa/nuxt**                                             |
 
 ---
 

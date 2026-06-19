@@ -59,11 +59,9 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       body: event.data,
     })
     navigateTo(`/${result.owner.username}/${result.slug}/edit`)
-  }
-  catch (err: unknown) {
+  } catch (err: unknown) {
     error.value = (err as { data?: { statusMessage?: string } })?.data?.statusMessage || t('recipe.createError')
-  }
-  finally {
+  } finally {
     loading.value = false
   }
 }
@@ -80,13 +78,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
     <UCard>
       <UForm :schema="schema" :state="state" class="space-y-6" @submit="onSubmit">
-        <UAlert
-          v-if="error"
-          color="error"
-          variant="subtle"
-          icon="i-lucide-alert-circle"
-          :title="error"
-        />
+        <UAlert v-if="error" color="error" variant="subtle" icon="i-lucide-alert-circle" :title="error" />
 
         <UFormField :label="t('recipe.title')" name="title" required>
           <UInput
@@ -98,11 +90,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         </UFormField>
 
         <UFormField :label="t('recipe.description')" name="description">
-          <UTextarea
-            v-model="state.description"
-            :placeholder="t('recipe.descriptionPlaceholder')"
-            :rows="3"
-          />
+          <UTextarea v-model="state.description" :placeholder="t('recipe.descriptionPlaceholder')" :rows="3" />
         </UFormField>
 
         <div class="grid grid-cols-3 gap-4">
@@ -111,11 +99,23 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           </UFormField>
 
           <UFormField :label="t('recipe.prepTime')" name="prepTimeMinutes">
-            <UInput v-model.number="state.prepTimeMinutes" type="number" :min="0" icon="i-lucide-clock" :placeholder="t('recipe.minutes')" />
+            <UInput
+              v-model.number="state.prepTimeMinutes"
+              type="number"
+              :min="0"
+              icon="i-lucide-clock"
+              :placeholder="t('recipe.minutes')"
+            />
           </UFormField>
 
           <UFormField :label="t('recipe.cookTime')" name="cookTimeMinutes">
-            <UInput v-model.number="state.cookTimeMinutes" type="number" :min="0" icon="i-lucide-flame" :placeholder="t('recipe.minutes')" />
+            <UInput
+              v-model.number="state.cookTimeMinutes"
+              type="number"
+              :min="0"
+              icon="i-lucide-flame"
+              :placeholder="t('recipe.minutes')"
+            />
           </UFormField>
         </div>
 

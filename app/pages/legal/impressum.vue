@@ -18,14 +18,10 @@ useSeoMeta({
       </template>
 
       <div class="prose dark:prose-invert max-w-none space-y-4">
-        <p class="text-sm text-[var(--ui-text-muted)]">
-          Angaben gemäß § 5 DDG:
-        </p>
+        <p class="text-sm text-[var(--ui-text-muted)]">Angaben gemäß § 5 DDG:</p>
 
         <address class="not-italic space-y-1 text-[var(--ui-text)]">
-          <p class="font-semibold">
-            Dustin Tramm
-          </p>
+          <p class="font-semibold">Dustin Tramm</p>
           <p>c/o Impressumservice Dein-Impressum</p>
           <p>Stettiner Str. 41</p>
           <p>35410 Hungen</p>

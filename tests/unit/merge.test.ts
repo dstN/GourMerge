@@ -10,7 +10,7 @@ function ing(
   unit: 'g' | 'ml' | 'piece' | 'pinch' | 'tsp' | 'tbsp' = 'g',
   sortOrder = ingredientId,
   notes: string | null = null,
-  ingredientName = `Ingredient ${ingredientId}`,
+  ingredientName = `Ingredient ${ingredientId}`
 ): MergeIngredient {
   return { ingredientId, ingredientName, quantity, unit, sortOrder, notes }
 }
@@ -39,7 +39,7 @@ describe('threeWayMerge — ingredients', () => {
     const target = snap([ing(1, '100.00')], [])
     const result = threeWayMerge(base, source, target)
     expect(result.hasConflicts).toBe(false)
-    expect(result.ingredients.map(i => i.ingredientId)).toContain(2)
+    expect(result.ingredients.map((i) => i.ingredientId)).toContain(2)
   })
 
   test('target adds an ingredient, source unchanged → ingredient included', () => {
@@ -48,7 +48,7 @@ describe('threeWayMerge — ingredients', () => {
     const target = snap([ing(1, '100.00'), ing(3, '30.00', 'piece')], [])
     const result = threeWayMerge(base, source, target)
     expect(result.hasConflicts).toBe(false)
-    expect(result.ingredients.map(i => i.ingredientId)).toContain(3)
+    expect(result.ingredients.map((i) => i.ingredientId)).toContain(3)
   })
 
   test('both add different ingredients → both included, no conflict', () => {
@@ -57,7 +57,7 @@ describe('threeWayMerge — ingredients', () => {
     const target = snap([ing(1, '100.00'), ing(3, '30.00')], [])
     const result = threeWayMerge(base, source, target)
     expect(result.hasConflicts).toBe(false)
-    const ids = result.ingredients.map(i => i.ingredientId)
+    const ids = result.ingredients.map((i) => i.ingredientId)
     expect(ids).toContain(2)
     expect(ids).toContain(3)
   })
@@ -68,7 +68,7 @@ describe('threeWayMerge — ingredients', () => {
     const target = snap([ing(1, '100.00'), ing(2, '50.00')], [])
     const result = threeWayMerge(base, source, target)
     expect(result.hasConflicts).toBe(false)
-    expect(result.ingredients.map(i => i.ingredientId)).not.toContain(2)
+    expect(result.ingredients.map((i) => i.ingredientId)).not.toContain(2)
   })
 
   test('target removes ingredient, source unchanged → ingredient removed', () => {
@@ -77,7 +77,7 @@ describe('threeWayMerge — ingredients', () => {
     const target = snap([ing(1, '100.00')], []) // removed 2
     const result = threeWayMerge(base, source, target)
     expect(result.hasConflicts).toBe(false)
-    expect(result.ingredients.map(i => i.ingredientId)).not.toContain(2)
+    expect(result.ingredients.map((i) => i.ingredientId)).not.toContain(2)
   })
 
   test('source modifies ingredient, target unchanged → use source version', () => {
@@ -113,7 +113,7 @@ describe('threeWayMerge — ingredients', () => {
     const target = snap([ing(1, '200.00')], []) // changed to 200 — different
     const result = threeWayMerge(base, source, target)
     expect(result.hasConflicts).toBe(true)
-    expect(result.conflicts.some(c => c.type === 'ingredient' && c.ingredientId === 1)).toBe(true)
+    expect(result.conflicts.some((c) => c.type === 'ingredient' && c.ingredientId === 1)).toBe(true)
   })
 
   test('source removes ingredient that target modified → CONFLICT', () => {
@@ -122,7 +122,7 @@ describe('threeWayMerge — ingredients', () => {
     const target = snap([ing(1, '100.00'), ing(2, '80.00')], []) // modified 2
     const result = threeWayMerge(base, source, target)
     expect(result.hasConflicts).toBe(true)
-    expect(result.conflicts.some(c => c.type === 'ingredient' && c.ingredientId === 2)).toBe(true)
+    expect(result.conflicts.some((c) => c.type === 'ingredient' && c.ingredientId === 2)).toBe(true)
   })
 
   test('target removes ingredient that source modified → CONFLICT', () => {
@@ -131,7 +131,7 @@ describe('threeWayMerge — ingredients', () => {
     const target = snap([ing(1, '100.00')], []) // removed 2
     const result = threeWayMerge(base, source, target)
     expect(result.hasConflicts).toBe(true)
-    expect(result.conflicts.some(c => c.type === 'ingredient' && c.ingredientId === 2)).toBe(true)
+    expect(result.conflicts.some((c) => c.type === 'ingredient' && c.ingredientId === 2)).toBe(true)
   })
 
   test('both remove the same ingredient → no conflict, ingredient gone', () => {
@@ -140,7 +140,7 @@ describe('threeWayMerge — ingredients', () => {
     const target = snap([ing(1, '100.00')], [])
     const result = threeWayMerge(base, source, target)
     expect(result.hasConflicts).toBe(false)
-    expect(result.ingredients.map(i => i.ingredientId)).not.toContain(2)
+    expect(result.ingredients.map((i) => i.ingredientId)).not.toContain(2)
   })
 
   test('source adds ingredient that already exists in target (same data) → no conflict', () => {
@@ -149,7 +149,7 @@ describe('threeWayMerge — ingredients', () => {
     const target = snap([ing(1, '100.00'), ing(2, '50.00')], []) // same addition
     const result = threeWayMerge(base, source, target)
     expect(result.hasConflicts).toBe(false)
-    const id2Count = result.ingredients.filter(i => i.ingredientId === 2).length
+    const id2Count = result.ingredients.filter((i) => i.ingredientId === 2).length
     expect(id2Count).toBe(1) // not duplicated
   })
 
@@ -159,7 +159,7 @@ describe('threeWayMerge — ingredients', () => {
     const target = snap([ing(1, '100.00'), ing(2, '75.00')], []) // different quantity
     const result = threeWayMerge(base, source, target)
     expect(result.hasConflicts).toBe(true)
-    expect(result.conflicts.some(c => c.type === 'ingredient' && c.ingredientId === 2)).toBe(true)
+    expect(result.conflicts.some((c) => c.type === 'ingredient' && c.ingredientId === 2)).toBe(true)
   })
 })
 
@@ -179,7 +179,7 @@ describe('threeWayMerge — steps', () => {
     const target = snap([], [step(1, 'Preheat oven')])
     const result = threeWayMerge(base, source, target)
     expect(result.hasConflicts).toBe(false)
-    expect(result.steps.find(s => s.sortOrder === 2)?.content).toBe('Mix flour')
+    expect(result.steps.find((s) => s.sortOrder === 2)?.content).toBe('Mix flour')
   })
 
   test('target adds a step, source unchanged → step included', () => {
@@ -188,7 +188,7 @@ describe('threeWayMerge — steps', () => {
     const target = snap([], [step(1, 'Preheat oven'), step(2, 'Add sugar')])
     const result = threeWayMerge(base, source, target)
     expect(result.hasConflicts).toBe(false)
-    expect(result.steps.find(s => s.sortOrder === 2)?.content).toBe('Add sugar')
+    expect(result.steps.find((s) => s.sortOrder === 2)?.content).toBe('Add sugar')
   })
 
   test('source modifies step, target unchanged → use source version', () => {
@@ -224,7 +224,7 @@ describe('threeWayMerge — steps', () => {
     const target = snap([], [step(1, 'Preheat to 160°C fan')])
     const result = threeWayMerge(base, source, target)
     expect(result.hasConflicts).toBe(true)
-    expect(result.conflicts.some(c => c.type === 'step' && c.stepSortOrder === 1)).toBe(true)
+    expect(result.conflicts.some((c) => c.type === 'step' && c.stepSortOrder === 1)).toBe(true)
   })
 
   test('source removes step, target unchanged → step not in result', () => {
@@ -233,7 +233,7 @@ describe('threeWayMerge — steps', () => {
     const target = snap([], [step(1, 'Preheat oven'), step(2, 'Mix flour')])
     const result = threeWayMerge(base, source, target)
     expect(result.hasConflicts).toBe(false)
-    expect(result.steps.find(s => s.sortOrder === 2)).toBeUndefined()
+    expect(result.steps.find((s) => s.sortOrder === 2)).toBeUndefined()
   })
 
   test('source removes step that target modified → CONFLICT', () => {
@@ -242,7 +242,7 @@ describe('threeWayMerge — steps', () => {
     const target = snap([], [step(1, 'Preheat oven'), step(2, 'Sift flour carefully')]) // modified step 2
     const result = threeWayMerge(base, source, target)
     expect(result.hasConflicts).toBe(true)
-    expect(result.conflicts.some(c => c.type === 'step' && c.stepSortOrder === 2)).toBe(true)
+    expect(result.conflicts.some((c) => c.type === 'step' && c.stepSortOrder === 2)).toBe(true)
   })
 
   test('both source and target add steps at different positions → both included', () => {
@@ -251,7 +251,7 @@ describe('threeWayMerge — steps', () => {
     const target = snap([], [step(1, 'Preheat oven'), step(3, 'Add sugar')])
     const result = threeWayMerge(base, source, target)
     expect(result.hasConflicts).toBe(false)
-    const sortOrders = result.steps.map(s => s.sortOrder)
+    const sortOrders = result.steps.map((s) => s.sortOrder)
     expect(sortOrders).toContain(2)
     expect(sortOrders).toContain(3)
   })
@@ -266,7 +266,7 @@ describe('threeWayMerge — combined', () => {
     const target = snap([ing(1, '100.00')], [step(1, 'Preheat oven')])
     const result = threeWayMerge(base, source, target)
     expect(result.hasConflicts).toBe(false)
-    expect(result.ingredients.map(i => i.ingredientId)).toContain(2)
+    expect(result.ingredients.map((i) => i.ingredientId)).toContain(2)
     expect(result.steps[0]!.content).toBe('Preheat to 200°C')
   })
 
@@ -276,8 +276,8 @@ describe('threeWayMerge — combined', () => {
     const target = snap([ing(1, '200.00')], [step(1, 'Preheat oven')]) // ingredient conflict
     const result = threeWayMerge(base, source, target)
     expect(result.hasConflicts).toBe(true)
-    expect(result.conflicts.some(c => c.type === 'ingredient')).toBe(true)
+    expect(result.conflicts.some((c) => c.type === 'ingredient')).toBe(true)
     // Even with conflict, non-conflicting step changes are returned for display
-    expect(result.steps.find(s => s.sortOrder === 2)).toBeDefined()
+    expect(result.steps.find((s) => s.sortOrder === 2)).toBeDefined()
   })
 })

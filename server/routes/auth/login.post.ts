@@ -33,11 +33,7 @@ export default defineEventHandler(async (event) => {
   if (!db) throw createError({ statusCode: 503, statusMessage: 'Database unavailable.' })
 
   // ── Find user ───────────────────────────────────────────────
-  const [user] = await db
-    .select()
-    .from(users)
-    .where(eq(users.email, email))
-    .limit(1)
+  const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1)
 
   if (!user) {
     throw createError({

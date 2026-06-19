@@ -18,13 +18,17 @@ export default defineEventHandler(async (event) => {
   if (!db) return { sent: true } // fail open — don't reveal DB state
 
   // Always return success to prevent user enumeration.
-  const [dbUser] = await db.select({ id: users.id, email: users.email })
-    .from(users).where(eq(users.email, parsed.data.email)).limit(1)
+  const [dbUser] = await db
+    .select({ id: users.id, email: users.email })
+    .from(users)
+    .where(eq(users.email, parsed.data.email))
+    .limit(1)
 
   if (!dbUser) return { sent: true } // silent: don't reveal if email exists
 
   // Invalidate existing tokens.
-  await db.delete(passwordResetTokens)
+  await db
+    .delete(passwordResetTokens)
     .where(and(eq(passwordResetTokens.userId, dbUser.id), isNull(passwordResetTokens.usedAt)))
 
   const rawToken = randomBytes(32).toString('hex')

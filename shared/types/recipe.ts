@@ -34,10 +34,33 @@ export interface RecipeDetail {
   createdAt: string
   updatedAt: string
   owner: { id: number; username: string; displayName: string | null; avatarUrl: string | null }
-  branches: Array<{ id: number; recipeId: number; name: string; headCommitId: number | null; isDefault: boolean; createdAt: string }>
-  defaultBranch: { id: number; recipeId: number; name: string; headCommitId: number | null; isDefault: boolean; createdAt: string } | undefined
-  currentIngredients: Array<{ id: number; ingredientId: number; ingredientName: string; quantity: string; unit: string; notes: string | null; sortOrder: number }>
-  currentSteps: Array<{ id: number; commitId: number; sortOrder: number; content: string; contentTranslations: StepTranslations | null }>
+  branches: Array<{
+    id: number
+    recipeId: number
+    name: string
+    headCommitId: number | null
+    isDefault: boolean
+    createdAt: string
+  }>
+  defaultBranch:
+    | { id: number; recipeId: number; name: string; headCommitId: number | null; isDefault: boolean; createdAt: string }
+    | undefined
+  currentIngredients: Array<{
+    id: number
+    ingredientId: number
+    ingredientName: string
+    quantity: string
+    unit: string
+    notes: string | null
+    sortOrder: number
+  }>
+  currentSteps: Array<{
+    id: number
+    commitId: number
+    sortOrder: number
+    content: string
+    contentTranslations: StepTranslations | null
+  }>
   titleTranslations: StepTranslations | null
   descriptionTranslations: StepTranslations | null
   isStarred: boolean
@@ -68,11 +91,32 @@ export interface GourmergeRequestDetail {
   description: string | null
   status: 'draft' | 'open' | 'closed' | 'merged'
   author: { username: string; displayName: string | null } | undefined
-  sourceBranch: { id: number; name: string; headCommitId: number | null; recipeId: number; isDefault: boolean; createdAt: string } | null
-  targetBranch: { id: number; name: string; headCommitId: number | null; recipeId: number; isDefault: boolean; createdAt: string } | null
+  sourceBranch: {
+    id: number
+    name: string
+    headCommitId: number | null
+    recipeId: number
+    isDefault: boolean
+    createdAt: string
+  } | null
+  targetBranch: {
+    id: number
+    name: string
+    headCommitId: number | null
+    recipeId: number
+    isDefault: boolean
+    createdAt: string
+  } | null
   diff: CommitDiff | null
   canMerge: boolean
-  comments: Array<{ id: number; body: string; authorId: number; authorUsername: string; authorDisplayName: string | null; createdAt: string }>
+  comments: Array<{
+    id: number
+    body: string
+    authorId: number
+    authorUsername: string
+    authorDisplayName: string | null
+    createdAt: string
+  }>
   createdAt: string
   updatedAt: string
 }

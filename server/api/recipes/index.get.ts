@@ -81,8 +81,8 @@ export default defineEventHandler(async (event) => {
 })
 
 async function withTags<T extends { id: number }>(db: ReturnType<typeof useDrizzle>, rows: T[]) {
-  if (!rows.length) return rows.map(r => ({ ...r, tags: [] as string[] }))
-  const ids = rows.map(r => r.id)
+  if (!rows.length) return rows.map((r) => ({ ...r, tags: [] as string[] }))
+  const ids = rows.map((r) => r.id)
   const tagRows = await db
     .select({ recipeId: recipeTags.recipeId, name: tags.name })
     .from(recipeTags)
@@ -93,5 +93,5 @@ async function withTags<T extends { id: number }>(db: ReturnType<typeof useDrizz
     if (!map.has(row.recipeId)) map.set(row.recipeId, [])
     map.get(row.recipeId)!.push(row.name)
   }
-  return rows.map(r => ({ ...r, tags: map.get(r.id) ?? [] as string[] }))
+  return rows.map((r) => ({ ...r, tags: map.get(r.id) ?? ([] as string[]) }))
 }

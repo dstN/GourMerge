@@ -5,12 +5,15 @@ import { z } from 'zod'
 import { eq } from 'drizzle-orm'
 import { recipes } from '~~/server/database/schema'
 
-const localeTranslationsSchema = z.object({
-  de: z.string().optional(),
-  en: z.string().optional(),
-  fr: z.string().optional(),
-  it: z.string().optional(),
-}).optional().nullable()
+const localeTranslationsSchema = z
+  .object({
+    de: z.string().optional(),
+    en: z.string().optional(),
+    fr: z.string().optional(),
+    it: z.string().optional(),
+  })
+  .optional()
+  .nullable()
 
 const updateRecipeSchema = z.object({
   title: z.string().min(2).max(300).optional(),
@@ -46,11 +49,7 @@ export default defineEventHandler(async (event) => {
   if (!db) throw createError({ statusCode: 503, statusMessage: 'Database unavailable.' })
 
   // ── Verify ownership ────────────────────────────────────────
-  const [recipe] = await db
-    .select({ ownerId: recipes.ownerId })
-    .from(recipes)
-    .where(eq(recipes.id, id))
-    .limit(1)
+  const [recipe] = await db.select({ ownerId: recipes.ownerId }).from(recipes).where(eq(recipes.id, id)).limit(1)
 
   if (!recipe) {
     throw createError({ statusCode: 404, statusMessage: 'Recipe not found' })

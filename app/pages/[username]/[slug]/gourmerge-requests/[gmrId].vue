@@ -13,17 +13,21 @@ const slug = computed(() => route.params.slug as string)
 const gmrId = computed(() => route.params.gmrId as string)
 const recipeUrl = computed(() => `/${username.value}/${slug.value}`)
 
-const { data: recipe } = useFetch<RecipeDetail>(
-  () => `/api/recipes/by-slug/${username.value}/${slug.value}`,
-  { headers: useRequestHeaders(['cookie']) },
-)
+const { data: recipe } = useFetch<RecipeDetail>(() => `/api/recipes/by-slug/${username.value}/${slug.value}`, {
+  headers: useRequestHeaders(['cookie']),
+})
 
 const recipeId = computed(() => recipe.value?.id ?? 0)
 
-const { data: gmr, pending, error, refresh } = useFetch<GourmergeRequestDetail>(
-  () => `/api/recipes/${recipeId.value}/gourmerge-requests/${gmrId.value}`,
-  { headers: useRequestHeaders(['cookie']), watch: [recipeId] },
-)
+const {
+  data: gmr,
+  pending,
+  error,
+  refresh,
+} = useFetch<GourmergeRequestDetail>(() => `/api/recipes/${recipeId.value}/gourmerge-requests/${gmrId.value}`, {
+  headers: useRequestHeaders(['cookie']),
+  watch: [recipeId],
+})
 
 // ── Actions ──────────────────────────────────────────────────────
 const mergePending = ref(false)
@@ -37,7 +41,7 @@ async function executeMerge() {
   try {
     const res = await $fetch<{ success: boolean; hasConflicts?: boolean }>(
       `/api/recipes/${recipe.value.id}/gourmerge-requests/${gmrId.value}/merge`,
-      { method: 'POST' },
+      { method: 'POST' }
     )
     if (res.success) {
       toast.success(t('gourmergeRequest.mergeSuccess'))
@@ -86,15 +90,18 @@ async function submitComment() {
   }
 }
 
-const statusColor = computed(() => ({
-  open: 'success' as const,
-  closed: 'neutral' as const,
-  merged: 'primary' as const,
-  draft: 'warning' as const,
-}[gmr.value?.status ?? 'open']))
+const statusColor = computed(
+  () =>
+    ({
+      open: 'success' as const,
+      closed: 'neutral' as const,
+      merged: 'primary' as const,
+      draft: 'warning' as const,
+    })[gmr.value?.status ?? 'open']
+)
 
 useSeoMeta({
-  title: () => gmr.value ? `${gmr.value.title} — GourMerge` : 'GourMerge',
+  title: () => (gmr.value ? `${gmr.value.title} — GourMerge` : 'GourMerge'),
 })
 </script>
 
@@ -168,7 +175,9 @@ useSeoMeta({
       </div>
 
       <!-- Branch info -->
-      <div class="flex items-center gap-2 text-sm text-[var(--ui-text-muted)] mb-6 p-3 bg-[var(--ui-bg-elevated)] rounded-lg">
+      <div
+        class="flex items-center gap-2 text-sm text-[var(--ui-text-muted)] mb-6 p-3 bg-[var(--ui-bg-elevated)] rounded-lg"
+      >
         <UIcon name="i-lucide-git-branch" class="size-4 text-primary-500" />
         <span class="font-mono font-medium">{{ gmr.sourceBranch?.name }}</span>
         <UIcon name="i-lucide-arrow-right" class="size-4" />
@@ -198,7 +207,10 @@ useSeoMeta({
           </div>
         </template>
 
-        <div v-if="!gmr.diff || (gmr.diff.ingredients.length === 0 && gmr.diff.steps.length === 0)" class="text-center py-8 text-[var(--ui-text-muted)]">
+        <div
+          v-if="!gmr.diff || (gmr.diff.ingredients.length === 0 && gmr.diff.steps.length === 0)"
+          class="text-center py-8 text-[var(--ui-text-muted)]"
+        >
           {{ t('gourmergeRequest.noDiff') }}
         </div>
         <RecipeDiffViewer v-else :diff="gmr.diff" />
@@ -216,11 +228,7 @@ useSeoMeta({
 
         <!-- Existing comments -->
         <div v-if="gmr.comments?.length" class="space-y-4 mb-6">
-          <div
-            v-for="c in gmr.comments"
-            :key="c.id"
-            class="flex gap-3 p-3 rounded-lg bg-[var(--ui-bg-elevated)]"
-          >
+          <div v-for="c in gmr.comments" :key="c.id" class="flex gap-3 p-3 rounded-lg bg-[var(--ui-bg-elevated)]">
             <div class="w-8 h-8 rounded-full bg-primary-500/10 flex items-center justify-center shrink-0">
               <UIcon name="i-lucide-user-circle" class="size-5 text-primary-500" />
             </div>

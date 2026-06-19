@@ -13,11 +13,21 @@ export interface TourStep {
 
 const DEFAULT_STEPS: TourStep[] = [
   { id: 'nav-explore', titleKey: 'tour.step.explore.title', descKey: 'tour.step.explore.desc', placement: 'bottom' },
-  { id: 'new-recipe-btn', titleKey: 'tour.step.newRecipe.title', descKey: 'tour.step.newRecipe.desc', placement: 'bottom' },
+  {
+    id: 'new-recipe-btn',
+    titleKey: 'tour.step.newRecipe.title',
+    descKey: 'tour.step.newRecipe.desc',
+    placement: 'bottom',
+  },
   { id: 'fork-button', titleKey: 'tour.step.fork.title', descKey: 'tour.step.fork.desc', placement: 'bottom' },
   { id: 'star-button', titleKey: 'tour.step.star.title', descKey: 'tour.step.star.desc', placement: 'bottom' },
   { id: 'history-link', titleKey: 'tour.step.history.title', descKey: 'tour.step.history.desc', placement: 'left' },
-  { id: 'gourmerge-requests-link', titleKey: 'tour.step.gourmergeRequest.title', descKey: 'tour.step.gourmergeRequest.desc', placement: 'left' },
+  {
+    id: 'gourmerge-requests-link',
+    titleKey: 'tour.step.gourmergeRequest.title',
+    descKey: 'tour.step.gourmergeRequest.desc',
+    placement: 'left',
+  },
 ]
 
 const active = ref(false)

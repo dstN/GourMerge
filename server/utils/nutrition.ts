@@ -14,7 +14,7 @@
 import type { NutritionTotals } from '~~/shared/types/recipe'
 
 // ── tsp/tbsp in ml (canonical conversion constants) ──────────────────────────
-const TSP_ML  = 4.92892
+const TSP_ML = 4.92892
 const TBSP_ML = 14.7868
 const PINCH_G = 0.3
 
@@ -22,22 +22,22 @@ type CommitUnit = 'g' | 'ml' | 'piece' | 'pinch' | 'tsp' | 'tbsp'
 
 export interface IngredientNutritionRow {
   ingredientId: number
-  energyKcal100g:   string | null
-  protein100g:      string | null
-  carbs100g:        string | null
-  fat100g:          string | null
-  fiber100g:        string | null
+  energyKcal100g: string | null
+  protein100g: string | null
+  carbs100g: string | null
+  fat100g: string | null
+  fiber100g: string | null
   saturatedFat100g: string | null
-  sugar100g?:       string | null
-  densityGPerMl:    string | null
-  gramsPerPiece:    number | null
-  micros?:          unknown
+  sugar100g?: string | null
+  densityGPerMl: string | null
+  gramsPerPiece: number | null
+  micros?: unknown
 }
 
 export interface CommitIngredientInput {
   ingredientId: number
-  quantity:     string  // DECIMAL stored as string by mysql2
-  unit:         CommitUnit
+  quantity: string // DECIMAL stored as string by mysql2
+  unit: CommitUnit
   ingredientName?: string
 }
 
@@ -49,14 +49,14 @@ function toGrams(
   quantity: number,
   unit: CommitUnit,
   density: number | null,
-  gramsPerPiece: number | null,
+  gramsPerPiece: number | null
 ): { grams: number; approximate: boolean } | null {
   switch (unit) {
     case 'g':
       return { grams: quantity, approximate: false }
 
     case 'ml': {
-      const d = density ?? 1.0  // fallback: assume water density
+      const d = density ?? 1.0 // fallback: assume water density
       return { grams: quantity * d, approximate: density === null }
     }
 
@@ -93,7 +93,7 @@ function toGrams(
  */
 export function computeNutritionTotals(
   commitIngredients: CommitIngredientInput[],
-  nutritionByIngredientId: Map<number, IngredientNutritionRow>,
+  nutritionByIngredientId: Map<number, IngredientNutritionRow>
 ): NutritionTotals {
   let kcal = 0
   let protein = 0
@@ -116,9 +116,9 @@ export function computeNutritionTotals(
       continue
     }
 
-    const density     = n.densityGPerMl    ? parseFloat(n.densityGPerMl)    : null
-    const gPiece      = n.gramsPerPiece    ?? null
-    const qty         = parseFloat(ci.quantity)
+    const density = n.densityGPerMl ? parseFloat(n.densityGPerMl) : null
+    const gPiece = n.gramsPerPiece ?? null
+    const qty = parseFloat(ci.quantity)
 
     const conv = toGrams(qty, ci.unit, density, gPiece)
     if (!conv) {
@@ -130,12 +130,12 @@ export function computeNutritionTotals(
     if (conv.approximate) isApproximate = true
     const factor = conv.grams / 100
 
-    kcal        += (parseFloat(n.energyKcal100g   ?? '0')) * factor
-    protein     += (parseFloat(n.protein100g      ?? '0')) * factor
-    carbs       += (parseFloat(n.carbs100g        ?? '0')) * factor
-    fat         += (parseFloat(n.fat100g          ?? '0')) * factor
-    fiber       += (parseFloat(n.fiber100g        ?? '0')) * factor
-    saturatedFat+= (parseFloat(n.saturatedFat100g ?? '0')) * factor
+    kcal += parseFloat(n.energyKcal100g ?? '0') * factor
+    protein += parseFloat(n.protein100g ?? '0') * factor
+    carbs += parseFloat(n.carbs100g ?? '0') * factor
+    fat += parseFloat(n.fat100g ?? '0') * factor
+    fiber += parseFloat(n.fiber100g ?? '0') * factor
+    saturatedFat += parseFloat(n.saturatedFat100g ?? '0') * factor
     coveredCount++
 
     const micros = n.micros as Record<string, number | null> | null
@@ -152,15 +152,15 @@ export function computeNutritionTotals(
   const micros = Object.fromEntries(
     Object.entries(microsTotal)
       .filter(([, v]) => v > 0)
-      .map(([k, v]) => [k, round2(v)]),
+      .map(([k, v]) => [k, round2(v)])
   )
 
   return {
-    kcal:         round2(kcal),
-    protein:      round2(protein),
-    carbs:        round2(carbs),
-    fat:          round2(fat),
-    fiber:        round2(fiber),
+    kcal: round2(kcal),
+    protein: round2(protein),
+    carbs: round2(carbs),
+    fat: round2(fat),
+    fiber: round2(fiber),
     saturatedFat: round2(saturatedFat),
     isApproximate,
     missingCount,
@@ -177,17 +177,15 @@ export function perServing(totals: NutritionTotals, servings: number): Nutrition
   if (servings <= 0) return totals
   const d = (v: number) => Math.round((v / servings) * 100) / 100
   return {
-    kcal:          d(totals.kcal),
-    protein:       d(totals.protein),
-    carbs:         d(totals.carbs),
-    fat:           d(totals.fat),
-    fiber:         d(totals.fiber),
-    saturatedFat:  d(totals.saturatedFat),
+    kcal: d(totals.kcal),
+    protein: d(totals.protein),
+    carbs: d(totals.carbs),
+    fat: d(totals.fat),
+    fiber: d(totals.fiber),
+    saturatedFat: d(totals.saturatedFat),
     isApproximate: totals.isApproximate,
-    missingCount:  totals.missingCount,
-    coveredCount:  totals.coveredCount,
-    micros: totals.micros
-      ? Object.fromEntries(Object.entries(totals.micros).map(([k, v]) => [k, d(v)]))
-      : undefined,
+    missingCount: totals.missingCount,
+    coveredCount: totals.coveredCount,
+    micros: totals.micros ? Object.fromEntries(Object.entries(totals.micros).map(([k, v]) => [k, d(v)])) : undefined,
   }
 }

@@ -20,9 +20,7 @@ const { t } = useI18n()
   >
     <!-- Progress -->
     <div class="flex items-center justify-between mb-3">
-      <span class="text-xs text-[var(--ui-text-dimmed)]">
-        {{ progress.current }} / {{ progress.total }}
-      </span>
+      <span class="text-xs text-[var(--ui-text-dimmed)]"> {{ progress.current }} / {{ progress.total }} </span>
       <UProgress :value="(progress.current / progress.total) * 100" size="xs" class="w-24" />
       <UButton
         icon="i-lucide-x"
@@ -40,13 +38,7 @@ const { t } = useI18n()
 
     <!-- Navigation -->
     <div class="flex items-center justify-between gap-2">
-      <UButton
-        :label="t('tour.skip')"
-        variant="ghost"
-        color="neutral"
-        size="xs"
-        @click="emit('skip')"
-      />
+      <UButton :label="t('tour.skip')" variant="ghost" color="neutral" size="xs" @click="emit('skip')" />
       <div class="flex items-center gap-1.5">
         <UButton
           v-if="progress.current > 1"

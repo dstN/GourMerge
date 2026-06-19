@@ -46,15 +46,13 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     state.email = ''
     state.message = ''
     honeypot.value = ''
-  }
-  catch {
+  } catch {
     toast.add({
       color: 'error',
       title: t('legal.contactError'),
       icon: 'i-lucide-alert-circle',
     })
-  }
-  finally {
+  } finally {
     loading.value = false
   }
 }
@@ -82,21 +80,9 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         class="mb-4"
       />
 
-      <UForm
-        v-else
-        :schema="schema"
-        :state="state"
-        class="space-y-4"
-        @submit="onSubmit"
-      >
+      <UForm v-else :schema="schema" :state="state" class="space-y-4" @submit="onSubmit">
         <!-- Honeypot (hidden from real users) -->
-        <input
-          name="website"
-          class="hidden"
-          v-model="honeypot"
-          tabindex="-1"
-          autocomplete="off"
-        />
+        <input v-model="honeypot" name="website" class="hidden" tabindex="-1" autocomplete="off" />
 
         <UFormField :label="t('legal.contactName')" name="name" required>
           <UInput

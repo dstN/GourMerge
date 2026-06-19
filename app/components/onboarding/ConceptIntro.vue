@@ -9,7 +9,9 @@ const show = ref(false)
 onMounted(() => {
   if (loggedIn.value && !isDone.value) {
     // Small delay so the page is fully rendered before the modal appears.
-    setTimeout(() => { show.value = true }, 800)
+    setTimeout(() => {
+      show.value = true
+    }, 800)
   }
 })
 
@@ -47,19 +49,31 @@ async function startTour() {
           >
             <div class="shrink-0 mt-0.5">
               <UIcon
-                :name="concept === 'recipe' ? 'i-lucide-book-open'
-                  : concept === 'fork' ? 'i-lucide-git-fork'
-                  : concept === 'branch' ? 'i-lucide-git-branch'
-                  : concept === 'commit' ? 'i-lucide-save'
-                  : concept === 'merge' ? 'i-lucide-git-merge'
-                  : 'i-lucide-git-pull-request'"
+                :name="
+                  concept === 'recipe'
+                    ? 'i-lucide-book-open'
+                    : concept === 'fork'
+                      ? 'i-lucide-git-fork'
+                      : concept === 'branch'
+                        ? 'i-lucide-git-branch'
+                        : concept === 'commit'
+                          ? 'i-lucide-save'
+                          : concept === 'merge'
+                            ? 'i-lucide-git-merge'
+                            : 'i-lucide-git-pull-request'
+                "
                 class="size-5 text-primary-500"
               />
             </div>
             <div>
               <div class="flex items-center gap-2 mb-0.5">
                 <span class="font-semibold text-sm">{{ t(`onboarding.conceptIntro.${concept}.alias`) }}</span>
-                <UBadge color="neutral" variant="subtle" size="xs" :label="t(`onboarding.conceptIntro.${concept}.canonical`)" />
+                <UBadge
+                  color="neutral"
+                  variant="subtle"
+                  size="xs"
+                  :label="t(`onboarding.conceptIntro.${concept}.canonical`)"
+                />
               </div>
               <p class="text-sm text-[var(--ui-text-muted)]">
                 {{ t(`onboarding.conceptIntro.${concept}.desc`) }}
@@ -72,13 +86,7 @@ async function startTour() {
 
     <template #footer>
       <div class="flex items-center justify-between w-full gap-3">
-        <UButton
-          variant="ghost"
-          color="neutral"
-          size="sm"
-          :label="t('onboarding.skipAll')"
-          @click="dismiss"
-        />
+        <UButton variant="ghost" color="neutral" size="sm" :label="t('onboarding.skipAll')" @click="dismiss" />
         <UButton
           :label="t('onboarding.gotIt')"
           color="primary"

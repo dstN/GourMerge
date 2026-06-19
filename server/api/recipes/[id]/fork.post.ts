@@ -78,7 +78,10 @@ export default defineEventHandler(async (event) => {
       .from(recipes)
       .where(and(eq(recipes.ownerId, session.user.id), eq(recipes.slug, candidate)))
       .limit(1)
-    if (!existing) { slug = candidate; break }
+    if (!existing) {
+      slug = candidate
+      break
+    }
     suffix++
   }
 
@@ -89,57 +92,60 @@ export default defineEventHandler(async (event) => {
     .where(and(eq(recipeBranches.recipeId, recipeId), eq(recipeBranches.isDefault, true)))
     .limit(1)
 
-  let sourceIngredients: typeof recipeCommitIngredients.$inferSelect[] = []
-  let sourceSteps: typeof recipeCommitSteps.$inferSelect[] = []
+  let sourceIngredients: (typeof recipeCommitIngredients.$inferSelect)[] = []
+  let sourceSteps: (typeof recipeCommitSteps.$inferSelect)[] = []
 
   if (defaultBranch?.headCommitId) {
     ;[sourceIngredients, sourceSteps] = await Promise.all([
-      db
-        .select()
-        .from(recipeCommitIngredients)
-        .where(eq(recipeCommitIngredients.commitId, defaultBranch.headCommitId)),
-      db
-        .select()
-        .from(recipeCommitSteps)
-        .where(eq(recipeCommitSteps.commitId, defaultBranch.headCommitId)),
+      db.select().from(recipeCommitIngredients).where(eq(recipeCommitIngredients.commitId, defaultBranch.headCommitId)),
+      db.select().from(recipeCommitSteps).where(eq(recipeCommitSteps.commitId, defaultBranch.headCommitId)),
     ])
   }
 
   // ── Transaction: deep copy + counter increment ───────────────
   const result = await db.transaction(async (tx) => {
     // 1. Insert the forked recipe
-    const [fork] = await tx.insert(recipes).values({
-      publicId: generatePublicId(),
-      ownerId: session.user.id,
-      title: original.title,
-      slug,
-      description: original.description,
-      servings: original.servings,
-      prepTimeMinutes: original.prepTimeMinutes ?? undefined,
-      cookTimeMinutes: original.cookTimeMinutes ?? undefined,
-      difficulty: original.difficulty,
-      visibility: original.visibility,
-      forkedFromRecipeId: recipeId,
-    }).$returningId()
+    const [fork] = await tx
+      .insert(recipes)
+      .values({
+        publicId: generatePublicId(),
+        ownerId: session.user.id,
+        title: original.title,
+        slug,
+        description: original.description,
+        servings: original.servings,
+        prepTimeMinutes: original.prepTimeMinutes ?? undefined,
+        cookTimeMinutes: original.cookTimeMinutes ?? undefined,
+        difficulty: original.difficulty,
+        visibility: original.visibility,
+        forkedFromRecipeId: recipeId,
+      })
+      .$returningId()
 
     if (!fork) throw createError({ statusCode: 500, statusMessage: 'Insert failed.' })
 
     // 2. Create default branch for fork
-    const [forkBranch] = await tx.insert(recipeBranches).values({
-      recipeId: fork.id,
-      name: 'main',
-      isDefault: true,
-    }).$returningId()
+    const [forkBranch] = await tx
+      .insert(recipeBranches)
+      .values({
+        recipeId: fork.id,
+        name: 'main',
+        isDefault: true,
+      })
+      .$returningId()
 
     if (!forkBranch) throw createError({ statusCode: 500, statusMessage: 'Insert failed.' })
 
     // 3. Copy head commit snapshot (fork point)
-    const [forkCommit] = await tx.insert(recipeCommits).values({
-      branchId: forkBranch.id,
-      authorId: session.user.id,
-      message: `Forked from original recipe`,
-      parentCommitId: null,
-    }).$returningId()
+    const [forkCommit] = await tx
+      .insert(recipeCommits)
+      .values({
+        branchId: forkBranch.id,
+        authorId: session.user.id,
+        message: `Forked from original recipe`,
+        parentCommitId: null,
+      })
+      .$returningId()
 
     if (!forkCommit) throw createError({ statusCode: 500, statusMessage: 'Insert failed.' })
 
@@ -169,10 +175,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // 6. Set fork's branch head
-    await tx
-      .update(recipeBranches)
-      .set({ headCommitId: forkCommit.id })
-      .where(eq(recipeBranches.id, forkBranch.id))
+    await tx.update(recipeBranches).set({ headCommitId: forkCommit.id }).where(eq(recipeBranches.id, forkBranch.id))
 
     // 7. Increment original recipe's forkCount atomically
     await tx

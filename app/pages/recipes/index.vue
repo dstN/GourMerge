@@ -9,7 +9,11 @@ useSeoMeta({
   title: `${t('nav.myRecipes')} — GourMerge`,
 })
 
-const { data: recipes, pending, error } = useFetch<DashboardRecipe[]>('/api/recipes', {
+const {
+  data: recipes,
+  pending,
+  error,
+} = useFetch<DashboardRecipe[]>('/api/recipes', {
   headers: useRequestHeaders(['cookie']),
 })
 </script>
@@ -25,13 +29,7 @@ const { data: recipes, pending, error } = useFetch<DashboardRecipe[]>('/api/reci
           {{ t('dashboard.subtitle') }}
         </p>
       </div>
-      <UButton
-        :label="t('nav.newRecipe')"
-        icon="i-lucide-plus"
-        size="lg"
-        to="/recipes/new"
-        class="mt-4 sm:mt-0"
-      />
+      <UButton :label="t('nav.newRecipe')" icon="i-lucide-plus" size="lg" to="/recipes/new" class="mt-4 sm:mt-0" />
     </div>
 
     <div v-if="pending" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -46,11 +44,7 @@ const { data: recipes, pending, error } = useFetch<DashboardRecipe[]>('/api/reci
       <p class="text-[var(--ui-text-muted)] mb-6 max-w-md mx-auto">
         {{ t('dashboard.errorDescription') }}
       </p>
-      <UButton
-        :label="t('auth.loginButton')"
-        icon="i-lucide-log-in"
-        to="/auth/login"
-      />
+      <UButton :label="t('auth.loginButton')" icon="i-lucide-log-in" to="/auth/login" />
     </UCard>
 
     <UCard v-else-if="!recipes || recipes.length === 0" class="text-center py-16">
@@ -61,20 +55,11 @@ const { data: recipes, pending, error } = useFetch<DashboardRecipe[]>('/api/reci
       <p class="text-[var(--ui-text-muted)] mb-6 max-w-md mx-auto">
         {{ t('dashboard.emptyDescription') }}
       </p>
-      <UButton
-        :label="t('dashboard.createFirst')"
-        icon="i-lucide-plus"
-        size="lg"
-        to="/recipes/new"
-      />
+      <UButton :label="t('dashboard.createFirst')" icon="i-lucide-plus" size="lg" to="/recipes/new" />
     </UCard>
 
     <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <RecipeCard
-        v-for="recipe in recipes"
-        :key="recipe.id"
-        :recipe="recipe"
-      />
+      <RecipeCard v-for="recipe in recipes" :key="recipe.id" :recipe="recipe" />
     </div>
   </div>
 </template>

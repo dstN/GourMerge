@@ -57,7 +57,7 @@ export default defineEventHandler(async (event) => {
         sql`JSON_UNQUOTE(JSON_EXTRACT(${ingredients.nameTranslations}, '$.fr')) LIKE ${`${q}%`}`,
         sql`JSON_UNQUOTE(JSON_EXTRACT(${ingredients.nameTranslations}, '$.it')) LIKE ${`${q}%`}`,
         // Match synonyms for the current locale
-        sql`JSON_SEARCH(${ingredients.synonyms}, 'one', ${`${q}%`}, NULL, ${`$.${locale}[*]`}) IS NOT NULL`,
+        sql`JSON_SEARCH(${ingredients.synonyms}, 'one', ${`${q}%`}, NULL, ${`$.${locale}[*]`}) IS NOT NULL`
       )
     )
     .limit(limit)
@@ -71,14 +71,16 @@ export default defineEventHandler(async (event) => {
       localeName: translations[locale] ?? translations['en'] ?? row.name,
       category: row.category,
       hasNutrition,
-      nutrition: hasNutrition ? {
-        kcal: row.energyKcal100g ? parseFloat(row.energyKcal100g) : null,
-        protein: row.protein100g ? parseFloat(row.protein100g) : null,
-        carbs: row.carbs100g ? parseFloat(row.carbs100g) : null,
-        fat: row.fat100g ? parseFloat(row.fat100g) : null,
-        fiber: row.fiber100g ? parseFloat(row.fiber100g) : null,
-        densityGPerMl: row.densityGPerMl ? parseFloat(row.densityGPerMl) : null,
-      } : null,
+      nutrition: hasNutrition
+        ? {
+            kcal: row.energyKcal100g ? parseFloat(row.energyKcal100g) : null,
+            protein: row.protein100g ? parseFloat(row.protein100g) : null,
+            carbs: row.carbs100g ? parseFloat(row.carbs100g) : null,
+            fat: row.fat100g ? parseFloat(row.fat100g) : null,
+            fiber: row.fiber100g ? parseFloat(row.fiber100g) : null,
+            densityGPerMl: row.densityGPerMl ? parseFloat(row.densityGPerMl) : null,
+          }
+        : null,
     }
   })
 })

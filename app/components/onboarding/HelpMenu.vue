@@ -13,7 +13,10 @@ const items = computed(() => [
   {
     label: t('help.resetOnboarding'),
     icon: 'i-lucide-refresh-cw',
-    click: async () => { await resetOnboarding(); tour.start() },
+    click: async () => {
+      await resetOnboarding()
+      tour.start()
+    },
   },
   {
     label: t('help.glossary'),
@@ -24,10 +27,7 @@ const items = computed(() => [
 </script>
 
 <template>
-  <UDropdownMenu
-    v-if="loggedIn"
-    :items="items"
-  >
+  <UDropdownMenu v-if="loggedIn" :items="items">
     <UButton
       icon="i-lucide-circle-help"
       variant="ghost"

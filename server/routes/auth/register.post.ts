@@ -57,12 +57,15 @@ export default defineEventHandler(async (event) => {
   // ── Hash password & insert ──────────────────────────────────
   const passwordHash = await hashPassword(password)
 
-  const [inserted] = await db.insert(users).values({
-    username,
-    email,
-    passwordHash,
-    displayName: displayName || username,
-  }).$returningId()
+  const [inserted] = await db
+    .insert(users)
+    .values({
+      username,
+      email,
+      passwordHash,
+      displayName: displayName || username,
+    })
+    .$returningId()
 
   if (!inserted) throw createError({ statusCode: 500, statusMessage: 'Insert failed.' })
 

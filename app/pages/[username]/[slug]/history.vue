@@ -25,9 +25,7 @@ const slug = computed(() => route.params.slug as string)
 const recipeUrl = computed(() => `/${username.value}/${slug.value}`)
 
 // ── Fetch recipe data ────────────────────────────────────────
-const { data: recipe } = await useFetch<RecipeDetail>(
-  () => `/api/recipes/by-slug/${username.value}/${slug.value}`,
-)
+const { data: recipe } = await useFetch<RecipeDetail>(() => `/api/recipes/by-slug/${username.value}/${slug.value}`)
 if (!recipe.value) {
   throw createError({ statusCode: 404, statusMessage: 'Recipe not found' })
 }
@@ -37,17 +35,18 @@ const recipeId = computed(() => recipe.value!.id)
 // ── Branch selection ─────────────────────────────────────────
 const selectedBranchId = ref(recipe.value.defaultBranch?.id)
 
-const branchOptions = computed(() =>
-  recipe.value?.branches?.map((b) => ({
-    label: b.name + (b.isDefault ? ` (${t('recipe.defaultBranch')})` : ''),
-    value: b.id,
-  })) || [],
+const branchOptions = computed(
+  () =>
+    recipe.value?.branches?.map((b) => ({
+      label: b.name + (b.isDefault ? ` (${t('recipe.defaultBranch')})` : ''),
+      value: b.id,
+    })) || []
 )
 
 // ── Fetch commits for selected branch ────────────────────────
 const { data: commits, refresh: refreshCommits } = await useFetch<CommitListItem[]>(
   () => `/api/recipes/${recipeId.value}/commits`,
-  { query: { branchId: selectedBranchId } },
+  { query: { branchId: selectedBranchId } }
 )
 
 watch(selectedBranchId, () => refreshCommits())
@@ -67,12 +66,10 @@ async function viewDiff(fromCommit: CommitListItem, toCommit: CommitListItem) {
     diffData.value = await $fetch(`/api/recipes/${recipeId.value}/diff`, {
       query: { from: fromCommit.id, to: toCommit.id },
     })
-  }
-  catch (err) {
+  } catch (err) {
     console.error('Failed to load diff:', err)
     diffData.value = null
-  }
-  finally {
+  } finally {
     diffLoading.value = false
   }
 }
@@ -121,11 +118,7 @@ function formatDate(dateStr: string) {
       <!-- Vertical line -->
       <div class="absolute left-6 top-0 bottom-0 w-px bg-[var(--ui-border)]" />
 
-      <div
-        v-for="(commit, index) in commits"
-        :key="commit.id"
-        class="relative flex items-start gap-4 mb-6"
-      >
+      <div v-for="(commit, index) in commits" :key="commit.id" class="relative flex items-start gap-4 mb-6">
         <!-- Timeline dot -->
         <div
           :class="[

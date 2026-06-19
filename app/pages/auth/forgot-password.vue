@@ -37,13 +37,7 @@ async function submit() {
 
     <form v-else class="space-y-4" @submit.prevent="submit">
       <UFormField :label="t('auth.email')">
-        <UInput
-          v-model="email"
-          type="email"
-          autocomplete="email"
-          :placeholder="t('auth.emailPlaceholder')"
-          required
-        />
+        <UInput v-model="email" type="email" autocomplete="email" :placeholder="t('auth.emailPlaceholder')" required />
       </UFormField>
       <UButton type="submit" :label="t('auth.sendResetLink')" :loading="pending" block />
       <p class="text-center text-sm text-[var(--ui-text-muted)]">
