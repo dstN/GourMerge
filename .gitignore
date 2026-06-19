@@ -30,6 +30,8 @@ logs
 # Drizzle — only ignore the meta snapshot; migration SQL files are versioned
 server/database/migrations/meta
 
-# Claude
-.claude
+# Claude — ignore everything inside .claude/ except team reference docs
+.claude/*
 !.claude/ARCHITECTURE.md
+!.claude/ROADMAP.md
+!.claude/current_state.md
