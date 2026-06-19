@@ -17,18 +17,18 @@ A git-like recipe platform. Recipes are repositories with branches, snapshot com
 
 ## 2. Tech Stack (fixed — do not substitute)
 
-| Layer | Technology | Version |
-|---|---|---|
-| Framework | Nuxt 4 | ^4.0.0 |
-| UI | Nuxt UI v4 (Reka UI + Tailwind CSS v4) | ^4.0.0 |
-| Database | MariaDB via Drizzle ORM (mysql2) | drizzle ^0.44 |
-| Auth | nuxt-auth-utils (session-based) | ^0.5.0 |
-| i18n | @nuxtjs/i18n | ^9.0.0 |
-| Editor | TipTap 3 + @tiptap/markdown | ^3.0.0 |
-| Diff | diff-match-patch-es | ^0.1.0 |
-| PWA | @vite-pwa/nuxt | ^0.10.0 |
-| Observability | Pino + @sentry/nuxt | ^10 / ^13 |
-| Deployment | Netcup Webhosting + Phusion Passenger (Apache) | — |
+| Layer         | Technology                                     | Version       |
+| ------------- | ---------------------------------------------- | ------------- |
+| Framework     | Nuxt 4                                         | ^4.0.0        |
+| UI            | Nuxt UI v4 (Reka UI + Tailwind CSS v4)         | ^4.0.0        |
+| Database      | MariaDB via Drizzle ORM (mysql2)               | drizzle ^0.44 |
+| Auth          | nuxt-auth-utils (session-based)                | ^0.5.0        |
+| i18n          | @nuxtjs/i18n                                   | ^9.0.0        |
+| Editor        | TipTap 3 + @tiptap/markdown                    | ^3.0.0        |
+| Diff          | diff-match-patch-es                            | ^0.1.0        |
+| PWA           | @vite-pwa/nuxt                                 | ^0.10.0       |
+| Observability | Pino + @sentry/nuxt                            | ^10 / ^13     |
+| Deployment    | Netcup Webhosting + Phusion Passenger (Apache) | —             |
 
 ---
 
@@ -75,29 +75,30 @@ GourMerge/
 
 All migrations versioned in `server/database/migrations/`. **Never use `db:push` against production.**
 
-| Table | Purpose | Key Relations |
-|---|---|---|
-| `users` | Auth + profile | — |
-| `ingredients` | Global master catalog (Swiss BLV) | 1:1 → `ingredient_nutrition` |
-| `ingredient_nutrition` | Per-100g nutritional data (Swiss BLV V7.0) | — |
-| `recipes` | Repository equivalent | owner → `users`; forkedFrom → self |
-| `recipe_tags` | Recipe ↔ tag M:M | CASCADE on recipe delete |
-| `tags` | Tag master list | — |
-| `recipe_stars` | Favorites (unique per user+recipe) | CASCADE on recipe delete |
-| `recipe_branches` | Lightweight branch pointer | CASCADE on recipe delete |
-| `recipe_commits` | Full snapshot per commit (not deltas) | CASCADE on branch delete |
-| `recipe_commit_ingredients` | Ingredient snapshot per commit | CASCADE on commit delete |
-| `recipe_commit_steps` | Step (Markdown) snapshot per commit | CASCADE on commit delete |
-| `gourmerge_requests` | GMR (cross-branch/fork proposals) | CASCADE on recipe delete (recipe_id) |
-| `gm_request_comments` | Comments on GMRs | CASCADE on GMR delete |
-| `email_verification_tokens` | CSPRNG tokens (bcrypt-hashed) | CASCADE on user delete |
-| `password_reset_tokens` | CSPRNG tokens (bcrypt-hashed) | CASCADE on user delete |
-| `rate_limit_hits` | DB-backed rate limiter (multi-process safe) | — |
-| `contact_messages` | Contact form submissions | — |
+| Table                       | Purpose                                     | Key Relations                        |
+| --------------------------- | ------------------------------------------- | ------------------------------------ |
+| `users`                     | Auth + profile                              | —                                    |
+| `ingredients`               | Global master catalog (Swiss BLV)           | 1:1 → `ingredient_nutrition`         |
+| `ingredient_nutrition`      | Per-100g nutritional data (Swiss BLV V7.0)  | —                                    |
+| `recipes`                   | Repository equivalent                       | owner → `users`; forkedFrom → self   |
+| `recipe_tags`               | Recipe ↔ tag M:M                            | CASCADE on recipe delete             |
+| `tags`                      | Tag master list                             | —                                    |
+| `recipe_stars`              | Favorites (unique per user+recipe)          | CASCADE on recipe delete             |
+| `recipe_branches`           | Lightweight branch pointer                  | CASCADE on recipe delete             |
+| `recipe_commits`            | Full snapshot per commit (not deltas)       | CASCADE on branch delete             |
+| `recipe_commit_ingredients` | Ingredient snapshot per commit              | CASCADE on commit delete             |
+| `recipe_commit_steps`       | Step (Markdown) snapshot per commit         | CASCADE on commit delete             |
+| `gourmerge_requests`        | GMR (cross-branch/fork proposals)           | CASCADE on recipe delete (recipe_id) |
+| `gm_request_comments`       | Comments on GMRs                            | CASCADE on GMR delete                |
+| `email_verification_tokens` | CSPRNG tokens (bcrypt-hashed)               | CASCADE on user delete               |
+| `password_reset_tokens`     | CSPRNG tokens (bcrypt-hashed)               | CASCADE on user delete               |
+| `rate_limit_hits`           | DB-backed rate limiter (multi-process safe) | —                                    |
+| `contact_messages`          | Contact form submissions                    | —                                    |
 
 ### FK cascade gaps (manually handled in API)
 
 Two FKs use NO ACTION (= RESTRICT in MariaDB) and require pre-delete cleanup:
+
 - `recipes.forked_from_recipe_id` — forks nullified before parent delete
 - `gourmerge_requests.source_branch_id / target_branch_id / source_recipe_id` — cross-recipe GMRs deleted before branch cascade
 
@@ -115,31 +116,31 @@ This is handled in `server/api/recipes/[id].delete.ts`.
 
 ## 5. Pages (23)
 
-| Route | Page | Auth | Layout |
-|---|---|---|---|
-| `/` | Landing | No | default |
-| `/dashboard` | My dashboard | Yes | dashboard |
-| `/recipes` | My recipes list | Yes | dashboard |
-| `/recipes/new` | Create recipe | Yes | dashboard |
-| `/explore` | Public discovery (search/filter/sort) | No | default |
-| `/[username]` | User public profile | No | default |
-| `/[username]/[slug]` | Recipe detail | No | default |
-| `/[username]/[slug]/edit` | Recipe editor (TipTap + ingredients) | Yes (owner) | dashboard |
-| `/[username]/[slug]/branches` | Branch management | Yes (owner) | dashboard |
-| `/[username]/[slug]/history` | Commit history timeline | No | dashboard |
-| `/[username]/[slug]/gourmerge-requests` | GMR list | No | dashboard |
-| `/[username]/[slug]/gourmerge-requests/new` | Create GMR | Yes | dashboard |
-| `/[username]/[slug]/gourmerge-requests/[gmrId]` | GMR detail + merge | No | dashboard |
-| `/auth/login` | Login | No | auth |
-| `/auth/register` | Register | No | auth |
-| `/auth/verified` | Email verification confirmation | No | auth |
-| `/auth/forgot-password` | Password reset request | No | auth |
-| `/auth/reset-password` | Password reset confirm | No | auth |
-| `/settings` | Profile + locale + measurement prefs | Yes | dashboard |
-| `/help/glossary` | Git-term cooking alias glossary | No | default |
-| `/legal/contact` | Contact form | No | default |
-| `/legal/impressum` | Legal notice | No | default |
-| `/legal/datenschutz` | Privacy policy | No | default |
+| Route                                           | Page                                  | Auth        | Layout    |
+| ----------------------------------------------- | ------------------------------------- | ----------- | --------- |
+| `/`                                             | Landing                               | No          | default   |
+| `/dashboard`                                    | My dashboard                          | Yes         | dashboard |
+| `/recipes`                                      | My recipes list                       | Yes         | dashboard |
+| `/recipes/new`                                  | Create recipe                         | Yes         | dashboard |
+| `/explore`                                      | Public discovery (search/filter/sort) | No          | default   |
+| `/[username]`                                   | User public profile                   | No          | default   |
+| `/[username]/[slug]`                            | Recipe detail                         | No          | default   |
+| `/[username]/[slug]/edit`                       | Recipe editor (TipTap + ingredients)  | Yes (owner) | dashboard |
+| `/[username]/[slug]/branches`                   | Branch management                     | Yes (owner) | dashboard |
+| `/[username]/[slug]/history`                    | Commit history timeline               | No          | dashboard |
+| `/[username]/[slug]/gourmerge-requests`         | GMR list                              | No          | dashboard |
+| `/[username]/[slug]/gourmerge-requests/new`     | Create GMR                            | Yes         | dashboard |
+| `/[username]/[slug]/gourmerge-requests/[gmrId]` | GMR detail + merge                    | No          | dashboard |
+| `/auth/login`                                   | Login                                 | No          | auth      |
+| `/auth/register`                                | Register                              | No          | auth      |
+| `/auth/verified`                                | Email verification confirmation       | No          | auth      |
+| `/auth/forgot-password`                         | Password reset request                | No          | auth      |
+| `/auth/reset-password`                          | Password reset confirm                | No          | auth      |
+| `/settings`                                     | Profile + locale + measurement prefs  | Yes         | dashboard |
+| `/help/glossary`                                | Git-term cooking alias glossary       | No          | default   |
+| `/legal/contact`                                | Contact form                          | No          | default   |
+| `/legal/impressum`                              | Legal notice                          | No          | default   |
+| `/legal/datenschutz`                            | Privacy policy                        | No          | default   |
 
 ---
 
@@ -148,59 +149,65 @@ This is handled in `server/api/recipes/[id].delete.ts`.
 All routes: Zod-validated body/query, `requireUserSession()` where auth required, `createError()` for errors.
 
 ### Auth / Users
-| Method | Route | Auth | Purpose |
-|---|---|---|---|
-| GET | `/api/users/[username]` | No | Public profile |
-| PATCH | `/api/users/me` | Yes | Update own profile |
+
+| Method | Route                   | Auth | Purpose            |
+| ------ | ----------------------- | ---- | ------------------ |
+| GET    | `/api/users/[username]` | No   | Public profile     |
+| PATCH  | `/api/users/me`         | Yes  | Update own profile |
 
 ### Ingredients
-| Method | Route | Auth | Purpose |
-|---|---|---|---|
-| GET | `/api/ingredients` | Yes | Search (q + locale) — Swiss BLV catalog |
-| POST | `/api/ingredients` | Yes | Create ingredient on-the-fly (deduped) |
+
+| Method | Route              | Auth | Purpose                                 |
+| ------ | ------------------ | ---- | --------------------------------------- |
+| GET    | `/api/ingredients` | Yes  | Search (q + locale) — Swiss BLV catalog |
+| POST   | `/api/ingredients` | Yes  | Create ingredient on-the-fly (deduped)  |
 
 ### Recipes
-| Method | Route | Auth | Purpose |
-|---|---|---|---|
-| GET | `/api/recipes` | Yes | Own recipes list |
-| POST | `/api/recipes` | Yes | Create recipe (transactional: recipe+branch+commit) |
-| GET | `/api/recipes/explore` | No | Public browse (search/filter/sort/paginate) |
-| GET | `/api/recipes/by-slug/[username]/[slug]` | No | Fetch by URL slug |
-| GET | `/api/recipes/[id]` | No | Fetch by internal ID |
-| PATCH | `/api/recipes/[id]` | Yes (owner) | Update metadata |
-| DELETE | `/api/recipes/[id]` | Yes (owner) | Delete + cascade cleanup |
-| POST | `/api/recipes/[id]/fork` | Yes | Deep-copy fork |
-| POST | `/api/recipes/[id]/star` | Yes | Toggle star |
-| POST | `/api/recipes/[id]/tags` | Yes (owner) | Set tags |
+
+| Method | Route                                    | Auth        | Purpose                                             |
+| ------ | ---------------------------------------- | ----------- | --------------------------------------------------- |
+| GET    | `/api/recipes`                           | Yes         | Own recipes list                                    |
+| POST   | `/api/recipes`                           | Yes         | Create recipe (transactional: recipe+branch+commit) |
+| GET    | `/api/recipes/explore`                   | No          | Public browse (search/filter/sort/paginate)         |
+| GET    | `/api/recipes/by-slug/[username]/[slug]` | No          | Fetch by URL slug                                   |
+| GET    | `/api/recipes/[id]`                      | No          | Fetch by internal ID                                |
+| PATCH  | `/api/recipes/[id]`                      | Yes (owner) | Update metadata                                     |
+| DELETE | `/api/recipes/[id]`                      | Yes (owner) | Delete + cascade cleanup                            |
+| POST   | `/api/recipes/[id]/fork`                 | Yes         | Deep-copy fork                                      |
+| POST   | `/api/recipes/[id]/star`                 | Yes         | Toggle star                                         |
+| POST   | `/api/recipes/[id]/tags`                 | Yes (owner) | Set tags                                            |
 
 ### Branches / Commits
-| Method | Route | Auth | Purpose |
-|---|---|---|---|
-| GET | `/api/recipes/[id]/branches` | No | List branches |
-| POST | `/api/recipes/[id]/branches` | Yes (owner) | Create branch |
-| DELETE | `/api/recipes/[id]/branches/[branchId]` | Yes (owner) | Delete branch |
-| GET | `/api/recipes/[id]/branches/[branchId]/snapshot` | No | Current snapshot on branch |
-| GET | `/api/recipes/[id]/branches/compare` | No | Compare two branch heads |
-| GET | `/api/recipes/[id]/commits` | No | Commit history |
-| POST | `/api/recipes/[id]/commits` | Yes (owner) | Create snapshot commit |
-| GET | `/api/recipes/[id]/diff` | No | Diff between two commits |
+
+| Method | Route                                            | Auth        | Purpose                    |
+| ------ | ------------------------------------------------ | ----------- | -------------------------- |
+| GET    | `/api/recipes/[id]/branches`                     | No          | List branches              |
+| POST   | `/api/recipes/[id]/branches`                     | Yes (owner) | Create branch              |
+| DELETE | `/api/recipes/[id]/branches/[branchId]`          | Yes (owner) | Delete branch              |
+| GET    | `/api/recipes/[id]/branches/[branchId]/snapshot` | No          | Current snapshot on branch |
+| GET    | `/api/recipes/[id]/branches/compare`             | No          | Compare two branch heads   |
+| GET    | `/api/recipes/[id]/commits`                      | No          | Commit history             |
+| POST   | `/api/recipes/[id]/commits`                      | Yes (owner) | Create snapshot commit     |
+| GET    | `/api/recipes/[id]/diff`                         | No          | Diff between two commits   |
 
 ### GourMerge Requests
-| Method | Route | Auth | Purpose |
-|---|---|---|---|
-| GET | `/api/recipes/[id]/gourmerge-requests` | No | List GMRs |
-| POST | `/api/recipes/[id]/gourmerge-requests` | Yes | Create GMR |
-| GET | `/api/recipes/[id]/gourmerge-requests/[gmrId]` | No | GMR detail with diff |
-| PATCH | `/api/recipes/[id]/gourmerge-requests/[gmrId]` | Yes | Status transitions |
-| POST | `/api/recipes/[id]/gourmerge-requests/[gmrId]/comments` | Yes | Add comment |
-| POST | `/api/recipes/[id]/gourmerge-requests/[gmrId]/merge` | Yes (owner) | Execute three-way merge |
+
+| Method | Route                                                   | Auth        | Purpose                 |
+| ------ | ------------------------------------------------------- | ----------- | ----------------------- |
+| GET    | `/api/recipes/[id]/gourmerge-requests`                  | No          | List GMRs               |
+| POST   | `/api/recipes/[id]/gourmerge-requests`                  | Yes         | Create GMR              |
+| GET    | `/api/recipes/[id]/gourmerge-requests/[gmrId]`          | No          | GMR detail with diff    |
+| PATCH  | `/api/recipes/[id]/gourmerge-requests/[gmrId]`          | Yes         | Status transitions      |
+| POST   | `/api/recipes/[id]/gourmerge-requests/[gmrId]/comments` | Yes         | Add comment             |
+| POST   | `/api/recipes/[id]/gourmerge-requests/[gmrId]/merge`    | Yes (owner) | Execute three-way merge |
 
 ### Misc
-| Method | Route | Auth | Purpose |
-|---|---|---|---|
-| GET | `/api/tags` | No | All tags |
-| POST | `/api/contact` | No | Contact form submission |
-| GET | `/api/health` | No | Health check (`{ status, db }`) |
+
+| Method | Route          | Auth | Purpose                         |
+| ------ | -------------- | ---- | ------------------------------- |
+| GET    | `/api/tags`    | No   | All tags                        |
+| POST   | `/api/contact` | No   | Contact form submission         |
+| GET    | `/api/health`  | No   | Health check (`{ status, db }`) |
 
 ---
 
@@ -218,15 +225,15 @@ All routes: Zod-validated body/query, `requireUserSession()` where auth required
 
 ## 8. Scripts
 
-| Script | NPM command | Purpose |
-|---|---|---|
-| `i18n-check.mjs` | `npm run i18n:check` | 4-way locale parity gate |
-| `import-swiss-foods.mjs` | `npm run seed:swiss` | Import Swiss BLV Food Composition DB V7.0 |
-| `seed-ingredients.mjs` | `npm run db:seed` | Curated ingredient entries (not in Swiss BLV) |
-| `cleanup-seed-ingredients.mjs` | `node scripts/cleanup-seed-ingredients.mjs` | Remove non-BLV ingredients not used in any recipe |
-| `seed-tags.mjs` | — | Seed default recipe tags |
-| `reconcile-counters.mjs` | — | Repair denormalized star/fork counters (idempotent) |
-| `generate-icons.mjs` | `npm run generate:icons` | Generate PWA/favicon assets from brand SVG |
+| Script                         | NPM command                                 | Purpose                                             |
+| ------------------------------ | ------------------------------------------- | --------------------------------------------------- |
+| `i18n-check.mjs`               | `npm run i18n:check`                        | 4-way locale parity gate                            |
+| `import-swiss-foods.mjs`       | `npm run seed:swiss`                        | Import Swiss BLV Food Composition DB V7.0           |
+| `seed-ingredients.mjs`         | `npm run db:seed`                           | Curated ingredient entries (not in Swiss BLV)       |
+| `cleanup-seed-ingredients.mjs` | `node scripts/cleanup-seed-ingredients.mjs` | Remove non-BLV ingredients not used in any recipe   |
+| `seed-tags.mjs`                | —                                           | Seed default recipe tags                            |
+| `reconcile-counters.mjs`       | —                                           | Repair denormalized star/fork counters (idempotent) |
+| `generate-icons.mjs`           | `npm run generate:icons`                    | Generate PWA/favicon assets from brand SVG          |
 
 ---
 
@@ -245,32 +252,34 @@ The `ingredients` master table is populated from the **Swiss BLV Food Compositio
 
 ## 10. Security Implementation
 
-| Measure | Status | Notes |
-|---|---|---|
-| Rate limiting | ✓ Done | DB-backed (`rate_limit_hits` table) — multi-process safe for Passenger |
-| CSRF | ✓ Done | nuxt-auth-utils / Nitro |
-| Session rotation | ✓ Done | Post-login session regeneration |
-| Secure cookies | ✓ Done | `httpOnly`, `sameSite=lax`, 14-day maxAge |
-| Email verification | ✓ Done | CSPRNG token + bcrypt hash + SMTP send |
-| Password reset | ✓ Done | CSPRNG token + bcrypt hash + expiry + no-enumeration response |
-| Zod validation | ✓ Done | All endpoint bodies + query params |
-| Authorization | ✓ Done | Ownership checks on all mutating routes |
-| CSP | ✓ Done | `routeRules` in `nuxt.config.ts` — allows TipTap, Sentry, Google Fonts |
-| Security headers | ✓ Done | X-Content-Type-Options, X-Frame-Options, Referrer-Policy |
-| HSTS | Partial | Configured but commented out for local dev — enable in production |
-| Error sanitization | ✓ Done | Nitro error hook — no stack traces in production |
-| `npm audit` | Manual | No automated Dependabot yet |
+| Measure               | Status    | Notes                                                                                                                                              |
+| --------------------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Rate limiting         | ✓ Done    | DB-backed (`rate_limit_hits` table) — multi-process safe for Passenger                                                                             |
+| CSRF                  | ✓ Done    | nuxt-auth-utils / Nitro                                                                                                                            |
+| Session rotation      | ✓ Done    | Post-login session regeneration                                                                                                                    |
+| Secure cookies        | ✓ Done    | `httpOnly`, `sameSite=lax`, 14-day maxAge                                                                                                          |
+| Email verification    | ✓ Done    | CSPRNG token + bcrypt hash + SMTP send                                                                                                             |
+| Password reset        | ✓ Done    | CSPRNG token + bcrypt hash + expiry + no-enumeration response                                                                                      |
+| Zod validation        | ✓ Done    | All endpoint bodies + query params                                                                                                                 |
+| Authorization         | ✓ Done    | Ownership checks on all mutating routes                                                                                                            |
+| CSP                   | ✓ Done    | `routeRules` in `nuxt.config.ts` — allows TipTap, Sentry, Google Fonts                                                                             |
+| Security headers      | ✓ Done    | X-Content-Type-Options, X-Frame-Options, Referrer-Policy                                                                                           |
+| HSTS                  | Partial   | Configured but commented out for local dev — enable in production                                                                                  |
+| Markdown sanitization | ✓ Done    | User step HTML/Markdown sanitized via allowlist (`app/utils/markdown.ts`) before `v-html`                                                          |
+| Error sanitization    | ⚠ Partial | Nitro hides stack traces in prod by default, but `error-handler.ts` only logs — it does not strip `createError` `data` from responses (F1 pending) |
+| CSP `unsafe-inline`   | ⚠ Caveat  | `script-src` still allows `'unsafe-inline'` (Nuxt hydration) — harden via nonce/hash later                                                         |
+| `npm audit`           | Manual    | No automated Dependabot yet                                                                                                                        |
 
 ---
 
 ## 11. Observability
 
-| Layer | Tool | Config |
-|---|---|---|
-| Structured logging | Pino → rotating file | `server/plugins/logger.ts`; `LOG_LEVEL` env; redacts cookies/auth |
-| Error tracking | Sentry.io (`@sentry/nuxt`) | `NUXT_PUBLIC_SENTRY_DSN` + `NUXT_SENTRY_RELEASE` env |
-| Health check | `GET /api/health` | Returns `{ status: "ok", db: "ok" }` or 503 |
-| Uptime monitoring | UptimeRobot (external) | Polls `/api/health` — configure manually |
+| Layer              | Tool                                      | Config                                                                                                                          |
+| ------------------ | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Structured logging | Pino → single file (⚠ rotation NOT wired) | `server/utils/logger.ts`; `LOG_LEVEL` env; redacts cookies/auth — `pino-rotating-file-stream` installed but unused (F1 pending) |
+| Error tracking     | Sentry.io (`@sentry/nuxt`)                | SDK configured (`sentry.*.config.ts`, DSN env) but ⚠ no active `captureException` yet (F1 pending)                              |
+| Health check       | `GET /api/health`                         | Returns `{ status: "ok", db: "ok" }` or 503                                                                                     |
+| Uptime monitoring  | UptimeRobot (external)                    | Polls `/api/health` — configure manually                                                                                        |
 
 ---
 
@@ -298,15 +307,17 @@ The `ingredients` master table is populated from the **Swiss BLV Food Compositio
 - **Delete recipe**: from edit page with confirmation modal; cascade handles all FK cleanup
 - **Layout**: default (header nav + footer), dashboard (sidebar + max-w-7xl header/footer), auth (minimal)
 - **PWA**: icons generated, manifest configured, autoUpdate service worker
-- **Observability**: Pino logging, Sentry client + server, /api/health endpoint
+- **Observability**: Pino logging (⚠ file rotation + Sentry active capture not yet wired — see §11), /api/health endpoint
 - **Security headers/CSP**: configured in nuxt.config.ts routeRules
+- **Markdown sanitization**: user step content sanitized via allowlist before `v-html` (`app/utils/markdown.ts`)
 - **Brand**: GourMerge SVG logo (`BrandLogo.vue`), orange primary color, DM Sans + JetBrains Mono fonts
 
 ### ✗ Not yet done
 
-- **Tests**: Vitest + Playwright scaffolded; actual test coverage is minimal — no unit tests for `diff.ts` / `merge.ts` / `units.ts` yet
-- **CI/CD**: GitHub Actions workflows not yet configured (no automated build/deploy pipeline)
-- **Passenger CD**: `.htaccess` + `app.js` exist; CD deploy job (SFTP + migrate + restart) not wired
+- **Tests**: unit tests for `diff.ts` / `merge.ts` / `units.ts` + an i18n-gate test **do exist** (68 cases, `tests/unit/`). Still missing — component tests, API/integration tests, real E2E (only a skipped placeholder), `slug.ts`/other-util tests, and `--coverage` enforcement in CI
+- **CI/CD**: GitHub Actions **are configured** — `ci.yml` (lint → format → typecheck → i18n → migrate → test → build) and `deploy.yml` (rsync → migrate → restart → smoke test). Not yet: coverage enforcement, `npm audit` gate
+- **Passenger CD**: `.htaccess` + `app.js` exist and `deploy.yml` **does** wire rsync + migrate + `touch tmp/restart.txt` + health smoke test. Not yet: migrate exit-code check, production environment protection
+- **Prod safety (F1 pending)**: Pino log rotation, Sentry active capture, error-response `data` sanitization, transactional-email i18n
 - **Vanilla Sugar**: missing from Swiss BLV DB; curated entry not yet added to `seed-ingredients.mjs`
 - **Dependabot / npm audit CI gate**: not configured
 
@@ -316,7 +327,7 @@ The `ingredients` master table is populated from the **Swiss BLV Food Compositio
 
 - **`window.confirm` is suppressed in Chromium dev environments** — always use `UModal` for async confirmations. Replaced in edit page (`onBeforeRouteLeave`).
 - **USelect in Nuxt UI v4** uses `:items` (not `:options`) and requires `value-key="value"` to bind object arrays correctly.
-- **TipTap SSR**: must use `immediatelyRender: false` or `<ClientOnly>`. Empty-state mismatch (`''` vs `'<p></p>'`) causes constant `setContent()` resets — normalize via `isEmpty()` helper.
+- **TipTap SSR**: `@tiptap/vue-3` v3 `useEditor` has **no** `immediatelyRender` option (passing it fails typecheck) — SSR safety comes from wrapping `<StepEditor>` in `<ClientOnly>` plus the `v-if="editor"` guard. Empty-state mismatch (`''` vs `'<p></p>'`) causes constant `setContent()` resets — normalize via `isEmpty()` helper.
 - **Dietary options**: empty string `value: ''` causes Nuxt UI v4 falsy-value handling to break USelect — use sentinel `'none'` instead.
 - **`isDirty` tracking**: compare via `JSON.stringify` of `{ ingredients, stepsForSnapshot }`. Set `initialSnapshot` synchronously after data loads in `loadBranchSnapshot()`, not in a separate `watch`. Exclude local UI state (`translationsOpen`) from the snapshot.
 - **Rate limiting across Passenger processes**: in-memory rate limiting is NOT multi-process safe. The `rate_limit_hits` DB table is the correct approach.
@@ -329,14 +340,14 @@ The `ingredients` master table is populated from the **Swiss BLV Food Compositio
 
 Production is **NOT Docker**. `docker-compose.yml` is local dev MariaDB only.
 
-| Component | Config |
-|---|---|
-| Host | Netcup Webhosting (shared) + separate MySQL server |
-| Server | Apache + Phusion Passenger running Node.js |
-| Startup | `app.js` → `.output/server/index.mjs` |
-| Env vars | Injected via Passenger env directives (never committed) |
-| Restart | `touch tmp/restart.txt` |
-| Preset | Nitro `node-server` |
+| Component | Config                                                  |
+| --------- | ------------------------------------------------------- |
+| Host      | Netcup Webhosting (shared) + separate MySQL server      |
+| Server    | Apache + Phusion Passenger running Node.js              |
+| Startup   | `app.js` → `.output/server/index.mjs`                   |
+| Env vars  | Injected via Passenger env directives (never committed) |
+| Restart   | `touch tmp/restart.txt`                                 |
+| Preset    | Nitro `node-server`                                     |
 
 Required env vars: `DATABASE_URL`, `NUXT_SESSION_PASSWORD`, `NUXT_PUBLIC_SENTRY_DSN`, `SMTP_HOST`, `SMTP_USER`, `SMTP_PASS`, `NUXT_PUBLIC_APP_URL`.
 
@@ -349,6 +360,7 @@ Full deployment runbook: `docs/RUNBOOK.md`.
 `feature/phase-0-foundation` — all current development is on this branch. `master` is the target for production deploys.
 
 Recent significant commits (newest first):
+
 ```
 694d0f2  fix(api): handle NO ACTION FK constraints in recipe delete
 1ae461d  feat(edit): add delete recipe button with confirmation modal
