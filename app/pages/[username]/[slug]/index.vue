@@ -1,22 +1,14 @@
 <script setup lang="ts">
 import type { RecipeDetail, StepTranslations } from '~~/shared/types/recipe'
-import { marked } from 'marked'
 
 definePageMeta({ middleware: ['validate-recipe-route'] })
-
-function renderStep(content: string): string {
-  if (!content) return ''
-  // Already HTML (TipTap getHTML output from new saves)
-  if (content.trimStart().startsWith('<')) return content
-  // Legacy Markdown stored before the HTML switch — parse it
-  return marked.parse(content, { async: false }) as string
-}
 
 function resolveStepContent(step: { content: string; contentTranslations: StepTranslations | null }): string {
   const loc = locale.value as keyof StepTranslations
   const translated = step.contentTranslations?.[loc]
   const effective = translated && translated.trim() !== '' ? translated : step.content
-  return renderStep(effective)
+  // Output is sanitized (allowlist) before v-html — see app/utils/markdown.ts
+  return renderMarkdownSafe(effective)
 }
 
 function resolveTranslation(translations: StepTranslations | null | undefined, fallback: string): string {
@@ -46,25 +38,33 @@ const toast = useAppToast()
 const username = computed(() => route.params.username as string)
 const slug = computed(() => route.params.slug as string)
 
-const { data: recipe, pending, error } = useFetch<RecipeDetail>(
-  () => `/api/recipes/by-slug/${username.value}/${slug.value}`,
-  { headers: useRequestHeaders(['cookie']), query: { locale } },
-)
+const {
+  data: recipe,
+  pending,
+  error,
+} = useFetch<RecipeDetail>(() => `/api/recipes/by-slug/${username.value}/${slug.value}`, {
+  headers: useRequestHeaders(['cookie']),
+  query: { locale },
+})
 
 const isOwner = computed(() => recipe.value?.owner?.id === user.value?.id)
-const recipeUrl = computed(() => recipe.value ? `/${recipe.value.owner.username}/${recipe.value.slug}` : '')
+const recipeUrl = computed(() => (recipe.value ? `/${recipe.value.owner.username}/${recipe.value.slug}` : ''))
 
 // ── Star toggle ──────────────────────────────────────────────
 const starred = ref(false)
 const starCount = ref(0)
 const starPending = ref(false)
 
-watch(recipe, (r) => {
-  if (r) {
-    starred.value = r.isStarred ?? false
-    starCount.value = r.starCount ?? 0
-  }
-}, { immediate: true })
+watch(
+  recipe,
+  (r) => {
+    if (r) {
+      starred.value = r.isStarred ?? false
+      starCount.value = r.starCount ?? 0
+    }
+  },
+  { immediate: true }
+)
 
 async function toggleStar() {
   if (!loggedIn.value || !recipe.value) return
@@ -87,10 +87,9 @@ async function forkRecipe() {
   if (!loggedIn.value || !recipe.value) return
   forkPending.value = true
   try {
-    const res = await $fetch<{ slug: string; owner: { username: string } }>(
-      `/api/recipes/${recipe.value.id}/fork`,
-      { method: 'POST' },
-    )
+    const res = await $fetch<{ slug: string; owner: { username: string } }>(`/api/recipes/${recipe.value.id}/fork`, {
+      method: 'POST',
+    })
     toast.success(t('recipe.forkSuccess'))
     await navigateTo(`/${res.owner.username}/${res.slug}`)
   } catch (e: unknown) {
@@ -103,17 +102,31 @@ async function forkRecipe() {
 const appUrl = useRuntimeConfig().public.appUrl as string
 
 useSeoMeta({
-  title: () => recipe.value ? `${resolveTranslation(recipe.value.titleTranslations, recipe.value.title)} — GourMerge` : 'GourMerge',
-  description: () => recipe.value ? resolveTranslation(recipe.value.descriptionTranslations, recipe.value.description ?? '') || t('recipe.seoDescriptionFallback') : t('recipe.seoDescriptionFallback'),
-  ogTitle: () => recipe.value ? `${resolveTranslation(recipe.value.titleTranslations, recipe.value.title)} — GourMerge` : 'GourMerge',
-  ogDescription: () => recipe.value ? resolveTranslation(recipe.value.descriptionTranslations, recipe.value.description ?? '') || t('recipe.seoDescriptionFallback') : t('recipe.seoDescriptionFallback'),
-  ogUrl: () => recipe.value ? `${appUrl}/${recipe.value.owner.username}/${recipe.value.slug}` : appUrl,
+  title: () =>
+    recipe.value
+      ? `${resolveTranslation(recipe.value.titleTranslations, recipe.value.title)} — GourMerge`
+      : 'GourMerge',
+  description: () =>
+    recipe.value
+      ? resolveTranslation(recipe.value.descriptionTranslations, recipe.value.description ?? '') ||
+        t('recipe.seoDescriptionFallback')
+      : t('recipe.seoDescriptionFallback'),
+  ogTitle: () =>
+    recipe.value
+      ? `${resolveTranslation(recipe.value.titleTranslations, recipe.value.title)} — GourMerge`
+      : 'GourMerge',
+  ogDescription: () =>
+    recipe.value
+      ? resolveTranslation(recipe.value.descriptionTranslations, recipe.value.description ?? '') ||
+        t('recipe.seoDescriptionFallback')
+      : t('recipe.seoDescriptionFallback'),
+  ogUrl: () => (recipe.value ? `${appUrl}/${recipe.value.owner.username}/${recipe.value.slug}` : appUrl),
   ogType: 'website',
   ogSiteName: 'GourMerge',
   twitterCard: 'summary',
-  twitterTitle: () => recipe.value ? `${recipe.value.title} — GourMerge` : 'GourMerge',
+  twitterTitle: () => (recipe.value ? `${recipe.value.title} — GourMerge` : 'GourMerge'),
   twitterDescription: () => recipe.value?.description || t('recipe.seoDescriptionFallback'),
-  robots: () => recipe.value?.visibility === 'private' ? 'noindex,nofollow' : 'index,follow',
+  robots: () => (recipe.value?.visibility === 'private' ? 'noindex,nofollow' : 'index,follow'),
 })
 
 // Recipe schema.org JSON-LD structured data
@@ -121,7 +134,7 @@ useHead(() => {
   if (!recipe.value) return {}
   const r = recipe.value
   const ingredients = (r.currentIngredients || []).map(
-    (ing) => `${ing.quantity} ${ing.unit} ${ing.ingredientName}${ing.notes ? ` (${ing.notes})` : ''}`,
+    (ing) => `${ing.quantity} ${ing.unit} ${ing.ingredientName}${ing.notes ? ` (${ing.notes})` : ''}`
   )
   const steps = (r.currentSteps || []).map((s, i) => ({
     '@type': 'HowToStep',
@@ -262,15 +275,34 @@ useHead(() => {
 
       <!-- Meta badges -->
       <div class="flex flex-wrap items-center gap-3 mb-4">
-        <UBadge color="neutral" variant="outline" icon="i-lucide-users" :label="`${recipe.servings} ${t('recipe.servingsLabel')}`" />
-        <UBadge v-if="recipe.prepTimeMinutes" color="neutral" variant="outline" icon="i-lucide-clock" :label="`${recipe.prepTimeMinutes} min ${t('recipe.prepTime')}`" />
-        <UBadge v-if="recipe.cookTimeMinutes" color="neutral" variant="outline" icon="i-lucide-flame" :label="`${recipe.cookTimeMinutes} min ${t('recipe.cookTime')}`" />
-        <UBadge :color="recipe.difficulty === 'easy' ? 'success' : recipe.difficulty === 'hard' ? 'error' : 'warning'" variant="subtle" :label="t(`recipe.${recipe.difficulty}`)" />
+        <UBadge
+          color="neutral"
+          variant="outline"
+          icon="i-lucide-users"
+          :label="`${recipe.servings} ${t('recipe.servingsLabel')}`"
+        />
+        <UBadge
+          v-if="recipe.prepTimeMinutes"
+          color="neutral"
+          variant="outline"
+          icon="i-lucide-clock"
+          :label="`${recipe.prepTimeMinutes} min ${t('recipe.prepTime')}`"
+        />
+        <UBadge
+          v-if="recipe.cookTimeMinutes"
+          color="neutral"
+          variant="outline"
+          icon="i-lucide-flame"
+          :label="`${recipe.cookTimeMinutes} min ${t('recipe.cookTime')}`"
+        />
+        <UBadge
+          :color="recipe.difficulty === 'easy' ? 'success' : recipe.difficulty === 'hard' ? 'error' : 'warning'"
+          variant="subtle"
+          :label="t(`recipe.${recipe.difficulty}`)"
+        />
         <RecipeDietaryBadge v-if="recipe.dietaryType" :type="recipe.dietaryType" />
         <div class="ml-auto flex items-center gap-3 text-sm text-[var(--ui-text-dimmed)]">
-          <span class="flex items-center gap-1">
-            <UIcon name="i-lucide-star" class="size-4" /> {{ starCount }}
-          </span>
+          <span class="flex items-center gap-1"> <UIcon name="i-lucide-star" class="size-4" /> {{ starCount }} </span>
           <span class="flex items-center gap-1">
             <UIcon name="i-lucide-git-fork" class="size-4" /> {{ recipe.forkCount }}
           </span>
@@ -283,7 +315,8 @@ useHead(() => {
           v-for="tag in recipe.tags"
           :key="tag"
           class="text-xs px-2.5 py-1 rounded-full bg-[var(--ui-bg-elevated)] border border-[var(--ui-border)] text-[var(--ui-text-muted)]"
-        >{{ tag }}</span>
+          >{{ tag }}</span
+        >
       </div>
       <div v-else class="mb-6" />
 
@@ -313,17 +346,11 @@ useHead(() => {
         </div>
 
         <div v-else class="divide-y divide-[var(--ui-border)]">
-          <div
-            v-for="ing in recipe.currentIngredients"
-            :key="ing.id"
-            class="flex items-center justify-between py-3"
-          >
+          <div v-for="ing in recipe.currentIngredients" :key="ing.id" class="flex items-center justify-between py-3">
             <span class="font-medium">{{ ing.ingredientName }}</span>
             <span class="font-mono text-sm text-[var(--ui-text-muted)]">
               {{ ing.quantity }} {{ translateUnit(ing.unit) }}
-              <span v-if="ing.notes" class="text-[var(--ui-text-dimmed)] italic ml-2">
-                ({{ ing.notes }})
-              </span>
+              <span v-if="ing.notes" class="text-[var(--ui-text-dimmed)] italic ml-2"> ({{ ing.notes }}) </span>
             </span>
           </div>
         </div>
@@ -353,14 +380,13 @@ useHead(() => {
         </div>
 
         <div v-else class="space-y-6">
-          <div
-            v-for="step in recipe.currentSteps"
-            :key="step.id"
-            class="flex gap-4"
-          >
-            <div class="shrink-0 w-8 h-8 rounded-full bg-primary-500/10 text-primary-500 flex items-center justify-center font-bold text-sm">
+          <div v-for="step in recipe.currentSteps" :key="step.id" class="flex gap-4">
+            <div
+              class="shrink-0 w-8 h-8 rounded-full bg-primary-500/10 text-primary-500 flex items-center justify-center font-bold text-sm"
+            >
               {{ step.sortOrder }}
             </div>
+            <!-- eslint-disable-next-line vue/no-v-html -- content is sanitized via renderMarkdownSafe() -->
             <div class="flex-1 prose prose-sm dark:prose-invert max-w-none pt-1" v-html="resolveStepContent(step)" />
           </div>
         </div>

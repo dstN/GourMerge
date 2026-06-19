@@ -2,7 +2,7 @@
 /**
  * StepEditor — TipTap 3 WYSIWYG editor for a single recipe step.
  *
- * - Wrapped in <ClientOnly> at usage site (or immediatelyRender: false here)
+ * - Wrapped in <ClientOnly> at usage site so it only mounts client-side (SSR-safe)
  * - Uses StarterKit + @tiptap/markdown for Markdown output
  * - Images explicitly disabled (text-only per ARCHITECTURE decision)
  * - Emits Markdown string on every content change
@@ -22,7 +22,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'update:modelValue': [value: string]
-  'remove': []
+  remove: []
 }>()
 
 // Prevents onUpdate from re-emitting when we programmatically set content from a prop change
@@ -30,7 +30,6 @@ const settingContent = ref(false)
 
 const editor = useEditor({
   content: props.modelValue,
-  immediatelyRender: false,
   extensions: [
     StarterKit.configure({
       // Images are disabled project-wide (text-only v1)
@@ -51,25 +50,35 @@ const editor = useEditor({
 // Sync external modelValue → editor when parent loads/resets data (e.g. branch switch).
 // Treat '' and '<p></p>' as equivalent empty states to avoid calling setContent on
 // every tick, which would reset the cursor and block the user from typing.
-watch(() => props.modelValue, (newVal) => {
-  if (!editor.value) return
-  const currentHtml = editor.value.getHTML()
-  const isEmpty = (s: string) => !s || s === '<p></p>' || s === '<p><br></p>'
-  if (isEmpty(newVal) && isEmpty(currentHtml)) return
-  if (newVal !== currentHtml) {
-    settingContent.value = true
-    editor.value.commands.setContent(newVal)
-    nextTick(() => { settingContent.value = false })
+watch(
+  () => props.modelValue,
+  (newVal) => {
+    if (!editor.value) return
+    const currentHtml = editor.value.getHTML()
+    const isEmpty = (s: string) => !s || s === '<p></p>' || s === '<p><br></p>'
+    if (isEmpty(newVal) && isEmpty(currentHtml)) return
+    if (newVal !== currentHtml) {
+      settingContent.value = true
+      editor.value.commands.setContent(newVal)
+      nextTick(() => {
+        settingContent.value = false
+      })
+    }
   }
-})
+)
 
 onBeforeUnmount(() => editor.value?.destroy())
 </script>
 
 <template>
-  <div class="border border-neutral-200 dark:border-neutral-700 rounded-lg overflow-hidden group" :data-tour="`step-editor-${index}`">
+  <div
+    class="border border-neutral-200 dark:border-neutral-700 rounded-lg overflow-hidden group"
+    :data-tour="`step-editor-${index}`"
+  >
     <!-- Toolbar -->
-    <div class="flex items-center gap-1 px-2 py-1 border-b border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800">
+    <div
+      class="flex items-center gap-1 px-2 py-1 border-b border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800"
+    >
       <span class="text-xs font-medium text-neutral-500 mr-2">{{ t('diff.stepNumber', { n: index + 1 }) }}</span>
 
       <UButton
@@ -117,15 +126,8 @@ onBeforeUnmount(() => editor.value?.destroy())
     </div>
 
     <!-- Editor content area -->
-    <EditorContent
-      v-if="editor"
-      :editor="editor"
-      class="bg-white dark:bg-neutral-900"
-    />
-    <div
-      v-else
-      class="min-h-[4rem] p-3 text-neutral-400 text-sm"
-    >
+    <EditorContent v-if="editor" :editor="editor" class="bg-white dark:bg-neutral-900" />
+    <div v-else class="min-h-[4rem] p-3 text-neutral-400 text-sm">
       {{ placeholder ?? t('recipe.stepPlaceholder') }}
     </div>
   </div>
