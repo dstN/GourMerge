@@ -11,7 +11,8 @@ jobs:
     name: Deploy to Netcup
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    # environment: production  # uncomment after creating a "production" GitHub Environment in repo settings
+    # Configure required reviewers / protection rules in repo Settings → Environments → production.
+    environment: production
 
     steps:
       - name: Checkout

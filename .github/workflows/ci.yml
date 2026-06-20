@@ -58,6 +58,12 @@ jobs:
       - name: i18n bilingual gate
         run: node scripts/i18n-check.mjs
 
+      # Fail on any CRITICAL advisory. High/moderate are tracked + proposed as
+      # reviewable PRs by Dependabot (some current highs are dev-tool/transitive
+      # or need breaking upgrades — see docs/SECRETS.md / dependabot.yml).
+      - name: Dependency audit (critical)
+        run: npm audit --audit-level=critical
+
       - name: Run database migrations
         run: npx drizzle-kit migrate
 
