@@ -10,7 +10,7 @@
  *   page        — 1-based page number (default 1)
  *   limit       — page size (default 20, max 50)
  */
-import { eq, and, desc, like, or, inArray } from 'drizzle-orm'
+import { eq, and, desc, like, or, inArray, sql } from 'drizzle-orm'
 import { recipes, users, recipeTags, tags } from '~~/server/database/schema'
 
 export default defineEventHandler(async (event) => {
@@ -34,7 +34,13 @@ export default defineEventHandler(async (event) => {
   const conditions = [eq(recipes.visibility, 'public')]
 
   if (q) {
-    conditions.push(or(like(recipes.title, `%${q}%`), like(recipes.description, `%${q}%`))!)
+    // FULLTEXT (ft_recipes_title_description, migration 0006) for real words;
+    // fall back to LIKE for short terms below InnoDB's min token size (default 3).
+    if (q.length >= 3) {
+      conditions.push(sql`MATCH(${recipes.title}, ${recipes.description}) AGAINST (${q} IN NATURAL LANGUAGE MODE)`)
+    } else {
+      conditions.push(or(like(recipes.title, `%${q}%`), like(recipes.description, `%${q}%`))!)
+    }
   }
 
   if (difficulty && ['easy', 'medium', 'hard'].includes(difficulty)) {

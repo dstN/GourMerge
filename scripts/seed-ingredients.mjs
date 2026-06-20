@@ -50,7 +50,10 @@ if (!DATABASE_URL) {
 // data, which can be filled in manually via the ingredient_nutrition
 // table with source = 'curated'.
 // ────────────────────────────────────────────────────────────
-const INGREDIENTS = []
+const INGREDIENTS = [
+  // Common in DACH baking but absent from the Swiss BLV catalog (known gap).
+  { name: 'Vanilla Sugar', de: 'Vanillezucker', category: 'baking' },
+]
 
 // ────────────────────────────────────────────────────────────
 // Main

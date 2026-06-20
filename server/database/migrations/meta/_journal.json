@@ -1,0 +1,55 @@
+{
+  "version": "7",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1781410119525,
+      "tag": "0000_baseline",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1781410856845,
+      "tag": "0001_add-public-ids-auth-tokens-rate-limit",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1781445312550,
+      "tag": "0002_melted_otto_octavius",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1781448891962,
+      "tag": "0003_tranquil_gargoyle",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1781464018789,
+      "tag": "0004_lush_madame_hydra",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1781464416863,
+      "tag": "0005_handy_timeslip",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1781917140722,
+      "tag": "0006_fulltext-recipe-search",
+      "breakpoints": true
+    }
+  ]
+}

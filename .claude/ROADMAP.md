@@ -56,7 +56,7 @@ Nuxt 4 · Vue 3 Composition API (`<script setup lang="ts">`) · Nuxt UI v4 (Reka
 - CI/CD: GitHub Actions **are configured** (`ci.yml` + `deploy.yml`); still missing: coverage enforcement + `npm audit` gate
 - Passenger CD: `.htaccess` + `app.js` exist and `deploy.yml` **does** wire rsync + migrate + restart + smoke test; still missing: migrate exit-code check + production environment protection
 - Prod safety (F1 pending): Pino log rotation, Sentry active capture, error-response `data` sanitization, transactional-email i18n
-- Vanilla Sugar: missing from Swiss BLV DB; curated entry not yet added
+- (Vanilla Sugar curated entry — done, F3)
 
 ---
 

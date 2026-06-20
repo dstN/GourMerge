@@ -53,7 +53,7 @@ GourMerge/
 │   ├── api/                    # 32 REST endpoints (see §6)
 │   ├── database/
 │   │   ├── schema.ts           # Drizzle ORM schema (17 tables)
-│   │   └── migrations/         # 6 versioned SQL migrations (0000–0005)
+│   │   └── migrations/         # 7 versioned SQL migrations (0000–0006)
 │   ├── middleware/             # Nitro middleware
 │   ├── plugins/                # Nitro plugins (db, logger, sentry)
 │   └── utils/                  # drizzle.ts, diff.ts, merge.ts, units.ts, slug.ts
@@ -111,6 +111,7 @@ This is handled in `server/api/recipes/[id].delete.ts`.
 - **INT PK internal, UUIDv7 external**: `recipes` and `gourmerge_requests` have a `public_id BINARY(16)` (UUIDv7) for external URLs/API — internal JOINs use INT PKs. Auth tokens use CSPRNG, NOT UUIDv7.
 - **Metric-canonical units**: DB stores `g` / `ml` / `piece` / `pinch` / `tsp` / `tbsp` only. Display conversion in `server/utils/units.ts`.
 - **No recursive CTEs**: commit DAG traversal is done application-side (`parentCommitId` walk). MariaDB CTEs are slow.
+- **Explore search**: FULLTEXT index on `recipes(title, description)` (migration `0006`, hand-authored — Drizzle's mysql `index()` can't express FULLTEXT). `explore.get.ts` uses `MATCH … AGAINST` for queries ≥ 3 chars, `LIKE` fallback for shorter terms.
 
 ---
 
@@ -246,7 +247,7 @@ The `ingredients` master table is populated from the **Swiss BLV Food Compositio
 - Source marker: `ingredient_nutrition.source = 'swiss-blv-v7'`
 - Locale-aware search: name + synonyms matched by user's locale (`GET /api/ingredients?q=&locale=`)
 - Curated entries (not in Swiss DB) can be added to `seed-ingredients.mjs` with `source = 'curated'`
-- **Known gap**: Vanilla Sugar (`Vanillezucker`) not in Swiss BLV DB — needs a curated entry
+- **Vanilla Sugar** (`Vanillezucker`): not in Swiss BLV DB — added as a curated entry in `seed-ingredients.mjs` (apply with `npm run db:seed`)
 
 ---
 
@@ -318,7 +319,6 @@ The `ingredients` master table is populated from the **Swiss BLV Food Compositio
 - **Tests**: unit tests for `diff.ts` / `merge.ts` / `units.ts` + an i18n-gate test **do exist** (68 cases, `tests/unit/`). Still missing — component tests, API/integration tests, real E2E (only a skipped placeholder), `slug.ts`/other-util tests, and `--coverage` enforcement in CI
 - **CI/CD**: GitHub Actions **are configured** — `ci.yml` (lint → format → typecheck → i18n → migrate → test → build) and `deploy.yml` (rsync → migrate → restart → smoke test). Not yet: coverage enforcement, `npm audit` gate
 - **Passenger CD**: `.htaccess` + `app.js` exist and `deploy.yml` **does** wire rsync + migrate + `touch tmp/restart.txt` + health smoke test. Not yet: migrate exit-code check, production environment protection
-- **Vanilla Sugar**: missing from Swiss BLV DB; curated entry not yet added to `seed-ingredients.mjs`
 - **Dependabot / npm audit CI gate**: not configured
 
 ---
@@ -333,6 +333,7 @@ The `ingredients` master table is populated from the **Swiss BLV Food Compositio
 - **Rate limiting across Passenger processes**: in-memory rate limiting is NOT multi-process safe. The `rate_limit_hits` DB table is the correct approach.
 - **Ingredient nutrition source**: `ingredient_nutrition.source = 'swiss-blv-v7'` identifies Swiss BLV rows. Manually curated entries use `'curated'`.
 - **UDropdownMenu navigation**: use `to:` for navigation items, `click:` for actions. Missing `color: 'neutral'` causes icon colour flash on hover.
+- **Drizzle migration meta MUST be tracked**: `server/database/migrations/meta/` (the `_journal.json` + per-migration snapshots) was previously gitignored, which silently broke `drizzle-kit migrate` on any fresh checkout (CI/deploy) — no journal means no migrations applied. It is now versioned; never re-ignore it.
 
 ---
 
