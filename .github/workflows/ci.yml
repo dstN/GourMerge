@@ -58,8 +58,8 @@ jobs:
       - name: Run database migrations
         run: npx drizzle-kit migrate
 
-      - name: Unit & component tests
-        run: npm test -- --reporter=verbose
+      - name: Unit & component tests (with coverage gate)
+        run: npm test -- --coverage
 
       - name: Build
         run: npm run build

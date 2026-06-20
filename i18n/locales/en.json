@@ -1,20 +1,4 @@
 {
-  "email": {
-    "verification": {
-      "subject": "Verify your GourMerge email address",
-      "intro": "Click the link below to verify your GourMerge account:",
-      "linkLabel": "Verify my email",
-      "expiry": "This link expires in 24 hours. If you didn't request this, you can safely ignore this email.",
-      "textIntro": "Click the link to verify your GourMerge email address:"
-    },
-    "passwordReset": {
-      "subject": "Reset your GourMerge password",
-      "intro": "Someone requested a password reset for your GourMerge account.",
-      "linkLabel": "Reset your password",
-      "expiry": "This link expires in 2 hours. If you didn't request this, ignore this email — your password won't change.",
-      "textIntro": "Click the link to reset your GourMerge password:"
-    }
-  },
   "app": {
     "slogan": "Fork the recipe, merge the flavor."
   },
