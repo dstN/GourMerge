@@ -157,9 +157,10 @@ export default defineNuxtConfig({
     },
   },
 
-  // ── Security Headers + CSP (P6-001) ─────────────────────────
-  // Applied to all routes. CSP allows TipTap (needs 'unsafe-inline' for style),
-  // Google Fonts, and the Sentry reporting endpoint.
+  // ── Security Headers (P6-001) ───────────────────────────────
+  // Static headers applied to all routes. The Content-Security-Policy is set
+  // per-request in `server/plugins/csp.ts` instead (it carries a per-request
+  // script nonce in production — see that file).
   routeRules: {
     '/**': {
       headers: {
@@ -173,24 +174,8 @@ export default defineNuxtConfig({
         ...(process.env.NODE_ENV === 'production'
           ? { 'Strict-Transport-Security': 'max-age=31536000; includeSubDomains' }
           : {}),
-        'Content-Security-Policy': [
-          "default-src 'self'",
-          // TipTap requires unsafe-inline for inline styles on the prosemirror editor
-          "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-          "font-src 'self' https://fonts.gstatic.com",
-          "img-src 'self' data: https:",
-          // Scripts: self + Sentry CDN bundle (loaded via @sentry/nuxt)
-          "script-src 'self' 'unsafe-inline' https://browser.sentry-cdn.com",
-          "connect-src 'self' https://*.sentry.io",
-          "frame-ancestors 'none'",
-          "base-uri 'self'",
-          "form-action 'self'",
-        ].join('; '),
       },
     },
-    // API and auth routes: no page headers needed, disable CSP header inheritance
-    '/api/**': { headers: {} },
-    '/auth/**': { headers: {} },
   },
 
   // ── Nitro server preset (Passenger uses node-server) ────────
