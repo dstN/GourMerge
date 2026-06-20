@@ -8,7 +8,11 @@
     "newRecipe": "Neues Rezept",
     "dashboard": "Dashboard",
     "quickActions": "Schnellaktionen",
-    "editProfile": "Profil bearbeiten"
+    "editProfile": "Profil bearbeiten",
+    "starred": "Favoriten",
+    "menu": "Menü",
+    "language": "Sprache",
+    "appearance": "Erscheinungsbild"
   },
   "auth": {
     "login": "Anmelden",
@@ -158,7 +162,9 @@
     "fork": "Remixen",
     "forkSuccess": "Eigene Version erstellt.",
     "forkError": "Eigene Version konnte nicht erstellt werden.",
-    "seoDescriptionFallback": "Entdecke und remixe dieses Rezept auf GourMerge — die Plattform für kollaborative Rezeptentwicklung."
+    "seoDescriptionFallback": "Entdecke und remixe dieses Rezept auf GourMerge — die Plattform für kollaborative Rezeptentwicklung.",
+    "forkedFrom": "Abgeleitet von",
+    "viewForks": "Remixe ansehen"
   },
   "common": {
     "edit": "Bearbeiten",
@@ -418,7 +424,8 @@
   },
   "a11y": {
     "skipToContent": "Zum Hauptinhalt springen",
-    "selectLanguage": "Sprache wählen"
+    "selectLanguage": "Sprache wählen",
+    "openMenu": "Menü öffnen"
   },
   "nutrition": {
     "title": "Nährwerte",
@@ -460,5 +467,17 @@
     "bold": "Fett",
     "italic": "Kursiv",
     "bulletList": "Aufzählung"
+  },
+  "forks": {
+    "title": "Remixe",
+    "subtitle": "Rezepte, die von diesem Rezept abgeleitet wurden.",
+    "empty": "Noch keine Remixe",
+    "emptyDesc": "Dieses Rezept wurde noch von niemandem remixt."
+  },
+  "starred": {
+    "title": "Favoriten",
+    "subtitle": "Rezepte, die du mit einem Stern markiert hast.",
+    "empty": "Noch keine Favoriten",
+    "emptyDesc": "Markiere Rezepte mit einem Stern, um sie hier wiederzufinden."
   }
 }

@@ -8,7 +8,11 @@
     "newRecipe": "New Recipe",
     "dashboard": "Dashboard",
     "quickActions": "Quick Actions",
-    "editProfile": "Edit Profile"
+    "editProfile": "Edit Profile",
+    "starred": "Starred",
+    "menu": "Menu",
+    "language": "Language",
+    "appearance": "Appearance"
   },
   "auth": {
     "login": "Log In",
@@ -158,7 +162,9 @@
     "fork": "Remix",
     "forkSuccess": "Your remix is ready.",
     "forkError": "Could not create your remix.",
-    "seoDescriptionFallback": "Discover and remix this recipe on GourMerge — the platform for collaborative recipe development."
+    "seoDescriptionFallback": "Discover and remix this recipe on GourMerge — the platform for collaborative recipe development.",
+    "forkedFrom": "Forked from",
+    "viewForks": "View forks"
   },
   "common": {
     "edit": "Edit",
@@ -418,7 +424,8 @@
   },
   "a11y": {
     "skipToContent": "Skip to main content",
-    "selectLanguage": "Select language"
+    "selectLanguage": "Select language",
+    "openMenu": "Open menu"
   },
   "nutrition": {
     "title": "Nutrition Facts",
@@ -460,5 +467,17 @@
     "bold": "Bold",
     "italic": "Italic",
     "bulletList": "Bullet list"
+  },
+  "forks": {
+    "title": "Forks",
+    "subtitle": "Recipes forked from this one.",
+    "empty": "No forks yet",
+    "emptyDesc": "No one has forked this recipe yet."
+  },
+  "starred": {
+    "title": "Starred",
+    "subtitle": "Recipes you have starred.",
+    "empty": "No starred recipes yet",
+    "emptyDesc": "Star recipes to find them here later."
   }
 }

@@ -1,11 +1,13 @@
 /**
  * POST /api/recipes/:id/fork — Fork a recipe
  *
- * Deep-copies the recipe metadata, default branch, and head commit snapshot
- * (ingredients + steps) into a new recipe owned by the current user.
+ * Deep-copies the recipe metadata, its default branch, and the FULL commit
+ * history of that branch (every commit's ingredient/step snapshot) into a new
+ * recipe owned by the current user. Commit lineage (parentCommitId), original
+ * authors and timestamps are preserved so the fork carries the source's history.
  * Increments forkCount on the original in the same transaction.
  */
-import { eq, and, sql } from 'drizzle-orm'
+import { eq, and, sql, inArray } from 'drizzle-orm'
 import {
   recipes,
   recipeBranches,
@@ -15,6 +17,9 @@ import {
   users,
 } from '~~/server/database/schema'
 import { generatePublicId } from '~~/server/utils/uuid'
+
+/** Defensive cap on history length copied per fork. */
+const MAX_FORK_HISTORY = 1000
 
 export default defineEventHandler(async (event) => {
   const session = await requireUserSession(event)
@@ -85,21 +90,51 @@ export default defineEventHandler(async (event) => {
     suffix++
   }
 
-  // ── Load original default branch + head snapshot ─────────────
+  // ── Load original default branch + its full commit history ───
   const [defaultBranch] = await db
     .select({ id: recipeBranches.id, headCommitId: recipeBranches.headCommitId })
     .from(recipeBranches)
     .where(and(eq(recipeBranches.recipeId, recipeId), eq(recipeBranches.isDefault, true)))
     .limit(1)
 
-  let sourceIngredients: (typeof recipeCommitIngredients.$inferSelect)[] = []
-  let sourceSteps: (typeof recipeCommitSteps.$inferSelect)[] = []
+  // All commits on the default branch, then ordered root→head via the
+  // parentCommitId chain (parents must be inserted before their children).
+  const branchCommits = defaultBranch
+    ? await db.select().from(recipeCommits).where(eq(recipeCommits.branchId, defaultBranch.id))
+    : []
+  const commitById = new Map(branchCommits.map((c) => [c.id, c]))
 
-  if (defaultBranch?.headCommitId) {
-    ;[sourceIngredients, sourceSteps] = await Promise.all([
-      db.select().from(recipeCommitIngredients).where(eq(recipeCommitIngredients.commitId, defaultBranch.headCommitId)),
-      db.select().from(recipeCommitSteps).where(eq(recipeCommitSteps.commitId, defaultBranch.headCommitId)),
-    ])
+  const orderedDesc: (typeof recipeCommits.$inferSelect)[] = []
+  let cursor = defaultBranch?.headCommitId ?? null
+  const seen = new Set<number>()
+  while (cursor != null && commitById.has(cursor) && !seen.has(cursor) && orderedDesc.length < MAX_FORK_HISTORY) {
+    const c = commitById.get(cursor)!
+    orderedDesc.push(c)
+    seen.add(cursor)
+    cursor = c.parentCommitId
+  }
+  const orderedCommits = orderedDesc.reverse() // root → head
+
+  // Bulk-load ingredient/step snapshots for the copied commits.
+  const copiedIds = orderedCommits.map((c) => c.id)
+  const [allIngredients, allSteps] = copiedIds.length
+    ? await Promise.all([
+        db.select().from(recipeCommitIngredients).where(inArray(recipeCommitIngredients.commitId, copiedIds)),
+        db.select().from(recipeCommitSteps).where(inArray(recipeCommitSteps.commitId, copiedIds)),
+      ])
+    : [[], []]
+
+  const ingredientsByCommit = new Map<number, typeof allIngredients>()
+  for (const row of allIngredients) {
+    const list = ingredientsByCommit.get(row.commitId) ?? []
+    list.push(row)
+    ingredientsByCommit.set(row.commitId, list)
+  }
+  const stepsByCommit = new Map<number, typeof allSteps>()
+  for (const row of allSteps) {
+    const list = stepsByCommit.get(row.commitId) ?? []
+    list.push(row)
+    stepsByCommit.set(row.commitId, list)
   }
 
   // ── Transaction: deep copy + counter increment ───────────────
@@ -127,63 +162,72 @@ export default defineEventHandler(async (event) => {
     // 2. Create default branch for fork
     const [forkBranch] = await tx
       .insert(recipeBranches)
-      .values({
-        recipeId: fork.id,
-        name: 'main',
-        isDefault: true,
-      })
+      .values({ recipeId: fork.id, name: 'main', isDefault: true })
       .$returningId()
 
     if (!forkBranch) throw createError({ statusCode: 500, statusMessage: 'Insert failed.' })
 
-    // 3. Copy head commit snapshot (fork point)
-    const [forkCommit] = await tx
-      .insert(recipeCommits)
-      .values({
-        branchId: forkBranch.id,
-        authorId: session.user.id,
-        message: `Forked from original recipe`,
-        parentCommitId: null,
-      })
-      .$returningId()
+    // 3. Replay the commit history onto the fork branch, preserving lineage,
+    //    authors and timestamps. Commits are inserted one-by-one because each
+    //    child's parentCommitId references the freshly-created parent id.
+    const idMap = new Map<number, number>() // old commit id → new commit id
+    const newIngredientRows: (typeof recipeCommitIngredients.$inferInsert)[] = []
+    const newStepRows: (typeof recipeCommitSteps.$inferInsert)[] = []
 
-    if (!forkCommit) throw createError({ statusCode: 500, statusMessage: 'Insert failed.' })
+    for (const c of orderedCommits) {
+      const newParent = c.parentCommitId != null ? (idMap.get(c.parentCommitId) ?? null) : null
+      const newMergeSource = c.mergeSourceCommitId != null ? (idMap.get(c.mergeSourceCommitId) ?? null) : null
+      const [inserted] = await tx
+        .insert(recipeCommits)
+        .values({
+          branchId: forkBranch.id,
+          parentCommitId: newParent,
+          authorId: c.authorId,
+          message: c.message,
+          isMerge: c.isMerge,
+          mergeSourceCommitId: newMergeSource,
+          createdAt: c.createdAt,
+        })
+        .$returningId()
+      if (!inserted) throw createError({ statusCode: 500, statusMessage: 'Insert failed.' })
+      idMap.set(c.id, inserted.id)
 
-    // 4. Copy ingredients (reference the same master ingredient IDs)
-    if (sourceIngredients.length > 0) {
-      await tx.insert(recipeCommitIngredients).values(
-        sourceIngredients.map(({ ingredientId, quantity, unit, notes, sortOrder }) => ({
-          commitId: forkCommit.id,
-          ingredientId,
-          quantity,
-          unit,
-          notes: notes ?? undefined,
-          sortOrder,
-        }))
-      )
+      for (const ing of ingredientsByCommit.get(c.id) ?? []) {
+        newIngredientRows.push({
+          commitId: inserted.id,
+          ingredientId: ing.ingredientId,
+          quantity: ing.quantity,
+          unit: ing.unit,
+          notes: ing.notes ?? undefined,
+          sortOrder: ing.sortOrder,
+        })
+      }
+      for (const step of stepsByCommit.get(c.id) ?? []) {
+        newStepRows.push({
+          commitId: inserted.id,
+          sortOrder: step.sortOrder,
+          content: step.content,
+          contentTranslations: step.contentTranslations,
+        })
+      }
     }
 
-    // 5. Copy steps
-    if (sourceSteps.length > 0) {
-      await tx.insert(recipeCommitSteps).values(
-        sourceSteps.map(({ sortOrder, content }) => ({
-          commitId: forkCommit.id,
-          sortOrder,
-          content,
-        }))
-      )
+    if (newIngredientRows.length) await tx.insert(recipeCommitIngredients).values(newIngredientRows)
+    if (newStepRows.length) await tx.insert(recipeCommitSteps).values(newStepRows)
+
+    // 4. Point the fork's branch head at the copied head commit
+    const newHeadId = defaultBranch?.headCommitId != null ? (idMap.get(defaultBranch.headCommitId) ?? null) : null
+    if (newHeadId != null) {
+      await tx.update(recipeBranches).set({ headCommitId: newHeadId }).where(eq(recipeBranches.id, forkBranch.id))
     }
 
-    // 6. Set fork's branch head
-    await tx.update(recipeBranches).set({ headCommitId: forkCommit.id }).where(eq(recipeBranches.id, forkBranch.id))
-
-    // 7. Increment original recipe's forkCount atomically
+    // 5. Increment original recipe's forkCount atomically
     await tx
       .update(recipes)
       .set({ forkCount: sql`${recipes.forkCount} + 1` })
       .where(eq(recipes.id, recipeId))
 
-    return { id: fork.id, slug, branchId: forkBranch.id }
+    return { id: fork.id, slug, branchId: forkBranch.id, commitsCopied: orderedCommits.length }
   })
 
   setResponseStatus(event, 201)
@@ -192,5 +236,6 @@ export default defineEventHandler(async (event) => {
     slug: result.slug,
     owner: { username: owner.username },
     forkedFromRecipeId: recipeId,
+    commitsCopied: result.commitsCopied,
   }
 })

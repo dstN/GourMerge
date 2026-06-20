@@ -115,7 +115,7 @@ This is handled in `server/api/recipes/[id].delete.ts`.
 
 ---
 
-## 5. Pages (23)
+## 5. Pages (25)
 
 | Route                                           | Page                                  | Auth        | Layout    |
 | ----------------------------------------------- | ------------------------------------- | ----------- | --------- |
@@ -123,12 +123,14 @@ This is handled in `server/api/recipes/[id].delete.ts`.
 | `/dashboard`                                    | My dashboard                          | Yes         | dashboard |
 | `/recipes`                                      | My recipes list                       | Yes         | dashboard |
 | `/recipes/new`                                  | Create recipe                         | Yes         | dashboard |
-| `/explore`                                      | Public discovery (search/filter/sort) | No          | default   |
+| `/recipes/starred`                              | Starred recipes list                  | Yes         | dashboard |
+| `/explore`                                      | Public discovery (search/filter/sort) | No          | default\* |
 | `/[username]`                                   | User public profile                   | No          | default   |
 | `/[username]/[slug]`                            | Recipe detail                         | No          | default   |
 | `/[username]/[slug]/edit`                       | Recipe editor (TipTap + ingredients)  | Yes (owner) | dashboard |
 | `/[username]/[slug]/branches`                   | Branch management                     | Yes (owner) | dashboard |
 | `/[username]/[slug]/history`                    | Commit history timeline               | No          | dashboard |
+| `/[username]/[slug]/forks`                      | List of recipes forked from this one  | No          | default   |
 | `/[username]/[slug]/gourmerge-requests`         | GMR list                              | No          | dashboard |
 | `/[username]/[slug]/gourmerge-requests/new`     | Create GMR                            | Yes         | dashboard |
 | `/[username]/[slug]/gourmerge-requests/[gmrId]` | GMR detail + merge                    | No          | dashboard |
@@ -143,9 +145,11 @@ This is handled in `server/api/recipes/[id].delete.ts`.
 | `/legal/impressum`                              | Legal notice                          | No          | default   |
 | `/legal/datenschutz`                            | Privacy policy                        | No          | default   |
 
+\* `/explore` uses a **dynamic layout** (`definePageMeta({ layout: false })` + `<NuxtLayout :name="loggedIn ? 'dashboard' : 'default'">`): logged-in users get the dashboard shell with sidebar; guests get the public layout.
+
 ---
 
-## 6. API Routes (32 endpoints)
+## 6. API Routes (34 endpoints)
 
 All routes: Zod-validated body/query, `requireUserSession()` where auth required, `createError()` for errors.
 
@@ -168,13 +172,15 @@ All routes: Zod-validated body/query, `requireUserSession()` where auth required
 | Method | Route                                    | Auth        | Purpose                                             |
 | ------ | ---------------------------------------- | ----------- | --------------------------------------------------- |
 | GET    | `/api/recipes`                           | Yes         | Own recipes list                                    |
+| GET    | `/api/recipes/starred`                   | Yes         | Recipes the viewer has starred (card shape)         |
 | POST   | `/api/recipes`                           | Yes         | Create recipe (transactional: recipe+branch+commit) |
 | GET    | `/api/recipes/explore`                   | No          | Public browse (search/filter/sort/paginate)         |
-| GET    | `/api/recipes/by-slug/[username]/[slug]` | No          | Fetch by URL slug                                   |
+| GET    | `/api/recipes/by-slug/[username]/[slug]` | No          | Fetch by URL slug (incl. resolved `forkedFrom`)     |
 | GET    | `/api/recipes/[id]`                      | No          | Fetch by internal ID                                |
 | PATCH  | `/api/recipes/[id]`                      | Yes (owner) | Update metadata                                     |
 | DELETE | `/api/recipes/[id]`                      | Yes (owner) | Delete + cascade cleanup                            |
-| POST   | `/api/recipes/[id]/fork`                 | Yes         | Deep-copy fork                                      |
+| POST   | `/api/recipes/[id]/fork`                 | Yes         | Deep-copy fork **incl. full commit history**        |
+| GET    | `/api/recipes/[id]/forks`                | No          | List recipes forked from this one                   |
 | POST   | `/api/recipes/[id]/star`                 | Yes         | Toggle star                                         |
 | POST   | `/api/recipes/[id]/tags`                 | Yes (owner) | Set tags                                            |
 
@@ -332,13 +338,18 @@ The `ingredients` master table is populated from the **Swiss BLV Food Compositio
 - **`isDirty` tracking**: compare via `JSON.stringify` of `{ ingredients, stepsForSnapshot }`. Set `initialSnapshot` synchronously after data loads in `loadBranchSnapshot()`, not in a separate `watch`. Exclude local UI state (`translationsOpen`) from the snapshot.
 - **Rate limiting across Passenger processes**: in-memory rate limiting is NOT multi-process safe. The `rate_limit_hits` DB table is the correct approach.
 - **Ingredient nutrition source**: `ingredient_nutrition.source = 'swiss-blv-v7'` identifies Swiss BLV rows. Manually curated entries use `'curated'`.
-- **UDropdownMenu navigation**: use `to:` for navigation items, `click:` for actions. Missing `color: 'neutral'` causes icon colour flash on hover.
+- **UDropdownMenu navigation**: use `to:` for navigation items, `click:` for actions. Items need `color: 'neutral'` so they don't default to the primary highlight. Separately, the menu items (incl. their leading **icons**) carry a colour `transition` that **fades the highlight out on open**, reading as a one-frame flash. `transition` does not inherit, so `main.css` disables it on `[role='menu'] [role='menuitem']`, its `::before`, **and every descendant (`*`)** — the icon flash was only fixed once the descendant selector was added (verified frame-by-frame with Playwright).
 - **Multi-statement inline handlers break the build**: a `@click="a = 1\n b = 2"` (multiple statements on separate lines, no semicolons) fails the Vue macro parser at build time. Use a single expression or a `function` in `<script setup>`. (Was masked while CI was red on typecheck.)
 - **Nuxt UI v4 `USelect` uses `:items` + `value-key`, never `:options`** (a v3 holdover that is silently ignored → empty dropdowns). Fixed in explore filters + GMR-create branch pickers.
 - **Drizzle migration meta MUST be tracked**: `server/database/migrations/meta/` (the `_journal.json` + per-migration snapshots) was previously gitignored, which silently broke `drizzle-kit migrate` on any fresh checkout (CI/deploy) — no journal means no migrations applied. It is now versioned; never re-ignore it.
 - **Dead-code gate (`knip`)**: `npm run knip` (config in `knip.json`, enforced in CI) flags unused files/exports/deps. The mysql2 pool is closed gracefully on Nitro shutdown via `server/plugins/database.ts`.
 - **Nuxt path-prefixes components in subdirectories**: `components/common/HelpHint.vue` registers as `<CommonHelpHint>`, not `<HelpHint>` (same for `<CommonGlossaryTerm>`, `<CommonBrandLogo>`). Using the bare name silently renders nothing — this is why `GlossaryTerm`/`HelpHint` sat unused until adopted onto the fork/merge controls + history page.
-- **a11y axe gate**: `tests/e2e/a11y.spec.ts` fails CI on any **critical** axe violation; **serious** ones are logged. Fixed: missing `<html lang>` (set from i18n locale in `app.vue`) and 5 unnamed comboboxes (locale switchers + explore filters now have `aria-label`). **Outstanding (tracked design task):** `color-contrast` on the brand orange (`primary-500` as text / white-on-`primary` buttons) needs darkening to ~`primary-700` to meet WCAG AA — a brand decision, not yet applied. Modal focus-traps/keyboard-nav rely on Nuxt UI defaults (not independently audited).
+- **a11y axe gate**: `tests/e2e/a11y.spec.ts` fails CI on any **critical** axe violation; **serious** ones are logged. Fixed: missing `<html lang>` (set from i18n locale in `app.vue`) and 5 unnamed comboboxes (locale switchers + explore filters now have `aria-label`). **Brand-orange contrast** is now handled **light-mode only**: `main.css` darkens `primary-300…950` and the muted/dimmed neutral text under `:root:not(.dark)` (dark mode keeps the lighter palette, which already contrasts on dark bg). Difficulty + dietary badges and the in-text Sentry privacy link were darkened too (light `text-*-700`, `dark:text-*-400`). Modal focus-traps/keyboard-nav rely on Nuxt UI defaults (not independently audited).
+- **Double focus indicator**: the global `:focus-visible { outline }` fallback stacked on top of Nuxt UI's own ring on inputs/buttons. `main.css` now suppresses the global outline on native form controls + Reka widget roles (`:is(input, textarea, select, button, [role=...]):focus-visible { outline: none }`) so they show a single ring; links/custom elements keep the fallback outline.
+- **App shell (fixed chrome, scroll-in-content)**: `default` + `dashboard` layouts are `flex flex-col h-dvh overflow-hidden`; the header, footer (and dashboard sidebar) are `shrink-0`, and **only `<main>` scrolls** (`flex-1 overflow-y-auto`). `h-dvh` (not `h-screen`) handles mobile browser chrome. Header is no longer `sticky` (it's a flex row in the shell).
+- **Custom scrollbars**: `main.css` styles a slim, rounded, themed thumb (`--gm-scrollbar-thumb`, light/dark) via `scrollbar-width`/`scrollbar-color` (Firefox) + `::-webkit-scrollbar*` (Chromium) — replaces the chunky native OS bar on every scroll container.
+- **Mobile nav**: below `md`, both layouts hide the desktop control cluster (`hidden md:flex`) and show `<LayoutMobileMenu>` — a hamburger opening a `USlideover` offcanvas with all nav links (incl. dashboard/starred), the language switcher, theme toggle, tour helper and account actions. Closes on route change via a `route.fullPath` watcher.
+- **Fork carries history**: `POST /api/recipes/[id]/fork` replays the source default branch's **full commit chain** (root→head) into the fork, preserving `parentCommitId` lineage, original `authorId`/`createdAt` and step `contentTranslations` (the old version copied only the head snapshot and dropped translations). Commits inserted one-by-one (child parent refs the freshly-created parent); ingredient/step rows batch-inserted after. `mergeSourceCommitId` remapped only if in the copied set, else null. Bounded by `MAX_FORK_HISTORY` (1000).
 
 ---
 

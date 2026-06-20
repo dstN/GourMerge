@@ -19,10 +19,16 @@ const navItems = computed(() => [
     active: route.path === '/recipes',
   },
   {
+    label: t('nav.starred'),
+    icon: 'i-lucide-star',
+    to: '/recipes/starred',
+    active: route.path === '/recipes/starred',
+  },
+  {
     label: t('nav.explore'),
     icon: 'i-lucide-compass',
-    to: '/',
-    active: route.path === '/',
+    to: '/explore',
+    active: route.path === '/explore',
   },
   {
     label: t('nav.newRecipe'),

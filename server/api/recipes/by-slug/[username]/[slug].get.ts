@@ -149,10 +149,23 @@ export default defineEventHandler(async (event) => {
 
   const recipeTags_ = tagRows.map((t) => t.name)
 
+  // ── Resolve fork source (original recipe + its owner) ──────
+  let forkedFrom: { username: string; slug: string; title: string; displayName: string | null } | null = null
+  if (recipe.forkedFromRecipeId) {
+    const [src] = await db
+      .select({ slug: recipes.slug, title: recipes.title, username: users.username, displayName: users.displayName })
+      .from(recipes)
+      .innerJoin(users, eq(recipes.ownerId, users.id))
+      .where(eq(recipes.id, recipe.forkedFromRecipeId))
+      .limit(1)
+    forkedFrom = src ?? null
+  }
+
   return {
     ...recipe,
     tags: recipeTags_,
     owner,
+    forkedFrom,
     branches,
     defaultBranch,
     currentIngredients,

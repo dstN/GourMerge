@@ -8,7 +8,11 @@
     "newRecipe": "Nouvelle recette",
     "dashboard": "Tableau de bord",
     "quickActions": "Actions rapides",
-    "editProfile": "Modifier le profil"
+    "editProfile": "Modifier le profil",
+    "starred": "Favoris",
+    "menu": "Menu",
+    "language": "Langue",
+    "appearance": "Apparence"
   },
   "auth": {
     "login": "Se connecter",
@@ -158,7 +162,9 @@
     "fork": "Remixer",
     "forkSuccess": "Votre remix est prêt.",
     "forkError": "Impossible de créer votre remix.",
-    "seoDescriptionFallback": "Découvrez et remixez cette recette sur GourMerge — la plateforme de développement collaboratif de recettes."
+    "seoDescriptionFallback": "Découvrez et remixez cette recette sur GourMerge — la plateforme de développement collaboratif de recettes.",
+    "forkedFrom": "Dérivé de",
+    "viewForks": "Voir les dérivés"
   },
   "common": {
     "edit": "Modifier",
@@ -418,7 +424,8 @@
   },
   "a11y": {
     "skipToContent": "Aller au contenu principal",
-    "selectLanguage": "Choisir la langue"
+    "selectLanguage": "Choisir la langue",
+    "openMenu": "Ouvrir le menu"
   },
   "nutrition": {
     "title": "Valeurs nutritionnelles",
@@ -460,5 +467,17 @@
     "bold": "Gras",
     "italic": "Italique",
     "bulletList": "Liste à puces"
+  },
+  "forks": {
+    "title": "Dérivés",
+    "subtitle": "Recettes dérivées de celle-ci.",
+    "empty": "Aucun dérivé pour l’instant",
+    "emptyDesc": "Personne n’a encore dérivé cette recette."
+  },
+  "starred": {
+    "title": "Favoris",
+    "subtitle": "Recettes que vous avez mises en favori.",
+    "empty": "Aucun favori pour l’instant",
+    "emptyDesc": "Ajoutez des recettes en favori pour les retrouver ici."
   }
 }

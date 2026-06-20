@@ -31,6 +31,8 @@ export interface RecipeDetail {
   starCount: number
   forkCount: number
   forkedFromRecipeId: number | null
+  /** Resolved fork source (original recipe + owner); null if not a fork or source deleted. */
+  forkedFrom?: { username: string; slug: string; title: string; displayName: string | null } | null
   createdAt: string
   updatedAt: string
   owner: { id: number; username: string; displayName: string | null; avatarUrl: string | null }

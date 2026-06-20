@@ -189,89 +189,102 @@ useHead(() => {
     <!-- Recipe content -->
     <div v-else-if="recipe">
       <!-- Header -->
-      <div class="flex items-start justify-between mb-6">
-        <div>
-          <div class="flex items-center gap-2 text-sm text-[var(--ui-text-muted)] mb-1">
-            <UIcon name="i-lucide-user-circle" class="size-4" />
-            <NuxtLink :to="`/${recipe.owner.username}`" class="hover:text-primary-500 transition-colors">
+      <div class="mb-6">
+        <!-- Top row: breadcrumb + action buttons -->
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-3">
+          <div class="flex items-center gap-x-2 text-sm text-[var(--ui-text-muted)] min-w-0">
+            <UIcon name="i-lucide-user-circle" class="size-4 shrink-0" />
+            <NuxtLink :to="`/${recipe.owner.username}`" class="shrink-0 hover:text-primary-500 transition-colors">
               {{ recipe.owner.displayName || recipe.owner.username }}
             </NuxtLink>
-            <span>/</span>
-            <span class="font-semibold text-[var(--ui-text)]">{{ recipe.slug }}</span>
+            <span aria-hidden="true" class="shrink-0">/</span>
+            <span class="font-semibold text-[var(--ui-text)] truncate">{{ recipe.slug }}</span>
           </div>
-          <h1 class="text-3xl font-bold mb-2">{{ resolveTranslation(recipe.titleTranslations, recipe.title) }}</h1>
-          <p v-if="recipe.description" class="text-[var(--ui-text-muted)] text-lg">
-            {{ resolveTranslation(recipe.descriptionTranslations, recipe.description) }}
-          </p>
+
+          <div class="flex items-center gap-2 shrink-0 flex-wrap">
+            <UBadge
+              v-if="recipe.visibility === 'private'"
+              color="neutral"
+              variant="subtle"
+              icon="i-lucide-lock"
+              :label="t('recipe.private')"
+            />
+            <!-- Star button (logged-in, not owner) -->
+            <UButton
+              v-if="loggedIn"
+              :icon="starred ? 'i-lucide-star' : 'i-lucide-star'"
+              :color="starred ? 'warning' : 'neutral'"
+              :variant="starred ? 'soft' : 'outline'"
+              size="sm"
+              :loading="starPending"
+              :label="`${starCount}`"
+              data-tour="star-button"
+              @click="toggleStar"
+            />
+            <!-- Fork button (logged-in, not owner) -->
+            <UButton
+              v-if="loggedIn && !isOwner"
+              icon="i-lucide-git-fork"
+              :label="t('recipe.fork')"
+              variant="outline"
+              color="neutral"
+              size="sm"
+              :loading="forkPending"
+              data-tour="fork-button"
+              @click="forkRecipe"
+            />
+            <CommonHelpHint v-if="loggedIn && !isOwner" i18n-key="glossary.fork.helpHint" size="sm" />
+            <UButton
+              :label="t('gourmergeRequest.titlePlural')"
+              icon="i-lucide-git-pull-request"
+              variant="outline"
+              color="neutral"
+              size="sm"
+              :to="`${recipeUrl}/gourmerge-requests`"
+              data-tour="gourmerge-requests-link"
+            />
+            <UButton
+              :label="t('branches.title')"
+              icon="i-lucide-git-branch"
+              variant="outline"
+              color="neutral"
+              size="sm"
+              :to="`${recipeUrl}/branches`"
+            />
+            <UButton
+              :label="t('history.title')"
+              icon="i-lucide-history"
+              variant="outline"
+              color="neutral"
+              size="sm"
+              :to="`${recipeUrl}/history`"
+              data-tour="history-link"
+            />
+            <UButton
+              v-if="isOwner"
+              :label="t('common.edit')"
+              icon="i-lucide-pencil"
+              variant="soft"
+              :to="`${recipeUrl}/edit`"
+            />
+          </div>
         </div>
 
-        <div class="flex items-center gap-2 shrink-0 flex-wrap">
-          <UBadge
-            v-if="recipe.visibility === 'private'"
-            color="neutral"
-            variant="subtle"
-            icon="i-lucide-lock"
-            :label="t('recipe.private')"
-          />
-          <!-- Star button (logged-in, not owner) -->
-          <UButton
-            v-if="loggedIn"
-            :icon="starred ? 'i-lucide-star' : 'i-lucide-star'"
-            :color="starred ? 'warning' : 'neutral'"
-            :variant="starred ? 'soft' : 'outline'"
-            size="sm"
-            :loading="starPending"
-            :label="`${starCount}`"
-            data-tour="star-button"
-            @click="toggleStar"
-          />
-          <!-- Fork button (logged-in, not owner) -->
-          <UButton
-            v-if="loggedIn && !isOwner"
-            icon="i-lucide-git-fork"
-            :label="t('recipe.fork')"
-            variant="outline"
-            color="neutral"
-            size="sm"
-            :loading="forkPending"
-            data-tour="fork-button"
-            @click="forkRecipe"
-          />
-          <CommonHelpHint v-if="loggedIn && !isOwner" i18n-key="glossary.fork.helpHint" size="sm" />
-          <UButton
-            :label="t('gourmergeRequest.titlePlural')"
-            icon="i-lucide-git-pull-request"
-            variant="outline"
-            color="neutral"
-            size="sm"
-            :to="`${recipeUrl}/gourmerge-requests`"
-            data-tour="gourmerge-requests-link"
-          />
-          <UButton
-            :label="t('branches.title')"
-            icon="i-lucide-git-branch"
-            variant="outline"
-            color="neutral"
-            size="sm"
-            :to="`${recipeUrl}/branches`"
-          />
-          <UButton
-            :label="t('history.title')"
-            icon="i-lucide-history"
-            variant="outline"
-            color="neutral"
-            size="sm"
-            :to="`${recipeUrl}/history`"
-            data-tour="history-link"
-          />
-          <UButton
-            v-if="isOwner"
-            :label="t('common.edit')"
-            icon="i-lucide-pencil"
-            variant="soft"
-            :to="`${recipeUrl}/edit`"
-          />
-        </div>
+        <!-- Title block (full width) -->
+        <h1 class="text-3xl font-bold mb-2">{{ resolveTranslation(recipe.titleTranslations, recipe.title) }}</h1>
+        <p v-if="recipe.forkedFrom" class="text-sm text-[var(--ui-text-muted)] mb-2">
+          <UIcon name="i-lucide-git-fork" class="size-4 inline-block align-text-bottom mr-1" aria-hidden="true" />{{
+            t('recipe.forkedFrom')
+          }}:
+          <NuxtLink
+            :to="`/${recipe.forkedFrom.username}/${recipe.forkedFrom.slug}`"
+            class="text-primary-500 hover:underline font-medium break-words"
+            >{{ recipe.forkedFrom.displayName || recipe.forkedFrom.username }}/{{ recipe.forkedFrom.slug }}</NuxtLink
+          >
+        </p>
+        <p v-if="recipe.description" class="text-[var(--ui-text-muted)] text-lg">
+          {{ resolveTranslation(recipe.descriptionTranslations, recipe.description) }}
+        </p>
       </div>
 
       <!-- Meta badges -->
@@ -299,14 +312,25 @@ useHead(() => {
         <UBadge
           :color="recipe.difficulty === 'easy' ? 'success' : recipe.difficulty === 'hard' ? 'error' : 'warning'"
           variant="subtle"
+          :class="
+            recipe.difficulty === 'easy'
+              ? 'text-green-700 dark:text-green-400'
+              : recipe.difficulty === 'hard'
+                ? 'text-red-700 dark:text-red-400'
+                : 'text-amber-700 dark:text-amber-400'
+          "
           :label="t(`recipe.${recipe.difficulty}`)"
         />
         <RecipeDietaryBadge v-if="recipe.dietaryType" :type="recipe.dietaryType" />
         <div class="ml-auto flex items-center gap-3 text-sm text-[var(--ui-text-dimmed)]">
           <span class="flex items-center gap-1"> <UIcon name="i-lucide-star" class="size-4" /> {{ starCount }} </span>
-          <span class="flex items-center gap-1">
+          <NuxtLink
+            :to="`${recipeUrl}/forks`"
+            class="flex items-center gap-1 hover:text-primary-500 transition-colors"
+            :title="t('recipe.viewForks')"
+          >
             <UIcon name="i-lucide-git-fork" class="size-4" /> {{ recipe.forkCount }}
-          </span>
+          </NuxtLink>
         </div>
       </div>
 
