@@ -37,7 +37,14 @@ const {
           {{ t('dashboard.subtitle') }}
         </p>
       </div>
-      <UButton :label="t('nav.newRecipe')" icon="i-lucide-plus" size="lg" to="/recipes/new" class="mt-4 sm:mt-0" />
+      <UButton
+        :label="t('nav.newRecipe')"
+        icon="i-lucide-plus"
+        size="lg"
+        to="/recipes/new"
+        class="mt-4 sm:mt-0"
+        data-tour="new-recipe-btn"
+      />
     </div>
 
     <!-- ── Loading State ─────────────────────────────────── -->

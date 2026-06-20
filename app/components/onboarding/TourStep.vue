@@ -13,7 +13,7 @@ const { t } = useI18n()
 
 <template>
   <div
-    class="fixed z-[200] bg-[var(--ui-bg)] border border-[var(--ui-border)] rounded-xl shadow-xl p-4 w-72"
+    class="bg-[var(--ui-bg)] border border-[var(--ui-border)] rounded-xl shadow-xl p-4 w-[min(20rem,calc(100vw-1rem))]"
     role="dialog"
     aria-modal="true"
     :aria-label="t(step.titleKey)"
@@ -58,17 +58,5 @@ const { t } = useI18n()
         />
       </div>
     </div>
-
-    <!-- Pointer arrow pointing at the anchored element -->
-    <div
-      :class="[
-        'absolute w-3 h-3 bg-[var(--ui-bg)] border-[var(--ui-border)] rotate-45',
-        step.placement === 'top' ? 'bottom-[-6px] left-1/2 -translate-x-1/2 border-b border-r' : '',
-        step.placement === 'bottom' ? 'top-[-6px] left-1/2 -translate-x-1/2 border-t border-l' : '',
-        step.placement === 'left' ? 'right-[-6px] top-1/2 -translate-y-1/2 border-t border-r' : '',
-        step.placement === 'right' ? 'left-[-6px] top-1/2 -translate-y-1/2 border-b border-l' : '',
-        !step.placement ? 'hidden' : '',
-      ]"
-    />
   </div>
 </template>

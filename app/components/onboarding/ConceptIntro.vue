@@ -2,6 +2,7 @@
 const { t } = useI18n()
 const { isDone, completeOnboarding, dismissTour } = useOnboarding()
 const { loggedIn } = useUserSession()
+const tour = useProductTour()
 
 // Show the modal for new logged-in users who haven't seen it yet.
 const show = ref(false)
@@ -23,6 +24,8 @@ async function dismiss() {
 async function startTour() {
   show.value = false
   await completeOnboarding()
+  // Actually launch the guided tour (navigates + highlights across pages).
+  await tour.start()
 }
 </script>
 

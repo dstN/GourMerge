@@ -32,20 +32,13 @@ const localeSwitchItems = [
           <!-- Navigation for logged-in users -->
           <nav v-if="loggedIn" class="hidden md:flex items-center gap-1">
             <UButton :label="t('nav.dashboard')" variant="ghost" icon="i-lucide-layout-dashboard" to="/dashboard" />
-            <UButton
-              :label="t('nav.explore')"
-              variant="ghost"
-              icon="i-lucide-compass"
-              to="/explore"
-              data-tour="nav-explore"
-            />
+            <UButton :label="t('nav.explore')" variant="ghost" icon="i-lucide-compass" to="/explore" />
             <UButton
               :label="t('nav.newRecipe')"
               variant="soft"
               icon="i-lucide-plus"
               color="primary"
               to="/recipes/new"
-              data-tour="new-recipe-btn"
             />
           </nav>
 
@@ -85,12 +78,6 @@ const localeSwitchItems = [
     <main id="main-content" tabindex="-1" class="flex-1 overflow-y-auto">
       <slot />
     </main>
-
-    <!-- ── Onboarding overlays (client-only, non-blocking) ── -->
-    <ClientOnly>
-      <OnboardingConceptIntro />
-      <OnboardingTourOverlay />
-    </ClientOnly>
 
     <!-- ── Footer (fixed) ──────────────────────────────────── -->
     <footer class="shrink-0 border-t border-[var(--ui-border)]">

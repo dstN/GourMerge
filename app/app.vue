@@ -12,5 +12,11 @@ useHead({
     <NuxtLayout>
       <NuxtPage />
     </NuxtLayout>
+
+    <!-- Onboarding overlays — mounted globally so they work in every layout -->
+    <ClientOnly>
+      <OnboardingConceptIntro />
+      <OnboardingTourOverlay />
+    </ClientOnly>
   </UApp>
 </template>

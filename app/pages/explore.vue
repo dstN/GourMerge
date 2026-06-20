@@ -61,7 +61,13 @@ useSeoMeta({ title: `${t('nav.explore')} — GourMerge` })
 
       <!-- Filters -->
       <div class="flex flex-wrap gap-3 mb-6">
-        <UInput v-model="search" :placeholder="t('explore.search')" icon="i-lucide-search" class="w-64" />
+        <UInput
+          v-model="search"
+          data-tour="explore-search"
+          :placeholder="t('explore.search')"
+          icon="i-lucide-search"
+          class="w-64"
+        />
 
         <USelect
           v-model="difficulty"
