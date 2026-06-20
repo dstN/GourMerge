@@ -5,8 +5,9 @@ import type { ExploreResponse } from '~~/shared/types/recipe'
 const { t } = useI18n()
 
 const search = ref('')
-const difficulty = ref('')
-const dietaryFilter = ref('')
+// 'all' is a sentinel (empty-string values break Nuxt UI v4 USelect — ARCHITECTURE §5)
+const difficulty = ref('all')
+const dietaryFilter = ref('all')
 const sort = ref('stars')
 const selectedTag = ref('')
 const page = ref(1)
@@ -16,8 +17,8 @@ const { data: allTags } = useFetch<Array<{ id: number; name: string }>>('/api/ta
 const { data, pending, refresh } = useFetch<ExploreResponse>('/api/recipes/explore', {
   query: computed(() => ({
     q: search.value || undefined,
-    difficulty: difficulty.value || undefined,
-    dietaryType: dietaryFilter.value || undefined,
+    difficulty: difficulty.value === 'all' ? undefined : difficulty.value,
+    dietaryType: dietaryFilter.value === 'all' ? undefined : dietaryFilter.value,
     tag: selectedTag.value || undefined,
     sort: sort.value,
     page: page.value,
@@ -38,6 +39,11 @@ watch(search, () => {
   debouncedRefresh()
 })
 
+function loadMore() {
+  page.value++
+  refresh()
+}
+
 useSeoMeta({ title: `${t('nav.explore')} — GourMerge` })
 </script>
 
@@ -53,8 +59,9 @@ useSeoMeta({ title: `${t('nav.explore')} — GourMerge` })
 
       <USelect
         v-model="difficulty"
-        :options="[
-          { label: t('explore.allDifficulties'), value: '' },
+        value-key="value"
+        :items="[
+          { label: t('explore.allDifficulties'), value: 'all' },
           { label: t('recipe.easy'), value: 'easy' },
           { label: t('recipe.medium'), value: 'medium' },
           { label: t('recipe.hard'), value: 'hard' },
@@ -64,7 +71,8 @@ useSeoMeta({ title: `${t('nav.explore')} — GourMerge` })
 
       <USelect
         v-model="sort"
-        :options="[
+        value-key="value"
+        :items="[
           { label: t('explore.sortStars'), value: 'stars' },
           { label: t('explore.sortNewest'), value: 'newest' },
           { label: t('explore.sortForks'), value: 'forks' },
@@ -74,8 +82,9 @@ useSeoMeta({ title: `${t('nav.explore')} — GourMerge` })
 
       <USelect
         v-model="dietaryFilter"
-        :options="[
-          { label: t('recipe.dietaryUnspecified'), value: '' },
+        value-key="value"
+        :items="[
+          { label: t('recipe.dietaryUnspecified'), value: 'all' },
           { label: t('recipe.dietaryVegan'), value: 'vegan' },
           { label: t('recipe.dietaryVegetarian'), value: 'vegetarian' },
           { label: t('recipe.dietaryPescatarian'), value: 'pescatarian' },
@@ -96,11 +105,7 @@ useSeoMeta({ title: `${t('nav.explore')} — GourMerge` })
             ? 'bg-primary-500 border-primary-500 text-white'
             : 'border-[var(--ui-border)] hover:border-primary-500/50 text-[var(--ui-text-muted)]'
         "
-        @click="
-          selectedTag = selectedTag === tag.name ? '' : tag.name
-          page = 1
-          refresh()
-        "
+        @click="selectedTag = selectedTag === tag.name ? '' : tag.name"
       >
         {{ tag.name }}
       </button>
@@ -126,15 +131,7 @@ useSeoMeta({ title: `${t('nav.explore')} — GourMerge` })
 
     <!-- Pagination -->
     <div v-if="data?.recipes?.length === 20" class="mt-8 flex justify-center">
-      <UButton
-        :label="t('explore.loadMore')"
-        variant="outline"
-        color="neutral"
-        @click="
-          page++
-          refresh()
-        "
-      />
+      <UButton :label="t('explore.loadMore')" variant="outline" color="neutral" @click="loadMore()" />
     </div>
   </div>
 </template>

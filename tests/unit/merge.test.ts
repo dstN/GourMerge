@@ -281,3 +281,65 @@ describe('threeWayMerge — combined', () => {
     expect(result.steps.find((s) => s.sortOrder === 2)).toBeDefined()
   })
 })
+
+// ── Conflict resolution (interactive picker) ─────────────────────
+
+describe('threeWayMerge — conflict resolution', () => {
+  test('ingredient edit/edit conflict resolved to source → no conflict, source kept', () => {
+    const base = snap([ing(1, '100.00')], [])
+    const source = snap([ing(1, '150.00')], [])
+    const target = snap([ing(1, '200.00')], [])
+    const result = threeWayMerge(base, source, target, [{ type: 'ingredient', ingredientId: 1, choice: 'source' }])
+    expect(result.hasConflicts).toBe(false)
+    expect(result.conflicts).toHaveLength(0)
+    expect(result.ingredients.find((i) => i.ingredientId === 1)!.quantity).toBe('150.00')
+  })
+
+  test('ingredient edit/edit conflict resolved to target → target kept', () => {
+    const base = snap([ing(1, '100.00')], [])
+    const source = snap([ing(1, '150.00')], [])
+    const target = snap([ing(1, '200.00')], [])
+    const result = threeWayMerge(base, source, target, [{ type: 'ingredient', ingredientId: 1, choice: 'target' }])
+    expect(result.hasConflicts).toBe(false)
+    expect(result.ingredients.find((i) => i.ingredientId === 1)!.quantity).toBe('200.00')
+  })
+
+  test('delete/edit conflict resolved to the deleting side → ingredient removed', () => {
+    const base = snap([ing(1, '100.00')], [])
+    const source = snap([], []) // source deleted ingredient 1
+    const target = snap([ing(1, '200.00')], []) // target edited it
+    const result = threeWayMerge(base, source, target, [{ type: 'ingredient', ingredientId: 1, choice: 'source' }])
+    expect(result.hasConflicts).toBe(false)
+    expect(result.ingredients.find((i) => i.ingredientId === 1)).toBeUndefined()
+  })
+
+  test('step edit/edit conflict resolved to source → no conflict, source content kept', () => {
+    const base = snap([], [step(1, 'Bake 10 min')])
+    const source = snap([], [step(1, 'Bake 12 min')])
+    const target = snap([], [step(1, 'Bake 15 min')])
+    const result = threeWayMerge(base, source, target, [{ type: 'step', stepSortOrder: 1, choice: 'source' }])
+    expect(result.hasConflicts).toBe(false)
+    expect(result.steps.find((s) => s.sortOrder === 1)!.content).toBe('Bake 12 min')
+  })
+
+  test('partial resolution → unresolved conflict still blocks the merge', () => {
+    const base = snap([ing(1, '100.00')], [step(1, 'A')])
+    const source = snap([ing(1, '150.00')], [step(1, 'B')])
+    const target = snap([ing(1, '200.00')], [step(1, 'C')])
+    // Resolve only the ingredient; the step conflict remains unresolved.
+    const result = threeWayMerge(base, source, target, [{ type: 'ingredient', ingredientId: 1, choice: 'source' }])
+    expect(result.hasConflicts).toBe(true)
+    expect(result.conflicts).toHaveLength(1)
+    expect(result.conflicts[0]!.type).toBe('step')
+  })
+
+  test('a resolution for a non-conflicting item is harmless', () => {
+    const base = snap([ing(1, '100.00')], [])
+    const source = snap([ing(1, '150.00')], []) // only source changed → auto-applied
+    const target = snap([ing(1, '100.00')], [])
+    const result = threeWayMerge(base, source, target, [{ type: 'ingredient', ingredientId: 1, choice: 'target' }])
+    expect(result.hasConflicts).toBe(false)
+    // No conflict, so the normal auto-merge (source) applies; the resolution is ignored.
+    expect(result.ingredients.find((i) => i.ingredientId === 1)!.quantity).toBe('150.00')
+  })
+})

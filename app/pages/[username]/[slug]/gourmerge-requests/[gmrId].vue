@@ -35,26 +35,79 @@ const closePending = ref(false)
 const commentBody = ref('')
 const commentPending = ref(false)
 
-async function executeMerge() {
+// ── Conflict resolution ──────────────────────────────────────────
+interface ConflictVersion {
+  quantity?: string
+  unit?: string
+  notes?: string | null
+  content?: string
+}
+interface ConflictItem {
+  type: 'ingredient' | 'step'
+  ingredientId?: number
+  ingredientName?: string
+  stepSortOrder?: number
+  description: string
+  sourceVersion: ConflictVersion | null
+  targetVersion: ConflictVersion | null
+}
+
+// Conflicts surfaced by a merge attempt + the owner's per-conflict choice.
+const conflicts = ref<ConflictItem[]>([])
+const choices = ref<Record<string, 'source' | 'target'>>({})
+
+function conflictKey(c: ConflictItem): string {
+  return `${c.type}:${c.ingredientId ?? c.stepSortOrder}`
+}
+
+function conflictLabel(c: ConflictItem): string {
+  return c.type === 'ingredient'
+    ? (c.ingredientName ?? `#${c.ingredientId}`)
+    : t('diff.stepNumber', { n: c.stepSortOrder })
+}
+
+function formatVersion(c: ConflictItem, v: ConflictVersion | null): string {
+  if (v === null) return t('gourmergeRequest.conflictDeleted')
+  if (c.type === 'ingredient') return [v.quantity, v.unit, v.notes].filter(Boolean).join(' ')
+  return v.content ?? ''
+}
+
+async function executeMerge(resolutions: unknown[] = []) {
   if (!recipe.value || !gmrId.value) return
   mergePending.value = true
   try {
-    const res = await $fetch<{ success: boolean; hasConflicts?: boolean }>(
+    const res = await $fetch<{ success: boolean; hasConflicts?: boolean; conflicts?: ConflictItem[] }>(
       `/api/recipes/${recipe.value.id}/gourmerge-requests/${gmrId.value}/merge`,
-      { method: 'POST' }
+      { method: 'POST', body: { resolutions } }
     )
     if (res.success) {
+      conflicts.value = []
       toast.success(t('gourmergeRequest.mergeSuccess'))
       await refresh()
-    } else if (res.hasConflicts) {
-      toast.error(t('gourmergeRequest.conflictsTitle'))
-      await refresh()
+    } else if (res.hasConflicts && res.conflicts) {
+      conflicts.value = res.conflicts
+      // Default every conflict to keeping the source (proposed) version.
+      const next: Record<string, 'source' | 'target'> = {}
+      for (const c of res.conflicts) next[conflictKey(c)] = 'source'
+      choices.value = next
+      toast.info(t('gourmergeRequest.conflictsTitle'), t('gourmergeRequest.conflictsDesc'))
     }
   } catch (e: unknown) {
     toast.error((e as { data?: { statusMessage?: string } })?.data?.statusMessage || t('gourmergeRequest.mergeError'))
   } finally {
     mergePending.value = false
   }
+}
+
+function resolveAndMerge() {
+  executeMerge(
+    conflicts.value.map((c) => ({
+      type: c.type,
+      ingredientId: c.ingredientId,
+      stepSortOrder: c.stepSortOrder,
+      choice: choices.value[conflictKey(c)] ?? 'source',
+    }))
+  )
 }
 
 async function updateStatus(status: 'open' | 'closed') {
@@ -149,7 +202,7 @@ useSeoMeta({
             color="success"
             :loading="mergePending"
             data-tour="merge-button"
-            @click="executeMerge"
+            @click="executeMerge()"
           />
           <UButton
             v-if="gmr.status === 'open' && loggedIn"
@@ -188,15 +241,69 @@ useSeoMeta({
       <!-- Description -->
       <p v-if="gmr.description" class="text-[var(--ui-text-muted)] mb-6">{{ gmr.description }}</p>
 
-      <!-- Conflicts warning -->
-      <UAlert
-        v-if="gmr.diff && gmr.canMerge"
-        color="warning"
-        icon="i-lucide-alert-triangle"
-        class="mb-6"
-        :title="t('gourmergeRequest.conflictsTitle')"
-        :description="t('gourmergeRequest.conflictsDesc')"
-      />
+      <!-- Conflict resolution (shown only after a merge attempt surfaces conflicts) -->
+      <UCard v-if="conflicts.length" class="mb-6 ring-1 ring-warning-500/40">
+        <template #header>
+          <div class="flex items-center gap-2">
+            <UIcon name="i-lucide-alert-triangle" class="size-5 text-warning-500" />
+            <h2 class="font-semibold">{{ t('gourmergeRequest.conflictsTitle') }}</h2>
+          </div>
+        </template>
+
+        <p class="text-sm text-[var(--ui-text-muted)] mb-4">{{ t('gourmergeRequest.conflictsDesc') }}</p>
+
+        <div class="space-y-4">
+          <div v-for="c in conflicts" :key="conflictKey(c)" class="border border-[var(--ui-border)] rounded-lg p-3">
+            <p class="font-medium text-sm mb-2">{{ conflictLabel(c) }}</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button
+                type="button"
+                class="text-left p-3 rounded-lg border transition-colors"
+                :class="
+                  choices[conflictKey(c)] === 'source'
+                    ? 'border-primary-500 bg-primary-500/10'
+                    : 'border-[var(--ui-border)] hover:border-primary-500/50'
+                "
+                :aria-pressed="choices[conflictKey(c)] === 'source'"
+                @click="choices[conflictKey(c)] = 'source'"
+              >
+                <span class="block text-xs font-medium text-[var(--ui-text-muted)] mb-1">
+                  {{ t('gourmergeRequest.conflictSource') }}
+                </span>
+                <span class="text-sm break-words">{{ formatVersion(c, c.sourceVersion) }}</span>
+              </button>
+              <button
+                type="button"
+                class="text-left p-3 rounded-lg border transition-colors"
+                :class="
+                  choices[conflictKey(c)] === 'target'
+                    ? 'border-primary-500 bg-primary-500/10'
+                    : 'border-[var(--ui-border)] hover:border-primary-500/50'
+                "
+                :aria-pressed="choices[conflictKey(c)] === 'target'"
+                @click="choices[conflictKey(c)] = 'target'"
+              >
+                <span class="block text-xs font-medium text-[var(--ui-text-muted)] mb-1">
+                  {{ t('gourmergeRequest.conflictTarget') }}
+                </span>
+                <span class="text-sm break-words">{{ formatVersion(c, c.targetVersion) }}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <template #footer>
+          <div class="flex justify-end">
+            <UButton
+              :label="t('gourmergeRequest.conflictResolveMerge')"
+              icon="i-lucide-git-merge"
+              color="success"
+              :loading="mergePending"
+              @click="resolveAndMerge"
+            />
+          </div>
+        </template>
+      </UCard>
 
       <!-- Diff -->
       <UCard class="mb-6">

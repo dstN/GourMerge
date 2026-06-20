@@ -92,7 +92,8 @@ useSeoMeta({ title: () => `${t('gourmergeRequest.new')} — GourMerge` })
         <UFormField :label="t('gourmergeRequest.sourceBranch')" required>
           <USelect
             v-model="form.sourceBranchId"
-            :options="(recipe?.branches ?? []).map((b: any) => ({ label: b.name, value: b.id }))"
+            :items="(recipe?.branches ?? []).map((b: any) => ({ label: b.name, value: b.id }))"
+            value-key="value"
             class="w-full"
             :placeholder="t('gourmergeRequest.sourceBranch')"
           />
@@ -101,7 +102,8 @@ useSeoMeta({ title: () => `${t('gourmergeRequest.new')} — GourMerge` })
         <UFormField :label="t('gourmergeRequest.targetBranch')" required>
           <USelect
             v-model="form.targetBranchId"
-            :options="targetBranches.map((b: any) => ({ label: b.name, value: b.id }))"
+            :items="targetBranches.map((b: any) => ({ label: b.name, value: b.id }))"
+            value-key="value"
             class="w-full"
             :placeholder="t('gourmergeRequest.targetBranch')"
           />

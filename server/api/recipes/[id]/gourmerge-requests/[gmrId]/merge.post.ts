@@ -13,6 +13,7 @@
  *   7. Set GourMerge Request status = 'merged'
  */
 import { eq, and } from 'drizzle-orm'
+import { z } from 'zod'
 import {
   recipes,
   recipeBranches,
@@ -23,9 +24,25 @@ import {
   gourmergeRequests,
 } from '~~/server/database/schema'
 import { threeWayMerge } from '~~/server/utils/merge'
-import type { MergeSnapshot } from '~~/server/utils/merge'
+import type { MergeSnapshot, ConflictResolution } from '~~/server/utils/merge'
 
 const MAX_ANCESTOR_WALK = 100
+
+// Optional per-conflict resolutions: the owner chooses source/target for each
+// conflict in the GMR detail UI, then re-submits to complete the merge.
+const bodySchema = z.object({
+  resolutions: z
+    .array(
+      z.object({
+        type: z.enum(['ingredient', 'step']),
+        ingredientId: z.number().int().optional(),
+        stepSortOrder: z.number().int().optional(),
+        choice: z.enum(['source', 'target']),
+      })
+    )
+    .optional()
+    .default([]),
+})
 
 async function loadSnapshot(db: ReturnType<typeof useDrizzle>, headCommitId: number | null): Promise<MergeSnapshot> {
   if (!headCommitId || !db) return { ingredients: [], steps: [] }
@@ -76,6 +93,18 @@ export default defineEventHandler(async (event) => {
   const recipeId = Number(getRouterParam(event, 'id'))
   const gmrId = Number(getRouterParam(event, 'gmrId'))
   if (isNaN(recipeId) || isNaN(gmrId)) throw createError({ statusCode: 400, statusMessage: 'Invalid parameters' })
+
+  // Merge may be called with no body (preview) or with conflict resolutions.
+  const rawBody = await readBody(event).catch(() => ({}))
+  const parsedBody = bodySchema.safeParse(rawBody ?? {})
+  if (!parsedBody.success) {
+    throw createError({
+      statusCode: 422,
+      statusMessage: 'Invalid resolutions',
+      data: parsedBody.error.flatten().fieldErrors,
+    })
+  }
+  const resolutions: ConflictResolution[] = parsedBody.data.resolutions
 
   const db = useDrizzle()
   if (!db) throw createError({ statusCode: 503, statusMessage: 'Database unavailable.' })
@@ -136,9 +165,10 @@ export default defineEventHandler(async (event) => {
     loadSnapshot(db, targetHeadId),
   ])
 
-  // Run three-way merge
-  const mergeResult = threeWayMerge(baseSnapshot, sourceSnapshot, targetSnapshot)
+  // Run three-way merge, applying any user-supplied conflict resolutions.
+  const mergeResult = threeWayMerge(baseSnapshot, sourceSnapshot, targetSnapshot, resolutions)
 
+  // Any conflict left unresolved blocks the merge — return them for the picker UI.
   if (mergeResult.hasConflicts) {
     return {
       success: false,
@@ -147,8 +177,25 @@ export default defineEventHandler(async (event) => {
     }
   }
 
+  // Normalize ingredient sort order to a dense 0..n sequence. Merging unrelated
+  // histories (empty common ancestor) can leave two ingredients sharing a
+  // sortOrder; re-indexing the already-sorted list removes that ambiguity.
+  const normalizedIngredients = mergeResult.ingredients.map((i, idx) => ({ ...i, sortOrder: idx }))
+
   // Execute merge in a transaction
   await db.transaction(async (tx) => {
+    // 0. Lock the GMR row + re-check status to prevent a concurrent double-merge.
+    //    The status check above is a fast pre-check; this is the authoritative one.
+    const [locked] = await tx
+      .select({ status: gourmergeRequests.status })
+      .from(gourmergeRequests)
+      .where(eq(gourmergeRequests.id, gmrId))
+      .for('update')
+      .limit(1)
+    if (!locked || locked.status !== 'open') {
+      throw createError({ statusCode: 409, statusMessage: 'GourMerge Request is no longer open.' })
+    }
+
     // 1. Create merge commit on target branch
     const [mergeCommit] = await tx
       .insert(recipeCommits)
@@ -164,10 +211,10 @@ export default defineEventHandler(async (event) => {
 
     if (!mergeCommit) throw createError({ statusCode: 500, statusMessage: 'Insert failed.' })
 
-    // 2. Insert merged ingredients
-    if (mergeResult.ingredients.length > 0) {
+    // 2. Insert merged ingredients (sortOrder normalized above)
+    if (normalizedIngredients.length > 0) {
       await tx.insert(recipeCommitIngredients).values(
-        mergeResult.ingredients.map((i) => ({
+        normalizedIngredients.map((i) => ({
           commitId: mergeCommit.id,
           ingredientId: i.ingredientId,
           quantity: i.quantity,

@@ -62,6 +62,17 @@ export interface MergeResult {
   conflicts: MergeConflict[]
 }
 
+/**
+ * A user's choice for a single conflict: keep the `source` side or the `target` side.
+ * Passed to `threeWayMerge` to interactively resolve conflicts during a merge.
+ */
+export interface ConflictResolution {
+  type: 'ingredient' | 'step'
+  ingredientId?: number
+  stepSortOrder?: number
+  choice: 'source' | 'target'
+}
+
 // ── Comparison helpers ───────────────────────────────────────────
 
 function ingContentKey(i: MergeIngredient): string {
@@ -74,10 +85,24 @@ function ingFullKey(i: MergeIngredient): string {
 
 // ── Merge implementation ─────────────────────────────────────────
 
-export function threeWayMerge(base: MergeSnapshot, source: MergeSnapshot, target: MergeSnapshot): MergeResult {
+export function threeWayMerge(
+  base: MergeSnapshot,
+  source: MergeSnapshot,
+  target: MergeSnapshot,
+  resolutions: ConflictResolution[] = []
+): MergeResult {
   const conflicts: MergeConflict[] = []
   const mergedIngredients: MergeIngredient[] = []
   const mergedSteps: MergeStep[] = []
+
+  // Index user-provided resolutions so conflict branches can apply a chosen side
+  // instead of recording an (unresolved) conflict.
+  const ingResolutions = new Map<number, ConflictResolution>()
+  const stepResolutions = new Map<number, ConflictResolution>()
+  for (const r of resolutions) {
+    if (r.type === 'ingredient' && r.ingredientId != null) ingResolutions.set(r.ingredientId, r)
+    else if (r.type === 'step' && r.stepSortOrder != null) stepResolutions.set(r.stepSortOrder, r)
+  }
 
   // ── Ingredient merge ──────────────────────────────────────────
   const baseIngMap = new Map(base.ingredients.map((i) => [i.ingredientId, i]))
@@ -112,23 +137,29 @@ export function threeWayMerge(base: MergeSnapshot, source: MergeSnapshot, target
         // Both made the same change — no conflict
         mergedIngredients.push(s)
       } else {
-        // Real conflict
-        conflicts.push({
-          type: 'ingredient',
-          ingredientId: id,
-          ingredientName: s?.ingredientName ?? t?.ingredientName ?? b?.ingredientName ?? String(id),
-          description:
-            s === null
-              ? `Source deleted this ingredient, but target modified it`
-              : t === null
-                ? `Target deleted this ingredient, but source modified it`
-                : `Both source and target modified this ingredient differently`,
-          sourceVersion: s,
-          targetVersion: t,
-        })
-        // Still include a version in the result (source takes precedence) for display
-        if (s !== null) mergedIngredients.push(s)
-        else if (t !== null) mergedIngredients.push(t)
+        // Real conflict — apply the user's resolution if one was provided.
+        const resolution = ingResolutions.get(id)
+        if (resolution) {
+          const chosen = resolution.choice === 'source' ? s : t
+          if (chosen !== null) mergedIngredients.push(chosen) // null = chosen side deleted it
+        } else {
+          conflicts.push({
+            type: 'ingredient',
+            ingredientId: id,
+            ingredientName: s?.ingredientName ?? t?.ingredientName ?? b?.ingredientName ?? String(id),
+            description:
+              s === null
+                ? `Source deleted this ingredient, but target modified it`
+                : t === null
+                  ? `Target deleted this ingredient, but source modified it`
+                  : `Both source and target modified this ingredient differently`,
+            sourceVersion: s,
+            targetVersion: t,
+          })
+          // Still include a version in the result (source takes precedence) for display
+          if (s !== null) mergedIngredients.push(s)
+          else if (t !== null) mergedIngredients.push(t)
+        }
       }
     }
   }
@@ -165,21 +196,28 @@ export function threeWayMerge(base: MergeSnapshot, source: MergeSnapshot, target
         // Same change — clean
         mergedSteps.push(s)
       } else {
-        conflicts.push({
-          type: 'step',
-          stepSortOrder: order,
-          description:
-            s === null
-              ? `Source deleted step ${order}, but target modified it`
-              : t === null
-                ? `Target deleted step ${order}, but source modified it`
-                : `Both source and target modified step ${order} differently`,
-          sourceVersion: s,
-          targetVersion: t,
-        })
-        // Include source version in result for display
-        if (s !== null) mergedSteps.push(s)
-        else if (t !== null) mergedSteps.push(t)
+        // Real conflict — apply the user's resolution if one was provided.
+        const resolution = stepResolutions.get(order)
+        if (resolution) {
+          const chosen = resolution.choice === 'source' ? s : t
+          if (chosen !== null) mergedSteps.push(chosen) // null = chosen side deleted it
+        } else {
+          conflicts.push({
+            type: 'step',
+            stepSortOrder: order,
+            description:
+              s === null
+                ? `Source deleted step ${order}, but target modified it`
+                : t === null
+                  ? `Target deleted step ${order}, but source modified it`
+                  : `Both source and target modified step ${order} differently`,
+            sourceVersion: s,
+            targetVersion: t,
+          })
+          // Include source version in result for display
+          if (s !== null) mergedSteps.push(s)
+          else if (t !== null) mergedSteps.push(t)
+        }
       }
     }
   }

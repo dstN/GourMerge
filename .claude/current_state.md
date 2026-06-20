@@ -302,7 +302,7 @@ The `ingredients` master table is populated from the **Swiss BLV Food Compositio
 - **Tags**: attach/detach, filter in explore
 - **Explore**: public browse with text search, difficulty/tag filter, sort (stars/newest/forks), pagination
 - **User profiles**: public profile (recipes, starred, bio, avatar), settings page
-- **GourMerge Requests**: full lifecycle — create, list, view with diff, comment (Markdown), status (draft→open→closed/merged), three-way snapshot merge with conflict detection, merge commit
+- **GourMerge Requests**: full lifecycle — create, list, view with diff, comment (Markdown), status (draft→open→closed/merged), three-way snapshot merge with conflict detection + **interactive per-conflict resolution** (keep source/target), merge commit. Merge is transactional with a `SELECT … FOR UPDATE` guard against concurrent double-merge; merged ingredient `sortOrder` is normalized
 - **i18n**: 4 locales (DE/EN/FR/IT), 377 keys in parity, 4-way CI gate — incl. transactional emails (verification + password reset) localized per recipient's `preferredLocale`
 - **Onboarding**: concept explainer, interactive skippable/re-runnable tour, guided first-recipe flow, contextual help (`<HelpHint>`), glossary page
 - **Dirty-state guard**: edit page navigation guard via UModal (not `window.confirm` — suppressed in Chromium)
@@ -333,6 +333,8 @@ The `ingredients` master table is populated from the **Swiss BLV Food Compositio
 - **Rate limiting across Passenger processes**: in-memory rate limiting is NOT multi-process safe. The `rate_limit_hits` DB table is the correct approach.
 - **Ingredient nutrition source**: `ingredient_nutrition.source = 'swiss-blv-v7'` identifies Swiss BLV rows. Manually curated entries use `'curated'`.
 - **UDropdownMenu navigation**: use `to:` for navigation items, `click:` for actions. Missing `color: 'neutral'` causes icon colour flash on hover.
+- **Multi-statement inline handlers break the build**: a `@click="a = 1\n b = 2"` (multiple statements on separate lines, no semicolons) fails the Vue macro parser at build time. Use a single expression or a `function` in `<script setup>`. (Was masked while CI was red on typecheck.)
+- **Nuxt UI v4 `USelect` uses `:items` + `value-key`, never `:options`** (a v3 holdover that is silently ignored → empty dropdowns). Fixed in explore filters + GMR-create branch pickers.
 - **Drizzle migration meta MUST be tracked**: `server/database/migrations/meta/` (the `_journal.json` + per-migration snapshots) was previously gitignored, which silently broke `drizzle-kit migrate` on any fresh checkout (CI/deploy) — no journal means no migrations applied. It is now versioned; never re-ignore it.
 
 ---
