@@ -324,7 +324,8 @@
     "sortNewest": "Les plus récentes",
     "sortForks": "Les plus remixées",
     "noResults": "Aucune recette trouvée.",
-    "loadMore": "Charger plus"
+    "loadMore": "Charger plus",
+    "sortBy": "Trier par"
   },
   "branches": {
     "title": "Variantes",
@@ -416,7 +417,8 @@
     "glossary": "Glossaire"
   },
   "a11y": {
-    "skipToContent": "Aller au contenu principal"
+    "skipToContent": "Aller au contenu principal",
+    "selectLanguage": "Choisir la langue"
   },
   "nutrition": {
     "title": "Valeurs nutritionnelles",

@@ -52,7 +52,7 @@ Nuxt 4 · Vue 3 Composition API (`<script setup lang="ts">`) · Nuxt UI v4 (Reka
 
 **Not yet done (corrected against code, 2026-06-20):**
 
-- Tests: unit tests for `diff.ts`/`merge.ts`/`units.ts` + i18n-gate **do exist** (68 cases). Still missing: component, API/integration, real E2E (placeholder only), `slug.ts`/other-util tests, and `--coverage` enforcement in CI
+- Tests: **done** — 118 unit cases (97% coverage gate in CI) + 24 Playwright specs (API auth/recipes/merge, SSR + register journeys, axe a11y) via the `E2E` workflow. Dedicated component-mount tests deferred (covered by E2E)
 - CI/CD: GitHub Actions **are configured** (`ci.yml` + `deploy.yml`); still missing: coverage enforcement + `npm audit` gate
 - Passenger CD: `.htaccess` + `app.js` exist and `deploy.yml` **does** wire rsync + migrate + restart + smoke test; still missing: migrate exit-code check + production environment protection
 - Prod safety (F1 pending): Pino log rotation, Sentry active capture, error-response `data` sanitization, transactional-email i18n

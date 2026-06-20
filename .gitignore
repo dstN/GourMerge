@@ -16,6 +16,11 @@ logs
 # Test coverage reports
 coverage
 
+# Playwright
+test-results
+playwright-report
+.playwright
+
 # Misc
 .DS_Store
 .fleet

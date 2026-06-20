@@ -57,6 +57,7 @@ const localeSwitchItems = [
               value-key="value"
               size="sm"
               class="w-28"
+              :aria-label="t('a11y.selectLanguage')"
               @update:model-value="setLocale($event as 'de' | 'en' | 'fr' | 'it')"
             />
             <UColorModeButton />

@@ -316,7 +316,7 @@ The `ingredients` master table is populated from the **Swiss BLV Food Compositio
 
 ### ✗ Not yet done
 
-- **Tests**: unit tests for `diff.ts` / `merge.ts` / `units.ts` + an i18n-gate test **do exist** (68 cases, `tests/unit/`). Still missing — component tests, API/integration tests, real E2E (only a skipped placeholder), `slug.ts`/other-util tests, and `--coverage` enforcement in CI
+- **Tests**: **unit** — 118 cases (`tests/unit/`: diff, merge incl. resolution, units, slug, uuid, nutrition, markdown-XSS, emailI18n, i18n-gate), 97% line coverage enforced in CI. **E2E/API/a11y** — 24 Playwright specs (`tests/e2e/`): auth lifecycle + authz matrix, recipe CRUD/fork/star, merge conflict-detect → interactive resolve → verify → immutable, SSR render, register UI journey, and axe scans (critical-gated). Run via `npm run test:e2e` + the `E2E` workflow on master. Dedicated component-mount tests not added — covered functionally by the E2E journeys
 - **CI/CD**: GitHub Actions **are configured** — `ci.yml` (lint → format → typecheck → i18n → migrate → test → build) and `deploy.yml` (rsync → migrate → restart → smoke test). Not yet: coverage enforcement, `npm audit` gate
 - **Passenger CD**: `.htaccess` + `app.js` exist and `deploy.yml` **does** wire rsync + migrate + `touch tmp/restart.txt` + health smoke test. Not yet: migrate exit-code check, production environment protection
 - **Dependabot / npm audit CI gate**: not configured
@@ -338,6 +338,7 @@ The `ingredients` master table is populated from the **Swiss BLV Food Compositio
 - **Drizzle migration meta MUST be tracked**: `server/database/migrations/meta/` (the `_journal.json` + per-migration snapshots) was previously gitignored, which silently broke `drizzle-kit migrate` on any fresh checkout (CI/deploy) — no journal means no migrations applied. It is now versioned; never re-ignore it.
 - **Dead-code gate (`knip`)**: `npm run knip` (config in `knip.json`, enforced in CI) flags unused files/exports/deps. The mysql2 pool is closed gracefully on Nitro shutdown via `server/plugins/database.ts`.
 - **Nuxt path-prefixes components in subdirectories**: `components/common/HelpHint.vue` registers as `<CommonHelpHint>`, not `<HelpHint>` (same for `<CommonGlossaryTerm>`, `<CommonBrandLogo>`). Using the bare name silently renders nothing — this is why `GlossaryTerm`/`HelpHint` sat unused until adopted onto the fork/merge controls + history page.
+- **a11y axe gate**: `tests/e2e/a11y.spec.ts` fails CI on any **critical** axe violation; **serious** ones are logged. Fixed: missing `<html lang>` (set from i18n locale in `app.vue`) and 5 unnamed comboboxes (locale switchers + explore filters now have `aria-label`). **Outstanding (tracked design task):** `color-contrast` on the brand orange (`primary-500` as text / white-on-`primary` buttons) needs darkening to ~`primary-700` to meet WCAG AA — a brand decision, not yet applied. Modal focus-traps/keyboard-nav rely on Nuxt UI defaults (not independently audited).
 
 ---
 

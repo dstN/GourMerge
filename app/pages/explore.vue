@@ -60,6 +60,7 @@ useSeoMeta({ title: `${t('nav.explore')} — GourMerge` })
       <USelect
         v-model="difficulty"
         value-key="value"
+        :aria-label="t('recipe.difficultyLabel')"
         :items="[
           { label: t('explore.allDifficulties'), value: 'all' },
           { label: t('recipe.easy'), value: 'easy' },
@@ -72,6 +73,7 @@ useSeoMeta({ title: `${t('nav.explore')} — GourMerge` })
       <USelect
         v-model="sort"
         value-key="value"
+        :aria-label="t('explore.sortBy')"
         :items="[
           { label: t('explore.sortStars'), value: 'stars' },
           { label: t('explore.sortNewest'), value: 'newest' },
@@ -83,6 +85,7 @@ useSeoMeta({ title: `${t('nav.explore')} — GourMerge` })
       <USelect
         v-model="dietaryFilter"
         value-key="value"
+        :aria-label="t('recipe.dietaryType')"
         :items="[
           { label: t('recipe.dietaryUnspecified'), value: 'all' },
           { label: t('recipe.dietaryVegan'), value: 'vegan' },

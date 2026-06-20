@@ -53,6 +53,7 @@
     "zod": "^3.24.0"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.3",
     "@nuxt/eslint": "^1.16.0",
     "@nuxt/test-utils": "^4.0.3",
     "@playwright/test": "^1.61.0",
