@@ -66,16 +66,21 @@ const localeSwitchItems = [
       </div>
     </header>
 
-    <!-- ── Body (fixed sidebar; only main scrolls) ─────────── -->
-    <div class="flex-1 flex min-h-0 w-full max-w-screen-2xl mx-auto overflow-hidden">
+    <!-- ── Body (fixed sidebar; only main scrolls) ───────────
+         Full width so the sidebar sits at the left edge and main's scrollbar
+         sits at the viewport's right edge; content is capped + centred INSIDE
+         main (capping the row would push the scrollbar into mid-page). -->
+    <div class="flex-1 flex min-h-0 overflow-hidden">
       <!-- Sidebar (fixed; scrolls independently if it overflows) -->
       <aside class="hidden lg:block w-64 shrink-0 border-r border-[var(--ui-border)] overflow-y-auto">
         <LayoutDashboardSidebar />
       </aside>
 
       <!-- Main content (the only scrollable region) -->
-      <main id="main-content" tabindex="-1" class="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 py-8">
-        <slot />
+      <main id="main-content" tabindex="-1" class="flex-1 overflow-y-auto">
+        <div class="mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-8 py-8">
+          <slot />
+        </div>
       </main>
     </div>
 
