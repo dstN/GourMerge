@@ -14,9 +14,12 @@ const localeSwitchItems = [
 </script>
 
 <template>
-  <div class="min-h-screen bg-[var(--ui-bg)] text-[var(--ui-text)]">
-    <!-- ── Header ──────────────────────────────────────────── -->
-    <header class="sticky top-0 z-50 backdrop-blur-xl bg-[var(--ui-bg)]/80 border-b border-[var(--ui-border)]">
+  <div class="flex flex-col h-dvh overflow-hidden bg-[var(--ui-bg)] text-[var(--ui-text)]">
+    <!-- Skip-to-content for keyboard/screen reader users -->
+    <a href="#main-content" class="skip-link">{{ t('a11y.skipToContent') }}</a>
+
+    <!-- ── Header (fixed) ──────────────────────────────────── -->
+    <header class="shrink-0 bg-[var(--ui-bg)] border-b border-[var(--ui-border)]">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16">
           <!-- Logo -->
@@ -41,44 +44,49 @@ const localeSwitchItems = [
 
           <!-- Right side -->
           <div class="flex items-center gap-2">
-            <USelect
-              :model-value="locale"
-              :items="localeSwitchItems"
-              value-key="value"
-              size="sm"
-              class="w-28"
-              :aria-label="t('a11y.selectLanguage')"
-              @update:model-value="setLocale($event as 'de' | 'en' | 'fr' | 'it')"
-            />
-            <UColorModeButton />
-            <OnboardingHelpMenu />
-            <LayoutUserDropdown v-if="loggedIn" />
+            <div class="hidden md:flex items-center gap-2">
+              <USelect
+                :model-value="locale"
+                :items="localeSwitchItems"
+                value-key="value"
+                size="sm"
+                class="w-28"
+                :aria-label="t('a11y.selectLanguage')"
+                @update:model-value="setLocale($event as 'de' | 'en' | 'fr' | 'it')"
+              />
+              <UColorModeButton />
+              <OnboardingHelpMenu />
+              <LayoutUserDropdown v-if="loggedIn" />
+            </div>
+
+            <!-- Mobile: hamburger → offcanvas with everything -->
+            <LayoutMobileMenu />
           </div>
         </div>
       </div>
     </header>
 
-    <!-- ── Body ────────────────────────────────────────────── -->
-    <div class="max-w-screen-2xl mx-auto flex">
-      <!-- Sidebar -->
-      <aside class="hidden lg:block w-64 shrink-0 border-r border-[var(--ui-border)] min-h-[calc(100vh-4rem)]">
+    <!-- ── Body (fixed sidebar; only main scrolls) ─────────── -->
+    <div class="flex-1 flex min-h-0 w-full max-w-screen-2xl mx-auto overflow-hidden">
+      <!-- Sidebar (fixed; scrolls independently if it overflows) -->
+      <aside class="hidden lg:block w-64 shrink-0 border-r border-[var(--ui-border)] overflow-y-auto">
         <LayoutDashboardSidebar />
       </aside>
 
-      <!-- Main content -->
-      <main class="flex-1 px-4 sm:px-6 lg:px-8 py-8">
+      <!-- Main content (the only scrollable region) -->
+      <main id="main-content" tabindex="-1" class="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 py-8">
         <slot />
       </main>
     </div>
 
-    <!-- ── Footer ──────────────────────────────────────────── -->
-    <footer class="border-t border-[var(--ui-border)] mt-auto">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p class="text-sm text-[var(--ui-text-muted)]">
-            © {{ new Date().getFullYear() }} GourMerge — {{ t('app.slogan') }}
+    <!-- ── Footer (fixed) ──────────────────────────────────── -->
+    <footer class="shrink-0 border-t border-[var(--ui-border)]">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
+        <div class="flex flex-col-reverse sm:flex-row items-center justify-between gap-2">
+          <p class="text-sm text-[var(--ui-text-muted)] text-center">
+            © {{ new Date().getFullYear() }} GourMerge<span class="hidden sm:inline"> — {{ t('app.slogan') }}</span>
           </p>
-          <div class="flex items-center gap-4">
+          <div class="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
             <UButton
               label="GitHub"
               variant="ghost"

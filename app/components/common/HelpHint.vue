@@ -35,7 +35,6 @@ const open = ref(false)
       class="opacity-60 hover:opacity-100 transition-opacity"
       :aria-label="t('common.help')"
       :aria-expanded="open"
-      @click="open = !open"
     />
 
     <template #content>

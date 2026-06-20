@@ -15,12 +15,12 @@ const localeSwitchItems = [
 </script>
 
 <template>
-  <div class="min-h-screen bg-[var(--ui-bg)] text-[var(--ui-text)]">
+  <div class="flex flex-col h-dvh overflow-hidden bg-[var(--ui-bg)] text-[var(--ui-text)]">
     <!-- Skip-to-content for keyboard/screen reader users -->
     <a href="#main-content" class="skip-link">{{ t('a11y.skipToContent') }}</a>
 
-    <!-- ── Header ──────────────────────────────────────────── -->
-    <header class="sticky top-0 z-50 backdrop-blur-xl bg-[var(--ui-bg)]/80 border-b border-[var(--ui-border)]">
+    <!-- ── Header (fixed; only the content area scrolls) ────── -->
+    <header class="shrink-0 bg-[var(--ui-bg)] border-b border-[var(--ui-border)]">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16">
           <!-- Logo / Brand -->
@@ -51,33 +51,38 @@ const localeSwitchItems = [
 
           <!-- Right side -->
           <div class="flex items-center gap-2">
-            <USelect
-              :model-value="locale"
-              :items="localeSwitchItems"
-              value-key="value"
-              size="sm"
-              class="w-28"
-              :aria-label="t('a11y.selectLanguage')"
-              @update:model-value="setLocale($event as 'de' | 'en' | 'fr' | 'it')"
-            />
-            <UColorModeButton />
-            <OnboardingHelpMenu />
+            <div class="hidden md:flex items-center gap-2">
+              <USelect
+                :model-value="locale"
+                :items="localeSwitchItems"
+                value-key="value"
+                size="sm"
+                class="w-28"
+                :aria-label="t('a11y.selectLanguage')"
+                @update:model-value="setLocale($event as 'de' | 'en' | 'fr' | 'it')"
+              />
+              <UColorModeButton />
+              <OnboardingHelpMenu />
 
-            <!-- Auth buttons for logged-out users -->
-            <template v-if="!loggedIn">
-              <UButton :label="t('auth.login')" variant="ghost" to="/auth/login" />
-              <UButton :label="t('auth.register')" to="/auth/register" />
-            </template>
+              <!-- Auth buttons for logged-out users -->
+              <template v-if="!loggedIn">
+                <UButton :label="t('auth.login')" variant="ghost" to="/auth/login" />
+                <UButton :label="t('auth.register')" to="/auth/register" />
+              </template>
 
-            <!-- User dropdown for logged-in users -->
-            <LayoutUserDropdown v-else />
+              <!-- User dropdown for logged-in users -->
+              <LayoutUserDropdown v-else />
+            </div>
+
+            <!-- Mobile: hamburger → offcanvas with everything -->
+            <LayoutMobileMenu />
           </div>
         </div>
       </div>
     </header>
 
-    <!-- ── Main Content ────────────────────────────────────── -->
-    <main id="main-content" tabindex="-1">
+    <!-- ── Main Content (the only scrollable region) ───────── -->
+    <main id="main-content" tabindex="-1" class="flex-1 overflow-y-auto">
       <slot />
     </main>
 
@@ -87,14 +92,14 @@ const localeSwitchItems = [
       <OnboardingTourOverlay />
     </ClientOnly>
 
-    <!-- ── Footer ──────────────────────────────────────────── -->
-    <footer class="border-t border-[var(--ui-border)] mt-auto">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p class="text-sm text-[var(--ui-text-muted)]">
-            © {{ new Date().getFullYear() }} GourMerge — {{ t('app.slogan') }}
+    <!-- ── Footer (fixed) ──────────────────────────────────── -->
+    <footer class="shrink-0 border-t border-[var(--ui-border)]">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
+        <div class="flex flex-col-reverse sm:flex-row items-center justify-between gap-2">
+          <p class="text-sm text-[var(--ui-text-muted)] text-center">
+            © {{ new Date().getFullYear() }} GourMerge<span class="hidden sm:inline"> — {{ t('app.slogan') }}</span>
           </p>
-          <div class="flex items-center gap-4">
+          <div class="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
             <UButton
               label="GitHub"
               variant="ghost"

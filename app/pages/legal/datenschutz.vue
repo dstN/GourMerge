@@ -69,7 +69,7 @@ useSeoMeta({
               href="https://sentry.io/privacy/"
               target="_blank"
               rel="noopener noreferrer"
-              class="text-primary-500 hover:underline"
+              class="text-primary-500 underline"
               >sentry.io/privacy</a
             >.
           </p>

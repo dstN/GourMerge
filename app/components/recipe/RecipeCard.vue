@@ -41,6 +41,22 @@ const difficultyColor = computed(() => {
   }
 })
 
+// Subtle badges render text at the -500/600 shade, which fails WCAG AA on the
+// light tint in light mode. Force the -700 shade in light mode only; dark mode
+// keeps Nuxt UI's default (already high-contrast on dark backgrounds).
+const difficultyTextClass = computed(() => {
+  switch (props.recipe.difficulty) {
+    case 'easy':
+      return 'text-green-700 dark:text-green-400'
+    case 'medium':
+      return 'text-amber-700 dark:text-amber-400'
+    case 'hard':
+      return 'text-red-700 dark:text-red-400'
+    default:
+      return ''
+  }
+})
+
 const totalTime = computed(() => {
   const prep = props.recipe.prepTimeMinutes || 0
   const cook = props.recipe.cookTimeMinutes || 0
@@ -80,7 +96,13 @@ const totalTime = computed(() => {
         <div
           class="flex items-center gap-3 text-xs text-[var(--ui-text-dimmed)] mt-auto pt-3 border-t border-[var(--ui-border)]"
         >
-          <UBadge :color="difficultyColor" variant="subtle" :label="t(`recipe.${recipe.difficulty}`)" size="xs" />
+          <UBadge
+            :color="difficultyColor"
+            variant="subtle"
+            :class="difficultyTextClass"
+            :label="t(`recipe.${recipe.difficulty}`)"
+            size="xs"
+          />
 
           <RecipeDietaryBadge :type="recipe.dietaryType" />
 
