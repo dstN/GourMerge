@@ -336,6 +336,7 @@ The `ingredients` master table is populated from the **Swiss BLV Food Compositio
 - **Multi-statement inline handlers break the build**: a `@click="a = 1\n b = 2"` (multiple statements on separate lines, no semicolons) fails the Vue macro parser at build time. Use a single expression or a `function` in `<script setup>`. (Was masked while CI was red on typecheck.)
 - **Nuxt UI v4 `USelect` uses `:items` + `value-key`, never `:options`** (a v3 holdover that is silently ignored → empty dropdowns). Fixed in explore filters + GMR-create branch pickers.
 - **Drizzle migration meta MUST be tracked**: `server/database/migrations/meta/` (the `_journal.json` + per-migration snapshots) was previously gitignored, which silently broke `drizzle-kit migrate` on any fresh checkout (CI/deploy) — no journal means no migrations applied. It is now versioned; never re-ignore it.
+- **Dead-code gate (`knip`)**: `npm run knip` (config in `knip.json`, enforced in CI) flags unused files/exports/deps. `GlossaryTerm.vue` + `HelpHint.vue` are temporarily ignored there pending adoption (F6). The mysql2 pool is closed gracefully on Nitro shutdown via `server/plugins/database.ts`.
 
 ---
 

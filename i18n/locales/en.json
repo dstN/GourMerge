@@ -155,14 +155,12 @@
     "commitSuccess": "Version saved successfully.",
     "commitError": "Failed to save version.",
     "ingredientIncomplete": "Each ingredient needs a name and quantity.",
-    "commitPlaceholder": "e.g., Reduced sugar, added vanilla",
     "fork": "Remix",
     "forkSuccess": "Your remix is ready.",
     "forkError": "Could not create your remix.",
     "seoDescriptionFallback": "Discover and remix this recipe on GourMerge — the platform for collaborative recipe development."
   },
   "common": {
-    "on": "on",
     "edit": "Edit",
     "cancel": "Cancel",
     "save": "Save",
@@ -225,9 +223,7 @@
     "commentSubmit": "Comment",
     "noDiff": "No changes detected between these variants.",
     "diffTitle": "Changes",
-    "backToList": "Back to GourMerge Requests",
-    "by": "Opened by {author}",
-    "cannotMerge": "Only the recipe owner can merge."
+    "by": "Opened by {author}"
   },
   "error": {
     "notFoundTitle": "Page Not Found",

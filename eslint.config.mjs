@@ -1,5 +1,6 @@
 // @ts-check
 import withNuxt from './.nuxt/eslint.config.mjs'
+import eslintConfigPrettier from 'eslint-config-prettier'
 
 export default withNuxt(
   {
@@ -30,4 +31,5 @@ export default withNuxt(
       '@typescript-eslint/no-explicit-any': 'off',
     },
   }
-)
+  // eslint-config-prettier last: turn off all formatting rules Prettier owns.
+).append(eslintConfigPrettier)

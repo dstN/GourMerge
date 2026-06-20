@@ -1,0 +1,6 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": ["app.js", "scripts/*.mjs"],
+  "ignore": ["app/components/common/GlossaryTerm.vue", "app/components/common/HelpHint.vue"],
+  "ignoreDependencies": ["h3", "vitest-environment-nuxt"]
+}

@@ -155,14 +155,12 @@
     "commitSuccess": "Versione salvata con successo.",
     "commitError": "Impossibile salvare la versione.",
     "ingredientIncomplete": "Ogni ingrediente richiede un nome e una quantità.",
-    "commitPlaceholder": "es. Zucchero ridotto, vaniglia aggiunta",
     "fork": "Remixa",
     "forkSuccess": "Il tuo remix è pronto.",
     "forkError": "Impossibile creare il remix.",
     "seoDescriptionFallback": "Scopri e remixa questa ricetta su GourMerge — la piattaforma per lo sviluppo collaborativo di ricette."
   },
   "common": {
-    "on": "il",
     "edit": "Modifica",
     "cancel": "Annulla",
     "save": "Salva",
@@ -225,9 +223,7 @@
     "commentSubmit": "Commenta",
     "noDiff": "Nessuna modifica rilevata tra queste varianti.",
     "diffTitle": "Modifiche",
-    "backToList": "Torna ai GourMerge Requests",
-    "by": "Aperto da {author}",
-    "cannotMerge": "Solo il proprietario della ricetta può unire."
+    "by": "Aperto da {author}"
   },
   "error": {
     "notFoundTitle": "Pagina non trovata",

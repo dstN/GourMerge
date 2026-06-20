@@ -77,6 +77,14 @@ export default defineEventHandler(async (event) => {
 
   const whereClause = conditions.length === 1 ? conditions[0]! : and(...conditions)!
 
+  // Total matching rows (same filters) → drives real pagination on the client.
+  const [countRow] = await db
+    .select({ total: sql<number>`count(*)` })
+    .from(recipes)
+    .innerJoin(users, eq(recipes.ownerId, users.id))
+    .where(whereClause)
+  const total = Number(countRow?.total ?? 0)
+
   const orderBy =
     sort === 'newest' ? desc(recipes.createdAt) : sort === 'forks' ? desc(recipes.forkCount) : desc(recipes.starCount)
 
@@ -130,5 +138,5 @@ export default defineEventHandler(async (event) => {
     tags: tagMap.get(r.id) ?? [],
   }))
 
-  return { recipes: recipesWithTags, page, limit }
+  return { recipes: recipesWithTags, total, page, limit }
 })

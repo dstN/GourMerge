@@ -3,6 +3,10 @@
  *
  * These types are auto-imported by both `app/` and `server/` via the `shared/` directory.
  * They define the canonical data shapes for the entire application.
+ *
+ * Note: the rich, API-facing recipe/GMR view types live in `./recipe.ts`
+ * (RecipeDetail, GourmergeRequestDetail, etc.). This file holds the primitive
+ * building blocks shared across layers.
  */
 
 // ── Units ─────────────────────────────────────────────────────
@@ -48,80 +52,9 @@ export interface CommitStep {
   content: string
 }
 
-// ── Commit ────────────────────────────────────────────────────
-
-export interface RecipeCommit {
-  id: number
-  branchId: number
-  parentCommitId: number | null
-  authorId: number
-  message: string
-  createdAt: string
-  /** Populated on demand */
-  ingredients?: CommitIngredient[]
-  /** Populated on demand */
-  steps?: CommitStep[]
-}
-
-// ── Branch ────────────────────────────────────────────────────
-
-export interface RecipeBranch {
-  id: number
-  recipeId: number
-  name: string
-  headCommitId: number | null
-  isDefault: boolean
-  createdAt: string
-}
-
-// ── Recipe (Repository) ───────────────────────────────────────
-
-export interface Recipe {
-  id: number
-  ownerId: number
-  title: string
-  description: string | null
-  visibility: 'public' | 'private'
-  forkedFromRecipeId: number | null
-  servings: number
-  prepTimeMinutes: number | null
-  cookTimeMinutes: number | null
-  difficulty: 'easy' | 'medium' | 'hard'
-  /** Populated on demand */
-  branches?: RecipeBranch[]
-  starCount: number
-  forkCount: number
-  createdAt: string
-  updatedAt: string
-}
-
-// ── GourMerge Request ─────────────────────────────────────────
+// ── GourMerge Request status ──────────────────────────────────
 
 export type GourmergeRequestStatus = 'open' | 'closed' | 'merged' | 'draft'
-
-export interface GourmergeRequest {
-  id: number
-  recipeId: number
-  authorId: number
-  title: string
-  description: string | null
-  status: GourmergeRequestStatus
-  sourceBranchId: number
-  targetBranchId: number
-  /** For cross-repo GourMerge Requests (from forks) */
-  sourceRecipeId: number | null
-  createdAt: string
-  updatedAt: string
-}
-
-export interface GourmergeRequestComment {
-  id: number
-  gourmergeRequestId: number
-  authorId: number
-  body: string
-  createdAt: string
-  updatedAt: string
-}
 
 // ── Diff Types ────────────────────────────────────────────────
 

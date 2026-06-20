@@ -155,14 +155,12 @@
     "commitSuccess": "Version erfolgreich gespeichert.",
     "commitError": "Version konnte nicht gespeichert werden.",
     "ingredientIncomplete": "Jede Zutat benötigt einen Namen und eine Menge.",
-    "commitPlaceholder": "z.B. Zucker reduziert, Vanille hinzugefügt",
     "fork": "Remixen",
     "forkSuccess": "Eigene Version erstellt.",
     "forkError": "Eigene Version konnte nicht erstellt werden.",
     "seoDescriptionFallback": "Entdecke und remixe dieses Rezept auf GourMerge — die Plattform für kollaborative Rezeptentwicklung."
   },
   "common": {
-    "on": "am",
     "edit": "Bearbeiten",
     "cancel": "Abbrechen",
     "save": "Speichern",
@@ -225,9 +223,7 @@
     "commentSubmit": "Kommentieren",
     "noDiff": "Keine Änderungen zwischen diesen Varianten erkannt.",
     "diffTitle": "Änderungen",
-    "backToList": "Zurück zu GourMerge Requests",
-    "by": "Geöffnet von {author}",
-    "cannotMerge": "Nur der Rezept-Autor kann zusammenführen."
+    "by": "Geöffnet von {author}"
   },
   "error": {
     "notFoundTitle": "Seite nicht gefunden",

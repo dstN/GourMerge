@@ -130,7 +130,7 @@ useSeoMeta({ title: `${t('nav.explore')} — GourMerge` })
     </div>
 
     <!-- Pagination -->
-    <div v-if="data?.recipes?.length === 20" class="mt-8 flex justify-center">
+    <div v-if="data && page * 20 < data.total" class="mt-8 flex justify-center">
       <UButton :label="t('explore.loadMore')" variant="outline" color="neutral" @click="loadMore()" />
     </div>
   </div>

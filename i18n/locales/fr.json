@@ -155,14 +155,12 @@
     "commitSuccess": "Version sauvegardée avec succès.",
     "commitError": "Impossible de sauvegarder la version.",
     "ingredientIncomplete": "Chaque ingrédient nécessite un nom et une quantité.",
-    "commitPlaceholder": "ex. Sucre réduit, vanille ajoutée",
     "fork": "Remixer",
     "forkSuccess": "Votre remix est prêt.",
     "forkError": "Impossible de créer votre remix.",
     "seoDescriptionFallback": "Découvrez et remixez cette recette sur GourMerge — la plateforme de développement collaboratif de recettes."
   },
   "common": {
-    "on": "le",
     "edit": "Modifier",
     "cancel": "Annuler",
     "save": "Enregistrer",
@@ -225,9 +223,7 @@
     "commentSubmit": "Commenter",
     "noDiff": "Aucune modification détectée entre ces variantes.",
     "diffTitle": "Modifications",
-    "backToList": "Retour aux GourMerge Requests",
-    "by": "Ouvert par {author}",
-    "cannotMerge": "Seul le propriétaire de la recette peut fusionner."
+    "by": "Ouvert par {author}"
   },
   "error": {
     "notFoundTitle": "Page introuvable",

@@ -81,7 +81,15 @@ export interface UserProfile {
     createdAt: string
   }
   recipes: RecipeDetail[]
-  starredRecipes: RecipeDetail[]
+  /** Minimal card shape returned by GET /api/users/:username (not full RecipeDetail). */
+  starredRecipes: Array<{
+    id: number
+    title: string
+    slug: string
+    difficulty: string
+    starCount: number
+    ownerId: number
+  }>
   isOwnProfile: boolean
 }
 
