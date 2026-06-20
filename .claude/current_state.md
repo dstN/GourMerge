@@ -252,34 +252,35 @@ The `ingredients` master table is populated from the **Swiss BLV Food Compositio
 
 ## 10. Security Implementation
 
-| Measure               | Status    | Notes                                                                                                                                              |
-| --------------------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Rate limiting         | ✓ Done    | DB-backed (`rate_limit_hits` table) — multi-process safe for Passenger                                                                             |
-| CSRF                  | ✓ Done    | nuxt-auth-utils / Nitro                                                                                                                            |
-| Session rotation      | ✓ Done    | Post-login session regeneration                                                                                                                    |
-| Secure cookies        | ✓ Done    | `httpOnly`, `sameSite=lax`, 14-day maxAge                                                                                                          |
-| Email verification    | ✓ Done    | CSPRNG token + bcrypt hash + SMTP send                                                                                                             |
-| Password reset        | ✓ Done    | CSPRNG token + bcrypt hash + expiry + no-enumeration response                                                                                      |
-| Zod validation        | ✓ Done    | All endpoint bodies + query params                                                                                                                 |
-| Authorization         | ✓ Done    | Ownership checks on all mutating routes                                                                                                            |
-| CSP                   | ✓ Done    | `routeRules` in `nuxt.config.ts` — allows TipTap, Sentry, Google Fonts                                                                             |
-| Security headers      | ✓ Done    | X-Content-Type-Options, X-Frame-Options, Referrer-Policy                                                                                           |
-| HSTS                  | Partial   | Configured but commented out for local dev — enable in production                                                                                  |
-| Markdown sanitization | ✓ Done    | User step HTML/Markdown sanitized via allowlist (`app/utils/markdown.ts`) before `v-html`                                                          |
-| Error sanitization    | ⚠ Partial | Nitro hides stack traces in prod by default, but `error-handler.ts` only logs — it does not strip `createError` `data` from responses (F1 pending) |
-| CSP `unsafe-inline`   | ⚠ Caveat  | `script-src` still allows `'unsafe-inline'` (Nuxt hydration) — harden via nonce/hash later                                                         |
-| `npm audit`           | Manual    | No automated Dependabot yet                                                                                                                        |
+| Measure                   | Status   | Notes                                                                                                                                                                                                                                                                 |
+| ------------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Rate limiting             | ✓ Done   | DB-backed (`rate_limit_hits` table) — multi-process safe for Passenger                                                                                                                                                                                                |
+| CSRF                      | ✓ Done   | nuxt-auth-utils / Nitro                                                                                                                                                                                                                                               |
+| Session rotation          | ✓ Done   | Post-login session regeneration                                                                                                                                                                                                                                       |
+| Secure cookies            | ✓ Done   | `httpOnly`, `sameSite=lax`, 14-day maxAge                                                                                                                                                                                                                             |
+| Email verification        | ✓ Done   | CSPRNG token + bcrypt hash + SMTP send                                                                                                                                                                                                                                |
+| Password reset            | ✓ Done   | CSPRNG token + bcrypt hash + expiry + no-enumeration response                                                                                                                                                                                                         |
+| Zod validation            | ✓ Done   | All endpoint bodies + query params                                                                                                                                                                                                                                    |
+| Authorization             | ✓ Done   | Ownership checks on all mutating routes                                                                                                                                                                                                                               |
+| CSP                       | ✓ Done   | `routeRules` in `nuxt.config.ts` — allows TipTap, Sentry, Google Fonts                                                                                                                                                                                                |
+| Security headers          | ✓ Done   | X-Content-Type-Options, X-Frame-Options, Referrer-Policy                                                                                                                                                                                                              |
+| HSTS                      | ✓ Done   | Enabled in production via `routeRules` (baked when `NODE_ENV=production`): 1y max-age + includeSubDomains. Local HTTP dev unaffected. `.htaccess` also forces HTTP→HTTPS                                                                                              |
+| Email-verification gating | ✓ Done   | `requireVerifiedUser` wired into GMR creation + recipe publish (create/patch to public); no-op unless `REQUIRE_EMAIL_VERIFICATION=true`                                                                                                                               |
+| Markdown sanitization     | ✓ Done   | User step HTML/Markdown sanitized via allowlist (`app/utils/markdown.ts`) before `v-html`                                                                                                                                                                             |
+| Error sanitization        | ✓ Done   | Verified: Nitro prod handler returns generic `"Server Error"` (no message/data/stack) for unhandled errors; only intentional `createError` 4xx keep `statusMessage`/`data` (e.g. Zod field errors). `error-handler.ts` logs 5xx + sets `x-request-id` for correlation |
+| CSP `unsafe-inline`       | ⚠ Caveat | `script-src` still allows `'unsafe-inline'` (Nuxt hydration) — harden via nonce/hash later                                                                                                                                                                            |
+| `npm audit`               | Manual   | No automated Dependabot yet                                                                                                                                                                                                                                           |
 
 ---
 
 ## 11. Observability
 
-| Layer              | Tool                                      | Config                                                                                                                          |
-| ------------------ | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| Structured logging | Pino → single file (⚠ rotation NOT wired) | `server/utils/logger.ts`; `LOG_LEVEL` env; redacts cookies/auth — `pino-rotating-file-stream` installed but unused (F1 pending) |
-| Error tracking     | Sentry.io (`@sentry/nuxt`)                | SDK configured (`sentry.*.config.ts`, DSN env) but ⚠ no active `captureException` yet (F1 pending)                              |
-| Health check       | `GET /api/health`                         | Returns `{ status: "ok", db: "ok" }` or 503                                                                                     |
-| Uptime monitoring  | UptimeRobot (external)                    | Polls `/api/health` — configure manually                                                                                        |
+| Layer              | Tool                       | Config                                                                                                                                                                            |
+| ------------------ | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Structured logging | Pino → rotating file       | `server/utils/logger.ts`; rotates at 10 MB or daily, keeps 7 gzipped files via `rotating-file-stream` (no worker thread); `LOG_LEVEL` env; redacts cookies/auth                   |
+| Error tracking     | Sentry.io (`@sentry/nuxt`) | Client + server auto-capture of unhandled errors; `autoInjectServerSentry: 'top-level-import'` (unconditional) so the CI-built artifact ships server capture; DSN/release via env |
+| Health check       | `GET /api/health`          | Returns `{ status: "ok", db: "ok" }` or 503                                                                                                                                       |
+| Uptime monitoring  | UptimeRobot (external)     | Polls `/api/health` — configure manually                                                                                                                                          |
 
 ---
 
@@ -317,7 +318,7 @@ The `ingredients` master table is populated from the **Swiss BLV Food Compositio
 - **Tests**: unit tests for `diff.ts` / `merge.ts` / `units.ts` + an i18n-gate test **do exist** (68 cases, `tests/unit/`). Still missing — component tests, API/integration tests, real E2E (only a skipped placeholder), `slug.ts`/other-util tests, and `--coverage` enforcement in CI
 - **CI/CD**: GitHub Actions **are configured** — `ci.yml` (lint → format → typecheck → i18n → migrate → test → build) and `deploy.yml` (rsync → migrate → restart → smoke test). Not yet: coverage enforcement, `npm audit` gate
 - **Passenger CD**: `.htaccess` + `app.js` exist and `deploy.yml` **does** wire rsync + migrate + `touch tmp/restart.txt` + health smoke test. Not yet: migrate exit-code check, production environment protection
-- **Prod safety (F1 pending)**: Pino log rotation, Sentry active capture, error-response `data` sanitization, transactional-email i18n
+- **Transactional-email i18n (F2 pending)**: verification + password-reset email subjects/bodies are still English-only (Pino rotation, Sentry capture, and error sanitization are now done — F1)
 - **Vanilla Sugar**: missing from Swiss BLV DB; curated entry not yet added to `seed-ingredients.mjs`
 - **Dependabot / npm audit CI gate**: not configured
 

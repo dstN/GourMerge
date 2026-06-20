@@ -130,11 +130,15 @@ export default defineNuxtConfig({
       org: process.env.SENTRY_ORG || '',
       project: process.env.SENTRY_PROJECT || 'gourmerge',
       authToken: process.env.SENTRY_AUTH_TOKEN || '',
-      // Only upload source maps in CI where the auth token is set.
+      // Source-map UPLOAD only runs in CI where the auth token is set; the
+      // module skips upload when authToken is empty.
       telemetry: false,
     },
-    // Disable source map upload locally (no auth token in dev).
-    autoInjectServerSentry: process.env.SENTRY_AUTH_TOKEN ? 'top-level-import' : undefined,
+    // Always inject the server SDK so unhandled Nitro errors are captured in
+    // production. This must NOT depend on SENTRY_AUTH_TOKEN (a build-time
+    // source-map concern) — otherwise the CI-built artifact ships without
+    // server-side capture. With an empty DSN, Sentry.init is a safe no-op.
+    autoInjectServerSentry: 'top-level-import',
   },
 
   // ── Head / Fonts ───────────────────────────────────────────
@@ -163,9 +167,12 @@ export default defineNuxtConfig({
         'X-Frame-Options': 'DENY',
         'Referrer-Policy': 'strict-origin-when-cross-origin',
         'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
-        // HSTS is set in production only via Passenger / .htaccess to avoid
-        // breaking local HTTP dev. Uncomment when behind HTTPS:
-        // 'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+        // HSTS in production only (baked at build, NODE_ENV=production). Browsers
+        // ignore HSTS received over plain HTTP, but we still gate it to honor the
+        // local-HTTP-dev workflow. Behind Netcup SSL this enforces HTTPS for 1y.
+        ...(process.env.NODE_ENV === 'production'
+          ? { 'Strict-Transport-Security': 'max-age=31536000; includeSubDomains' }
+          : {}),
         'Content-Security-Policy': [
           "default-src 'self'",
           // TipTap requires unsafe-inline for inline styles on the prosemirror editor

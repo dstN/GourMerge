@@ -20,6 +20,9 @@ const createSchema = z.object({
 
 export default defineEventHandler(async (event) => {
   const session = await requireUserSession(event)
+  // Opening a GourMerge Request is a published/social action — gate on a verified
+  // email (no-op unless REQUIRE_EMAIL_VERIFICATION=true). See ROADMAP P2-007.
+  await requireVerifiedUser(event)
   const targetRecipeId = Number(getRouterParam(event, 'id'))
   if (isNaN(targetRecipeId)) {
     throw createError({ statusCode: 400, statusMessage: 'Invalid recipe ID' })

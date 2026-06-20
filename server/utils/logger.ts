@@ -10,6 +10,7 @@
 import pino from 'pino'
 import PinoPretty from 'pino-pretty'
 import type { Logger } from 'pino'
+import { createStream } from 'rotating-file-stream'
 import { join } from 'node:path'
 import { mkdirSync } from 'node:fs'
 
@@ -39,15 +40,23 @@ export function getLogger(): Logger {
       /* already exists */
     }
 
+    // Rotating file stream (not a pino transport worker) — worker-thread module
+    // resolution is unreliable in Nitro's bundled output on shared hosting.
+    // Rotates at 10 MB or daily, keeps 7 gzipped files.
+    const stream = createStream('app.log', {
+      path: logsDir,
+      size: '10M',
+      interval: '1d',
+      maxFiles: 7,
+      compress: 'gzip',
+    })
+
     _logger = pino(
       {
         level: process.env.LOG_LEVEL || 'info',
         redact: { paths: REDACT_PATHS, censor: '[REDACTED]' },
       },
-      pino.destination({
-        dest: join(logsDir, 'app.log'),
-        sync: false,
-      })
+      stream
     )
   } else {
     // Use pino-pretty as a stream (not a transport worker) so it works in Nitro's

@@ -3,6 +3,9 @@ import { eq } from 'drizzle-orm'
 import { emailVerificationTokens, users } from '~~/server/database/schema'
 
 export default defineEventHandler(async (event) => {
+  // Rate-limit by IP to prevent token brute-forcing (unauthenticated endpoint).
+  await useRateLimit(getRateLimitKey(event, 'auth:verify'), { max: 10, windowSeconds: 60 })
+
   const { token } = getQuery(event) as { token?: string }
 
   if (!token || typeof token !== 'string' || token.length < 32) {

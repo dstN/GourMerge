@@ -11,6 +11,9 @@ export default withNuxt(
       // Allow 'any' with justification — we use it in Drizzle query results and dynamic handlers.
       // Prefer explicit types where possible but don't hard-block on every any.
       '@typescript-eslint/no-explicit-any': 'warn',
+      // Prettier owns element formatting; this rule conflicts with how Prettier
+      // self-closes void elements (<input />), so leave it to Prettier.
+      'vue/html-self-closing': 'off',
     },
   },
   // Scripts (maintenance + CI utilities) intentionally use console.log
