@@ -18,6 +18,11 @@ const recipeUrl = computed(() => `/${username.value}/${slug.value}`)
 
 // ── Fetch recipe ─────────────────────────────────────────────
 const { data: recipe } = await useFetch<RecipeDetail>(() => `/api/recipes/by-slug/${username.value}/${slug.value}`)
+
+useSeoMeta({
+  title: () => (recipe.value ? `${recipe.value.title} — GourMerge` : 'GourMerge'),
+  robots: 'noindex',
+})
 if (!recipe.value) {
   throw createError({ statusCode: 404, statusMessage: 'Recipe not found' })
 }
