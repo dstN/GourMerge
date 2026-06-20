@@ -9,7 +9,7 @@ const updateSchema = z.object({
   displayName: z.string().min(1).max(100).optional(),
   bio: z.string().max(500).optional().nullable(),
   avatarUrl: z.string().url().max(500).optional().nullable(),
-  preferredLocale: z.enum(['de', 'en']).optional(),
+  preferredLocale: z.enum(['de', 'en', 'fr', 'it']).optional(),
   preferredMeasurementSystem: z.enum(['metric', 'imperial']).optional(),
   onboardingCompletedAt: z.string().datetime().optional().nullable(),
   tourDismissed: z.boolean().optional(),

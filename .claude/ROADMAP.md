@@ -42,7 +42,7 @@ Nuxt 4 · Vue 3 Composition API (`<script setup lang="ts">`) · Nuxt UI v4 (Reka
 - Explore: public browse with text search, difficulty/tag filter, sort (stars/newest/forks), pagination
 - User profiles: public profile, settings (bio, locale, measurement, avatar)
 - GourMerge Requests: full lifecycle — create, list, view with diff, comment, status transitions, three-way snapshot merge with conflict detection
-- i18n: 4 locales (DE/EN/FR/IT), 367 keys in 4-way parity, CI gate active
+- i18n: 4 locales (DE/EN/FR/IT), 377 keys in 4-way parity, CI gate active
 - Onboarding: concept explainer, skippable/re-runnable interactive tour, contextual help, glossary page
 - Observability: Pino logging, Sentry client + server, /api/health
 - Security: CSRF, session rotation, DB-backed rate limiting, security headers, CSP, email verification, password reset, Zod validation

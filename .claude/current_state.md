@@ -58,7 +58,7 @@ GourMerge/
 │   ├── plugins/                # Nitro plugins (db, logger, sentry)
 │   └── utils/                  # drizzle.ts, diff.ts, merge.ts, units.ts, slug.ts
 ├── shared/types/               # TypeScript types shared app ↔ server
-├── i18n/locales/               # de.json, en.json, fr.json, it.json (367 keys, 4-way parity)
+├── i18n/locales/               # de.json, en.json, fr.json, it.json (377 keys, 4-way parity)
 ├── scripts/                    # Maintenance + setup scripts (see §8)
 ├── public/                     # PWA icons, favicon, apple-touch-icon
 ├── docs/RUNBOOK.md             # Production operations playbook
@@ -215,7 +215,7 @@ All routes: Zod-validated body/query, `requireUserSession()` where auth required
 
 - **4 locales**: `de` (default), `en`, `fr`, `it`
 - **Strategy**: `prefix_except_default` — German has no prefix; `/en/`, `/fr/`, `/it/` prefixed
-- **Key count**: 367 keys, 4-way parity (verified by `npm run i18n:check`)
+- **Key count**: 377 keys, 4-way parity (verified by `npm run i18n:check`)
 - **Locale files**: `i18n/locales/{de,en,fr,it}.json`
 - **CI gate**: `scripts/i18n-check.mjs` — fails if any locale has a missing key or empty value
 - **Translated**: all UI labels, navigation, errors, toasts, onboarding, glossary, legal pages, auth flows
@@ -302,7 +302,7 @@ The `ingredients` master table is populated from the **Swiss BLV Food Compositio
 - **Explore**: public browse with text search, difficulty/tag filter, sort (stars/newest/forks), pagination
 - **User profiles**: public profile (recipes, starred, bio, avatar), settings page
 - **GourMerge Requests**: full lifecycle — create, list, view with diff, comment (Markdown), status (draft→open→closed/merged), three-way snapshot merge with conflict detection, merge commit
-- **i18n**: 4 locales (DE/EN/FR/IT), 367 keys in parity, 4-way CI gate
+- **i18n**: 4 locales (DE/EN/FR/IT), 377 keys in parity, 4-way CI gate — incl. transactional emails (verification + password reset) localized per recipient's `preferredLocale`
 - **Onboarding**: concept explainer, interactive skippable/re-runnable tour, guided first-recipe flow, contextual help (`<HelpHint>`), glossary page
 - **Dirty-state guard**: edit page navigation guard via UModal (not `window.confirm` — suppressed in Chromium)
 - **Delete recipe**: from edit page with confirmation modal; cascade handles all FK cleanup
@@ -318,7 +318,6 @@ The `ingredients` master table is populated from the **Swiss BLV Food Compositio
 - **Tests**: unit tests for `diff.ts` / `merge.ts` / `units.ts` + an i18n-gate test **do exist** (68 cases, `tests/unit/`). Still missing — component tests, API/integration tests, real E2E (only a skipped placeholder), `slug.ts`/other-util tests, and `--coverage` enforcement in CI
 - **CI/CD**: GitHub Actions **are configured** — `ci.yml` (lint → format → typecheck → i18n → migrate → test → build) and `deploy.yml` (rsync → migrate → restart → smoke test). Not yet: coverage enforcement, `npm audit` gate
 - **Passenger CD**: `.htaccess` + `app.js` exist and `deploy.yml` **does** wire rsync + migrate + `touch tmp/restart.txt` + health smoke test. Not yet: migrate exit-code check, production environment protection
-- **Transactional-email i18n (F2 pending)**: verification + password-reset email subjects/bodies are still English-only (Pino rotation, Sentry capture, and error sanitization are now done — F1)
 - **Vanilla Sugar**: missing from Swiss BLV DB; curated entry not yet added to `seed-ingredients.mjs`
 - **Dependabot / npm audit CI gate**: not configured
 

@@ -3,6 +3,7 @@ import { eq, and, isNull } from 'drizzle-orm'
 import { emailVerificationTokens, users } from '~~/server/database/schema'
 import { useRateLimit, getRateLimitKey } from '~~/server/utils/rateLimit'
 import { sendMail } from '~~/server/utils/mailer'
+import { buildVerificationEmail } from '~~/server/utils/emailI18n'
 
 export default defineEventHandler(async (event) => {
   await useRateLimit(getRateLimitKey(event, 'auth:send-verification'), { max: 3, windowSeconds: 3600 })
@@ -13,7 +14,12 @@ export default defineEventHandler(async (event) => {
   const db = useDrizzle()
   if (!db) throw createError({ statusCode: 503, statusMessage: 'Database unavailable.' })
   const [dbUser] = await db
-    .select({ id: users.id, email: users.email, emailVerifiedAt: users.emailVerifiedAt })
+    .select({
+      id: users.id,
+      email: users.email,
+      emailVerifiedAt: users.emailVerifiedAt,
+      preferredLocale: users.preferredLocale,
+    })
     .from(users)
     .where(eq(users.id, user.id))
     .limit(1)
@@ -38,14 +44,8 @@ export default defineEventHandler(async (event) => {
   const appUrl = useRuntimeConfig().appUrl.replace(/\/$/, '')
   const verifyUrl = `${appUrl}/auth/verify?token=${rawToken}`
 
-  await sendMail({
-    to: dbUser.email,
-    subject: 'Verify your GourMerge email address',
-    text: `Click the link to verify your email:\n\n${verifyUrl}\n\nLink expires in 24 hours.`,
-    html: `<p>Click the link below to verify your GourMerge account:</p>
-<p><a href="${verifyUrl}">${verifyUrl}</a></p>
-<p>This link expires in 24 hours. If you didn't request this, you can ignore it.</p>`,
-  })
+  const message = buildVerificationEmail(dbUser.preferredLocale, verifyUrl)
+  await sendMail({ to: dbUser.email, ...message })
 
   return { sent: true }
 })

@@ -1,4 +1,20 @@
 {
+  "email": {
+    "verification": {
+      "subject": "Bestätige deine GourMerge-E-Mail-Adresse",
+      "intro": "Klicke auf den folgenden Link, um dein GourMerge-Konto zu bestätigen:",
+      "linkLabel": "E-Mail bestätigen",
+      "expiry": "Dieser Link läuft in 24 Stunden ab. Falls du das nicht angefordert hast, kannst du diese E-Mail ignorieren.",
+      "textIntro": "Klicke auf den Link, um deine GourMerge-E-Mail-Adresse zu bestätigen:"
+    },
+    "passwordReset": {
+      "subject": "Setze dein GourMerge-Passwort zurück",
+      "intro": "Für dein GourMerge-Konto wurde ein Zurücksetzen des Passworts angefordert.",
+      "linkLabel": "Passwort zurücksetzen",
+      "expiry": "Dieser Link läuft in 2 Stunden ab. Falls du das nicht angefordert hast, ignoriere diese E-Mail — dein Passwort bleibt unverändert.",
+      "textIntro": "Klicke auf den Link, um dein GourMerge-Passwort zurückzusetzen:"
+    }
+  },
   "app": {
     "slogan": "Wo bester Geschmack verschmilzt."
   },

@@ -3,6 +3,7 @@ import { eq, and, isNull } from 'drizzle-orm'
 import { passwordResetTokens, users } from '~~/server/database/schema'
 import { useRateLimit, getRateLimitKey } from '~~/server/utils/rateLimit'
 import { sendMail } from '~~/server/utils/mailer'
+import { buildPasswordResetEmail } from '~~/server/utils/emailI18n'
 import { z } from 'zod'
 
 const bodySchema = z.object({ email: z.string().email() })
@@ -19,7 +20,7 @@ export default defineEventHandler(async (event) => {
 
   // Always return success to prevent user enumeration.
   const [dbUser] = await db
-    .select({ id: users.id, email: users.email })
+    .select({ id: users.id, email: users.email, preferredLocale: users.preferredLocale })
     .from(users)
     .where(eq(users.email, parsed.data.email))
     .limit(1)
@@ -40,14 +41,8 @@ export default defineEventHandler(async (event) => {
   const appUrl = useRuntimeConfig().appUrl.replace(/\/$/, '')
   const resetUrl = `${appUrl}/auth/reset-password?token=${rawToken}`
 
-  await sendMail({
-    to: dbUser.email,
-    subject: 'Reset your GourMerge password',
-    text: `Click the link to reset your password:\n\n${resetUrl}\n\nLink expires in 2 hours.`,
-    html: `<p>Someone requested a password reset for your GourMerge account.</p>
-<p><a href="${resetUrl}">Reset your password</a></p>
-<p>This link expires in 2 hours. If you didn't request this, ignore this email — your password won't change.</p>`,
-  })
+  const message = buildPasswordResetEmail(dbUser.preferredLocale, resetUrl)
+  await sendMail({ to: dbUser.email, ...message })
 
   return { sent: true }
 })
