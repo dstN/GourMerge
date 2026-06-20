@@ -2,9 +2,9 @@
 /**
  * GlossaryTerm — Displays a friendly cooking alias with the canonical git term in a tooltip.
  *
- * Usage:
- *   <GlossaryTerm term="fork" />
- *   <GlossaryTerm term="commit" icon />
+ * Usage (Nuxt path-prefixes components in components/common/):
+ *   <CommonGlossaryTerm term="fork" />
+ *   <CommonGlossaryTerm term="commit" icon />
  *
  * The `term` prop maps to a key in the `glossary` i18n namespace.
  * Each term has:

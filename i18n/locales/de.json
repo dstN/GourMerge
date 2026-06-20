@@ -453,5 +453,10 @@
     "contactError": "Nachricht konnte nicht gesendet werden. Bitte versuche es erneut.",
     "impressumTitle": "Impressum",
     "datenschutzTitle": "Datenschutzerklärung"
+  },
+  "editor": {
+    "bold": "Fett",
+    "italic": "Kursiv",
+    "bulletList": "Aufzählung"
   }
 }

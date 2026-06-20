@@ -88,7 +88,7 @@ onBeforeUnmount(() => editor.value?.destroy())
         variant="ghost"
         color="neutral"
         :class="{ 'bg-neutral-200 dark:bg-neutral-700': editor.isActive('bold') }"
-        :aria-label="'Bold'"
+        :aria-label="t('editor.bold')"
         @click="editor.chain().focus().toggleBold().run()"
       />
       <UButton
@@ -98,7 +98,7 @@ onBeforeUnmount(() => editor.value?.destroy())
         variant="ghost"
         color="neutral"
         :class="{ 'bg-neutral-200 dark:bg-neutral-700': editor.isActive('italic') }"
-        :aria-label="'Italic'"
+        :aria-label="t('editor.italic')"
         @click="editor.chain().focus().toggleItalic().run()"
       />
       <UButton
@@ -108,7 +108,7 @@ onBeforeUnmount(() => editor.value?.destroy())
         variant="ghost"
         color="neutral"
         :class="{ 'bg-neutral-200 dark:bg-neutral-700': editor.isActive('bulletList') }"
-        :aria-label="'Bullet list'"
+        :aria-label="t('editor.bulletList')"
         @click="editor.chain().focus().toggleBulletList().run()"
       />
 

@@ -204,6 +204,7 @@ useSeoMeta({
             data-tour="merge-button"
             @click="executeMerge()"
           />
+          <CommonHelpHint v-if="gmr.canMerge" i18n-key="glossary.merge.helpHint" size="sm" />
           <UButton
             v-if="gmr.status === 'open' && loggedIn"
             :label="t('gourmergeRequest.closeButton')"

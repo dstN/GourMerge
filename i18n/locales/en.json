@@ -453,5 +453,10 @@
     "contactError": "Message could not be sent. Please try again.",
     "impressumTitle": "Legal Notice",
     "datenschutzTitle": "Privacy Policy"
+  },
+  "editor": {
+    "bold": "Bold",
+    "italic": "Italic",
+    "bulletList": "Bullet list"
   }
 }

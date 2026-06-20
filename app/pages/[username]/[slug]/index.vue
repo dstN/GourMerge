@@ -237,6 +237,7 @@ useHead(() => {
             data-tour="fork-button"
             @click="forkRecipe"
           />
+          <CommonHelpHint v-if="loggedIn && !isOwner" i18n-key="glossary.fork.helpHint" size="sm" />
           <UButton
             :label="t('gourmergeRequest.titlePlural')"
             icon="i-lucide-git-pull-request"

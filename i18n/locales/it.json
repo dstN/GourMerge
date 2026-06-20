@@ -453,5 +453,10 @@
     "contactError": "Impossibile inviare il messaggio. Riprova.",
     "impressumTitle": "Note legali",
     "datenschutzTitle": "Informativa sulla privacy"
+  },
+  "editor": {
+    "bold": "Grassetto",
+    "italic": "Corsivo",
+    "bulletList": "Elenco puntato"
   }
 }

@@ -453,5 +453,10 @@
     "contactError": "Le message n'a pas pu être envoyé. Veuillez réessayer.",
     "impressumTitle": "Mentions légales",
     "datenschutzTitle": "Politique de confidentialité"
+  },
+  "editor": {
+    "bold": "Gras",
+    "italic": "Italique",
+    "bulletList": "Liste à puces"
   }
 }

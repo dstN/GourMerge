@@ -103,9 +103,12 @@ function formatDate(dateStr: string) {
           {{ recipe?.title }}
         </NuxtLink>
         <h1 class="text-2xl font-bold flex items-center gap-2">
-          <UIcon name="i-lucide-history" class="size-6 text-primary-500" />
+          <UIcon name="i-lucide-history" class="size-6 text-primary-500" aria-hidden="true" />
           {{ t('history.title') }}
         </h1>
+        <p class="text-sm text-[var(--ui-text-muted)] mt-1">
+          <CommonGlossaryTerm term="commit" icon />
+        </p>
       </div>
 
       <!-- Branch selector -->

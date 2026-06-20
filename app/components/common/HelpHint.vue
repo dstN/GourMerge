@@ -2,9 +2,9 @@
 /**
  * HelpHint — A ? icon that opens a popover with contextual help text.
  *
- * Usage:
- *   <HelpHint i18n-key="glossary.fork.helpHint" />
- *   <HelpHint text="This creates an independent copy of the recipe." />
+ * Usage (Nuxt path-prefixes components in components/common/):
+ *   <CommonHelpHint i18n-key="glossary.fork.helpHint" />
+ *   <CommonHelpHint text="This creates an independent copy of the recipe." />
  */
 const { t } = useI18n()
 
