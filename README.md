@@ -70,8 +70,9 @@ Open [http://localhost:3000](http://localhost:3000).
 | `npm run lint`           | ESLint                                          |
 | `npm run lint:fix`       | ESLint auto-fix                                 |
 | `npm run format`         | Prettier format                                 |
-| `npm test`               | Vitest unit + component tests                   |
-| `npm run test:e2e`       | Playwright E2E tests                            |
+| `npm test`               | Vitest unit tests (97% coverage gate)           |
+| `npm run test:e2e`       | Playwright API + journey + axe a11y tests       |
+| `npm run knip`           | Dead-code check (unused files/exports/deps)     |
 | `npm run i18n:check`     | 4-way locale parity gate (DE/EN/FR/IT)          |
 | `npm run db:generate`    | Generate a new Drizzle migration                |
 | `npm run db:migrate`     | Apply pending migrations                        |

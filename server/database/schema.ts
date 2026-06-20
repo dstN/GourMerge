@@ -375,7 +375,7 @@ export const recipeCommitSteps = mysqlTable(
 )
 
 // ═══════════════════════════════════════════════════════════════
-// GOURMERGE REQUESTS (our branded "Pull Requests")
+// GOURMERGE REQUESTS (branched change proposals — propose/review/merge model)
 // ═══════════════════════════════════════════════════════════════
 // ⚠️  WORDING: Never use "pull_request" anywhere. It's "gourmerge_request".
 

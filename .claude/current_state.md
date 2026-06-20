@@ -365,17 +365,17 @@ Full deployment runbook: `docs/RUNBOOK.md`.
 
 `feature/phase-0-foundation` — all current development is on this branch. `master` is the target for production deploys.
 
-Recent significant commits (newest first):
+### Finishing plan — executed (2026-06-20)
 
-```
-694d0f2  fix(api): handle NO ACTION FK constraints in recipe delete
-1ae461d  feat(edit): add delete recipe button with confirmation modal
-ff95486  fix(edit): replace window.confirm with UModal for unsaved-changes guard
-bf37c37  chore(ingredients): retire generic seed list, add safe cleanup script
-84eefcd  fix(layout): align dashboard header/footer width to max-w-7xl
-56a6994  feat(nav): add Edit Profile link to user dropdown
-f393d5c  fix(ui): resolve nav links, select dropdowns, step editing, layout gaps
-f1b843c  feat: multilingual steps/title/description, fix footer slogan, nutrition popover
-fc88826  fix(editor): steps editable, metadata fields, Markdown rendering, tags/dietary
-ec93f4c  feat(nutrition): compact bar layout on recipe detail page
-```
+The "to gold-plated v1" finishing plan ran end to end. Committed phases:
+
+- **CI unblocked** — TipTap typecheck fix, Prettier baseline + `format:check`, stored-XSS closed (Markdown sanitizer).
+- **Prod safety** — Pino log rotation, server-side Sentry capture, prod HSTS, secrets/`docs/SECRETS.md`, verify rate-limit, `requireVerifiedUser` wired.
+- **i18n** — all 4 locales saveable; transactional emails localized.
+- **Schema/data** — FULLTEXT search; Vanilla Sugar seed; **migration `meta/` un-ignored** (migrations previously applied nothing on fresh checkouts).
+- **GMR merge** — interactive per-conflict resolution + `FOR UPDATE` guard; repaired build-breaking handlers + 5 broken `:options` dropdowns (GMR creation was unusable).
+- **Tests** — 118 unit (97% gate) + 24 Playwright (API/journey/axe); CI coverage gate + `E2E` workflow.
+- **Dead code** — knip gate; removed dead composable/types/keys; drizzle-orm CVE upgrade; Dependabot + critical-audit gate.
+- **a11y** — `<html lang>`, combobox labels, StepEditor labels i18n'd; axe critical-gate.
+
+**Tracked follow-ups (not blocking, owner decisions):** brand-orange `color-contrast` to meet WCAG AA; CSP `script-src 'unsafe-inline'` hardening; dedicated component-mount tests (E2E covers functionally); nodemailer/vite/esbuild advisories (Dependabot PRs).
