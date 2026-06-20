@@ -12,7 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     # Configure required reviewers / protection rules in repo Settings → Environments → production.
-    environment: production
+    environment:
+      name: production
 
     steps:
       - name: Checkout
