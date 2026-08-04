@@ -53,7 +53,7 @@ Nuxt 4 · Vue 3 Composition API (`<script setup lang="ts">`) · Nuxt UI v4 (Reka
 **Not yet done (corrected against code, 2026-08-04):**
 
 Phases 0–6 are complete. Everything previously listed here has shipped: coverage
-enforcement, the `npm audit` gate, Dependabot, production environment protection, the
+enforcement, the `npm audit` gate, Dependabot, the
 migrate exit-code check, Pino log rotation, Sentry capture, error-response sanitization,
 and transactional-email i18n. The pre-release audit additionally fixed a red typecheck,
 a production-migration step that could never run, a missing rollback path, and an

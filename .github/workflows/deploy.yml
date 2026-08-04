@@ -11,11 +11,41 @@ jobs:
     name: Deploy to Netcup
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    # Configure required reviewers / protection rules in repo Settings → Environments → production.
+    # The environment must exist in repo Settings → Environments for its protection
+    # rules to apply. If it does not, GitHub silently auto-creates an UNPROTECTED one
+    # on first run — so an absent `production` environment means no approval gate.
     environment:
       name: production
 
     steps:
+      # Fail in seconds with a readable message instead of 15 minutes later at the
+      # migrate step. Without DATABASE_URL, drizzle.config.ts falls back to its
+      # localhost dev URL and the failure looks like a database problem rather than
+      # unconfigured secrets.
+      - name: Preflight — required secrets are configured
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          DEPLOY_DOMAIN: ${{ secrets.DEPLOY_DOMAIN }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          missing=''
+          for name in DEPLOY_HOST DEPLOY_USER DEPLOY_SSH_KEY DEPLOY_PATH DEPLOY_DOMAIN DATABASE_URL; do
+            # Indirect expansion, so multi-line values (the SSH key) stay intact.
+            if [ -z "${!name:-}" ]; then
+              missing="$missing $name"
+            fi
+          done
+          if [ -n "$missing" ]; then
+            echo "::error::Deploy aborted — unset repository secrets:$missing"
+            echo "Add them under Settings → Secrets and variables → Actions."
+            echo "See docs/SECRETS.md for what each one holds."
+            exit 1
+          fi
+          echo "All required deploy secrets are present."
+
       # CI and E2E start together on a master push, and this job is triggered by
       # CI alone — so without this wait a green CI would deploy while E2E (the
       # only end-to-end coverage of fork → GourMerge Request → merge) is still
@@ -85,7 +115,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '26'
           cache: 'npm'
 
       # drizzle-kit lives in devDependencies and migrations are run from here
