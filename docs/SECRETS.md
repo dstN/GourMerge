@@ -82,9 +82,30 @@ on a routine cadence for long-lived credentials:
 
 1. **`NUXT_SESSION_PASSWORD`** — rotating invalidates all existing sessions (users
    re-login). Safe to rotate any time; do so if it ever leaked.
-2. **`DATABASE_URL` password** — change the MySQL user password in the Netcup panel,
-   then update the secret/host env in lockstep, then restart Passenger
-   (`touch tmp/restart.txt`).
+2. **`DATABASE_URL` password** — this value is **stored twice, deliberately**, and both
+   copies must change together:
+
+   | Copy                                       | Consumer                                     | When        |
+   | ------------------------------------------ | -------------------------------------------- | ----------- |
+   | Plesk → Custom environment variables       | the running app (`server/database/index.ts`) | runtime     |
+   | GitHub → Environments → production secrets | `npx drizzle-kit migrate` on the runner      | deploy time |
+
+   The runner cannot read Plesk's env and the host cannot read GitHub's secrets, hence
+   the duplication. One identical URL serves both: the database is a separate machine
+   (`<db-host>`, `<server-ip>`) from the webspace (`<server-ip>`), so
+   there is no internal shortcut like `localhost` — the app goes over the same public
+   hostname the runner uses.
+
+   Rotate: change the password in the Netcup panel → update **both** copies → restart
+   Passenger (`touch tmp/restart.txt`). Forgetting one fails differently:
+
+   - **Only Plesk updated** → the app keeps working; the next deploy fails at the
+     migrate step. That step runs before the release is swapped, so nothing breaks.
+   - **Only GitHub updated** → migrations apply, then the app cannot connect,
+     `/api/health` returns 503, the smoke test fails and the deploy auto-rolls back.
+     **The rollback will not fix this**: it swaps the code directory, not the host's
+     environment variable. The site stays down until Plesk is corrected.
+
 3. **`SMTP_PASS`** — rotate in the Netcup mail panel, update host env.
 4. **`DEPLOY_SSH_KEY`** — replace the key pair; update the GitHub secret and the host's
    `authorized_keys`.
