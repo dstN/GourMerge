@@ -24,16 +24,16 @@ PassengerEnvVar LOG_LEVEL info
 PassengerEnvVar REQUIRE_EMAIL_VERIFICATION true
 ```
 
-| Variable                                              | Sensitive | Purpose                                          |
-| ----------------------------------------------------- | --------- | ------------------------------------------------ |
-| `DATABASE_URL`                                        | **Yes**   | MariaDB connection (`mysql://user:pass@host/db`) |
-| `NUXT_SESSION_PASSWORD`                               | **Yes**   | ≥32-char key encrypting session cookies          |
-| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` | **Yes**   | Transactional email (verification, reset)        |
-| `SMTP_FROM`                                           | No        | From-address for emails                          |
-| `NUXT_PUBLIC_SENTRY_DSN`                              | No        | Sentry project DSN (public by design)            |
-| `NUXT_PUBLIC_APP_URL`                                 | No        | Canonical URL for emails / SEO / OG / sitemap    |
-| `LOG_LEVEL`                                           | No        | `debug` \| `info` \| `warn` \| `error`           |
-| `REQUIRE_EMAIL_VERIFICATION`                          | No        | Gate publishing / GMRs on a verified email       |
+| Variable                                              | Sensitive | Purpose                                        |
+| ----------------------------------------------------- | --------- | ---------------------------------------------- |
+| `DATABASE_URL`                                        | **Yes**   | MySQL connection (`mysql://user:pass@host/db`) |
+| `NUXT_SESSION_PASSWORD`                               | **Yes**   | ≥32-char key encrypting session cookies        |
+| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` | **Yes**   | Transactional email (verification, reset)      |
+| `SMTP_FROM`                                           | No        | From-address for emails                        |
+| `NUXT_PUBLIC_SENTRY_DSN`                              | No        | Sentry project DSN (public by design)          |
+| `NUXT_PUBLIC_APP_URL`                                 | No        | Canonical URL for emails / SEO / OG / sitemap  |
+| `LOG_LEVEL`                                           | No        | `debug` \| `info` \| `warn` \| `error`         |
+| `REQUIRE_EMAIL_VERIFICATION`                          | No        | Gate publishing / GMRs on a verified email     |
 
 The full annotated list with example values is in [`.env.example`](../.env.example).
 
@@ -62,7 +62,7 @@ artifact and cannot be injected on the host — its name does not map to the
 `GITHUB_TOKEN` is provided automatically and needs no configuration.
 
 CI test values in `ci.yml` (`NUXT_SESSION_PASSWORD`, `DATABASE_URL` pointing at the
-ephemeral `mariadb:11` service) are **throwaway test values**, not secrets.
+ephemeral `mysql:8.4` service) are **throwaway test values**, not secrets.
 
 ---
 
@@ -90,7 +90,7 @@ on a routine cadence for long-lived credentials:
    `authorized_keys`.
 
 > **Local dev note:** any credential that has ever lived in a developer's local `.env`
-> (e.g. a local MariaDB password or a generated session secret) should be treated as
+> (e.g. a local MySQL password or a generated session secret) should be treated as
 > dev-only and **must not** be reused for staging/production. Generate fresh values for
 > each environment.
 

@@ -21,7 +21,7 @@ A git-like recipe platform. Recipes are repositories with branches, snapshot com
 | ------------- | ---------------------------------------------- | ------------- |
 | Framework     | Nuxt 4                                         | ^4.0.0        |
 | UI            | Nuxt UI v4 (Reka UI + Tailwind CSS v4)         | ^4.0.0        |
-| Database      | MariaDB via Drizzle ORM (mysql2)               | drizzle ^0.45 |
+| Database      | MySQL 8.4 via Drizzle ORM (mysql2)             | drizzle ^0.45 |
 | Auth          | nuxt-auth-utils (session-based)                | ^0.5.0        |
 | i18n          | @nuxtjs/i18n                                   | ^9.0.0        |
 | Editor        | TipTap 3 + @tiptap/markdown                    | ^3.0.0        |
@@ -65,7 +65,7 @@ GourMerge/
 ├── .claude/                    # AI + team reference docs
 ├── nuxt.config.ts              # Main config (CSP, i18n, PWA, runtime config)
 ├── drizzle.config.ts           # Drizzle Kit config
-├── docker-compose.yml          # LOCAL DEV ONLY — MariaDB
+├── docker-compose.yml          # LOCAL DEV ONLY — MySQL 8.4
 └── app.js                      # Passenger startup shim → .output/server/index.mjs
 ```
 
@@ -97,7 +97,7 @@ All migrations versioned in `server/database/migrations/`. **Never use `db:push`
 
 ### FK cascade gaps (manually handled in API)
 
-Two FKs use NO ACTION (= RESTRICT in MariaDB) and require pre-delete cleanup:
+Two FKs use NO ACTION (= RESTRICT in MySQL) and require pre-delete cleanup:
 
 - `recipes.forked_from_recipe_id` — forks nullified before parent delete
 - `gourmerge_requests.source_branch_id / target_branch_id / source_recipe_id` — cross-recipe GMRs deleted before branch cascade
@@ -110,7 +110,7 @@ This is handled in `server/api/recipes/[id].delete.ts`.
 - **Branch = pointer**: a branch row points to `head_commit_id`. Creating a branch is 1 INSERT.
 - **INT PK internal, UUIDv7 external**: `recipes` and `gourmerge_requests` have a `public_id BINARY(16)` (UUIDv7) for external URLs/API — internal JOINs use INT PKs. Auth tokens use CSPRNG, NOT UUIDv7.
 - **Metric-canonical units**: DB stores `g` / `ml` / `piece` / `pinch` / `tsp` / `tbsp` only. Display conversion in `server/utils/units.ts`.
-- **No recursive CTEs**: commit DAG traversal is done application-side (`parentCommitId` walk). MariaDB CTEs are slow.
+- **Commit DAG walked application-side** (`parentCommitId`), not via recursive CTE. The original rationale ("MariaDB CTEs are slow") no longer applies — production is MySQL 8.4 — but the app-side walk stays: it is built, paginated and proven.
 - **Explore search**: FULLTEXT index on `recipes(title, description)` (migration `0006`, hand-authored — Drizzle's mysql `index()` can't express FULLTEXT). `explore.get.ts` uses `MATCH … AGAINST` for queries ≥ 3 chars, `LIKE` fallback for shorter terms.
 
 ---
@@ -350,6 +350,7 @@ The `ingredients` master table is populated from the **Swiss BLV Food Compositio
 - **Multi-statement inline handlers break the build**: a `@click="a = 1\n b = 2"` (multiple statements on separate lines, no semicolons) fails the Vue macro parser at build time. Use a single expression or a `function` in `<script setup>`. (Was masked while CI was red on typecheck.)
 - **Inline handlers must not leak a return value on Nuxt UI components**: `@click="open = true"` or `@click="editor.chain()…run()"` compiles to `($event) => (expr)`, whose return type is the assigned value / `boolean`. TypeScript's void-return bivariance (a `() => T` _is_ assignable to `() => void`) **does not apply** because Nuxt UI 4.9 types the click prop as the **union** `((e: MouseEvent) => void | Promise<void>) | […][] | undefined` — the special rule only fires when the target return type is exactly `void`. Result: `error TS2322` on **components** but not on native `<button>`, which is why only some sites broke. Fix: wrap in a block arrow so it returns `undefined` — `@click="() => { open = true }"`. Inside a closure the `v-if="editor"` narrowing is lost, so use `editor?.chain()`. This surfaced from the Nuxt UI 4.6→4.9 bump and broke 11 call sites.
 - **Nuxt UI v4 `USelect` uses `:items` + `value-key`, never `:options`** (a v3 holdover that is silently ignored → empty dropdowns). Fixed in explore filters + GMR-create branch pickers.
+- **Every environment is MySQL 8.4 — never MariaDB**: the docs specified MariaDB for months while production (`<db-host>`, **8.4.11**) and local dev were both MySQL; only `ci.yml`/`e2e.yml` ran `mariadb:11`, making the **test suite the single MariaDB in the project**. That is not academic: the ingredient autocomplete and ingredient-name resolution run raw `JSON_UNQUOTE(JSON_EXTRACT(…))` with a collation-sensitive `LIKE`, and explore search uses `MATCH … AGAINST`. MariaDB implements `JSON` as `LONGTEXT` + a CHECK constraint, so comparison, collation and full-text tokenizer/stopword behaviour all differ from MySQL's native JSON type — German umlaut and accent matching was being tested on one engine and served from another. CI, E2E and `docker-compose.yml` are now pinned to `mysql:8.4`. The MySQL image needs `MYSQL_*` env vars (not `MARIADB_*`) and `mysqladmin ping -h 127.0.0.1` as its healthcheck — `-h 127.0.0.1` forces TCP so the check cannot pass against the init-phase unix socket before the network listener is up.
 - **Drizzle migration meta MUST be tracked**: `server/database/migrations/meta/` (the `_journal.json` + per-migration snapshots) was previously gitignored, which silently broke `drizzle-kit migrate` on any fresh checkout (CI/deploy) — no journal means no migrations applied. It is now versioned; never re-ignore it.
 - **Dead-code gate (`knip`)**: `npm run knip` (config in `knip.json`, enforced in CI) flags unused files/exports/deps. The mysql2 pool is closed gracefully on Nitro shutdown via `server/plugins/database.ts`.
 - **Nuxt path-prefixes components in subdirectories**: `components/common/HelpHint.vue` registers as `<CommonHelpHint>`, not `<HelpHint>` (same for `<CommonGlossaryTerm>`, `<CommonBrandLogo>`). Using the bare name silently renders nothing — this is why `GlossaryTerm`/`HelpHint` sat unused until adopted onto the fork/merge controls + history page.
@@ -367,7 +368,7 @@ The `ingredients` master table is populated from the **Swiss BLV Food Compositio
 
 ## 14. Deployment (Target: Netcup + Passenger)
 
-Production is **NOT Docker**. `docker-compose.yml` is local dev MariaDB only.
+Production is **NOT Docker**. `docker-compose.yml` is local dev MySQL only.
 
 | Component | Config                                                  |
 | --------- | ------------------------------------------------------- |
@@ -416,6 +417,9 @@ Audited the branch against §10 of `ROADMAP.md` before cutting v1. Fixed in this
 - **Ground truth was stale** — §12 listed the coverage gate, audit gate and Dependabot as missing though all had shipped; counts corrected (25 pages, 33 endpoints, 387 keys).
 
 Verified **not** a problem despite looking like one: `ci.yml` sets `NODE_ENV: test` workflow-wide, but `nuxt build` calls `overrideEnv('production')`, so HSTS and the `secure` session-cookie flag are baked correctly in the shipped artifact.
+
+- **Tests ran on the wrong database engine** — CI used `mariadb:11` while production and local dev were both MySQL (prod confirmed **8.4.11**). Given the raw `JSON_EXTRACT`/`JSON_UNQUOTE` and `MATCH … AGAINST` SQL on core read paths, the suite could not tell you whether ingredient search behaves in production. CI, E2E and `docker-compose.yml` pinned to `mysql:8.4`; engine corrected across all docs (see §13).
+- **DB reachability confirmed** — `<db-host>` (= `<server-ip>`, same machine) answers on 3306 from an arbitrary external IP, so the runner-based migration step works and no SSH fallback is needed. Note this also means the DB is publicly reachable and the password is the only control.
 
 Also added: **deploy now waits on the `E2E` run for the same commit** and refuses to proceed unless it passed — previously a green `CI` could deploy while the only end-to-end coverage of the fork → GMR → merge flow was still running.
 

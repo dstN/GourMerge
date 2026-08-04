@@ -12,18 +12,26 @@ jobs:
     runs-on: ubuntu-latest
 
     services:
-      mariadb:
-        image: mariadb:11
+      # MySQL 8.4 to match production (<db-host> reports 8.4.11).
+      # This was mariadb:11 while prod and local dev were both MySQL — and the
+      # ingredient search runs raw JSON_EXTRACT/JSON_UNQUOTE plus a
+      # collation-sensitive LIKE, and explore uses MATCH…AGAINST, all of which
+      # differ between the engines. Tests must run on what production runs.
+      mysql:
+        image: mysql:8.4
         env:
-          MARIADB_ROOT_PASSWORD: testpassword
-          MARIADB_DATABASE: gourmerge_test
+          MYSQL_ROOT_PASSWORD: testpassword
+          MYSQL_DATABASE: gourmerge_test
         ports:
           - 3306:3306
+        # -h 127.0.0.1 forces TCP, so the check cannot pass against the
+        # init-phase unix socket before the network listener is up. MySQL's
+        # first-boot init is slower than MariaDB's, hence the extra retries.
         options: >-
-          --health-cmd "healthcheck.sh --connect --innodb_initialized"
+          --health-cmd "mysqladmin ping -h 127.0.0.1 -uroot -ptestpassword --silent"
           --health-interval 10s
           --health-timeout 5s
-          --health-retries 10
+          --health-retries 15
 
     env:
       NODE_ENV: test

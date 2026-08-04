@@ -13,18 +13,19 @@ jobs:
     runs-on: ubuntu-latest
 
     services:
-      mariadb:
-        image: mariadb:11
+      # MySQL 8.4 to match production — see the note in ci.yml.
+      mysql:
+        image: mysql:8.4
         env:
-          MARIADB_ROOT_PASSWORD: testpassword
-          MARIADB_DATABASE: gourmerge_test
+          MYSQL_ROOT_PASSWORD: testpassword
+          MYSQL_DATABASE: gourmerge_test
         ports:
           - 3306:3306
         options: >-
-          --health-cmd "healthcheck.sh --connect --innodb_initialized"
+          --health-cmd "mysqladmin ping -h 127.0.0.1 -uroot -ptestpassword --silent"
           --health-interval 10s
           --health-timeout 5s
-          --health-retries 10
+          --health-retries 15
 
     env:
       DATABASE_URL: mysql://root:testpassword@127.0.0.1:3306/gourmerge_test

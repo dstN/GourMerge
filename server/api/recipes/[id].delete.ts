@@ -6,7 +6,7 @@
  *   recipes → recipe_tags, recipe_stars
  *   recipes → gourmerge_requests (recipe_id) → gm_request_comments
  *
- * Two FK relations use NO ACTION (= RESTRICT in MariaDB) and must be
+ * Two FK relations use NO ACTION (= RESTRICT in MySQL) and must be
  * handled explicitly before the main delete:
  *   1. recipes.forked_from_recipe_id  — forks that reference this recipe as their origin
  *   2. gourmerge_requests.source_recipe_id / source_branch_id / target_branch_id

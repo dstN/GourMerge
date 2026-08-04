@@ -1,19 +1,28 @@
-version: '3.8'
-
+# LOCAL DEV ONLY — production is Netcup MySQL behind Plesk, never Docker.
+#
+# Pinned to MySQL 8.4 to match production (<db-host> reports 8.4.11).
+# This previously ran mariadb:11, which matched neither production nor the
+# native MySQL commonly already listening on localhost:3306. If you use a
+# native MySQL instead of this compose file, prefer 8.4 for the same reason.
 services:
-  mariadb:
-    image: mariadb:11
+  mysql:
+    image: mysql:8.4
     container_name: gourmerge-db
     restart: unless-stopped
     ports:
       - '3306:3306'
     environment:
-      MARIADB_ROOT_PASSWORD: gourmerge_root
-      MARIADB_DATABASE: gourmerge
-      MARIADB_USER: gourmerge
-      MARIADB_PASSWORD: gourmerge_secret
+      MYSQL_ROOT_PASSWORD: gourmerge_root
+      MYSQL_DATABASE: gourmerge
+      MYSQL_USER: gourmerge
+      MYSQL_PASSWORD: gourmerge_secret
     volumes:
       - gourmerge_data:/var/lib/mysql
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', '127.0.0.1', '-uroot', '-pgourmerge_root', '--silent']
+      interval: 10s
+      timeout: 5s
+      retries: 15
 
 volumes:
   gourmerge_data:

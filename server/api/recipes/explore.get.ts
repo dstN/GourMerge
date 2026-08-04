@@ -69,8 +69,7 @@ export default defineEventHandler(async (event) => {
       return { recipes: [], total: 0, page, limit }
     }
 
-    // MariaDB doesn't have an inArray that plays nicely with large sets;
-    // for v1 scale this is fine
+    // An IN (…) list does not scale to very large sets; fine at v1 scale.
     const ids = taggedRecipeIds.map((r) => r.recipeId)
     conditions.push(inArray(recipes.id, ids))
   }

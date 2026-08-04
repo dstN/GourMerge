@@ -1,5 +1,5 @@
 /**
- * GourMerge — Drizzle ORM Database Schema (MariaDB)
+ * GourMerge — Drizzle ORM Database Schema (MySQL 8.4)
  *
  * This schema implements the Git-like versioning model for recipes:
  * - Recipes = Repositories

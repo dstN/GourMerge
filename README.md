@@ -13,7 +13,7 @@ A git-like recipe platform. Recipes are repositories — they have branches, com
 | ---------- | ---------------------------------------------- |
 | Framework  | Nuxt 4 (Vue 3 Composition API)                 |
 | UI         | Nuxt UI v4 (Reka UI + Tailwind CSS v4)         |
-| Database   | MariaDB via Drizzle ORM (mysql2)               |
+| Database   | MySQL 8.4 via Drizzle ORM (mysql2)             |
 | Auth       | nuxt-auth-utils (session-based)                |
 | i18n       | @nuxtjs/i18n — DE (default), EN, FR, IT        |
 | Editor     | TipTap 3 (Markdown output, no images)          |
@@ -28,7 +28,8 @@ A git-like recipe platform. Recipes are repositories — they have branches, com
 ### Prerequisites
 
 - Node.js 20+
-- Docker (for local MariaDB only — production uses Netcup MySQL)
+- MySQL 8.4 — either a native install on `localhost:3306` or the bundled
+  `docker-compose.yml`. Match production's major version; do not use MariaDB.
 
 ### Setup
 
@@ -43,7 +44,7 @@ npm install
 cp .env.example .env
 # Edit .env — set DATABASE_URL and NUXT_SESSION_PASSWORD at minimum
 
-# 4. Start local MariaDB
+# 4. Start local MySQL (skip if you already run MySQL 8.4 natively)
 docker compose up -d
 
 # 5. Apply migrations

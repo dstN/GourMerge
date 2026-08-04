@@ -30,12 +30,23 @@ In all code, UI labels, database columns, API endpoints, comments, commit messag
 | Framework      | **Nuxt 4** (Vue 3 Composition API)                             |
 | UI Library     | **Nuxt UI v4** (Reka UI + Tailwind CSS v4 + Tailwind Variants) |
 | Styling        | **Tailwind CSS v4** (CSS-first config via `@theme`)            |
-| Database       | **MariaDB** (exclusively)                                      |
+| Database       | **MySQL 8.4** (exclusively — see note below)                   |
 | ORM            | **Drizzle ORM** with `mysql2` driver                           |
 | i18n           | **@nuxtjs/i18n** (lazy-loaded, DE default + EN + FR + IT)      |
 | WYSIWYG Editor | **TipTap 3.x** with `@tiptap/markdown`                         |
 | Text Diffing   | **diff-match-patch-es**                                        |
 | PWA            | **@vite-pwa/nuxt**                                             |
+
+> **Engine correction (2026-08-04).** This document previously specified MariaDB. In
+> reality every environment is MySQL: production is `<db-host>` reporting
+> **8.4.11**, local dev is a native MySQL, and only CI ran `mariadb:11` — so tests were
+> the single MariaDB in the project. CI and `docker-compose.yml` are now pinned to
+> `mysql:8.4`. This matters because the codebase issues engine-specific SQL:
+> `JSON_UNQUOTE(JSON_EXTRACT(…))` for locale-aware ingredient names, a
+> collation-sensitive `LIKE` in ingredient autocomplete, and `MATCH … AGAINST` for
+> explore search. MariaDB implements `JSON` as `LONGTEXT` + CHECK, with different
+> comparison, collation and full-text tokenizer behaviour from MySQL's native type.
+> Keep every environment on MySQL 8.4; do not reintroduce MariaDB.
 
 ---
 
@@ -77,7 +88,7 @@ GourMerge/
 ├── docs/                       # Operational documentation
 ├── nuxt.config.ts              # Nuxt configuration (CSP, i18n, PWA, runtime config)
 ├── drizzle.config.ts           # Drizzle Kit config
-├── docker-compose.yml          # LOCAL DEV ONLY — MariaDB
+├── docker-compose.yml          # LOCAL DEV ONLY — MySQL 8.4
 └── app.js                      # Passenger startup shim
 ```
 
@@ -185,7 +196,7 @@ onBeforeRouteLeave((to, from, next) => {
 
 ---
 
-## 6. MariaDB & Drizzle ORM — Best Practices
+## 6. MySQL & Drizzle ORM — Best Practices
 
 ### Schema Design
 
@@ -200,13 +211,13 @@ onBeforeRouteLeave((to, from, next) => {
 
 1. **Snapshot-based commits**: each commit stores a full snapshot of ingredients + steps. Never delta encoding.
 2. **Branch = Pointer**: a branch row points to `head_commit_id`. Creating a branch is 1 INSERT.
-3. **Commit DAG**: `parent_commit_id` creates a linked list. Traverse application-side — **do NOT use recursive CTEs** (slow on MariaDB).
+3. **Commit DAG**: `parent_commit_id` creates a linked list. Traverse application-side. (The original rule said "no recursive CTEs, slow on MariaDB"; production is MySQL 8.4, where recursive CTEs are perfectly serviceable. The app-side walk stays because it is built, paginated and proven — not because CTEs are unavailable. Do not rewrite it without a measured reason.)
 4. **Diffs are computed on-read**: compare two commit snapshots at query time. Never pre-store diffs.
 5. **Indexing**: always index `branch_id`, `parent_commit_id`, `commit_id` (on ingredient/step tables), and `source_branch_id` / `target_branch_id` on GourMerge Requests.
 
 ### FK Cascade Design
 
-Most FK relations use `onDelete: 'cascade'`. Two relations use NO ACTION (= RESTRICT in MariaDB) and must be handled explicitly in the delete handler:
+Most FK relations use `onDelete: 'cascade'`. Two relations use NO ACTION (= RESTRICT in MySQL) and must be handled explicitly in the delete handler:
 
 - `recipes.forked_from_recipe_id` — nullify on forks before deleting parent
 - `gourmerge_requests.source_branch_id / target_branch_id / source_recipe_id` — delete cross-recipe GMRs before branch cascade

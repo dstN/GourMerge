@@ -10,7 +10,7 @@ The existing `production_audit.md` is **stale**: the uncommitted working tree ha
 
 ### Locked decisions (from stakeholder)
 
-1. **Deployment:** Netcup **Webhosting** (shared hosting) running Node via **Apache + Phusion Passenger**, with a **separate MySQL server** (MariaDB-compatible). → No Docker in production; `docker-compose.yml` is **local-dev only**. No root, no Redis, no self-hosted daemons.
+1. **Deployment:** Netcup **Webhosting** (shared hosting) running Node via **Apache + Phusion Passenger**, with a **separate MySQL server** (confirmed **MySQL 8.4.11** at `<db-host>`). → No Docker in production; `docker-compose.yml` is **local-dev only**. No root, no Redis, no self-hosted daemons.
 2. **No images / no uploads — text only.** Drop the entire `img::<uuid>` track. TipTap configured without image nodes. Ingredients identified by **real names** (from the `ingredients` master table + i18n), icons are decorative-only.
 3. **Full git workflow is a v1 blocker:** fork + branch comparison + GourMerge Requests + merge all ship in v1.
 4. **Observability:** Pino file logging (mandatory) + **Sentry.io** SDK + **UptimeRobot** on `/api/health`.
@@ -19,7 +19,7 @@ The existing `production_audit.md` is **stale**: the uncommitted working tree ha
 
 ### Stack is fixed (do not substitute)
 
-Nuxt 4 · Vue 3 Composition API (`<script setup lang="ts">`) · Nuxt UI v4 (Reka + Tailwind v4) · MariaDB · Drizzle ORM (`mysql2`) · TipTap 3 · `@nuxtjs/i18n` · `@vite-pwa/nuxt` · `nuxt-auth-utils` · Zod · `diff-match-patch-es`.
+Nuxt 4 · Vue 3 Composition API (`<script setup lang="ts">`) · Nuxt UI v4 (Reka + Tailwind v4) · MySQL 8.4 · Drizzle ORM (`mysql2`) · TipTap 3 · `@nuxtjs/i18n` · `@vite-pwa/nuxt` · `nuxt-auth-utils` · Zod · `diff-match-patch-es`.
 
 ---
 
@@ -311,10 +311,10 @@ Remaining, all deliberate:
 
 _Why UUIDv7 specifically, and why it doesn't hurt:_ a random UUIDv4 secondary index suffers constant page splits, ~2× index size, slower inserts (the randomness problem). **UUIDv7 stores a 48-bit Unix-millisecond timestamp in its leading bytes**, so generated IDs are time-ordered and append near the right edge of the index — keeping the `public_id` index dense and insert-cheap, while remaining globally unique and unguessable-enough for opaque references.
 
-_MariaDB-correct implementation (not Postgres):_
+_MySQL-correct implementation (not Postgres):_
 
 - Store `public_id` as **`BINARY(16)`** (16 bytes, not a 36-char string) with a **unique index**; expose as canonical UUID string at the API boundary.
-- **Generate in app code** (`uuidv7` npm package) rather than relying on a SQL `UUID_v7()` function — Netcup's MySQL server version is outside our control, so app-side generation is portable and version-independent. (If the server is confirmed MariaDB ≥ 11.7, `UUID_v7()` is an option, but app-side stays the default.)
+- **Generate in app code** (`uuidv7` npm package) rather than relying on a SQL `UUID_v7()` function — Netcup's MySQL server version is outside our control, so app-side generation is portable and version-independent. (The server is now known to be MySQL 8.4.11, which has no built-in `UUID_v7()` at all — that function is MariaDB ≥ 11.7 only — so app-side generation is not merely the default, it is the only option.)
 - Apply to externally-referenced entities: **`recipes`** and **`gourmerge_requests`** at minimum; pattern is extensible to `users`/`branches`/`commits` if/when those get external references. Recipes also keep slug+username URLs; `public_id` backs API/`:id` lookups so internal integers never leak.
 
 _Security caveat (do NOT apply v7 here):_ `email_verification_tokens` and `password_reset_tokens` must use **CSPRNG random tokens (hashed at rest)**, never UUIDv7 — v7's predictable timestamp prefix would weaken token unguessability. v7 is for identifiers, not secrets.
@@ -394,7 +394,7 @@ For each: **Why · How (Nuxt 4) · Test.**
 
 ## SECTION 8 — DevOps & Deployment Plan (Netcup Webhosting + Passenger)
 
-> **No Docker in production.** Production is Apache + Phusion Passenger running the built Nitro server, with a separate Netcup MySQL. `docker-compose.yml` stays for **local dev MariaDB only**.
+> **No Docker in production.** Production is Apache + Phusion Passenger running the built Nitro server, with a separate Netcup MySQL. `docker-compose.yml` stays for **local dev MySQL only**.
 
 **Build artifact:** Nuxt with Nitro `node-server` preset → `.output/`. **Build happens in CI** (shared hosting can't reliably build); the artifact is shipped to the host.
 
@@ -404,7 +404,7 @@ For each: **Why · How (Nuxt 4) · Test.**
 - Restart: deploy step `touch tmp/restart.txt`.
 - Env vars (`DATABASE_URL`, `NUXT_SESSION_PASSWORD`, `SENTRY_DSN`, SMTP creds): injected via Passenger env directives / Netcup panel — never committed.
 
-**Environment strategy:** `local` (Docker MariaDB) → `staging` (separate Netcup webspace/subdomain + staging DB) → `production`. Same artifact, different injected env.
+**Environment strategy:** `local` (MySQL 8.4) → `staging` (separate Netcup webspace/subdomain + staging DB) → `production`. Same artifact, different injected env.
 
 **CI/CD pipeline (GitHub Actions):**
 
