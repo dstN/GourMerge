@@ -91,8 +91,7 @@ function handleClearError() {
         </summary>
         <pre
           class="mt-2 p-4 rounded-lg bg-[var(--ui-bg-elevated)] text-xs text-[var(--ui-text-muted)] overflow-x-auto"
-          >{{ error.statusMessage }}</pre
-        >
+          >{{ error.statusMessage }}</pre>
       </details>
     </div>
   </div>
