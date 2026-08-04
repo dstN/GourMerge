@@ -14,8 +14,18 @@ jobs:
     # The environment must exist in repo Settings → Environments for its protection
     # rules to apply. If it does not, GitHub silently auto-creates an UNPROTECTED one
     # on first run — so an absent `production` environment means no approval gate.
+    # Keep the DEPLOY_*/DATABASE_URL secrets as ENVIRONMENT secrets on this
+    # environment, not repository secrets: repo secrets are readable by any workflow
+    # on any branch, which would bypass the approval gate entirely.
     environment:
       name: production
+
+    env:
+      # Netcup's SSH is a chrooted /bin/bash whose root IS the subscription root,
+      # so this path is what `pwd` shows over SSH (verified: /gourmerge.de), not a
+      # /var/www/vhosts/... path.
+      REMOTE_PATH: ${{ secrets.DEPLOY_PATH }}
+      REMOTE: ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}
 
     steps:
       # Fail in seconds with a readable message instead of 15 minutes later at the
@@ -26,21 +36,21 @@ jobs:
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_SSH_PASSWORD: ${{ secrets.DEPLOY_SSH_PASSWORD }}
           DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
           DEPLOY_DOMAIN: ${{ secrets.DEPLOY_DOMAIN }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
           missing=''
-          for name in DEPLOY_HOST DEPLOY_USER DEPLOY_SSH_KEY DEPLOY_PATH DEPLOY_DOMAIN DATABASE_URL; do
-            # Indirect expansion, so multi-line values (the SSH key) stay intact.
+          for name in DEPLOY_HOST DEPLOY_USER DEPLOY_SSH_PASSWORD DEPLOY_PATH DEPLOY_DOMAIN DATABASE_URL; do
+            # Indirect expansion, so multi-line values stay intact.
             if [ -z "${!name:-}" ]; then
               missing="$missing $name"
             fi
           done
           if [ -n "$missing" ]; then
-            echo "::error::Deploy aborted — unset repository secrets:$missing"
-            echo "Add them under Settings → Secrets and variables → Actions."
+            echo "::error::Deploy aborted — unset secrets:$missing"
+            echo "Add them as ENVIRONMENT secrets under Settings → Environments → production."
             echo "See docs/SECRETS.md for what each one holds."
             exit 1
           fi
@@ -49,8 +59,9 @@ jobs:
       # CI and E2E start together on a master push, and this job is triggered by
       # CI alone — so without this wait a green CI would deploy while E2E (the
       # only end-to-end coverage of fork → GourMerge Request → merge) is still
-      # running. Deliberately the FIRST step: nothing below it touches the
-      # production database or the live release.
+      # running. Deliberately early: nothing below it touches the production
+      # database or the live release. actions/github-script is GitHub-owned and
+      # never sees the SSH password.
       - name: Require the E2E suite to have passed for this commit
         timeout-minutes: 35
         uses: actions/github-script@v7
@@ -119,7 +130,7 @@ jobs:
           cache: 'npm'
 
       # drizzle-kit lives in devDependencies and migrations are run from here
-      # (the Netcup webspace has neither the CLI nor the migration files).
+      # (the chrooted webspace has neither node, npx, nor the migration files).
       - name: Install dependencies
         run: npm ci
 
@@ -141,54 +152,95 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: npx drizzle-kit migrate
 
-      # Staged into .output.new so the live .output is never a half-synced tree.
-      - name: Upload artifact to staging directory
-        uses: burnett01/rsync-deployments@7.0.1
-        with:
-          switches: -avz --delete
-          path: .output/
-          remote_path: ${{ secrets.DEPLOY_PATH }}/.output.new/
-          remote_host: ${{ secrets.DEPLOY_HOST }}
-          remote_user: ${{ secrets.DEPLOY_USER }}
-          remote_key: ${{ secrets.DEPLOY_SSH_KEY }}
+      # Everything remote is done with plain ssh + sshpass rather than a
+      # marketplace action: the webspace login is a password (Netcup exposes no
+      # key auth in the panel) and it is shared across all 26 domains on this
+      # subscription, so it must not be handed to a third-party action behind a
+      # mutable tag like @v1.
+      - name: Set up SSH (password auth + host key)
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_SSH_HOSTKEY: ${{ secrets.DEPLOY_SSH_HOSTKEY }}
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq sshpass
+          mkdir -p ~/.ssh
+          if [ -n "${DEPLOY_SSH_HOSTKEY:-}" ]; then
+            printf '%s\n' "$DEPLOY_SSH_HOSTKEY" > ~/.ssh/known_hosts_deploy
+            echo "Host key pinned from DEPLOY_SSH_HOSTKEY."
+          else
+            ssh-keyscan -t ed25519,rsa "$DEPLOY_HOST" > ~/.ssh/known_hosts_deploy 2>/dev/null
+            echo "::warning::DEPLOY_SSH_HOSTKEY is not set, so the deploy trusts whatever"
+            echo "::warning::key ssh-keyscan just fetched. With password auth an attacker in"
+            echo "::warning::the path would receive the account password in cleartext. Pin it:"
+            echo "::warning::  ssh-keyscan -t ed25519 ${DEPLOY_HOST}"
+            echo "::warning::and store the output line as the DEPLOY_SSH_HOSTKEY secret."
+          fi
+          chmod 600 ~/.ssh/known_hosts_deploy
 
-      - name: Upload app.js startup shim
-        uses: burnett01/rsync-deployments@7.0.1
-        with:
-          switches: -avz
-          path: app.js
-          remote_path: ${{ secrets.DEPLOY_PATH }}/app.js
-          remote_host: ${{ secrets.DEPLOY_HOST }}
-          remote_user: ${{ secrets.DEPLOY_USER }}
-          remote_key: ${{ secrets.DEPLOY_SSH_KEY }}
+      # rsync is NOT available in the chroot (verified: only tar, sh, mv, touch,
+      # mkdir), so the artifact is streamed as a gzipped tar over ssh. Staged into
+      # .output.new so the live .output is never a half-written tree.
+      - name: Upload release to staging directory
+        env:
+          SSHPASS: ${{ secrets.DEPLOY_SSH_PASSWORD }}
+        run: |
+          set -euo pipefail
+          # Deliberately unquoted below: these are separate ssh arguments.
+          # Compression=yes compresses in the SSH transport, so the remote side
+          # needs no gzip. `tar -z` would shell out to gzip, which is NOT among the
+          # binaries the chroot provides (only tar, sh, mv, touch, mkdir are
+          # confirmed) — an uncompressed tar stream keeps the remote dependency
+          # surface to tar alone.
+          SSH_OPTS="-o UserKnownHostsFile=$HOME/.ssh/known_hosts_deploy -o StrictHostKeyChecking=yes -o PubkeyAuthentication=no -o Compression=yes"
 
-      # Directory renames are near-instant, so the window where .output is
-      # absent is far smaller than an rsync. The outgoing release is kept as
-      # .output.prev — that is what the rollback procedure repoints to.
+          # `sshpass -e` takes the password from $SSHPASS; `-p` would expose it in
+          # the process list.
+          sshpass -e ssh $SSH_OPTS "$REMOTE" sh -s "$REMOTE_PATH" <<'REMOTE'
+          set -eu
+          rm -rf "$1/.output.new"
+          mkdir -p "$1/.output.new"
+          REMOTE
+
+          # pipefail matters here: without it a failing tar would be masked by a
+          # successful ssh and we would activate an incomplete release.
+          tar cf - -C .output . \
+            | sshpass -e ssh $SSH_OPTS "$REMOTE" "tar xf - -C '$REMOTE_PATH/.output.new'"
+
+          # Passenger's startup file. Tiny, so just stream it in place.
+          sshpass -e ssh $SSH_OPTS "$REMOTE" "cat > '$REMOTE_PATH/app.js'" < app.js
+
+          echo "Artifact staged in $REMOTE_PATH/.output.new"
+
+      # Directory renames are near-instant, so the window where .output is absent
+      # is far smaller than a full upload. The outgoing release is kept as
+      # .output.prev — that is what the rollback repoints to.
       - name: Activate release and restart Passenger
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_SSH_KEY }}
-          script: |
-            # POSIX-safe: `pipefail` is a bashism and the host login shell is not
-            # guaranteed to be bash.
-            set -eu
-            cd "${{ secrets.DEPLOY_PATH }}"
+        env:
+          SSHPASS: ${{ secrets.DEPLOY_SSH_PASSWORD }}
+        run: |
+          set -euo pipefail
+          SSH_OPTS="-o UserKnownHostsFile=$HOME/.ssh/known_hosts_deploy -o StrictHostKeyChecking=yes -o PubkeyAuthentication=no"
 
-            test -d .output.new || { echo "staged release missing"; exit 1; }
+          sshpass -e ssh $SSH_OPTS "$REMOTE" sh -s "$REMOTE_PATH" <<'REMOTE'
+          set -eu
+          cd "$1"
 
-            rm -rf .output.prev
-            if [ -d .output ]; then
-              mv .output .output.prev
-            fi
-            mv .output.new .output
+          test -d .output.new || { echo "staged release missing"; exit 1; }
+          test -f .output.new/server/index.mjs || { echo "staged release looks incomplete"; exit 1; }
 
-            mkdir -p tmp
-            touch tmp/restart.txt
+          rm -rf .output.prev
+          if [ -d .output ]; then
+            mv .output .output.prev
+          fi
+          mv .output.new .output
 
-            echo "Release activated (previous kept in .output.prev)."
+          mkdir -p tmp
+          touch tmp/restart.txt
+
+          echo "Release activated (previous kept in .output.prev)."
+          REMOTE
 
       - name: Smoke test
         id: smoke
@@ -209,27 +261,27 @@ jobs:
       # reverted. Runs only when the smoke test failed.
       - name: Roll back to previous release
         if: failure() && steps.smoke.outcome == 'failure'
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_SSH_KEY }}
-          script: |
-            # POSIX-safe: `pipefail` is a bashism and the host login shell is not
-            # guaranteed to be bash.
-            set -eu
-            cd "${{ secrets.DEPLOY_PATH }}"
+        env:
+          SSHPASS: ${{ secrets.DEPLOY_SSH_PASSWORD }}
+        run: |
+          set -euo pipefail
+          SSH_OPTS="-o UserKnownHostsFile=$HOME/.ssh/known_hosts_deploy -o StrictHostKeyChecking=yes -o PubkeyAuthentication=no"
 
-            if [ ! -d .output.prev ]; then
-              echo "No .output.prev to roll back to (first deploy?) — leaving as-is."
-              exit 1
-            fi
+          sshpass -e ssh $SSH_OPTS "$REMOTE" sh -s "$REMOTE_PATH" <<'REMOTE'
+          set -eu
+          cd "$1"
 
-            rm -rf .output.failed
-            mv .output .output.failed
-            mv .output.prev .output
+          if [ ! -d .output.prev ]; then
+            echo "No .output.prev to roll back to (first deploy?) — leaving as-is."
+            exit 1
+          fi
 
-            mkdir -p tmp
-            touch tmp/restart.txt
+          rm -rf .output.failed
+          mv .output .output.failed
+          mv .output.prev .output
 
-            echo "Rolled back to the previous release (bad build kept in .output.failed)."
+          mkdir -p tmp
+          touch tmp/restart.txt
+
+          echo "Rolled back to the previous release (bad build kept in .output.failed)."
+          REMOTE
