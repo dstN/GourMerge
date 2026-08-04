@@ -248,12 +248,20 @@ All routes: Zod-validated body/query, `requireUserSession()` where auth required
 
 The `ingredients` master table is populated from the **Swiss BLV Food Composition Database V7.0** (naehrwertdaten.ch).
 
-- ~2300+ Swiss food entries with DE/FR/IT names and synonyms
+- **1191** Swiss food entries with DE/EN/FR/IT names and synonyms. (Previously documented as "~2300+" — wrong; the BLV generic-foods sheet is `A1:EK1193`, i.e. 1191 data rows after two header rows, and the importer merges all four language exports onto that same ID set.)
 - Nutrition data per 100g (kcal, macros, fiber, micros) in `ingredient_nutrition`
 - Source marker: `ingredient_nutrition.source = 'swiss-blv-v7'`
 - Locale-aware search: name + synonyms matched by user's locale (`GET /api/ingredients?q=&locale=`)
 - Curated entries (not in Swiss DB) can be added to `seed-ingredients.mjs` with `source = 'curated'`
 - **Vanilla Sugar** (`Vanillezucker`): not in Swiss BLV DB — added as a curated entry in `seed-ingredients.mjs` (apply with `npm run db:seed`)
+
+### Seeding (committed seed file, not the spreadsheets)
+
+`server/database/seeds/swiss-foods.jsonl` (1191 foods, ~1 MB, **tracked**) is the seed source, so a fresh clone can run `npm run db:setup` — migrate + all three seeds — with no downloads and without the `xlsx` dependency. JSON Lines, one food per line, so a dataset update is a reviewable diff rather than one rewritten mega-line.
+
+`scripts/import-swiss-foods.mjs` reads that file by default; `--from-xlsx` re-parses the four BLV spreadsheets from `.claude/data/swiss/` (gitignored, not redistributed) and `--emit-seed` regenerates the seed. `xlsx` is a **lazy** import inside that path only, so the contributor path never loads the package carrying the unfixed advisory.
+
+**No SQL dump is committed, deliberately**: it would be a second source of truth for the schema competing with the migrations, is unreviewable in a diff, and bakes in engine/version specifics. Schema ← migrations; reference data ← seed file.
 
 ---
 

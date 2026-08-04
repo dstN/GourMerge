@@ -1,34 +1,60 @@
 /**
  * Import Swiss BLV Food Composition Database V7.0 into the GourMerge ingredient catalog.
  *
+ * Two sources, one importer:
+ *
+ *   1. The committed seed file (DEFAULT) — `server/database/seeds/swiss-foods.jsonl`.
+ *      This is what contributors use. No XLSX, no `xlsx` dependency, no licence
+ *      question about redistributing spreadsheets: just `npm run db:seed:swiss`.
+ *
+ *   2. The original BLV spreadsheets — for regenerating that seed when BLV
+ *      publishes a new revision. They are NOT in the repo (`.claude/` is
+ *      gitignored); download them from naehrwertdaten.ch into
+ *      `.claude/data/swiss/` first.
+ *
  * Usage:
- *   node scripts/import-swiss-foods.mjs
- *   node scripts/import-swiss-foods.mjs --dry-run    (prints rows, no DB writes)
- *   node scripts/import-swiss-foods.mjs --limit 20   (import first N rows for testing)
+ *   node scripts/import-swiss-foods.mjs                    # seed file → DB
+ *   node scripts/import-swiss-foods.mjs --dry-run          # parse only, no DB writes
+ *   node scripts/import-swiss-foods.mjs --limit 20          # first N rows only
+ *   node scripts/import-swiss-foods.mjs --from-xlsx         # spreadsheets → DB
+ *   node scripts/import-swiss-foods.mjs --from-xlsx --emit-seed
+ *                                                          # spreadsheets → seed file, no DB
  *
- * Data source: .claude/data/swiss/
- *   - Schweizer_Nahrwertdatenbank.xlsx  (German — always required)
- *   - Add EN/FR/IT exports with same format when available; they are joined by the ID column.
+ * XLSX files expected by --from-xlsx (joined on the stable numeric ID column):
+ *   Schweizer_Nahrwertdatenbank.xlsx                     (de — required)
+ *   Swiss_food_composition_database.xlsx                 (en)
+ *   Base_de_donnees_suisse_des_valeurs_nutritives.xlsx   (fr)
+ *   Banca_dati_svizzera_dei_valori_nutritivi.xlsx        (it)
  *
- * The importer:
- *   - Reads all present language XLSX files in .claude/data/swiss/
- *   - Joins rows by the stable numeric ID column (column A in each sheet)
- *   - Upserts `ingredients` (canonical EN name when available, else DE) + `ingredient_nutrition`
- *   - Idempotent: keyed by (source='swiss-blv-v7', externalId)
+ * Upserts `ingredients` (canonical EN name when available, else DE) +
+ * `ingredient_nutrition`. Idempotent: keyed by (source='swiss-blv-v7', externalId).
  */
 
-import XLSXMod from 'xlsx'
 import { createConnection } from 'mysql2/promise'
-import { readFileSync, readdirSync } from 'node:fs'
+import { readFileSync, readdirSync, writeFileSync, mkdirSync } from 'node:fs'
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-const XLSX = XLSXMod.default ?? XLSXMod
+// `xlsx` is imported lazily inside the --from-xlsx path only. It carries an
+// unfixed advisory and is needed solely to regenerate the seed, so the default
+// contributor path must not load it (and must work if it is not installed).
+async function loadXlsx() {
+  try {
+    const mod = await import('xlsx')
+    return mod.default ?? mod
+  } catch {
+    console.error('The --from-xlsx path needs the `xlsx` package: npm i -D xlsx')
+    process.exit(1)
+  }
+}
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = resolve(__dirname, '..')
 const DATA_DIR = resolve(ROOT, '.claude/data/swiss')
+const SEED_FILE = resolve(ROOT, 'server/database/seeds/swiss-foods.jsonl')
 const isDryRun = process.argv.includes('--dry-run')
+const fromXlsx = process.argv.includes('--from-xlsx')
+const emitSeed = process.argv.includes('--emit-seed')
 const limitArg = process.argv.indexOf('--limit')
 const LIMIT = limitArg >= 0 ? parseInt(process.argv[limitArg + 1], 10) : Infinity
 
@@ -47,7 +73,9 @@ function loadEnv() {
 }
 loadEnv()
 
-if (!process.env.DATABASE_URL) {
+// --emit-seed and --dry-run never touch the database.
+const needsDb = !emitSeed && !isDryRun
+if (needsDb && !process.env.DATABASE_URL) {
   console.error('ERROR: DATABASE_URL is not set.')
   process.exit(1)
 }
@@ -123,7 +151,7 @@ function detectLanguage(filename) {
 //   FR: Aliments génériques      IT: Alimenti generici
 const GENERIC_SHEET_NAMES = ['Generische Lebensmittel', 'Generic Foods', 'Aliments génériques', 'Alimenti generici']
 
-function parseXlsx(filePath) {
+function parseXlsx(filePath, XLSX) {
   const wb = XLSX.readFile(filePath, { type: 'buffer', cellDates: false })
   const sheetName = GENERIC_SHEET_NAMES.find((n) => wb.Sheets[n])
   if (!sheetName) throw new Error(`No generic-foods sheet found in ${filePath}. Available: ${wb.SheetNames.join(', ')}`)
@@ -247,58 +275,98 @@ function mapCategory(kategorie) {
 async function main() {
   console.log('GourMerge Swiss BLV Food Importer V7.0\n')
 
-  // Find all XLSX files in the data directory
-  // Sort so DE is always first — category strings (Kategorie) come from DE and are the CATEGORY_MAP keys.
-  const LANG_ORDER = { de: 0, en: 1, fr: 2, it: 3 }
-  const xlsxFiles = readdirSync(DATA_DIR)
-    .filter((f) => f.toLowerCase().endsWith('.xlsx'))
-    .map((f) => ({ file: resolve(DATA_DIR, f), lang: detectLanguage(f) }))
-    .sort((a, b) => (LANG_ORDER[a.lang] ?? 9) - (LANG_ORDER[b.lang] ?? 9))
+  let merged
 
-  if (xlsxFiles.length === 0) {
-    console.error(`No XLSX files found in ${DATA_DIR}`)
-    process.exit(1)
-  }
+  if (fromXlsx) {
+    const XLSX = await loadXlsx()
 
-  console.log(`Found ${xlsxFiles.length} language file(s):`)
-  xlsxFiles.forEach(({ file, lang }) => console.log(`  [${lang}] ${file.split('/').pop() || file.split('\\').pop()}`))
-  console.log()
+    // Find all XLSX files in the data directory
+    // Sort so DE is always first — category strings (Kategorie) come from DE and are the CATEGORY_MAP keys.
+    const LANG_ORDER = { de: 0, en: 1, fr: 2, it: 3 }
+    let xlsxFiles
+    try {
+      xlsxFiles = readdirSync(DATA_DIR)
+        .filter((f) => f.toLowerCase().endsWith('.xlsx'))
+        .map((f) => ({ file: resolve(DATA_DIR, f), lang: detectLanguage(f) }))
+        .sort((a, b) => (LANG_ORDER[a.lang] ?? 9) - (LANG_ORDER[b.lang] ?? 9))
+    } catch {
+      console.error(`Cannot read ${DATA_DIR}.`)
+      console.error('The BLV spreadsheets are not in the repo. Download them from')
+      console.error('naehrwertdaten.ch into .claude/data/swiss/, or drop --from-xlsx')
+      console.error('to seed from the committed seed file instead.')
+      process.exit(1)
+    }
 
-  // Parse all language files; primary = first German file
-  const byLang = {}
-  const byId = {} // id → merged row
+    if (xlsxFiles.length === 0) {
+      console.error(`No XLSX files found in ${DATA_DIR}`)
+      process.exit(1)
+    }
 
-  for (const { file, lang } of xlsxFiles) {
-    console.log(`Parsing [${lang}]...`)
-    const rows = parseXlsx(file)
-    byLang[lang] = rows
-    console.log(`  → ${rows.length} rows`)
+    console.log(`Found ${xlsxFiles.length} language file(s):`)
+    xlsxFiles.forEach(({ file, lang }) => console.log(`  [${lang}] ${file.split(/[/\\]/).pop()}`))
+    console.log()
 
-    for (const row of rows) {
-      if (!byId[row.id]) {
-        // Primary entry (nutrition always from DE/first file)
-        byId[row.id] = {
-          id: row.id,
-          names: {},
-          synonyms: {},
-          kategorie: row.kategorie,
-          dichte: row.dichte,
-          nutrition: row.nutrition,
+    // Parse all language files; primary = first German file
+    const byId = {} // id → merged row
+
+    for (const { file, lang } of xlsxFiles) {
+      console.log(`Parsing [${lang}]...`)
+      const rows = parseXlsx(file, XLSX)
+      console.log(`  → ${rows.length} rows`)
+
+      for (const row of rows) {
+        if (!byId[row.id]) {
+          // Primary entry (nutrition always from DE/first file)
+          byId[row.id] = {
+            id: row.id,
+            names: {},
+            synonyms: {},
+            kategorie: row.kategorie,
+            dichte: row.dichte,
+            nutrition: row.nutrition,
+          }
+        }
+        // Add this language's name and synonyms
+        byId[row.id].names[lang] = row.name
+        if (row.synonyme) {
+          byId[row.id].synonyms[lang] = row.synonyme
+            .split(';')
+            .map((s) => s.trim())
+            .filter(Boolean)
         }
       }
-      // Add this language's name and synonyms
-      byId[row.id].names[lang] = row.name
-      if (row.synonyme) {
-        byId[row.id].synonyms[lang] = row.synonyme
-          .split(';')
-          .map((s) => s.trim())
-          .filter(Boolean)
-      }
     }
+
+    // Stable ordering, so regenerating the seed produces a reviewable diff
+    // instead of a reshuffled file.
+    merged = Object.values(byId).sort((a, b) => String(a.id).localeCompare(String(b.id), 'en', { numeric: true }))
+    console.log(`\nMerged ${merged.length} unique food IDs across all languages.\n`)
+  } else {
+    try {
+      merged = readFileSync(SEED_FILE, 'utf8')
+        .split('\n')
+        .filter((line) => line.trim())
+        .map((line) => JSON.parse(line))
+    } catch (err) {
+      console.error(`Cannot read the seed file at ${SEED_FILE}`)
+      console.error(err.code === 'ENOENT' ? 'It is missing from this checkout.' : err.message)
+      console.error('Regenerate it with: node scripts/import-swiss-foods.mjs --from-xlsx --emit-seed')
+      process.exit(1)
+    }
+    console.log(`Loaded ${merged.length} foods from the committed seed file.\n`)
   }
 
-  const merged = Object.values(byId)
-  console.log(`\nMerged ${merged.length} unique food IDs across all languages.\n`)
+  if (emitSeed) {
+    mkdirSync(dirname(SEED_FILE), { recursive: true })
+    // JSON Lines, one food per line: same size as minified JSON but a changed
+    // or added food shows up as a one-line diff instead of rewriting the whole
+    // file, which matters for a ~1 MB dataset under review.
+    writeFileSync(SEED_FILE, merged.map((row) => JSON.stringify(row)).join('\n') + '\n')
+    const kb = (readFileSync(SEED_FILE).length / 1024).toFixed(0)
+    console.log(`Wrote ${merged.length} foods to ${SEED_FILE} (${kb} KB).`)
+    console.log('Commit it so contributors can seed without the spreadsheets.')
+    return
+  }
 
   if (isDryRun) {
     const sample = merged.slice(0, 5)

@@ -25,7 +25,10 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:seed": "node scripts/seed-ingredients.mjs",
+    "db:seed:tags": "node scripts/seed-tags.mjs",
+    "db:setup": "npm run db:migrate && npm run seed:swiss && npm run db:seed && npm run db:seed:tags",
     "seed:swiss": "node scripts/import-swiss-foods.mjs",
+    "seed:swiss:regen": "node scripts/import-swiss-foods.mjs --from-xlsx --emit-seed",
     "generate:icons": "node scripts/generate-icons.mjs"
   },
   "dependencies": {

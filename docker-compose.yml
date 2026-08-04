@@ -1,16 +1,26 @@
 # LOCAL DEV ONLY — production is Netcup MySQL behind Plesk, never Docker.
 #
-# Pinned to MySQL 8.4 to match production (<db-host> reports 8.4.11).
-# This previously ran mariadb:11, which matched neither production nor the
-# native MySQL commonly already listening on localhost:3306. If you use a
-# native MySQL instead of this compose file, prefer 8.4 for the same reason.
+# OPTIONAL. A native MySQL 8.4 on :3306 works just as well; this only exists so a
+# fresh machine can get a correctly-versioned database in one command. Pinned to
+# MySQL 8.4 to match production (<db-host> reports 8.4.11) — it
+# previously ran mariadb:11, which matched no environment we actually use.
+#
+# Published on host port 3307, NOT 3306, so it can run ALONGSIDE a native MySQL
+# instead of fighting it. This matters on Windows + Docker-in-WSL2: WSL2 forwards
+# published ports onto the Windows localhost, so a 3306 mapping would collide
+# with a native Windows MySQL and fail (or worse, silently shadow it).
+#
+#   native MySQL  -> mysql://user:pass@127.0.0.1:3306/gourmerge
+#   this container -> mysql://gourmerge:gourmerge_secret@127.0.0.1:3307/gourmerge
+#
+# Point DATABASE_URL in .env at whichever you want; both can run at once.
 services:
   mysql:
     image: mysql:8.4
     container_name: gourmerge-db
     restart: unless-stopped
     ports:
-      - '3306:3306'
+      - '3307:3306'
     environment:
       MYSQL_ROOT_PASSWORD: gourmerge_root
       MYSQL_DATABASE: gourmerge
