@@ -31,7 +31,6 @@ PassengerEnvVar REQUIRE_EMAIL_VERIFICATION true
 | `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` | **Yes**   | Transactional email (verification, reset)        |
 | `SMTP_FROM`                                           | No        | From-address for emails                          |
 | `NUXT_PUBLIC_SENTRY_DSN`                              | No        | Sentry project DSN (public by design)            |
-| `NUXT_SENTRY_RELEASE`                                 | No        | Release tag (set by CI to the git SHA)           |
 | `NUXT_PUBLIC_APP_URL`                                 | No        | Canonical URL for emails / SEO / OG / sitemap    |
 | `LOG_LEVEL`                                           | No        | `debug` \| `info` \| `warn` \| `error`           |
 | `REQUIRE_EMAIL_VERIFICATION`                          | No        | Gate publishing / GMRs on a verified email       |
@@ -54,6 +53,11 @@ Set under **Repo → Settings → Secrets and variables → Actions**. Consumed 
 | `DEPLOY_DOMAIN`                                       | `deploy.yml`        | Domain for the post-deploy `/api/health` smoke test                                                                                           |
 | `DATABASE_URL`                                        | `deploy.yml`        | Production DB URL for `drizzle-kit migrate` during deploy                                                                                     |
 | `SENTRY_AUTH_TOKEN` / `SENTRY_ORG` / `SENTRY_PROJECT` | `ci.yml` (optional) | Source-map upload at build time. Optional — build succeeds without them (no upload). Server-side Sentry capture does **not** depend on these. |
+
+**Build-time-only Sentry vars.** `ci.yml` sets `NUXT_SENTRY_RELEASE` to `github.sha` on
+the build step so deployed errors are attributable to a release. It is baked into the
+artifact and cannot be injected on the host — its name does not map to the
+`runtimeConfig.public.sentry.release` path (that would be `NUXT_PUBLIC_SENTRY_RELEASE`).
 
 `GITHUB_TOKEN` is provided automatically and needs no configuration.
 

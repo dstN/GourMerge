@@ -46,11 +46,11 @@ GourMerge/
 │   │                           # RecipeCard, RecipeDiffViewer, DietaryBadge, NutritionFacts
 │   ├── layouts/                # default.vue, dashboard.vue, auth.vue
 │   ├── middleware/             # validate-recipe-route.ts, auth.ts
-│   ├── pages/                  # 23 pages (see §5)
+│   ├── pages/                  # 25 pages (see §5)
 │   ├── app.vue                 # <UApp><NuxtLayout><NuxtPage />
 │   └── app.config.ts           # Nuxt UI theme overrides
 ├── server/
-│   ├── api/                    # 32 REST endpoints (see §6)
+│   ├── api/                    # 33 REST endpoints (see §6)
 │   ├── database/
 │   │   ├── schema.ts           # Drizzle ORM schema (17 tables)
 │   │   └── migrations/         # 7 versioned SQL migrations (0000–0006)
@@ -58,7 +58,7 @@ GourMerge/
 │   ├── plugins/                # Nitro plugins (db, logger, sentry)
 │   └── utils/                  # drizzle.ts, diff.ts, merge.ts, units.ts, slug.ts
 ├── shared/types/               # TypeScript types shared app ↔ server
-├── i18n/locales/               # de.json, en.json, fr.json, it.json (377 keys, 4-way parity)
+├── i18n/locales/               # de.json, en.json, fr.json, it.json (387 keys, 4-way parity)
 ├── scripts/                    # Maintenance + setup scripts (see §8)
 ├── public/                     # PWA icons, favicon, apple-touch-icon
 ├── docs/RUNBOOK.md             # Production operations playbook
@@ -149,7 +149,7 @@ This is handled in `server/api/recipes/[id].delete.ts`.
 
 ---
 
-## 6. API Routes (34 endpoints)
+## 6. API Routes (33 endpoints)
 
 All routes: Zod-validated body/query, `requireUserSession()` where auth required, `createError()` for errors.
 
@@ -222,7 +222,7 @@ All routes: Zod-validated body/query, `requireUserSession()` where auth required
 
 - **4 locales**: `de` (default), `en`, `fr`, `it`
 - **Strategy**: `prefix_except_default` — German has no prefix; `/en/`, `/fr/`, `/it/` prefixed
-- **Key count**: 377 keys, 4-way parity (verified by `npm run i18n:check`)
+- **Key count**: 387 keys, 4-way parity (verified by `npm run i18n:check`)
 - **Locale files**: `i18n/locales/{de,en,fr,it}.json`
 - **CI gate**: `scripts/i18n-check.mjs` — fails if any locale has a missing key or empty value
 - **Translated**: all UI labels, navigation, errors, toasts, onboarding, glossary, legal pages, auth flows
@@ -259,24 +259,24 @@ The `ingredients` master table is populated from the **Swiss BLV Food Compositio
 
 ## 10. Security Implementation
 
-| Measure                   | Status   | Notes                                                                                                                                                                                                                                                                                                                          |
-| ------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Rate limiting             | ✓ Done   | DB-backed (`rate_limit_hits` table) — multi-process safe for Passenger                                                                                                                                                                                                                                                         |
-| CSRF                      | ✓ Done   | nuxt-auth-utils / Nitro                                                                                                                                                                                                                                                                                                        |
-| Session rotation          | ✓ Done   | Post-login session regeneration                                                                                                                                                                                                                                                                                                |
-| Secure cookies            | ✓ Done   | `httpOnly`, `sameSite=lax`, 14-day maxAge                                                                                                                                                                                                                                                                                      |
-| Email verification        | ✓ Done   | CSPRNG token + bcrypt hash + SMTP send                                                                                                                                                                                                                                                                                         |
-| Password reset            | ✓ Done   | CSPRNG token + bcrypt hash + expiry + no-enumeration response                                                                                                                                                                                                                                                                  |
-| Zod validation            | ✓ Done   | All endpoint bodies + query params                                                                                                                                                                                                                                                                                             |
-| Authorization             | ✓ Done   | Ownership checks on all mutating routes                                                                                                                                                                                                                                                                                        |
-| CSP                       | ✓ Done   | Set per-request in `server/plugins/csp.ts` (`render:html` hook), not `routeRules` — allows TipTap inline styles, Sentry, Google Fonts                                                                                                                                                                                            |
-| Security headers          | ✓ Done   | X-Content-Type-Options, X-Frame-Options, Referrer-Policy                                                                                                                                                                                                                                                                       |
-| HSTS                      | ✓ Done   | Enabled in production via `routeRules` (baked when `NODE_ENV=production`): 1y max-age + includeSubDomains. Local HTTP dev unaffected. `.htaccess` also forces HTTP→HTTPS                                                                                                                                                       |
-| Email-verification gating | ✓ Done   | `requireVerifiedUser` wired into GMR creation + recipe publish (create/patch to public); no-op unless `REQUIRE_EMAIL_VERIFICATION=true`                                                                                                                                                                                        |
-| Markdown sanitization     | ✓ Done   | User step HTML/Markdown sanitized via allowlist (`app/utils/markdown.ts`) before `v-html`                                                                                                                                                                                                                                      |
-| Error sanitization        | ✓ Done   | Verified: Nitro prod handler returns generic `"Server Error"` (no message/data/stack) for unhandled errors; only intentional `createError` 4xx keep `statusMessage`/`data` (e.g. Zod field errors). `error-handler.ts` logs 5xx + sets `x-request-id` for correlation                                                          |
-| CSP `script-src` nonce    | ✓ Done   | Production drops `'unsafe-inline'` from `script-src`; every inline `<script>` gets a per-request nonce (`script-src 'self' 'nonce-…'`). Dev keeps `'unsafe-inline'` (Vite/HMR). Verified against a prod build: 0 CSP violations, app hydrates, color-mode FOUC guard runs                                                          |
-| `npm audit`               | ✓ Done   | CI fails on **critical** advisories; Dependabot (`.github/dependabot.yml`) proposes high/moderate fixes as CI-validated PRs. drizzle-orm upgraded to ≥0.45.2 (SQL-identifier injection fix). Known accepted highs: `xlsx` (dev-only import script), `nodemailer` raw-option (unused), `vite`/`esbuild` dev-server (transitive) |
+| Measure                   | Status | Notes                                                                                                                                                                                                                                                                                                                          |
+| ------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Rate limiting             | ✓ Done | DB-backed (`rate_limit_hits` table) — multi-process safe for Passenger                                                                                                                                                                                                                                                         |
+| CSRF                      | ✓ Done | nuxt-auth-utils / Nitro                                                                                                                                                                                                                                                                                                        |
+| Session rotation          | ✓ Done | Post-login session regeneration                                                                                                                                                                                                                                                                                                |
+| Secure cookies            | ✓ Done | `httpOnly`, `sameSite=lax`, 14-day maxAge                                                                                                                                                                                                                                                                                      |
+| Email verification        | ✓ Done | CSPRNG token + bcrypt hash + SMTP send                                                                                                                                                                                                                                                                                         |
+| Password reset            | ✓ Done | CSPRNG token + bcrypt hash + expiry + no-enumeration response                                                                                                                                                                                                                                                                  |
+| Zod validation            | ✓ Done | All endpoint bodies + query params                                                                                                                                                                                                                                                                                             |
+| Authorization             | ✓ Done | Ownership checks on all mutating routes                                                                                                                                                                                                                                                                                        |
+| CSP                       | ✓ Done | Set per-request in `server/plugins/csp.ts` (`render:html` hook), not `routeRules` — allows TipTap inline styles, Sentry, Google Fonts                                                                                                                                                                                          |
+| Security headers          | ✓ Done | X-Content-Type-Options, X-Frame-Options, Referrer-Policy                                                                                                                                                                                                                                                                       |
+| HSTS                      | ✓ Done | Enabled in production via `routeRules` (baked when `NODE_ENV=production`): 1y max-age + includeSubDomains. Local HTTP dev unaffected. `.htaccess` also forces HTTP→HTTPS                                                                                                                                                       |
+| Email-verification gating | ✓ Done | `requireVerifiedUser` wired into GMR creation + recipe publish (create/patch to public); no-op unless `REQUIRE_EMAIL_VERIFICATION=true`                                                                                                                                                                                        |
+| Markdown sanitization     | ✓ Done | User step HTML/Markdown sanitized via allowlist (`app/utils/markdown.ts`) before `v-html`                                                                                                                                                                                                                                      |
+| Error sanitization        | ✓ Done | Verified: Nitro prod handler returns generic `"Server Error"` (no message/data/stack) for unhandled errors; only intentional `createError` 4xx keep `statusMessage`/`data` (e.g. Zod field errors). `error-handler.ts` logs 5xx + sets `x-request-id` for correlation                                                          |
+| CSP `script-src` nonce    | ✓ Done | Production drops `'unsafe-inline'` from `script-src`; every inline `<script>` gets a per-request nonce (`script-src 'self' 'nonce-…'`). Dev keeps `'unsafe-inline'` (Vite/HMR). Verified against a prod build: 0 CSP violations, app hydrates, color-mode FOUC guard runs                                                      |
+| `npm audit`               | ✓ Done | CI fails on **critical** advisories; Dependabot (`.github/dependabot.yml`) proposes high/moderate fixes as CI-validated PRs. drizzle-orm upgraded to ≥0.45.2 (SQL-identifier injection fix). Known accepted highs: `xlsx` (dev-only import script), `nodemailer` raw-option (unused), `vite`/`esbuild` dev-server (transitive) |
 
 ---
 
@@ -309,23 +309,31 @@ The `ingredients` master table is populated from the **Swiss BLV Food Compositio
 - **Explore**: public browse with text search, difficulty/tag filter, sort (stars/newest/forks), pagination
 - **User profiles**: public profile (recipes, starred, bio, avatar), settings page
 - **GourMerge Requests**: full lifecycle — create, list, view with diff, comment (Markdown), status (draft→open→closed/merged), three-way snapshot merge with conflict detection + **interactive per-conflict resolution** (keep source/target), merge commit. Merge is transactional with a `SELECT … FOR UPDATE` guard against concurrent double-merge; merged ingredient `sortOrder` is normalized
-- **i18n**: 4 locales (DE/EN/FR/IT), 377 keys in parity, 4-way CI gate — incl. transactional emails (verification + password reset) localized per recipient's `preferredLocale`
+- **i18n**: 4 locales (DE/EN/FR/IT), 387 keys in parity, 4-way CI gate — incl. transactional emails (verification + password reset) localized per recipient's `preferredLocale`
 - **Onboarding**: concept explainer, interactive skippable/re-runnable tour, guided first-recipe flow, contextual help (`<HelpHint>`), glossary page
 - **Dirty-state guard**: edit page navigation guard via UModal (not `window.confirm` — suppressed in Chromium)
 - **Delete recipe**: from edit page with confirmation modal; cascade handles all FK cleanup
 - **Layout**: default (header nav + footer), dashboard (sidebar + max-w-7xl header/footer), auth (minimal)
 - **PWA**: icons generated, manifest configured, autoUpdate service worker
-- **Observability**: Pino logging (⚠ file rotation + Sentry active capture not yet wired — see §11), /api/health endpoint
-- **Security headers/CSP**: configured in nuxt.config.ts routeRules
+- **Observability**: Pino logging with file rotation + client/server Sentry capture + `/api/health` (see §11)
+- **Security headers**: static headers in `nuxt.config.ts` `routeRules`; CSP set per-request in `server/plugins/csp.ts` (nonce-based `script-src` in production)
 - **Markdown sanitization**: user step content sanitized via allowlist before `v-html` (`app/utils/markdown.ts`)
 - **Brand**: GourMerge SVG logo (`BrandLogo.vue`), orange primary color, DM Sans + JetBrains Mono fonts
 
-### ✗ Not yet done
+### ✓ Complete (test + delivery pipeline)
 
-- **Tests**: **unit** — 118 cases (`tests/unit/`: diff, merge incl. resolution, units, slug, uuid, nutrition, markdown-XSS, emailI18n, i18n-gate), 97% line coverage enforced in CI. **E2E/API/a11y** — 24 Playwright specs (`tests/e2e/`): auth lifecycle + authz matrix, recipe CRUD/fork/star, merge conflict-detect → interactive resolve → verify → immutable, SSR render, register UI journey, and axe scans (critical-gated). Run via `npm run test:e2e` + the `E2E` workflow on master. Dedicated component-mount tests not added — covered functionally by the E2E journeys
-- **CI/CD**: GitHub Actions **are configured** — `ci.yml` (lint → format → typecheck → i18n → migrate → test → build) and `deploy.yml` (rsync → migrate → restart → smoke test). Not yet: coverage enforcement, `npm audit` gate
-- **Passenger CD**: `.htaccess` + `app.js` exist and `deploy.yml` **does** wire rsync + migrate + `touch tmp/restart.txt` + health smoke test. Not yet: migrate exit-code check, production environment protection
-- **Dependabot / npm audit CI gate**: not configured
+- **Tests**: **unit** — 118 cases (`tests/unit/`: diff, merge incl. resolution, units, slug, uuid, nutrition, markdown-XSS, emailI18n, i18n-gate), 97% line coverage enforced in CI. **E2E/API/a11y** — 24 Playwright specs across 5 files (`tests/e2e/`): auth lifecycle + authz matrix, recipe CRUD/fork/star, merge conflict-detect → interactive resolve → verify → immutable, SSR render, register UI journey, and axe scans (critical-gated). Run via `npm run test:e2e` + the `E2E` workflow on master
+- **CI** (`ci.yml`): lint → format:check → knip → typecheck → i18n → `npm audit` (critical) → migrate → test **with coverage gate** → build → upload artifact. Build stamps `NUXT_SENTRY_RELEASE` = commit SHA
+- **CD** (`deploy.yml`): `production` environment gate → checkout of the CI-built SHA → migrate from the runner (fail-fast) → rsync to `.output.new` → atomic rename swap (previous kept as `.output.prev`) → restart → polling smoke test → **auto-rollback on smoke-test failure**
+- **Dependabot + audit gate**: `.github/dependabot.yml` proposes high/moderate fixes; CI fails on critical
+
+### ✗ Not yet done / deliberately deferred
+
+- **Dedicated component-mount tests**: not added — covered functionally by the E2E journeys
+- ~~E2E does not gate deploy~~ — **now gated.** `deploy.yml`'s first step polls the GitHub API for the `e2e.yml` run matching `workflow_run.head_sha` and refuses to deploy unless it concluded `success` (30 min deadline, newest run wins so a re-run supersedes). It runs before the migrate step, so a failed E2E never touches the production DB. Caveat: re-running `CI` alone without a corresponding E2E run for that SHA will time out — dispatch `E2E` for the commit first
+- **Staging environment**: ROADMAP §8 describes local → staging → production; only local and production exist
+- **Manual/infra steps** (owner actions, not code): Let's Encrypt SSL, Passenger env injection, UptimeRobot monitor, nightly `mysqldump` cron + quarterly restore drill — all documented in `docs/RUNBOOK.md`
+- **Majors held**: `zod` 4, `eslint` 10, `typescript` 6, `vue-router` 5, `@nuxtjs/i18n` 10, `@vite-pwa/nuxt` 1, `drizzle-kit` 0.31, `diff-match-patch-es` 1 (each a breaking migration — do as a focused pass)
 
 ---
 
@@ -340,6 +348,7 @@ The `ingredients` master table is populated from the **Swiss BLV Food Compositio
 - **Ingredient nutrition source**: `ingredient_nutrition.source = 'swiss-blv-v7'` identifies Swiss BLV rows. Manually curated entries use `'curated'`.
 - **UDropdownMenu navigation**: use `to:` for navigation items, `click:` for actions. Items need `color: 'neutral'` so they don't default to the primary highlight. Separately, the menu items (incl. their leading **icons**) carry a colour `transition` that **fades the highlight out on open**, reading as a one-frame flash. `transition` does not inherit, so `main.css` disables it on `[role='menu'] [role='menuitem']`, its `::before`, **and every descendant (`*`)** — the icon flash was only fixed once the descendant selector was added (verified frame-by-frame with Playwright).
 - **Multi-statement inline handlers break the build**: a `@click="a = 1\n b = 2"` (multiple statements on separate lines, no semicolons) fails the Vue macro parser at build time. Use a single expression or a `function` in `<script setup>`. (Was masked while CI was red on typecheck.)
+- **Inline handlers must not leak a return value on Nuxt UI components**: `@click="open = true"` or `@click="editor.chain()…run()"` compiles to `($event) => (expr)`, whose return type is the assigned value / `boolean`. TypeScript's void-return bivariance (a `() => T` _is_ assignable to `() => void`) **does not apply** because Nuxt UI 4.9 types the click prop as the **union** `((e: MouseEvent) => void | Promise<void>) | […][] | undefined` — the special rule only fires when the target return type is exactly `void`. Result: `error TS2322` on **components** but not on native `<button>`, which is why only some sites broke. Fix: wrap in a block arrow so it returns `undefined` — `@click="() => { open = true }"`. Inside a closure the `v-if="editor"` narrowing is lost, so use `editor?.chain()`. This surfaced from the Nuxt UI 4.6→4.9 bump and broke 11 call sites.
 - **Nuxt UI v4 `USelect` uses `:items` + `value-key`, never `:options`** (a v3 holdover that is silently ignored → empty dropdowns). Fixed in explore filters + GMR-create branch pickers.
 - **Drizzle migration meta MUST be tracked**: `server/database/migrations/meta/` (the `_journal.json` + per-migration snapshots) was previously gitignored, which silently broke `drizzle-kit migrate` on any fresh checkout (CI/deploy) — no journal means no migrations applied. It is now versioned; never re-ignore it.
 - **Dead-code gate (`knip`)**: `npm run knip` (config in `knip.json`, enforced in CI) flags unused files/exports/deps. The mysql2 pool is closed gracefully on Nitro shutdown via `server/plugins/database.ts`.
@@ -392,4 +401,20 @@ The "to gold-plated v1" finishing plan ran end to end. Committed phases:
 - **Dead code** — knip gate; removed dead composable/types/keys; drizzle-orm CVE upgrade; Dependabot + critical-audit gate.
 - **a11y** — `<html lang>`, combobox labels, StepEditor labels i18n'd; axe critical-gate.
 
-**Tracked follow-ups (not blocking, owner decisions):** brand-orange `color-contrast` to meet WCAG AA; CSP `script-src 'unsafe-inline'` hardening; dedicated component-mount tests (E2E covers functionally); nodemailer/vite/esbuild advisories (Dependabot PRs).
+Post-plan commits: brand-orange contrast (light-mode palette darkening), fixed app shell + mobile offcanvas nav + custom scrollbars, forks list + starred dashboard + fork-carries-history, guided tour end-to-end repair, dependency/security bumps, scrollbar-at-viewport-edge, **nonce-based CSP `script-src`** (dropped `'unsafe-inline'` in prod).
+
+### Release readiness (2026-08-04)
+
+Audited the branch against §10 of `ROADMAP.md` before cutting v1. Fixed in this pass:
+
+- **Typecheck was red** — 11 inline `@click` handlers leaked a return value after the Nuxt UI 4.6→4.9 bump (see §13). CI would have failed on every push; the previous close-out predates the bump.
+- **Production migrations could never run** — `deploy.yml` ran `npx drizzle-kit migrate` over SSH, but only `.output/` + `app.js` are rsynced: the host has neither `drizzle.config.ts`, `server/database/migrations/`, nor the CLI. Migrations now run **from the CI runner** (matching ROADMAP §8's "against MySQL (CI secrets)"), fail-fast, and **before** the release is swapped in. Requires the production MySQL to accept connections from GitHub Actions — SSH fallback documented in the runbook.
+- **Rollback was impossible** — `rsync --delete` went straight into the live `.output/`, so no previous artifact survived, and the runbook documented a `releases/<ts>` + `current` symlink layout that was never implemented. Deploy now stages to `.output.new`, swaps by rename (retaining `.output.prev`), and **auto-rolls back if the smoke test fails**. A symlink layout was rejected: it would require repointing the Netcup docroot, which `.htaccess` + `app.js` at the project root assume.
+- **Sentry had no release tag** — `NUXT_SENTRY_RELEASE` is read at _build_ time but was never set in `ci.yml` (and cannot be injected on the host: the name doesn't map to `runtimeConfig.public.sentry.release`). Now stamped with the commit SHA.
+- **Ground truth was stale** — §12 listed the coverage gate, audit gate, Dependabot and prod-environment protection as missing though all had shipped; counts corrected (25 pages, 33 endpoints, 387 keys).
+
+Verified **not** a problem despite looking like one: `ci.yml` sets `NODE_ENV: test` workflow-wide, but `nuxt build` calls `overrideEnv('production')`, so HSTS and the `secure` session-cookie flag are baked correctly in the shipped artifact.
+
+Also added: **deploy now waits on the `E2E` run for the same commit** and refuses to proceed unless it passed — previously a green `CI` could deploy while the only end-to-end coverage of the fork → GMR → merge flow was still running.
+
+**Remaining owner actions (infra, not code):** Let's Encrypt SSL; Passenger env injection; UptimeRobot on `/api/health`; nightly `mysqldump` cron + restore drill; confirm prod MySQL reachability from Actions. **Deferred:** no staging environment; dedicated component-mount tests; held major upgrades.

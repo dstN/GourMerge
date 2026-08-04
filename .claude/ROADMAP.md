@@ -50,17 +50,36 @@ Nuxt 4 · Vue 3 Composition API (`<script setup lang="ts">`) · Nuxt UI v4 (Reka
 - Brand: SVG logo, orange primary color, DM Sans + JetBrains Mono fonts
 - Delete recipe: from edit page UI with confirmation modal; cascade + FK pre-cleanup handled in API
 
-**Not yet done (corrected against code, 2026-06-20):**
+**Not yet done (corrected against code, 2026-08-04):**
 
-- Tests: **done** — 118 unit cases (97% coverage gate in CI) + 24 Playwright specs (API auth/recipes/merge, SSR + register journeys, axe a11y) via the `E2E` workflow. Dedicated component-mount tests deferred (covered by E2E)
-- CI/CD: GitHub Actions **are configured** (`ci.yml` + `deploy.yml`); still missing: coverage enforcement + `npm audit` gate
-- Passenger CD: `.htaccess` + `app.js` exist and `deploy.yml` **does** wire rsync + migrate + restart + smoke test; still missing: migrate exit-code check + production environment protection
-- Prod safety (F1 pending): Pino log rotation, Sentry active capture, error-response `data` sanitization, transactional-email i18n
-- (Vanilla Sugar curated entry — done, F3)
+Phases 0–6 are complete. Everything previously listed here has shipped: coverage
+enforcement, the `npm audit` gate, Dependabot, production environment protection, the
+migrate exit-code check, Pino log rotation, Sentry capture, error-response sanitization,
+and transactional-email i18n. The pre-release audit additionally fixed a red typecheck,
+a production-migration step that could never run, a missing rollback path, and an
+unstamped Sentry release — see `.claude/current_state.md` §15 "Release readiness".
+
+Remaining, all deliberate:
+
+- **Owner/infra actions** (not code): Let's Encrypt SSL, Passenger env injection,
+  UptimeRobot on `/api/health`, nightly `mysqldump` cron + quarterly restore drill
+- **E2E gates deploy** — `deploy.yml` waits for the `e2e.yml` run on the same commit and
+  refuses to deploy unless it passed (before the migrate step, so prod is untouched on
+  failure). Re-running `CI` alone without an E2E run for that SHA will time out
+- **No staging environment** — §8 describes local → staging → production; only local and
+  production exist
+- **Dedicated component-mount tests** — deferred, covered functionally by the E2E journeys
+- **Held major upgrades** — `zod` 4, `eslint` 10, `typescript` 6, `vue-router` 5,
+  `@nuxtjs/i18n` 10, `@vite-pwa/nuxt` 1, `drizzle-kit` 0.31, `diff-match-patch-es` 1
 
 ---
 
 ## SECTION 1 — Executive Assessment
+
+> **Historical.** This section records the _original_ (pre-Phase-0) audit and is kept for
+> provenance. Its readiness score and "biggest risks" no longer describe the codebase —
+> every blocker listed here has since shipped. For current state read "Verified Current
+> State" above and `.claude/current_state.md`.
 
 - **Current maturity:** Advanced prototype / pre-alpha. Foundation, data model, and the _read_ side of the git model (branches, history, diff) are solid. The _write_ side (editor) and the entire _social/collaboration_ layer are absent.
 - **Production readiness score: 38 / 100.** (Architecture 8/10, read-path features 7/10, core editor 1/10, social workflow 0/10, security hardening 4/10, infra/deploy 1/10, testing 0/10, observability 1/10.)

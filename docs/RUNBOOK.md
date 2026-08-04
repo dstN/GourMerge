@@ -11,12 +11,29 @@
 ### Normal Deploy (automatic via CI/CD)
 
 1. Push to `master`
-2. GitHub Actions CI runs: lint → typecheck → i18n-check → test → build
-3. On CI success, deploy job:
-   - Rsyncs `.output/` to Netcup
-   - Runs `drizzle-kit migrate` against production DB
-   - Touches `tmp/restart.txt` to restart Passenger
-4. Smoke test hits `https://<domain>/api/health` — fail = deploy blocked
+2. GitHub Actions CI runs: lint → format → knip → typecheck → i18n → audit → migrate → test (coverage gate) → build → upload artifact
+3. On CI success, the deploy job (gated by the `production` environment):
+   - **Waits for the `E2E` run on the same commit** and aborts unless it passed. This runs
+     first, so nothing touches production if E2E fails. Re-running `CI` alone without an
+     E2E run for that SHA times out after 30 min — dispatch `E2E` for the commit first
+   - Checks out **the exact commit CI built** (`workflow_run.head_sha`), not master's tip
+   - Runs `drizzle-kit migrate` against the production DB **from the runner** — a
+     non-zero exit fails the deploy and leaves the live release untouched
+   - Rsyncs the artifact to `.output.new/` on the host (live `.output/` untouched)
+   - Renames `.output` → `.output.prev`, then `.output.new` → `.output`, and touches
+     `tmp/restart.txt`
+4. Smoke test polls `https://<domain>/api/health` (6 × 10 s). On failure the deploy
+   **auto-rolls back** to `.output.prev`
+
+> **Migrations run from the CI runner, not over SSH.** The Netcup webspace has neither
+> `drizzle-kit` nor the migration SQL (only `.output/` + `app.js` are shipped), so the
+> production MySQL must accept connections from GitHub Actions. If the DB is firewalled
+> to the webspace only, see _Manual migration_ below and drop the migrate step from
+> `deploy.yml`.
+
+> **`.htaccess` is deliberately never deployed.** It holds host-specific
+> `PassengerNodejs` / `PassengerEnvVar` values (see `docs/SECRETS.md`); overwriting it
+> would wipe the injected environment. Update it by hand when it changes in git.
 
 ### Manual Deploy (emergency)
 
@@ -27,33 +44,57 @@ cd /var/www/gourmerge
 # Pull the pre-built artifact (download from GitHub Actions)
 tar xzf gourmerge-output-<sha>.tar.gz
 
-# Run migrations
-DATABASE_URL="$DATABASE_URL" npx drizzle-kit migrate
-
 # Restart Passenger
 mkdir -p tmp && touch tmp/restart.txt
+```
+
+### Manual migration
+
+Run from a machine that can reach the production MySQL, with the repo checked out at
+the deployed commit:
+
+```bash
+npm ci
+DATABASE_URL="mysql://user:pass@host:3306/dbname" npx drizzle-kit migrate
 ```
 
 ---
 
 ## Rollback Procedure
 
-### Keep N previous releases
+### Release layout on the host
 
-The deploy script retains the two most recent releases in `releases/`. The `current` symlink points to the active one.
+The deploy keeps the outgoing release next to the live one — no symlinks, so Passenger's
+`PassengerStartupFile app.js` path stays valid:
+
+| Directory         | Meaning                                          |
+| ----------------- | ------------------------------------------------ |
+| `.output/`        | Live release                                     |
+| `.output.prev/`   | Previous release — the rollback target           |
+| `.output.new/`    | Staging dir during a deploy (should not persist) |
+| `.output.failed/` | Set aside by an auto-rollback, for post-mortem   |
+
+An auto-rollback already runs when the post-deploy smoke test fails. Roll back by hand
+when a problem surfaces later:
 
 ```bash
-# List releases
-ls -la /var/www/gourmerge/releases/
-
-# Rollback to previous release
 cd /var/www/gourmerge
-ln -sfn releases/<previous-timestamp> current
-touch tmp/restart.txt
+
+# Swap the current release out for the previous one
+rm -rf .output.failed
+mv .output .output.failed
+mv .output.prev .output
+
+mkdir -p tmp && touch tmp/restart.txt
 
 # Verify
 curl -s https://<domain>/api/health
 ```
+
+> Only **one** previous release is retained, so a rollback is not repeatable — after
+> rolling back, redeploy a known-good commit rather than rolling back twice. If the bad
+> release included a migration, restore the pre-migration dump first (below); migrations
+> are forward-only and are **not** reverted by a code rollback.
 
 ### Database Rollback
 
@@ -106,9 +147,11 @@ Set via Passenger `.htaccess` directives or Netcup hosting panel:
 | `NUXT_SESSION_PASSWORD`                 | ≥32-char random string for session encryption |
 | `NUXT_PUBLIC_APP_URL`                   | `https://gourmerge.app` (no trailing slash)   |
 | `NUXT_PUBLIC_SENTRY_DSN`                | Sentry project DSN                            |
-| `NUXT_SENTRY_RELEASE`                   | Set by CI to git SHA                          |
-| `SENTRY_AUTH_TOKEN`                     | For source map upload (CI only)               |
 | `SMTP_HOST` / `SMTP_USER` / `SMTP_PASS` | Netcup SMTP credentials                       |
+
+`NUXT_SENTRY_RELEASE` and `SENTRY_AUTH_TOKEN` are **build-time only** — set in
+`ci.yml`, not on the host. `NUXT_SENTRY_RELEASE` is baked into the artifact (its name
+does not map to the `runtimeConfig` path, so setting it under Passenger has no effect).
 
 ---
 
