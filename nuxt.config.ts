@@ -97,8 +97,19 @@ export default defineNuxtConfig({
 
   // ── Runtime Config ──────────────────────────────────────────
   runtimeConfig: {
+    // NOTE ON RUNTIME OVERRIDES. nuxt.config is evaluated at BUILD time, so these
+    // `process.env` reads only produce the baked default. Nitro re-reads env at
+    // runtime only for `NUXT_`-prefixed names matching the config path — i.e.
+    // `runtimeConfig.databaseUrl` would need NUXT_DATABASE_URL, not DATABASE_URL.
+    // Since DATABASE_URL is the documented name (and the one drizzle-kit needs),
+    // server/database/index.ts prefers process.env.DATABASE_URL at runtime.
     databaseUrl: process.env.DATABASE_URL || 'mysql://root:password@localhost:3306/gourmerge',
-    appUrl: process.env.NUXT_PUBLIC_APP_URL || 'http://localhost:3000',
+    // There is deliberately NO top-level `appUrl` here. It used to duplicate
+    // public.appUrl, and because its override name would have been NUXT_APP_URL,
+    // setting the documented NUXT_PUBLIC_APP_URL on the host left it at
+    // http://localhost:3000 — which silently broke the CSRF origin check and put
+    // localhost links into verification/reset emails. Server code reads
+    // config.public.appUrl, which NUXT_PUBLIC_APP_URL does override at runtime.
     // nuxt-auth-utils reads runtimeConfig.session for H3 SessionConfig
     // httpOnly + sameSite=lax blocks CSRF from cross-site browser requests.
     // secure=true in prod ensures the cookie is only sent over HTTPS.

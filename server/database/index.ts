@@ -26,7 +26,11 @@ export function useDatabase() {
     // Each process has its own pool, so the effective total = processes × limit.
     // Keep limit small (4) to stay well within Netcup's MySQL connection cap.
     _pool = mysql.createPool({
-      uri: config.databaseUrl,
+      // process.env first: nuxt.config baked `databaseUrl` at BUILD time (in CI
+      // that is the throwaway test database), and the unprefixed DATABASE_URL
+      // cannot override a runtimeConfig path at runtime. Reading env directly is
+      // what makes the host's DATABASE_URL actually take effect.
+      uri: process.env.DATABASE_URL || config.databaseUrl,
       waitForConnections: true,
       connectionLimit: 4,
       maxIdle: 2,

@@ -16,7 +16,7 @@ export default defineEventHandler((event) => {
   const config = useRuntimeConfig()
   let allowedOrigin: string
   try {
-    allowedOrigin = new URL(config.appUrl).origin
+    allowedOrigin = new URL(config.public.appUrl).origin
   } catch {
     // Misconfigured appUrl — fail open in dev, fail closed in prod
     if (process.env.NODE_ENV === 'production') {

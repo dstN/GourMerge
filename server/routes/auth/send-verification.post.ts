@@ -41,7 +41,7 @@ export default defineEventHandler(async (event) => {
 
   await db.insert(emailVerificationTokens).values({ userId: dbUser.id, tokenHash, expiresAt })
 
-  const appUrl = useRuntimeConfig().appUrl.replace(/\/$/, '')
+  const appUrl = useRuntimeConfig().public.appUrl.replace(/\/$/, '')
   const verifyUrl = `${appUrl}/auth/verify?token=${rawToken}`
 
   const message = buildVerificationEmail(dbUser.preferredLocale, verifyUrl)

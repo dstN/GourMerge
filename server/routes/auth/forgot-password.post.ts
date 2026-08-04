@@ -38,7 +38,7 @@ export default defineEventHandler(async (event) => {
 
   await db.insert(passwordResetTokens).values({ userId: dbUser.id, tokenHash, expiresAt })
 
-  const appUrl = useRuntimeConfig().appUrl.replace(/\/$/, '')
+  const appUrl = useRuntimeConfig().public.appUrl.replace(/\/$/, '')
   const resetUrl = `${appUrl}/auth/reset-password?token=${rawToken}`
 
   const message = buildPasswordResetEmail(dbUser.preferredLocale, resetUrl)

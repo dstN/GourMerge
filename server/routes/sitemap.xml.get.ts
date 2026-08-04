@@ -3,7 +3,7 @@ import { recipes, users } from '~~/server/database/schema'
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
-  const appUrl = config.appUrl.replace(/\/$/, '')
+  const appUrl = config.public.appUrl.replace(/\/$/, '')
   const db = useDrizzle()
   if (!db) {
     setHeader(event, 'content-type', 'application/xml; charset=utf-8')
