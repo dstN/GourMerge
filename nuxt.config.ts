@@ -158,12 +158,13 @@ export default defineNuxtConfig({
       link: [
         { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
         { rel: 'apple-touch-icon', href: '/apple-touch-icon-180x180.png' },
-        { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
-        { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
-        {
-          rel: 'stylesheet',
-          href: 'https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=JetBrains+Mono:wght@400;500;600&display=swap',
-        },
+        // NO Google Fonts <link> here. `@nuxt/fonts` (transitive via @nuxt/ui)
+        // already downloads DM Sans + JetBrains Mono at build time and serves
+        // them from /_fonts/, together with generated fallback-metric faces that
+        // prevent layout shift. The two preconnects plus the css2 stylesheet that
+        // used to sit here were therefore a duplicate fetch of fonts we already
+        // ship — and worse, they sent every visitor's IP to Google on every page
+        // load, before any consent (cf. LG München I, 20.01.2022, 3 O 17493/20).
       ],
     },
   },

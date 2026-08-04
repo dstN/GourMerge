@@ -33,8 +33,10 @@ export default defineNitroPlugin((nitroApp) => {
     const csp = [
       "default-src 'self'",
       // TipTap requires unsafe-inline for inline styles on the prosemirror editor.
-      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-      "font-src 'self' https://fonts.gstatic.com",
+      // No Google origins: fonts are self-hosted from /_fonts/ by @nuxt/fonts.
+      // 'unsafe-inline' stays for style-src because TipTap sets inline styles.
+      "style-src 'self' 'unsafe-inline'",
+      "font-src 'self'",
       "img-src 'self' data: https:",
       scriptSrc,
       "connect-src 'self' https://*.sentry.io",
