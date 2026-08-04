@@ -70,7 +70,17 @@ jobs:
       - name: Unit & component tests (with coverage gate)
         run: npm test -- --coverage
 
+      # NUXT_SENTRY_RELEASE is read in nuxt.config at BUILD time (its name does
+      # not match the runtimeConfig path, so it cannot be injected on the host).
+      # Stamping the SHA here is what makes Sentry issues attributable to a
+      # release. The SENTRY_* secrets are optional — source-map upload is skipped
+      # when the auth token is empty, and the build still succeeds.
       - name: Build
+        env:
+          NUXT_SENTRY_RELEASE: ${{ github.sha }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         run: npm run build
 
       - name: Upload build artifact

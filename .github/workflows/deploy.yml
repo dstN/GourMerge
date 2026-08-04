@@ -16,8 +16,82 @@ jobs:
       name: production
 
     steps:
-      - name: Checkout
+      # CI and E2E start together on a master push, and this job is triggered by
+      # CI alone — so without this wait a green CI would deploy while E2E (the
+      # only end-to-end coverage of fork → GourMerge Request → merge) is still
+      # running. Deliberately the FIRST step: nothing below it touches the
+      # production database or the live release.
+      - name: Require the E2E suite to have passed for this commit
+        timeout-minutes: 35
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const sha = context.payload.workflow_run.head_sha
+            const deadlineMs = Date.now() + 30 * 60 * 1000
+            const terminalFailures = ['failure', 'cancelled', 'timed_out', 'action_required', 'stale']
+
+            while (true) {
+              const { data } = await github.rest.actions.listWorkflowRuns({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id: 'e2e.yml',
+                head_sha: sha,
+              })
+
+              // Newest first, so a re-run supersedes an earlier attempt.
+              const runs = [...data.workflow_runs].sort(
+                (a, b) => new Date(b.created_at) - new Date(a.created_at)
+              )
+              const run = runs[0]
+
+              if (run && run.status === 'completed') {
+                if (run.conclusion === 'success') {
+                  core.info(`E2E passed for ${sha} (run ${run.id}).`)
+                  return
+                }
+                if (terminalFailures.includes(run.conclusion)) {
+                  core.setFailed(
+                    `E2E concluded "${run.conclusion}" for ${sha} (run ${run.id}) — refusing to deploy. ${run.html_url}`
+                  )
+                  return
+                }
+              }
+
+              if (Date.now() > deadlineMs) {
+                core.setFailed(
+                  run
+                    ? `Timed out waiting for E2E run ${run.id} (status "${run.status}") on ${sha}.`
+                    : `No E2E workflow run found for ${sha} within the deadline. E2E runs on master pushes; ` +
+                        `if CI was re-run without a push, dispatch E2E for this commit and re-run this deploy.`
+                )
+                return
+              }
+
+              core.info(
+                run
+                  ? `E2E run ${run.id} is "${run.status}" — waiting…`
+                  : `No E2E run for ${sha} yet — waiting…`
+              )
+              await new Promise((resolve) => setTimeout(resolve, 30_000))
+            }
+
+      # Check out the exact commit CI built, not master's tip — otherwise a push
+      # landing mid-deploy would migrate a schema the artifact doesn't match.
+      - name: Checkout the built commit
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      # drizzle-kit lives in devDependencies and migrations are run from here
+      # (the Netcup webspace has neither the CLI nor the migration files).
+      - name: Install dependencies
+        run: npm ci
 
       - name: Download build artifact
         uses: actions/download-artifact@v4
@@ -28,24 +102,25 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ github.event.workflow_run.id }}
 
-      - name: Deploy artifact to Netcup via rsync
+      # Migrations run BEFORE the new artifact goes live: our migrations are
+      # additive, so the currently-running (old) code tolerates the new schema,
+      # but the new code would break on the old one. A non-zero exit fails the
+      # job here and the live release is left untouched.
+      - name: Run database migrations against production
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: npx drizzle-kit migrate
+
+      # Staged into .output.new so the live .output is never a half-synced tree.
+      - name: Upload artifact to staging directory
         uses: burnett01/rsync-deployments@7.0.1
         with:
-          switches: -avz --delete --exclude='.env' --exclude='logs/'
+          switches: -avz --delete
           path: .output/
-          remote_path: ${{ secrets.DEPLOY_PATH }}/.output/
+          remote_path: ${{ secrets.DEPLOY_PATH }}/.output.new/
           remote_host: ${{ secrets.DEPLOY_HOST }}
           remote_user: ${{ secrets.DEPLOY_USER }}
           remote_key: ${{ secrets.DEPLOY_SSH_KEY }}
-
-      - name: Copy startup shim
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_SSH_KEY }}
-          script: |
-            cp ${{ secrets.DEPLOY_PATH }}/app.js ${{ secrets.DEPLOY_PATH }}/app.js.bak 2>/dev/null || true
 
       - name: Upload app.js startup shim
         uses: burnett01/rsync-deployments@7.0.1
@@ -57,31 +132,74 @@ jobs:
           remote_user: ${{ secrets.DEPLOY_USER }}
           remote_key: ${{ secrets.DEPLOY_SSH_KEY }}
 
-      - name: Run migrations and restart Passenger
+      # Directory renames are near-instant, so the window where .output is
+      # absent is far smaller than an rsync. The outgoing release is kept as
+      # .output.prev — that is what the rollback procedure repoints to.
+      - name: Activate release and restart Passenger
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           script: |
-            set -e
-            cd ${{ secrets.DEPLOY_PATH }}
+            # POSIX-safe: `pipefail` is a bashism and the host login shell is not
+            # guaranteed to be bash.
+            set -eu
+            cd "${{ secrets.DEPLOY_PATH }}"
 
-            # Run Drizzle migrations against the production database
-            DATABASE_URL="${{ secrets.DATABASE_URL }}" npx drizzle-kit migrate
+            test -d .output.new || { echo "staged release missing"; exit 1; }
 
-            # Signal Passenger to restart the app
+            rm -rf .output.prev
+            if [ -d .output ]; then
+              mv .output .output.prev
+            fi
+            mv .output.new .output
+
             mkdir -p tmp
             touch tmp/restart.txt
 
-            echo "Deploy complete."
+            echo "Release activated (previous kept in .output.prev)."
 
       - name: Smoke test
+        id: smoke
         run: |
-          sleep 10  # give Passenger a moment to reload
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://${{ secrets.DEPLOY_DOMAIN }}/api/health")
-          if [ "$STATUS" != "200" ]; then
-            echo "Health check failed with status $STATUS"
-            exit 1
-          fi
-          echo "Health check passed (HTTP $STATUS)"
+          for i in 1 2 3 4 5 6; do
+            sleep 10  # give Passenger time to boot the new release
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://${{ secrets.DEPLOY_DOMAIN }}/api/health" || true)
+            if [ "$STATUS" = "200" ]; then
+              echo "Health check passed (HTTP $STATUS)"
+              exit 0
+            fi
+            echo "Attempt $i: health check returned $STATUS"
+          done
+          echo "Health check never returned 200 — failing the deploy."
+          exit 1
+
+      # The retained artifact only earns its keep if a bad release is actually
+      # reverted. Runs only when the smoke test failed.
+      - name: Roll back to previous release
+        if: failure() && steps.smoke.outcome == 'failure'
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            # POSIX-safe: `pipefail` is a bashism and the host login shell is not
+            # guaranteed to be bash.
+            set -eu
+            cd "${{ secrets.DEPLOY_PATH }}"
+
+            if [ ! -d .output.prev ]; then
+              echo "No .output.prev to roll back to (first deploy?) — leaving as-is."
+              exit 1
+            fi
+
+            rm -rf .output.failed
+            mv .output .output.failed
+            mv .output.prev .output
+
+            mkdir -p tmp
+            touch tmp/restart.txt
+
+            echo "Rolled back to the previous release (bad build kept in .output.failed)."
