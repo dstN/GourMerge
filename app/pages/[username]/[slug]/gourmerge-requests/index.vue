@@ -73,7 +73,11 @@ useSeoMeta({
         :variant="statusFilter === s ? 'solid' : 'outline'"
         :color="statusColors[s]"
         size="sm"
-        @click="statusFilter = s"
+        @click="
+          () => {
+            statusFilter = s
+          }
+        "
       />
     </div>
 

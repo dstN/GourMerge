@@ -113,7 +113,15 @@ const branchSourceOptions = computed(
         </h1>
       </div>
 
-      <UButton :label="t('branches.create')" icon="i-lucide-plus" @click="showCreateModal = true" />
+      <UButton
+        :label="t('branches.create')"
+        icon="i-lucide-plus"
+        @click="
+          () => {
+            showCreateModal = true
+          }
+        "
+      />
     </div>
 
     <!-- Branches list -->
@@ -198,7 +206,16 @@ const branchSourceOptions = computed(
 
       <template #footer>
         <div class="flex justify-end gap-2">
-          <UButton :label="t('common.cancel')" variant="outline" color="neutral" @click="showCreateModal = false" />
+          <UButton
+            :label="t('common.cancel')"
+            variant="outline"
+            color="neutral"
+            @click="
+              () => {
+                showCreateModal = false
+              }
+            "
+          />
           <UButton
             :label="t('branches.create')"
             icon="i-lucide-plus"

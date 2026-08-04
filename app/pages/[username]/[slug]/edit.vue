@@ -456,7 +456,11 @@ useSeoMeta({
             variant="outline"
             color="error"
             size="sm"
-            @click="showDeleteModal = true"
+            @click="
+              () => {
+                showDeleteModal = true
+              }
+            "
           />
         </div>
       </div>
@@ -493,7 +497,11 @@ useSeoMeta({
               color="neutral"
               :icon="metaTranslationsOpen ? 'i-lucide-chevron-up' : 'i-lucide-languages'"
               :label="metaTranslationsOpen ? t('recipe.hideTranslations') : t('recipe.addTranslations')"
-              @click="metaTranslationsOpen = !metaTranslationsOpen"
+              @click="
+                () => {
+                  metaTranslationsOpen = !metaTranslationsOpen
+                }
+              "
             />
           </div>
 
@@ -688,7 +696,11 @@ useSeoMeta({
                   color="neutral"
                   :icon="step.translationsOpen ? 'i-lucide-chevron-up' : 'i-lucide-languages'"
                   :label="step.translationsOpen ? t('recipe.hideTranslations') : t('recipe.addTranslations')"
-                  @click="step.translationsOpen = !step.translationsOpen"
+                  @click="
+                    () => {
+                      step.translationsOpen = !step.translationsOpen
+                    }
+                  "
                 />
               </div>
 
@@ -761,7 +773,11 @@ useSeoMeta({
             color="neutral"
             :label="t('common.cancel')"
             :disabled="deleting"
-            @click="showDeleteModal = false"
+            @click="
+              () => {
+                showDeleteModal = false
+              }
+            "
           />
           <UButton
             color="error"

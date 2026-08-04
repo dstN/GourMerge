@@ -278,14 +278,22 @@ function getSegmentClass(type: number): string {
                 :variant="stepViewMode === 'unified' ? 'solid' : 'outline'"
                 color="neutral"
                 icon="i-lucide-align-justify"
-                @click="stepViewMode = 'unified'"
+                @click="
+                  () => {
+                    stepViewMode = 'unified'
+                  }
+                "
               />
               <UButton
                 :label="t('diff.viewSplit')"
                 :variant="stepViewMode === 'split' ? 'solid' : 'outline'"
                 color="neutral"
                 icon="i-lucide-columns-2"
-                @click="stepViewMode = 'split'"
+                @click="
+                  () => {
+                    stepViewMode = 'split'
+                  }
+                "
               />
             </UFieldGroup>
           </div>

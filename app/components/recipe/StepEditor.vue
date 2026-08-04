@@ -89,7 +89,11 @@ onBeforeUnmount(() => editor.value?.destroy())
         color="neutral"
         :class="{ 'bg-neutral-200 dark:bg-neutral-700': editor.isActive('bold') }"
         :aria-label="t('editor.bold')"
-        @click="editor.chain().focus().toggleBold().run()"
+        @click="
+          () => {
+            editor?.chain().focus().toggleBold().run()
+          }
+        "
       />
       <UButton
         v-if="editor"
@@ -99,7 +103,11 @@ onBeforeUnmount(() => editor.value?.destroy())
         color="neutral"
         :class="{ 'bg-neutral-200 dark:bg-neutral-700': editor.isActive('italic') }"
         :aria-label="t('editor.italic')"
-        @click="editor.chain().focus().toggleItalic().run()"
+        @click="
+          () => {
+            editor?.chain().focus().toggleItalic().run()
+          }
+        "
       />
       <UButton
         v-if="editor"
@@ -109,7 +117,11 @@ onBeforeUnmount(() => editor.value?.destroy())
         color="neutral"
         :class="{ 'bg-neutral-200 dark:bg-neutral-700': editor.isActive('bulletList') }"
         :aria-label="t('editor.bulletList')"
-        @click="editor.chain().focus().toggleBulletList().run()"
+        @click="
+          () => {
+            editor?.chain().focus().toggleBulletList().run()
+          }
+        "
       />
 
       <!-- Spacer + remove button -->
