@@ -150,7 +150,6 @@
     "commitHint": "Descrivi brevemente cosa hai modificato.",
     "commit": "Salva",
     "createIngredient": "Crea \"{name}\"",
-    "saveChanges": "Salva modifiche",
     "unsavedChanges": "Hai modifiche non salvate. Uscire senza salvare?",
     "deleteTitle": "Elimina ricetta",
     "deleteConfirm": "Sei sicuro? La ricetta e tutta la sua cronologia verranno eliminate definitivamente.",
@@ -172,7 +171,6 @@
     "save": "Salva",
     "delete": "Elimina",
     "error": "Errore",
-    "loading": "Caricamento...",
     "unsaved": "Modifiche non salvate",
     "leave": "Lascia",
     "help": "Aiuto"
@@ -184,7 +182,6 @@
     "added": "Aggiunto",
     "removed": "Rimosso",
     "modified": "Modificato",
-    "unchanged": "Invariato",
     "noChanges": "Nessuna modifica",
     "ingredient": "Ingrediente",
     "oldValue": "Vecchio",
@@ -475,7 +472,6 @@
     "emptyDesc": "Nessuno ha ancora derivato questa ricetta."
   },
   "starred": {
-    "title": "Preferiti",
     "subtitle": "Ricette che hai contrassegnato con una stella.",
     "empty": "Nessun preferito ancora",
     "emptyDesc": "Aggiungi ricette ai preferiti per ritrovarle qui."

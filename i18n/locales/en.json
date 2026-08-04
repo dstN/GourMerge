@@ -150,7 +150,6 @@
     "commitHint": "Briefly describe what you changed.",
     "commit": "Save",
     "createIngredient": "Create \"{name}\"",
-    "saveChanges": "Save Changes",
     "unsavedChanges": "You have unsaved changes. Leave without saving?",
     "deleteTitle": "Delete Recipe",
     "deleteConfirm": "Are you sure? The recipe and its entire history will be permanently deleted.",
@@ -172,7 +171,6 @@
     "save": "Save",
     "delete": "Delete",
     "error": "Error",
-    "loading": "Loading...",
     "unsaved": "Unsaved changes",
     "leave": "Leave",
     "help": "Help"
@@ -184,7 +182,6 @@
     "added": "Added",
     "removed": "Removed",
     "modified": "Modified",
-    "unchanged": "Unchanged",
     "noChanges": "No changes",
     "ingredient": "Ingredient",
     "oldValue": "Old",
@@ -475,7 +472,6 @@
     "emptyDesc": "No one has forked this recipe yet."
   },
   "starred": {
-    "title": "Starred",
     "subtitle": "Recipes you have starred.",
     "empty": "No starred recipes yet",
     "emptyDesc": "Star recipes to find them here later."

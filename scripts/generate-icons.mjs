@@ -11,7 +11,6 @@
  *   public/favicon.svg          — inline orange SVG (no rasterization)
  *   public/icon.svg             — same, for PWA manifest
  *   public/favicon.ico          — 32x32 ICO (PNG inside)
- *   public/pwa-64x64.png
  *   public/pwa-192x192.png
  *   public/pwa-512x512.png
  *   public/apple-touch-icon-180x180.png
@@ -57,7 +56,9 @@ const maskableSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${MASKABLE_S
 const outputs = [
   { file: 'public/favicon.svg', type: 'svg', svg: orangeSvg },
   { file: 'public/icon.svg', type: 'svg', svg: orangeSvg },
-  { file: 'public/pwa-64x64.png', type: 'png', size: 64, svg: orangeSvg },
+  // No 64x64: it is in neither the PWA manifest nor any <link>, but workbox's
+  // png glob precached it to every visitor. Add it back only alongside a
+  // manifest entry that actually uses it.
   { file: 'public/pwa-192x192.png', type: 'png', size: 192, svg: orangeSvg },
   { file: 'public/pwa-512x512.png', type: 'png', size: 512, svg: orangeSvg },
   { file: 'public/apple-touch-icon-180x180.png', type: 'png', size: 180, svg: orangeSvg },

@@ -150,7 +150,6 @@
     "commitHint": "Beschreibe kurz, was du geändert hast.",
     "commit": "Speichern",
     "createIngredient": "\"{name}\" erstellen",
-    "saveChanges": "Änderungen speichern",
     "unsavedChanges": "Du hast ungespeicherte Änderungen. Trotzdem verlassen?",
     "deleteTitle": "Rezept löschen",
     "deleteConfirm": "Bist du sicher? Das Rezept und der gesamte Versionsverlauf werden unwiderruflich gelöscht.",
@@ -172,7 +171,6 @@
     "save": "Speichern",
     "delete": "Löschen",
     "error": "Fehler",
-    "loading": "Laden...",
     "unsaved": "Ungespeicherte Änderungen",
     "leave": "Verlassen",
     "help": "Hilfe"
@@ -184,7 +182,6 @@
     "added": "Hinzugefügt",
     "removed": "Entfernt",
     "modified": "Geändert",
-    "unchanged": "Unverändert",
     "noChanges": "Keine Änderungen",
     "ingredient": "Zutat",
     "oldValue": "Alt",
@@ -475,7 +472,6 @@
     "emptyDesc": "Dieses Rezept wurde noch von niemandem remixt."
   },
   "starred": {
-    "title": "Favoriten",
     "subtitle": "Rezepte, die du mit einem Stern markiert hast.",
     "empty": "Noch keine Favoriten",
     "emptyDesc": "Markiere Rezepte mit einem Stern, um sie hier wiederzufinden."
