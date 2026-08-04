@@ -332,7 +332,7 @@ The `ingredients` master table is populated from the **Swiss BLV Food Compositio
 
 - **Tests**: **unit** — 118 cases (`tests/unit/`: diff, merge incl. resolution, units, slug, uuid, nutrition, markdown-XSS, emailI18n, i18n-gate), 97% line coverage enforced in CI. **E2E/API/a11y** — 24 Playwright specs across 5 files (`tests/e2e/`): auth lifecycle + authz matrix, recipe CRUD/fork/star, merge conflict-detect → interactive resolve → verify → immutable, SSR render, register UI journey, and axe scans (critical-gated). Run via `npm run test:e2e` + the `E2E` workflow on master
 - **CI** (`ci.yml`): lint → format:check → knip → typecheck → i18n → `npm audit` (critical) → migrate → test **with coverage gate** → build → upload artifact. Build stamps `NUXT_SENTRY_RELEASE` = commit SHA
-- **CD** (`deploy.yml`): `production` environment gate → checkout of the CI-built SHA → migrate from the runner (fail-fast) → rsync to `.output.new` → atomic rename swap (previous kept as `.output.prev`) → restart → polling smoke test → **auto-rollback on smoke-test failure**
+- **CD** (`deploy.yml`): preflight secrets → E2E gate → `production` environment gate → checkout of the CI-built SHA → migrate from the runner (fail-fast) → **tar-over-ssh** into `.output.new` → atomic rename swap (previous kept as `.output.prev`) → restart → polling smoke test → **auto-rollback on smoke-test failure**. Password auth via `sshpass` over plain `ssh` (Netcup offers no key auth; `rsync` and `gzip` do not exist in the chroot)
 - **Dependabot + audit gate**: `.github/dependabot.yml` proposes high/moderate fixes; CI fails on critical
 
 ### ✗ Not yet done / deliberately deferred

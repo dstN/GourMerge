@@ -19,7 +19,10 @@
    - Checks out **the exact commit CI built** (`workflow_run.head_sha`), not master's tip
    - Runs `drizzle-kit migrate` against the production DB **from the runner** — a
      non-zero exit fails the deploy and leaves the live release untouched
-   - Rsyncs the artifact to `.output.new/` on the host (live `.output/` untouched)
+   - Streams the artifact as a tar over ssh into `.output.new/` (live `.output/`
+     untouched). Not rsync, and not compressed: the chroot has neither `rsync` nor
+     `gzip` — only `tar`, `sh`, `mv`, `touch`, `mkdir`. SSH-level compression
+     (`-o Compression=yes`) does the squeezing instead
    - Renames `.output` → `.output.prev`, then `.output.new` → `.output`, and touches
      `tmp/restart.txt`
 4. Smoke test polls `https://<domain>/api/health` (6 × 10 s). On failure the deploy

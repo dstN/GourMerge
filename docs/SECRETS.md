@@ -4,7 +4,8 @@ How secrets are stored, injected, and rotated. Companion to [`RUNBOOK.md`](./RUN
 (which has the full runtime env-var table) and `.env.example` (the canonical list).
 
 > **Golden rule:** secrets live only in (a) the local, git-ignored `.env`, (b) GitHub
-> Actions repository secrets, and (c) the Netcup hosting env injection. They are
+> Actions secrets — deploy credentials as **environment** secrets on `production`, see
+> §2 — and (c) the Netcup hosting env injection. They are
 > **never** committed. `.env` and `.env.*` are git-ignored and `.htaccess` returns
 > 403 for `/.env`.
 
@@ -39,20 +40,33 @@ The full annotated list with example values is in [`.env.example`](../.env.examp
 
 ---
 
-## 2. GitHub Actions repository secrets (CI/CD)
+## 2. GitHub Actions secrets (CI/CD)
 
-Set under **Repo → Settings → Secrets and variables → Actions**. Consumed by
-`.github/workflows/deploy.yml` (and optionally `ci.yml` for source maps).
+**Two different places, and the difference matters.** Repository secrets are readable by
+any workflow on any branch — so putting the deploy credentials there would let a pushed
+branch read them without ever passing the `production` approval gate. Environment
+secrets are only available to a job that declares `environment: production`, which is
+exactly and only the deploy job.
 
-| Secret                                                | Used by             | Purpose                                                                                                                                       |
-| ----------------------------------------------------- | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| `DEPLOY_HOST`                                         | `deploy.yml`        | Netcup SSH/SFTP host                                                                                                                          |
-| `DEPLOY_USER`                                         | `deploy.yml`        | SSH user                                                                                                                                      |
-| `DEPLOY_SSH_KEY`                                      | `deploy.yml`        | Private key for rsync + SSH (no passphrase, scoped key)                                                                                       |
-| `DEPLOY_PATH`                                         | `deploy.yml`        | Absolute webroot path on the host                                                                                                             |
-| `DEPLOY_DOMAIN`                                       | `deploy.yml`        | Domain for the post-deploy `/api/health` smoke test                                                                                           |
-| `DATABASE_URL`                                        | `deploy.yml`        | Production DB URL for `drizzle-kit migrate` during deploy                                                                                     |
-| `SENTRY_AUTH_TOKEN` / `SENTRY_ORG` / `SENTRY_PROJECT` | `ci.yml` (optional) | Source-map upload at build time. Optional — build succeeds without them (no upload). Server-side Sentry capture does **not** depend on these. |
+### 2a. Environment secrets — Settings → Environments → `production`
+
+| Secret                | Value / purpose                                                                                                                                                                                                 |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DEPLOY_HOST`         | `gourmerge.de` — SSH host of the webspace                                                                                                                                                                       |
+| `DEPLOY_USER`         | `<ssh-user>` — Plesk system user (shared across all domains on the subscription)                                                                                                                             |
+| `DEPLOY_SSH_PASSWORD` | System user's password. Netcup exposes no key auth, so this is password auth via sshpass                                                                                                                        |
+| `DEPLOY_PATH`         | `/gourmerge.de` — the **application root**, not the webroot. The SSH shell is chrooted with the subscription root as `/`, so this is what `pwd` shows                                                           |
+| `DEPLOY_DOMAIN`       | `gourmerge.de` — host only, for the post-deploy `/api/health` smoke test                                                                                                                                        |
+| `DATABASE_URL`        | Production DB URL for `drizzle-kit migrate` (see §4.2 — also set in Plesk)                                                                                                                                      |
+| `DEPLOY_SSH_HOSTKEY`  | _Optional but recommended._ Output of `ssh-keyscan -t ed25519 gourmerge.de`. Without it the deploy trusts the key it fetches at run time, and with password auth a MITM would collect the password in cleartext |
+
+### 2b. Repository secrets — Settings → Secrets and variables → Actions
+
+Only the Sentry trio, because `ci.yml` declares no environment. All three are optional:
+the build succeeds without them, it just skips source-map upload. Server-side Sentry
+capture does **not** depend on them.
+
+`SENTRY_AUTH_TOKEN` · `SENTRY_ORG` · `SENTRY_PROJECT`
 
 **Build-time-only Sentry vars.** `ci.yml` sets `NUXT_SENTRY_RELEASE` to `github.sha` on
 the build step so deployed errors are attributable to a release. It is baked into the
@@ -107,8 +121,11 @@ on a routine cadence for long-lived credentials:
      environment variable. The site stays down until Plesk is corrected.
 
 3. **`SMTP_PASS`** — rotate in the Netcup mail panel, update host env.
-4. **`DEPLOY_SSH_KEY`** — replace the key pair; update the GitHub secret and the host's
-   `authorized_keys`.
+4. **`DEPLOY_SSH_PASSWORD`** — regenerate the system user's password in Plesk
+   (Hosting Settings → System user's credentials → Generate), then update the
+   `production` environment secret. Note this password also grants FTP and File Manager
+   access to **every** domain on the subscription, so treat an exposure as affecting all
+   of them, not just GourMerge.
 
 > **Local dev note:** any credential that has ever lived in a developer's local `.env`
 > (e.g. a local MySQL password or a generated session secret) should be treated as
