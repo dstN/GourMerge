@@ -129,6 +129,35 @@ Retain 14 days:
 0 4 * * *  find /backups -name 'gourmerge-*.sql.gz' -mtime +14 -delete
 ```
 
+---
+
+## Retention cleanup (required — the privacy policy promises it)
+
+`npm run db:cleanup` enforces the windows named in §7 of the privacy policy.
+This is not optional housekeeping: the policy states concrete retention periods
+under Art. 13(2)(a) GDPR, and an unenforced period is a claim you cannot back up.
+Before this job existed, `contact_messages` and `rate_limit_hits` had no delete
+path anywhere in the codebase.
+
+Add to Netcup's cron manager, nightly:
+
+```
+30 4 * * *  cd /gourmerge.de && npm run db:cleanup >> logs/cleanup.log 2>&1
+```
+
+| Rule                                | Window               |
+| ----------------------------------- | -------------------- |
+| `contact_messages`                  | 12 months            |
+| `email_verification_tokens`         | used or expired      |
+| `password_reset_tokens`             | used or expired      |
+| `data_requests` (GDPR self-service) | completed or expired |
+| `rate_limit_hits`                   | 24 hours             |
+
+Preview without deleting: `node scripts/cleanup-retention.mjs --dry-run`.
+
+> Change a window here and §7 of `app/pages/legal/datenschutz.vue` has to change
+> with it — they are two statements of the same fact.
+
 ### Verify restore (run quarterly)
 
 ```bash

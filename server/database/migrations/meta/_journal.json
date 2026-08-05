@@ -50,6 +50,13 @@
       "when": 1781917140722,
       "tag": "0006_fulltext-recipe-search",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1785891446557,
+      "tag": "0007_gdpr-self-service",
+      "breakpoints": true
     }
   ]
 }

@@ -110,7 +110,32 @@ useSeoMeta({
           </address>
         </section>
 
-        <!-- 7. Contact -->
+        <!-- 7. Retention (Art. 13(2)(a)) -->
+        <section>
+          <h2 class="text-lg font-semibold mb-2">{{ t('legal.privacy.retentionTitle') }}</h2>
+          <ul class="list-disc list-inside text-sm text-[var(--ui-text-muted)] space-y-1">
+            <li>{{ t('legal.privacy.retentionAccount') }}</li>
+            <li>{{ t('legal.privacy.retentionContact') }}</li>
+            <li>{{ t('legal.privacy.retentionTokens') }}</li>
+            <li>{{ t('legal.privacy.retentionLogs') }}</li>
+            <li>{{ t('legal.privacy.retentionErrors') }}</li>
+          </ul>
+        </section>
+
+        <!-- 8. Self-service (Art. 15 / Art. 17) -->
+        <section>
+          <h2 class="text-lg font-semibold mb-2">{{ t('legal.privacy.selfServiceTitle') }}</h2>
+          <p class="text-sm text-[var(--ui-text-muted)] mb-3">{{ t('legal.privacy.selfServiceDesc') }}</p>
+          <UButton
+            :to="localePath('/legal/data-request')"
+            :label="t('legal.privacy.linkFromPolicy')"
+            icon="i-lucide-shield-check"
+            variant="outline"
+            size="sm"
+          />
+        </section>
+
+        <!-- 9. Contact -->
         <section class="border-t border-[var(--ui-border)] pt-6">
           <h2 class="text-lg font-semibold mb-2">{{ t('legal.privacy.contactTitle') }}</h2>
           <p class="text-sm text-[var(--ui-text-muted)]">

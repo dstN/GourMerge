@@ -60,6 +60,17 @@ export const users = mysqlTable('users', {
   onboardingCompletedAt: datetime('onboarding_completed_at'),
   /** True if the user clicked "Don't show again" on the tour offer. */
   tourDismissed: boolean('tour_dismissed').notNull().default(false),
+  /**
+   * Set when the account was erased under Art. 17. The row deliberately
+   * SURVIVES: four FKs into `users` are NOT NULL and RESTRICT
+   * (recipes.owner_id, recipe_commits.author_id, gourmerge_requests.author_id,
+   * gm_request_comments.author_id), and a fork copies commits keeping the
+   * ORIGINAL author_id — so a hard delete would either fail on the constraint
+   * or tear holes in somebody else's recipe history. Instead the identifying
+   * columns are overwritten in place, which is GitHub's `ghost` behaviour but
+   * per-user, so two deleted accounts stay distinguishable in a thread.
+   */
+  anonymizedAt: datetime('anonymized_at'),
   createdAt: datetime('created_at')
     .notNull()
     .default(sql`CURRENT_TIMESTAMP`),
@@ -534,6 +545,38 @@ export const contactMessages = mysqlTable('contact_messages', {
     .notNull()
     .default(sql`CURRENT_TIMESTAMP`),
 })
+
+/**
+ * GDPR self-service requests (Art. 15 access / Art. 17 erasure).
+ *
+ * One row covers a whole flow. The same token is reused across both steps —
+ * `confirmedAt` is what separates them — rather than issuing a second token:
+ * the export link is also emailed, so it must stay valid for a while, and a
+ * one-shot token would break the moment the browser fetched it first.
+ *
+ * Lifetime: 2h to confirm, then extended to 24h so the emailed export link
+ * works for a day. Exports are generated on request and never written to disk,
+ * so an expired token leaves nothing behind to clean up.
+ */
+export const dataRequests = mysqlTable(
+  'data_requests',
+  {
+    id: int('id').primaryKey().autoincrement(),
+    userId: int('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    type: mysqlEnum('type', ['export', 'deletion']).notNull(),
+    // sha256 of the raw token, never the token itself — same as the auth tables.
+    tokenHash: varchar('token_hash', { length: 255 }).notNull().unique(),
+    expiresAt: datetime('expires_at').notNull(),
+    confirmedAt: datetime('confirmed_at'),
+    completedAt: datetime('completed_at'),
+    createdAt: datetime('created_at')
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [index('idx_data_requests_user').on(table.userId)]
+)
 
 // ═══════════════════════════════════════════════════════════════
 // DRIZZLE RELATIONS

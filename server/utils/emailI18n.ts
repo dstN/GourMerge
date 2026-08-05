@@ -34,3 +34,18 @@ export function buildVerificationEmail(locale: string | null | undefined, url: s
 export function buildPasswordResetEmail(locale: string | null | undefined, url: string): BuiltEmail {
   return build(EMAIL_MESSAGES[resolveLocale(locale)].passwordReset, url)
 }
+
+/** GDPR Art. 15 — ask the account owner to confirm an export request. */
+export function buildExportConfirmEmail(locale: string | null | undefined, url: string): BuiltEmail {
+  return build(EMAIL_MESSAGES[resolveLocale(locale)].exportConfirm, url)
+}
+
+/** GDPR Art. 15 — deliver the download link (also shown in the browser). */
+export function buildExportReadyEmail(locale: string | null | undefined, url: string): BuiltEmail {
+  return build(EMAIL_MESSAGES[resolveLocale(locale)].exportReady, url)
+}
+
+/** GDPR Art. 17 — ask the account owner to confirm an erasure request. */
+export function buildDeletionConfirmEmail(locale: string | null | undefined, url: string): BuiltEmail {
+  return build(EMAIL_MESSAGES[resolveLocale(locale)].deletionConfirm, url)
+}

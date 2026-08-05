@@ -18,6 +18,9 @@ export default defineVitestConfig({
         'server/utils/mailer.ts', // nodemailer transport
         'server/utils/rateLimit.ts', // DB-backed — covered by API tests
         'server/utils/requireVerified.ts', // DB + session — covered by API tests
+        'server/utils/dataExport.ts', // pure DB reads — covered by the GDPR API tests
+        // dataRequest.ts is NOT excluded: hashToken is a pure security primitive
+        // and is unit-tested. Only its DB lookup is left to the API tests.
       ],
       thresholds: {
         lines: 75,
