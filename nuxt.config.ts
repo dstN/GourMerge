@@ -27,12 +27,11 @@ export default defineNuxtConfig({
       { code: 'it', name: 'Italiano', file: 'it.json' },
     ],
     defaultLocale: 'de',
-    lazy: true,
+    // `lazy` was removed in @nuxtjs/i18n v10 — lazy loading is unconditional now.
     langDir: 'locales',
     strategy: 'prefix_except_default',
-    bundle: {
-      optimizeTranslationDirective: false,
-    },
+    // `bundle.optimizeTranslationDirective` was removed in @nuxtjs/i18n v10 —
+    // the option no longer exists on PluginOptions and is a typecheck error.
     detectBrowserLanguage: {
       useCookie: true,
       cookieKey: 'gourmerge_locale',

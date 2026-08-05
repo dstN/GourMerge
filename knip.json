@@ -1,5 +1,12 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
   "entry": ["app.js", "scripts/*.mjs"],
-  "ignoreDependencies": ["h3", "vitest-environment-nuxt", "xlsx"]
+  "ignoreDependencies": [
+    "h3",
+    "vitest-environment-nuxt",
+    "xlsx",
+    "vue-tsc",
+    "@iconify-json/lucide",
+    "@iconify-json/simple-icons"
+  ]
 }
