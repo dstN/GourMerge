@@ -1,4 +1,4 @@
-# GourMerge — Ground Truth (June 2026)
+# GourMerge — Ground Truth (August 2026)
 
 > Single document of current project state. Updated as features ship.
 > For future plans see `ROADMAP.md`. For architectural rules see `ARCHITECTURE.md`. For ops see `docs/RUNBOOK.md`.
@@ -17,18 +17,29 @@ A git-like recipe platform. Recipes are repositories with branches, snapshot com
 
 ## 2. Tech Stack (fixed — do not substitute)
 
-| Layer         | Technology                                     | Version       |
-| ------------- | ---------------------------------------------- | ------------- |
-| Framework     | Nuxt 4                                         | ^4.0.0        |
-| UI            | Nuxt UI v4 (Reka UI + Tailwind CSS v4)         | ^4.0.0        |
-| Database      | MySQL 8.4 via Drizzle ORM (mysql2)             | drizzle ^0.45 |
-| Auth          | nuxt-auth-utils (session-based)                | ^0.5.0        |
-| i18n          | @nuxtjs/i18n                                   | ^9.0.0        |
-| Editor        | TipTap 3 + @tiptap/markdown                    | ^3.0.0        |
-| Diff          | diff-match-patch-es                            | ^0.1.0        |
-| PWA           | @vite-pwa/nuxt                                 | ^0.10.0       |
-| Observability | Pino + @sentry/nuxt                            | ^10 / ^13     |
-| Deployment    | Netcup Webhosting + Phusion Passenger (Apache) | —             |
+Versions are the ones actually installed as of 2026-08-05, not the range in
+`package.json` — the ranges drifted far behind reality once and cost a debugging
+round.
+
+| Layer         | Technology                                     | Installed  |
+| ------------- | ---------------------------------------------- | ---------- |
+| Framework     | Nuxt                                           | 4.5.1      |
+| Bundler       | Vite                                           | 8.2.0      |
+| Runtime       | Node (dev, CI and the Plesk host)              | 26         |
+| Language      | TypeScript                                     | 6.0.3      |
+| UI            | Nuxt UI v4 (Reka UI + Tailwind CSS v4)         | 4.10.0     |
+| Database      | MySQL via Drizzle ORM (mysql2)                 | 8.4 / 0.45 |
+| Validation    | Zod                                            | 4.4.3      |
+| Auth          | nuxt-auth-utils (session-based)                | 0.5.x      |
+| i18n          | @nuxtjs/i18n                                   | 10.6.0     |
+| Editor        | TipTap 3 + @tiptap/markdown                    | 3.29.2     |
+| Diff          | diff-match-patch-es                            | 2.0.0      |
+| PWA           | @vite-pwa/nuxt                                 | 1.1.1      |
+| Observability | Pino + @sentry/nuxt                            | 10 / 10.69 |
+| Deployment    | Netcup Webhosting + Phusion Passenger (Apache) | —          |
+
+**TypeScript 7 is blocked**, not deferred: `@nuxt/ui@4.10.0` declares peer
+`typescript "^5.6.3 || ^6.0.0"`, so npm refuses 7. Re-check when Nuxt UI widens it.
 
 ---
 
@@ -46,19 +57,19 @@ GourMerge/
 │   │                           # RecipeCard, RecipeDiffViewer, DietaryBadge, NutritionFacts
 │   ├── layouts/                # default.vue, dashboard.vue, auth.vue
 │   ├── middleware/             # validate-recipe-route.ts, auth.ts
-│   ├── pages/                  # 25 pages (see §5)
+│   ├── pages/                  # 27 pages (see §5)
 │   ├── app.vue                 # <UApp><NuxtLayout><NuxtPage />
 │   └── app.config.ts           # Nuxt UI theme overrides
 ├── server/
-│   ├── api/                    # 33 REST endpoints (see §6)
+│   ├── api/                    # 37 REST endpoints (see §6)
 │   ├── database/
-│   │   ├── schema.ts           # Drizzle ORM schema (17 tables)
-│   │   └── migrations/         # 7 versioned SQL migrations (0000–0006)
+│   │   ├── schema.ts           # Drizzle ORM schema (18 tables)
+│   │   └── migrations/         # 8 versioned SQL migrations (0000–0007)
 │   ├── middleware/             # Nitro middleware
 │   ├── plugins/                # Nitro plugins (db, logger, sentry)
 │   └── utils/                  # drizzle.ts, diff.ts, merge.ts, units.ts, slug.ts
 ├── shared/types/               # TypeScript types shared app ↔ server
-├── i18n/locales/               # de.json, en.json, fr.json, it.json (387 keys, 4-way parity)
+├── i18n/locales/               # de.json, en.json, fr.json, it.json (455 keys, 4-way parity)
 ├── scripts/                    # Maintenance + setup scripts (see §8)
 ├── public/                     # PWA icons, favicon, apple-touch-icon
 ├── docs/RUNBOOK.md             # Production operations playbook
@@ -71,7 +82,7 @@ GourMerge/
 
 ---
 
-## 4. Database Schema (17 tables)
+## 4. Database Schema (18 tables)
 
 All migrations versioned in `server/database/migrations/`. **Never use `db:push` against production.**
 
@@ -94,6 +105,7 @@ All migrations versioned in `server/database/migrations/`. **Never use `db:push`
 | `password_reset_tokens`     | CSPRNG tokens (bcrypt-hashed)               | CASCADE on user delete               |
 | `rate_limit_hits`           | DB-backed rate limiter (multi-process safe) | —                                    |
 | `contact_messages`          | Contact form submissions                    | —                                    |
+| `data_requests`             | GDPR self-service tokens (export/erasure)   | CASCADE on user delete               |
 
 ### FK cascade gaps (manually handled in API)
 
@@ -102,7 +114,13 @@ Two FKs use NO ACTION (= RESTRICT in MySQL) and require pre-delete cleanup:
 - `recipes.forked_from_recipe_id` — forks nullified before parent delete
 - `gourmerge_requests.source_branch_id / target_branch_id / source_recipe_id` — cross-recipe GMRs deleted before branch cascade
 
-This is handled in `server/api/recipes/[id].delete.ts`.
+This is handled in `server/api/recipes/[id].delete.ts`, and repeated in `server/api/privacy/delete.post.ts` for the "delete my recipes too" path.
+
+### Four RESTRICT FKs make a hard user delete impossible
+
+`recipes.owner_id`, `recipe_commits.author_id`, `gourmerge_requests.author_id` and `gm_request_comments.author_id` are all **NOT NULL** and NO ACTION. On top of that `fork.post.ts` copies commits keeping the **original** `author_id`, so a forked recipe contains commits authored by someone else. `DELETE FROM users` therefore either fails on the constraint or requires destroying rows inside another user's recipe history.
+
+Account erasure consequently **anonymises the row in place** (`users.anonymized_at` + overwritten identifying columns) rather than deleting it — GitHub's `ghost`, but per-user so two erased accounts stay distinguishable in a thread. Git can orphan attribution for free because it stores the author as free text in the commit object; our `author_id` is a real foreign key.
 
 ### Key schema decisions
 
@@ -115,7 +133,7 @@ This is handled in `server/api/recipes/[id].delete.ts`.
 
 ---
 
-## 5. Pages (25)
+## 5. Pages (27)
 
 | Route                                           | Page                                  | Auth        | Layout    |
 | ----------------------------------------------- | ------------------------------------- | ----------- | --------- |
@@ -144,12 +162,14 @@ This is handled in `server/api/recipes/[id].delete.ts`.
 | `/legal/contact`                                | Contact form                          | No          | default   |
 | `/legal/impressum`                              | Legal notice                          | No          | default   |
 | `/legal/datenschutz`                            | Privacy policy                        | No          | default   |
+| `/legal/data-request`                           | GDPR self-service request form        | No\*        | default   |
+| `/legal/data-request/confirm`                   | Token landing: download or erase      | No\*        | default   |
 
 \* `/explore` uses a **dynamic layout** (`definePageMeta({ layout: false })` + `<NuxtLayout :name="loggedIn ? 'dashboard' : 'default'">`): logged-in users get the dashboard shell with sidebar; guests get the public layout.
 
 ---
 
-## 6. API Routes (33 endpoints)
+## 6. API Routes (37 endpoints)
 
 All routes: Zod-validated body/query, `requireUserSession()` where auth required, `createError()` for errors.
 
@@ -216,13 +236,25 @@ All routes: Zod-validated body/query, `requireUserSession()` where auth required
 | POST   | `/api/contact` | No   | Contact form submission         |
 | GET    | `/api/health`  | No   | Health check (`{ status, db }`) |
 
+### Privacy / GDPR self-service
+
+Deliberately **session-less**: ownership is proven by the emailed confirmation
+link, because a user locked out of their account still holds both rights.
+
+| Method | Route                  | Auth | Purpose                                                        |
+| ------ | ---------------------- | ---- | -------------------------------------------------------------- |
+| POST   | `/api/privacy/request` | No   | Start export/erasure. Always `{ sent: true }` (no enumeration) |
+| POST   | `/api/privacy/confirm` | No   | Consume the emailed token; extends the export window to 24h    |
+| GET    | `/api/privacy/export`  | No   | Stream the JSON export (token in query, `no-store`)            |
+| POST   | `/api/privacy/delete`  | No   | Execute erasure with the chosen recipe scope                   |
+
 ---
 
 ## 7. i18n Status
 
 - **4 locales**: `de` (default), `en`, `fr`, `it`
 - **Strategy**: `prefix_except_default` — German has no prefix; `/en/`, `/fr/`, `/it/` prefixed
-- **Key count**: 387 keys, 4-way parity (verified by `npm run i18n:check`)
+- **Key count**: 455 keys, 4-way parity (verified by `npm run i18n:check`)
 - **Locale files**: `i18n/locales/{de,en,fr,it}.json`
 - **CI gate**: `scripts/i18n-check.mjs` — fails if any locale has a missing key or empty value
 - **Translated**: all UI labels, navigation, errors, toasts, onboarding, glossary, legal pages, auth flows
@@ -232,15 +264,19 @@ All routes: Zod-validated body/query, `requireUserSession()` where auth required
 
 ## 8. Scripts
 
-| Script                         | NPM command                                 | Purpose                                             |
-| ------------------------------ | ------------------------------------------- | --------------------------------------------------- |
-| `i18n-check.mjs`               | `npm run i18n:check`                        | 4-way locale parity gate                            |
-| `import-swiss-foods.mjs`       | `npm run seed:swiss`                        | Import Swiss BLV Food Composition DB V7.0           |
-| `seed-ingredients.mjs`         | `npm run db:seed`                           | Curated ingredient entries (not in Swiss BLV)       |
-| `cleanup-seed-ingredients.mjs` | `node scripts/cleanup-seed-ingredients.mjs` | Remove non-BLV ingredients not used in any recipe   |
-| `seed-tags.mjs`                | —                                           | Seed default recipe tags                            |
-| `reconcile-counters.mjs`       | —                                           | Repair denormalized star/fork counters (idempotent) |
-| `generate-icons.mjs`           | `npm run generate:icons`                    | Generate PWA/favicon assets from brand SVG          |
+| Script                         | NPM command                                 | Purpose                                                                                                                               |
+| ------------------------------ | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `i18n-check.mjs`               | `npm run i18n:check`                        | 4-way locale parity gate                                                                                                              |
+| `import-swiss-foods.mjs`       | `npm run seed:swiss`                        | Import Swiss BLV Food Composition DB V7.0                                                                                             |
+| `seed-ingredients.mjs`         | `npm run db:seed`                           | Curated ingredient entries (not in Swiss BLV)                                                                                         |
+| `cleanup-seed-ingredients.mjs` | `node scripts/cleanup-seed-ingredients.mjs` | Remove non-BLV ingredients not used in any recipe                                                                                     |
+| `seed-tags.mjs`                | —                                           | Seed default recipe tags                                                                                                              |
+| `reconcile-counters.mjs`       | —                                           | Repair denormalized star/fork counters (idempotent)                                                                                   |
+| `generate-icons.mjs`           | `npm run generate:icons`                    | Generate PWA/favicon assets from brand SVG                                                                                            |
+| `cleanup-retention.mjs`        | `npm run db:cleanup`                        | **Enforce the retention windows the privacy policy states.** Nightly cron in production — see `docs/RUNBOOK.md`. `--dry-run` previews |
+
+`npm run db:setup` chains migrate + all three seeds for a fresh clone.
+`npm run seed:swiss:regen` rebuilds the committed seed from the BLV spreadsheets.
 
 ---
 
@@ -317,8 +353,10 @@ The `ingredients` master table is populated from the **Swiss BLV Food Compositio
 - **Explore**: public browse with text search, difficulty/tag filter, sort (stars/newest/forks), pagination
 - **User profiles**: public profile (recipes, starred, bio, avatar), settings page
 - **GourMerge Requests**: full lifecycle — create, list, view with diff, comment (Markdown), status (draft→open→closed/merged), three-way snapshot merge with conflict detection + **interactive per-conflict resolution** (keep source/target), merge commit. Merge is transactional with a `SELECT … FOR UPDATE` guard against concurrent double-merge; merged ingredient `sortOrder` is normalized
-- **i18n**: 4 locales (DE/EN/FR/IT), 387 keys in parity, 4-way CI gate — incl. transactional emails (verification + password reset) localized per recipient's `preferredLocale`
+- **i18n**: 4 locales (DE/EN/FR/IT), 455 keys in parity, 4-way CI gate — incl. transactional emails (verification + password reset) localized per recipient's `preferredLocale`
 - **Onboarding**: concept explainer, interactive skippable/re-runnable tour, guided first-recipe flow, contextual help (`<HelpHint>`), glossary page
+- **GDPR self-service**: data export (Art. 15/20) and account erasure (Art. 17) at `/legal/data-request`, both confirmed by email rather than by a session. Exports are built per request and streamed — never written to disk — and exclude the password hash. Erasure anonymises in place and lets the user choose whether recipes go too (see §4 for why a hard delete is impossible). Retention windows are stated in the policy **and enforced** by `npm run db:cleanup`
+- **Legal texts**: imprint + privacy policy fully translated in all four locales (they were hardcoded German with only the title translated). Contact email rendered via `<CommonObfuscatedEmail>` — readable without JS, `aria-hidden` decoy against scrapers, `mailto:` attached only on mount, so the address never appears in the SSR payload
 - **Dirty-state guard**: edit page navigation guard via UModal (not `window.confirm` — suppressed in Chromium)
 - **Delete recipe**: from edit page with confirmation modal; cascade handles all FK cleanup
 - **Layout**: default (header nav + footer), dashboard (sidebar + max-w-7xl header/footer), auth (minimal)
@@ -341,7 +379,18 @@ The `ingredients` master table is populated from the **Swiss BLV Food Compositio
 - ~~E2E does not gate deploy~~ — **now gated.** `deploy.yml`'s first step polls the GitHub API for the `e2e.yml` run matching `workflow_run.head_sha` and refuses to deploy unless it concluded `success` (30 min deadline, newest run wins so a re-run supersedes). It runs before the migrate step, so a failed E2E never touches the production DB. Caveat: re-running `CI` alone without a corresponding E2E run for that SHA will time out — dispatch `E2E` for the commit first
 - **Staging environment**: ROADMAP §8 describes local → staging → production; only local and production exist
 - **Manual/infra steps** (owner actions, not code): Let's Encrypt SSL, Passenger env injection, UptimeRobot monitor, nightly `mysqldump` cron + quarterly restore drill — all documented in `docs/RUNBOOK.md`
-- **Majors held**: `zod` 4, `eslint` 10, `typescript` 6, `vue-router` 5, `@nuxtjs/i18n` 10, `@vite-pwa/nuxt` 1, `drizzle-kit` 0.31, `diff-match-patch-es` 1 (each a breaking migration — do as a focused pass)
+- ~~Majors held~~ — **all taken (2026-08-05):** `zod` 4.4.3, `eslint` 10.8.0, `typescript` 6.0.3, `vue-router` 5.2.0, `@nuxtjs/i18n` 10.6.0, `@vite-pwa/nuxt` 1.1.1, `drizzle-kit` 0.31.10, `diff-match-patch-es` 2.0.0, plus `nuxt` 4.5.1 / `vite` 8.2.0. **Still blocked: `typescript` 7** — `@nuxt/ui@4.10.0` declares peer `typescript "^5.6.3 || ^6.0.0"`, so npm refuses 7. Re-check when Nuxt UI widens that range.
+
+- **UI consistency audit** (reported 2026-08-05, nothing changed yet — deliberately left for a focused pass):
+
+  The UI has drifted. Reported symptoms, to be treated as examples rather than the full list:
+  - **Button colours** — inconsistent use of `color`/`variant` for the same semantic action
+  - **Button sizes** — same-rank actions rendered at different `size`s
+  - **Link colours** — several in-text link styles coexist (`text-primary-500` vs the darkened `text-primary-700 dark:text-primary-400` introduced for the light-mode contrast fix, see §13)
+  - **Form field sizes** — register vs. contact form differ visibly; likely `size` and `class="w-full"` applied unevenly across `UInput`/`UFormField`
+  - Suspected root cause: styling decided per page instead of centrally. `app/app.config.ts` (Nuxt UI theme) and `main.css` exist for exactly this, so the fix is probably to pin defaults there and delete the per-call-site overrides, not to hand-tune each page.
+  - Worth building an inventory first (grep every `UButton`/`UInput` for `size`/`color`/`variant`/`class`) so the audit is driven by data rather than by whichever page is open.
+  - The axe a11y gate covers contrast, not consistency — it will not catch any of this.
 
 ---
 

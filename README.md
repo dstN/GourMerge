@@ -11,15 +11,25 @@ A git-like recipe platform. Recipes are repositories — they have branches, com
 
 | Layer      | Technology                                     |
 | ---------- | ---------------------------------------------- |
-| Framework  | Nuxt 4 (Vue 3 Composition API)                 |
+| Framework  | Nuxt 4.5 · Vite 8 · Vue 3.5 (Composition API)  |
+| Language   | TypeScript 6                                   |
 | UI         | Nuxt UI v4 (Reka UI + Tailwind CSS v4)         |
 | Database   | MySQL 8.4 via Drizzle ORM (mysql2)             |
+| Validation | Zod 4                                          |
 | Auth       | nuxt-auth-utils (session-based)                |
-| i18n       | @nuxtjs/i18n — DE (default), EN, FR, IT        |
+| i18n       | @nuxtjs/i18n 10 — DE (default), EN, FR, IT     |
 | Editor     | TipTap 3 (Markdown output, no images)          |
-| Diff       | diff-match-patch-es                            |
+| Diff       | diff-match-patch-es 2                          |
 | PWA        | @vite-pwa/nuxt                                 |
+| Runtime    | Node 26                                        |
 | Deployment | Netcup Webhosting + Phusion Passenger (Apache) |
+
+At a glance: **27 pages · 37 API endpoints · 18 tables · 455 i18n keys × 4
+locales · 132 unit tests at 93.8 % line coverage · `npm audit` at zero.**
+
+Fonts and icons are self-hosted — no Google Fonts, no Iconify API at runtime, so
+no visitor IP reaches a third party. See [CHANGELOG.md](CHANGELOG.md) for the
+full v1.0.0 scope.
 
 ---
 
@@ -71,7 +81,7 @@ and you cannot author a recipe, which is the core loop.
 
 | Step           | Provides                                                                         |
 | -------------- | -------------------------------------------------------------------------------- |
-| `db:migrate`   | Schema — 7 versioned migrations                                                  |
+| `db:migrate`   | Schema — 8 versioned migrations                                                  |
 | `seed:swiss`   | 1191 foods + per-100g nutrition, DE/EN/FR/IT names, from the committed seed file |
 | `db:seed`      | Curated ingredients absent from the Swiss dataset (e.g. Vanillezucker)           |
 | `db:seed:tags` | Base culinary tags                                                               |
@@ -92,7 +102,7 @@ dependency. See [Swiss ingredient data](#swiss-ingredient-data) for regenerating
 | `npm run lint`             | ESLint                                              |
 | `npm run lint:fix`         | ESLint auto-fix                                     |
 | `npm run format`           | Prettier format                                     |
-| `npm test`                 | Vitest unit tests (97% coverage gate)               |
+| `npm test`                 | Vitest unit tests (coverage-gated)                  |
 | `npm run test:e2e`         | Playwright API + journey + axe a11y tests           |
 | `npm run knip`             | Dead-code check (unused files/exports/deps)         |
 | `npm run i18n:check`       | 4-way locale parity gate (DE/EN/FR/IT)              |
@@ -208,9 +218,36 @@ Full runbook: [`docs/RUNBOOK.md`](docs/RUNBOOK.md).
 
 ---
 
+## Privacy (GDPR)
+
+Users handle both of their main rights themselves at `/legal/data-request`, with
+no support ticket in the loop:
+
+| Right                   | Flow                                                                                                |
+| ----------------------- | --------------------------------------------------------------------------------------------------- |
+| **Access** (Art. 15/20) | username + email → confirmation email → download link, valid 24 h, also emailed                     |
+| **Erasure** (Art. 17)   | username + email → confirmation email → choose whether recipes are deleted too → account anonymised |
+
+Two design points worth knowing before touching this code:
+
+- **Ownership is proven by the inbox, not by a session.** Someone locked out of
+  their account still holds both rights, so neither flow requires a login.
+- **Erasure anonymises the user row in place; it does not delete it.** Four
+  foreign keys into `users` are `NOT NULL` and `RESTRICT`, and a fork copies
+  commits keeping the original `author_id` — so a hard delete would either fail
+  on the constraint or destroy another user's recipe history. This is GitHub's
+  `ghost` behaviour, applied per user.
+
+Exports are built per request and streamed; nothing is written to disk.
+
 ## Maintenance Scripts
 
 ```bash
+# Enforce the retention windows stated in the privacy policy.
+# Runs nightly in production — see docs/RUNBOOK.md.
+npm run db:cleanup
+node scripts/cleanup-retention.mjs --dry-run  # preview, deletes nothing
+
 # Recompute denormalized star/fork counters (run if counters drift):
 node scripts/reconcile-counters.mjs
 
