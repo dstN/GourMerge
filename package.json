@@ -4,6 +4,9 @@
   "private": true,
   "description": "Fork the recipe, merge the flavor. A GitHub-clone for recipes.",
   "type": "module",
+  "engines": {
+    "node": ">=26"
+  },
   "scripts": {
     "build": "nuxt build",
     "dev": "nuxt dev",

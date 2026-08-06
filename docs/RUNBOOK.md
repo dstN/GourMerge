@@ -300,12 +300,39 @@ Restart after any change: `touch tmp/restart.txt`.
 `ci.yml`, not on the host. `NUXT_SENTRY_RELEASE` is baked into the artifact (its name
 does not map to the `runtimeConfig` path, so setting it under Passenger has no effect).
 
-**Passkeys need no variable, but they are bound to the hostname.** The WebAuthn RP ID is
-taken from the incoming request's `Host`, so a passkey enrolled at `https://gourmerge.de`
-will **not** work at `https://www.gourmerge.de`, and vice versa. Serve one canonical
-hostname and redirect the other. Changing the domain invalidates every enrolled passkey —
-users would have to re-enrol, though passwords (and TOTP, if set up) keep working, so it
-is not a lockout.
+---
+
+## Canonical host — `gourmerge.de`, never `www.`
+
+Three separate things key off the request's hostname, so one name has to win:
+
+- **The WebAuthn RP ID is the request hostname.** `gourmerge.de` and `www.gourmerge.de`
+  are different relying parties; a passkey enrolled on one does not exist on the other.
+- **The CSRF check** compares the request origin against `NUXT_PUBLIC_APP_URL`, so every
+  mutation on the other host returns 403.
+- **`/api/health` returns 503** on the other host, for the same reason.
+
+The apex wins, because that is what `NUXT_PUBLIC_APP_URL` is set to. Netcup's panel has
+no canonical-host setting, so the redirect lives in `.htaccess`: `www` → apex and
+`http` → `https` in a **single hop**, with `/.well-known/acme-challenge/` deliberately
+excluded.
+
+> **This does not reach the host by deploying.** `.htaccess` is never deployed — that is
+> what keeps the host's secrets alive across releases. Copy the `Canonical host + HTTPS`
+> block from the tracked `.htaccess` into the **host** copy by hand, then
+> `touch tmp/restart.txt`.
+
+**The certificate must cover `www.gourmerge.de` too, or the redirect never runs.** TLS is
+negotiated before Apache sees the request, so a cert that only covers the apex makes
+`https://www.gourmerge.de` fail with a certificate error — and because the app sends HSTS
+with `includeSubDomains`, a browser that has already seen the apex will refuse to let the
+visitor click through. Tick the "include www" / SAN option when issuing the Let's Encrypt
+certificate. The ACME exclusion above exists so renewal keeps working for both names:
+`http-01` follows redirects, so without it `www`'s challenge would be answered with the
+apex's token and the `www` SAN would silently stop renewing.
+
+**Point the scheduled tasks at the apex.** A `www` URL gets a 301, and Plesk's
+"Fetch a URL" cannot be relied on to follow one — the job would simply never run.
 
 ---
 

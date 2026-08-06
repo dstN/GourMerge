@@ -35,9 +35,30 @@ PassengerAppEnv production
 # rotating the session secret does not invalidate every enrolled authenticator:
 # PassengerEnvVar TOTP_ENCRYPTION_KEY    <≥32 random chars>
 
-# ── HTTPS / HSTS ────────────────────────────────────────────
-# Force HTTPS; Nitro handles HSTS header once behind SSL.
+# ── Canonical host + HTTPS ──────────────────────────────────
+# ONE hostname has to win, and not for tidiness:
+#
+#   • The WebAuthn RP ID is the hostname of the request. `gourmerge.de` and
+#     `www.gourmerge.de` are therefore different relying parties — a passkey enrolled
+#     on one does not exist on the other, and the login just says it cannot find it.
+#   • The CSRF check compares the request origin against NUXT_PUBLIC_APP_URL, so every
+#     mutation on the non-canonical host returns 403.
+#   • /api/health returns 503 on the non-canonical host for the same reason.
+#
+# The apex wins because that is what NUXT_PUBLIC_APP_URL is set to.
 RewriteEngine On
+
+# Never rewrite ACME challenges. Let's Encrypt must validate BOTH names over plain
+# HTTP, and http-01 follows redirects — so sending www's challenge to the apex would
+# serve the apex's token, fail validation for www, and eventually expire the www SAN.
+RewriteRule ^\.well-known/acme-challenge/ - [L]
+
+# www → apex AND http → https in a single hop. `%1` captures the host without the
+# `www.`, so this carries over unchanged if the domain ever changes.
+RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
+RewriteRule ^ https://%1%{REQUEST_URI} [R=301,L]
+
+# Anything else still on http → https. Nitro sets the HSTS header once behind SSL.
 RewriteCond %{HTTPS} off
 RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
 
