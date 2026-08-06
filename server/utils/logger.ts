@@ -27,6 +27,38 @@ const REDACT_PATHS = [
 
 let _logger: Logger | null = null
 
+/** pino's built-in levels. Anything else makes `pino()` THROW rather than warn. */
+const PINO_LEVELS = ['trace', 'debug', 'info', 'warn', 'error', 'fatal', 'silent']
+
+/**
+ * Resolve LOG_LEVEL defensively, because getting this wrong took production down.
+ *
+ * Sentry, from the live site: `default level:info  must be included in custom levels`, thrown
+ * by `pino()` inside `getLogger()`. Note the DOUBLE space in that message — it is
+ * `default level:${level} must be…`, so the value was `"info "`, with a trailing space picked
+ * up from the Netcup panel's environment-variable field. pino rejects an unknown level by
+ * throwing.
+ *
+ * The consequence was out of all proportion to the typo. The logger is built lazily on first
+ * use, and the first use in a healthy request cycle is often `logger.error()` — so an error
+ * would occur, the app would try to report it, the logger would throw, and the process would
+ * die mid-response. Passenger reported "Incomplete response received from application" and
+ * the browser got a 502, including on `/api/recipes/explore`. Every 502 we have been chasing
+ * came from a stray space.
+ *
+ * So: trim and lowercase, fall back instead of throwing, and say so on stderr. A logger is
+ * infrastructure for reporting failure; it must not be able to cause one.
+ */
+export function resolveLevel(fallback: string): string {
+  const raw = process.env.LOG_LEVEL
+  if (!raw) return fallback
+  const level = raw.trim().toLowerCase()
+  if (PINO_LEVELS.includes(level)) return level
+  // console, deliberately: the logger does not exist yet, and this must be visible.
+  console.warn(`[logger] LOG_LEVEL=${JSON.stringify(raw)} is not a pino level — using "${fallback}".`)
+  return fallback
+}
+
 export function getLogger(): Logger {
   if (_logger) return _logger
 
@@ -53,7 +85,7 @@ export function getLogger(): Logger {
 
     _logger = pino(
       {
-        level: process.env.LOG_LEVEL || 'info',
+        level: resolveLevel('info'),
         redact: { paths: REDACT_PATHS, censor: '[REDACTED]' },
       },
       stream
@@ -62,7 +94,7 @@ export function getLogger(): Logger {
     // Use pino-pretty as a stream (not a transport worker) so it works in Nitro's
     // bundled dev environment where worker-thread module resolution can fail.
     const stream = PinoPretty({ colorize: true, translateTime: 'SYS:standard', ignore: 'pid,hostname' })
-    _logger = pino({ level: 'debug', redact: { paths: REDACT_PATHS, censor: '[REDACTED]' } }, stream)
+    _logger = pino({ level: resolveLevel('debug'), redact: { paths: REDACT_PATHS, censor: '[REDACTED]' } }, stream)
   }
 
   return _logger
