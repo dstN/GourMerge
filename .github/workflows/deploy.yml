@@ -119,7 +119,7 @@ jobs:
       # Check out the exact commit CI built, not master's tip — otherwise a push
       # landing mid-deploy would migrate a schema the artifact doesn't match.
       - name: Checkout the built commit
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
 
