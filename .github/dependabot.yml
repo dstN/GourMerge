@@ -11,6 +11,15 @@ updates:
         dependency-type: production
       development:
         dependency-type: development
+    ignore:
+      # TypeScript 7 cannot be installed at all: `@nuxt/ui@4.10.0` declares peer
+      # `typescript "^5.6.3 || ^6.0.0"`, so `npm ci` fails outright — the PR is not a judgement
+      # call, it is unresolvable until Nuxt UI widens that range. Recorded here rather than as a
+      # `@dependabot ignore` comment on the PR, because that state lives in Dependabot and is
+      # invisible to anyone reading the repo; this line is greppable and deleting it is the
+      # whole re-enable step. See `.claude/ROADMAP.md` → "Open — deliberately deferred".
+      - dependency-name: typescript
+        versions: ['7.x']
   # Keep GitHub Actions pinned versions current.
   - package-ecosystem: github-actions
     directory: '/'
