@@ -342,9 +342,13 @@ belong in this list.
 
 `/api/health` reports which of the required ones actually arrived — see **Health Checks**.
 
-`NUXT_SENTRY_RELEASE` and `SENTRY_AUTH_TOKEN` are **build-time only** — set in
-`ci.yml`, not on the host. `NUXT_SENTRY_RELEASE` is baked into the artifact (its name
-does not map to the `runtimeConfig` path, so setting it under Passenger has no effect).
+`NUXT_SENTRY_RELEASE` and `SENTRY_AUTH_TOKEN` are **build-time only** — GitHub
+**repository** secrets, never host variables. `NUXT_SENTRY_RELEASE` is baked into the
+artifact (its name does not map to the `runtimeConfig` path, so setting it under Passenger
+has no effect), and the auth token only uploads source maps while CI builds. Runtime error
+capture depends solely on `NUXT_PUBLIC_SENTRY_DSN`, so an absent token costs you readable
+stack traces and nothing else. Use an **organization** token with scope `org:ci` — see
+`docs/SECRETS.md` §2b.
 
 ---
 

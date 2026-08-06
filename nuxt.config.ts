@@ -146,9 +146,18 @@ export default defineNuxtConfig({
   // ── Sentry ───────────────────────────────────────────────────
   sentry: {
     sourceMapsUploadOptions: {
-      org: process.env.SENTRY_ORG || '',
+      /**
+       * `|| undefined`, not `|| ''`. The token this expects is a Sentry
+       * **organization** token (scope `org:ci` — "Source Map Upload, Release
+       * Creation"), and those encode their own org, so `sentry-cli` infers it. An
+       * empty string is a *provided* value and overrides that inference, turning a
+       * correctly-configured build into "organization slug is required". Leaving the
+       * key undefined lets the token speak for itself, while still honouring
+       * SENTRY_ORG when it is set.
+       */
+      org: process.env.SENTRY_ORG || undefined,
       project: process.env.SENTRY_PROJECT || 'gourmerge',
-      authToken: process.env.SENTRY_AUTH_TOKEN || '',
+      authToken: process.env.SENTRY_AUTH_TOKEN || undefined,
       // Source-map UPLOAD only runs in CI where the auth token is set; the
       // module skips upload when authToken is empty.
       telemetry: false,

@@ -67,6 +67,17 @@ capture does **not** depend on them.
 
 `SENTRY_AUTH_TOKEN` · `SENTRY_ORG` · `SENTRY_PROJECT`
 
+Use an **organization** token, not a personal one: Sentry → **Settings → Auth Tokens →
+Create New Organization Token**. Its only scope, `org:ci`, is described as "Source Map
+Upload, Release Creation, Code Mappings" — precisely what the build needs and nothing
+more. A personal token would be tied to one human account (it dies with their access) and
+the scopes on offer there — `project:read/write/admin` — are all broader than required.
+
+Organization tokens encode their own org, so `SENTRY_ORG` is optional; `SENTRY_PROJECT`
+defaults to `gourmerge` in `nuxt.config.ts`. Both are passed as `undefined` rather than
+`''` when unset, because an empty string counts as a provided value and would override the
+org the token already carries.
+
 **Build-time-only Sentry vars.** `ci.yml` sets `NUXT_SENTRY_RELEASE` to `github.sha` on
 the build step so deployed errors are attributable to a release. It is baked into the
 artifact and cannot be injected on the host — its name does not map to the
