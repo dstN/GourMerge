@@ -536,7 +536,29 @@ browser would not let a visitor click past a certificate warning.
 
 - **Endpoint:** `GET /api/health`
 - **Healthy:** `200` with `{ "status": "ok", "database": "connected" }`
-- **UptimeRobot:** configure HTTP monitor at `https://gourmerge.de/api/health`, interval 5 min, alert on 2 consecutive failures
+- **UptimeRobot:** HTTP monitor at `https://gourmerge.de/api/health`, interval 5 min, alert on 2 consecutive failures
+
+### Alerting to Discord, and the two traps in it
+
+Discord rejects UptimeRobot's own webhook payload. Use the **Slack** contact type and append
+`/slack` to the Discord webhook URL — Discord serves a Slack-compatible endpoint there:
+
+```text
+https://discord.com/api/webhooks/<id>/<token>/slack
+```
+
+> **A contact is not attached to a monitor by creating it.** "Send test notification" tests
+> the contact in isolation, so Discord receives it while real alerts still go nowhere.
+> Open the **monitor** → Edit → _Alert contacts to notify_ → tick the contact → Save.
+> Creating a contact does not retroactively attach it to monitors that already exist.
+
+**Alerts fire on state transitions, not on every failed check.** A monitor that was already
+down before the contact was attached will not re-send that alert. To prove the wiring
+without waiting for a real outage, **pause the monitor and resume it** — on resume it
+re-evaluates and sends a fresh alert if the check is still failing.
+
+Both of these were hit during setup: the test notification arrived, nothing else did, and
+the site was returning 500 the whole time.
 
 The endpoint reports **fitness to serve, not just liveness**, because it is what the
 deploy smoke test and the auto-rollback key off. It returns **503** when the app is up
