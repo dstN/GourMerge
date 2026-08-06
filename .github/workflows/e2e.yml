@@ -1,10 +1,30 @@
 name: E2E
 
 # Browser E2E + API integration + axe a11y. Heavier than CI, so it runs on
-# master and on demand rather than every push.
+# master and on demand rather than on every push.
+#
+# It also runs on any PR that changes the dependency manifest, and that exception was paid for.
+# A Dependabot PR bumping @simplewebauthn from 11 to 13 arrived green: CI does lint, typecheck,
+# unit tests and build, none of which touch a passkey. The only coverage of enrol-then-sign-in
+# is here, and it never gated the PR — so the way to find out whether passkeys still worked was
+# to build the artifact and run this suite by hand. That is not a thing to do per bump.
+#
+# `paths` and not every PR: this suite takes ~4 minutes, and a PR that only moves CSS around
+# cannot break a dependency. No secrets are needed either (the job's env holds literals for the
+# throwaway MySQL service), which matters because Dependabot PRs run without repository
+# secrets — a job that needed them would fail for reasons unrelated to the bump.
+#
+# On the Deploy side this is harmless: `deploy.yml` looks up E2E runs by head SHA, and a PR head
+# SHA is not master's. If a PR is ever merged as a fast-forward the two coincide, and the gate
+# then finds two runs for one SHA and takes the newest — both ran the same code, so either
+# answer is correct.
 on:
   push:
     branches: [master]
+  pull_request:
+    paths:
+      - package.json
+      - package-lock.json
   workflow_dispatch:
 
 jobs:
