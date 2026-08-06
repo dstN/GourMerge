@@ -14,6 +14,25 @@ const {
   error,
 } = useFetch<UserProfile>(() => `/api/users/${username.value}`, { headers: useRequestHeaders(['cookie']) })
 
+/**
+ * A profile that does not exist must answer 404, not 200 with a friendly page.
+ *
+ * `/[username]` is the widest route in the app, so every unmatched single-segment path lands
+ * here — `/backups`, `/app.js`, `/.my.cnf`, anything. Each of those was returning HTTP 200
+ * with this page rendered inside it, which makes every typo an indexable URL and, worse,
+ * makes "is this file exposed?" impossible to answer from a status code. Checking whether
+ * `/backups` leaks a database dump took reading 36KB of response body to notice it was just
+ * this component.
+ *
+ * `setResponseStatus` rather than `createError`: the status is what was wrong, not the page.
+ * A visitor who mistypes a username should still get the styled "profile not found" state
+ * below, not the generic error screen — crawlers and scripts get the honest code either way.
+ */
+const event = useRequestEvent()
+if (import.meta.server && event && error.value) {
+  setResponseStatus(event, 404)
+}
+
 useSeoMeta({
   title: () =>
     profile.value ? `${profile.value.user.displayName || profile.value.user.username} — GourMerge` : 'GourMerge',

@@ -253,6 +253,15 @@ export default defineNuxtConfig({
           : {}),
       },
     },
+    // Lighthouse: 390KiB of "est. savings" from missing cache headers, all of it hashed build
+    // assets. Nitro sets this itself for `/_nuxt/**` under most presets; behind Apache +
+    // Passenger it evidently does not survive, so it is declared. Safe by construction —
+    // every filename in there carries a content hash, so `immutable` can never serve a stale
+    // asset: a change produces a new URL. The one thing that must NOT get this treatment is
+    // the HTML, which is why the rule is scoped to the build directory and not to `/**`.
+    '/_nuxt/**': {
+      headers: { 'cache-control': 'public, max-age=31536000, immutable' },
+    },
   },
 
   // ── Nitro server preset (Passenger uses node-server) ────────

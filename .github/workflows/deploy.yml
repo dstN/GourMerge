@@ -320,6 +320,35 @@ jobs:
           esac
           exit 1
 
+      # Paths that must never be readable over HTTP. `backups/` and `.my.cnf` sit outside the
+      # document root by design, and `.output/` is the server bundle — but "by design" is a
+      # claim about a Plesk setting nobody re-checks. If DEPLOY_PATH and the Node.js
+      # Application Root ever drift so that the artifact lands inside httpdocs, every server
+      # chunk becomes downloadable and the only symptom is that the site still works.
+      #
+      # Checked from outside, after the release is live, because that is the only place the
+      # answer is real. A 404 or 403 passes. So does the app answering with its own page — the
+      # `/[username]` route is wide enough to catch most of these — so the test is on CONTENT,
+      # not on the status code: a database dump, a credentials file and a shell script all have
+      # recognisable first bytes.
+      - name: Verify nothing sensitive is web-readable
+        if: steps.smoke.outcome == 'success'
+        run: |
+          set -uo pipefail
+          fail=0
+          for path in /backups/ /backups /.my.cnf /server-backup.sh /.env /.output/server/index.mjs /package.json; do
+            body=$(curl -s -m 20 "https://${{ secrets.DEPLOY_DOMAIN }}$path" || true)
+            code=$(curl -s -m 20 -o /dev/null -w '%{http_code}' "https://${{ secrets.DEPLOY_DOMAIN }}$path" || true)
+            # Markers of the real files, not of the app's HTML.
+            if printf '%s' "$body" | grep -qE '^\[client\]|^#!/bin/(sh|bash)|mysqldump|^-- MySQL|^INSERT INTO|DATABASE_URL=|NUXT_SESSION_PASSWORD=|"dependencies"[[:space:]]*:'; then
+              echo "::error::$path ($code) served real file content — it is web-readable."
+              fail=1
+            else
+              echo "ok   $path → $code, no file content"
+            fi
+          done
+          [ "$fail" = 0 ] || exit 1
+
       # The retained artifact only earns its keep if a bad release is actually
       # reverted. Runs only when the smoke test failed.
       - name: Roll back to previous release
