@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { RecipeDetail, StepTranslations } from '~~/shared/types/recipe'
 
-definePageMeta({ middleware: ['validate-recipe-route'] })
+definePageMeta({ middleware: ['validate-recipe-route', 'shell'] })
 
 function resolveStepContent(step: { content: string; contentTranslations: StepTranslations | null }): string {
   const loc = locale.value as keyof StepTranslations
@@ -71,6 +71,8 @@ const {
 
 const isOwner = computed(() => recipe.value?.owner?.id === user.value?.id)
 const recipeUrl = computed(() => (recipe.value ? `/${recipe.value.owner.username}/${recipe.value.slug}` : ''))
+
+const openGmrCount = computed(() => recipe.value?.openGmrCount ?? 0)
 
 // ── Branch switching ─────────────────────────────────────────
 const branchItems = computed(() =>
@@ -281,6 +283,10 @@ useHead(() => {
               @click="forkRecipe"
             />
             <CommonHelpHint v-if="loggedIn && !isOwner" i18n-key="glossary.fork.helpHint" size="sm" />
+            <!-- Carries the number of OPEN requests, the way GitHub does: a count of
+                 closed ones is history, not something needing attention. Hidden at zero
+                 rather than showing a `0`, so the badge only ever means "there is
+                 something here". -->
             <UButton
               :label="t('gourmergeRequest.titlePlural')"
               icon="i-lucide-git-pull-request"
@@ -289,15 +295,15 @@ useHead(() => {
               variant="outline"
               :to="`${recipeUrl}/gourmerge-requests`"
               data-tour="gourmerge-requests-link"
-            />
-            <UButton
-              :label="t('branches.title')"
-              icon="i-lucide-git-branch"
-              size="sm"
-              color="neutral"
-              variant="outline"
-              :to="`${recipeUrl}/branches`"
-            />
+            >
+              <template v-if="openGmrCount > 0" #trailing>
+                <UBadge :label="String(openGmrCount)" color="primary" variant="subtle" size="sm" />
+              </template>
+            </UButton>
+            <!-- No "Varianten" button here: the branch picker below carries the count and
+                 links to the same page, and two routes to one destination in one row is
+                 noise. -->
+
             <UButton
               :label="t('history.title')"
               icon="i-lucide-history"

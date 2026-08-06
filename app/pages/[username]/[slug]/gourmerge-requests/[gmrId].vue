@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { RecipeDetail, GourmergeRequestDetail } from '~~/shared/types/recipe'
 
-definePageMeta({ middleware: ['validate-recipe-route'] })
+definePageMeta({ middleware: ['validate-recipe-route', 'shell'] })
 
 const { t } = useI18n()
 const { apiError } = useApiError()

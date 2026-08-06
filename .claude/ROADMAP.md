@@ -107,8 +107,29 @@ Not scoped, not scheduled. Roughly in the order they would earn their keep.
 6. **SSR caching of public recipe pages** — only once traffic justifies it.
    Measure first: diff and merge are computed on read, and those are the
    expensive paths, not rendering.
-7. **Ingredient density table** — would let `g ↔ cup` convert properly. The
-   conversion engine deliberately refuses mass↔volume today rather than guessing.
+7. **Ingredient density table — US cups for dry goods.** Assessed 2026-08-06 and
+   parked; the shape of the work is clear, the effort is data entry rather than code.
+
+   What already works: `ml ↔ cup`, `ml ↔ fl oz`, `g ↔ oz`, `tsp`, `tbsp` — the
+   factors are in `server/utils/units.ts`, and `/settings` already offers
+   Metrisch / Imperial and is honoured on the read path.
+
+   What does not: **`g → cup` for dry ingredients**, because a gram of flour and a
+   gram of honey occupy different volumes. That needs one number per ingredient,
+   `ingredient_nutrition.density_g_per_ml` — the column **exists** and is populated
+   from the Swiss BLV `Dichte` field, but only for **157 of 1194** rows (13 %), and
+   `grams_per_piece` is empty everywhere. The engine deliberately refuses rather
+   than guessing, which is right: in baking the number is the recipe.
+
+   The cheap version is a curated table of ~50 staples (flour 0.59, sugar 0.85,
+   butter 0.91, rice 0.85 …) seeded into the existing column — that covers the
+   ingredients anyone actually wants in cups, and everything else keeps showing
+   grams. Sources like usa-kulinarisch.de have the conversions.
+
+   Left parked because a partially-converting recipe ("2 cups flour, 340 g
+   chicken") may read worse than a consistently metric one, and that is a product
+   call, not an implementation detail.
+
 8. **Machine translation of recipe text** (LibreTranslate). Assessed 2026-08-06 and
    deferred rather than rejected — three things have to be settled first, and none
    of them is code:

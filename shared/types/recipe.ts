@@ -55,6 +55,8 @@ export interface RecipeDetail {
   selectedBranch:
     | { id: number; recipeId: number; name: string; headCommitId: number | null; isDefault: boolean; createdAt: string }
     | undefined
+  /** Count of OPEN GourMerge Requests only — closed and merged ones are history. */
+  openGmrCount: number
   currentIngredients: Array<{
     id: number
     ingredientId: number

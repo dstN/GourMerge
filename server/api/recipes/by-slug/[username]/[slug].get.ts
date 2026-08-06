@@ -16,6 +16,7 @@ import {
   recipeStars,
   recipeTags,
   tags,
+  gourmergeRequests,
 } from '~~/server/database/schema'
 import { computeNutritionTotals, perServing } from '~~/server/utils/nutrition'
 import { getBestDisplayUnit } from '~~/server/utils/units'
@@ -217,8 +218,20 @@ export default defineEventHandler(async (event) => {
     forkedFrom = src ?? null
   }
 
+  /**
+   * Only OPEN requests. Closed and merged ones are history; a badge is a call for
+   * attention, so counting them would make it permanently non-zero and therefore
+   * meaningless. Computed here rather than fetched separately so the header renders
+   * server-side with everything else.
+   */
+  const [openGmrs] = await db
+    .select({ n: sql<number>`COUNT(*)` })
+    .from(gourmergeRequests)
+    .where(and(eq(gourmergeRequests.recipeId, recipe.id), eq(gourmergeRequests.status, 'open')))
+
   return {
     ...recipe,
+    openGmrCount: Number(openGmrs?.n ?? 0),
     tags: recipeTags_,
     owner,
     forkedFrom,

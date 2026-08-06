@@ -6,7 +6,7 @@
  */
 import type { RecipeDetail } from '~~/shared/types/recipe'
 
-definePageMeta({ middleware: ['validate-recipe-route'] })
+definePageMeta({ middleware: ['validate-recipe-route', 'shell'] })
 
 interface ForkCard {
   id: number

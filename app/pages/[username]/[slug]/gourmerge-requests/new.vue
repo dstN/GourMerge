@@ -6,7 +6,7 @@ import type { RecipeDetail } from '~~/shared/types/recipe'
  * had no client-side guard at all and an anonymous visitor got a form that could
  * only fail server-side. The named `auth` middleware is what actually guards.
  */
-definePageMeta({ middleware: ['validate-recipe-route', 'auth'] })
+definePageMeta({ layout: 'dashboard', middleware: ['validate-recipe-route', 'auth'] })
 
 const { t } = useI18n()
 const { apiError } = useApiError()
