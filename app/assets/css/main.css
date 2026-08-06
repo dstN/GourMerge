@@ -193,6 +193,49 @@
   text-decoration-color: currentColor;
 }
 
+/* ── Skeleton loading: a sweep, not a pulse ────────────────────
+ * Nuxt UI's skeleton is `animate-pulse rounded-md bg-elevated` — the whole block
+ * fades in and out together, which reads as "something is broken and blinking"
+ * rather than "content is on its way". A highlight travelling left-to-right reads
+ * as directional progress, which is why every platform that does this uses one.
+ *
+ * Applied by overriding only the animation half of that base in `app.config.ts`,
+ * so the shape and surface colour still come from Nuxt UI's own theme.
+ *
+ * The moving band is a background-image on top of `bg-elevated`, so the resting
+ * colour is unchanged and only the highlight moves. `background-position` is
+ * animated rather than `transform` because the element is the surface itself —
+ * there is no inner node to slide without adding one. */
+@keyframes gm-skeleton-sweep {
+  from {
+    background-position: -150% 0;
+  }
+  to {
+    background-position: 250% 0;
+  }
+}
+
+.gm-skeleton {
+  background-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in oklab, var(--ui-text-dimmed) 18%, transparent) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  background-repeat: no-repeat;
+  animation: gm-skeleton-sweep 1.6s ease-in-out infinite;
+}
+
+/* An indefinite looping animation is exactly what this setting is for. The
+ * skeleton stays visible as a static placeholder, so nothing is lost. */
+@media (prefers-reduced-motion: reduce) {
+  .gm-skeleton {
+    animation: none;
+    background-image: none;
+  }
+}
+
 /* ── Dropdown/menu open: no highlight/icon colour flash ────────
  * Nuxt UI menu items (and their leading icons + labels) animate colour via a
  * transition. On open, the highlighted values are briefly present and animate

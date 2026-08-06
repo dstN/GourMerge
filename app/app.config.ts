@@ -75,5 +75,14 @@ export default defineAppConfig({
         variant: 'subtle',
       },
     },
+
+    // ── Skeletons — sweep instead of pulse ───────────────────────
+    // Nuxt UI's default base is `animate-pulse rounded-md bg-elevated`. Only the
+    // animation is swapped; the shape and surface stay theirs, so a future Nuxt UI
+    // change to skeleton colour still reaches us. `.gm-skeleton` (main.css) layers a
+    // travelling highlight over `bg-elevated` and honours prefers-reduced-motion.
+    skeleton: {
+      base: 'gm-skeleton rounded-md bg-elevated',
+    },
   },
 })

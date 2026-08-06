@@ -17,8 +17,9 @@ const { t } = useI18n()
       variant="ghost"
       size="xs"
       icon="i-simple-icons-github"
-      to="https://github.com"
+      to="https://github.com/dstN/GourMerge"
       target="_blank"
+      rel="noopener noreferrer"
     />
     <UButton :label="t('legal.impressum')" color="neutral" variant="ghost" size="xs" to="/legal/impressum" />
     <UButton :label="t('legal.datenschutz')" color="neutral" variant="ghost" size="xs" to="/legal/datenschutz" />

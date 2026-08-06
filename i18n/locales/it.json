@@ -196,7 +196,8 @@
     "leave": "Lascia",
     "help": "Aiuto",
     "or": "oppure",
-    "create": "Crea"
+    "create": "Crea",
+    "view": "Visualizza"
   },
   "diff": {
     "title": "Modifiche",
@@ -365,7 +366,11 @@
     "created": "Variante creata",
     "deleted": "Variante eliminata",
     "viewHistory": "Cronologia versioni",
-    "empty": "Nessuna variante al momento."
+    "empty": "Nessuna variante al momento.",
+    "switchTo": "Cambia variante:",
+    "onlyDefault": "Questa ricetta non ha ancora altre varianti.",
+    "filter": "Cerca una variante…",
+    "count": "{n} varianti"
   },
   "onboarding": {
     "skipAll": "Salta",

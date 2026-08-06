@@ -24,8 +24,10 @@ import type { CanonicalUnit, MeasurementSystem } from '~~/shared/types'
 export default defineEventHandler(async (event) => {
   const username = getRouterParam(event, 'username')
   const slug = getRouterParam(event, 'slug')
-  const { locale: rawLocale } = getQuery(event)
+  const { locale: rawLocale, branch: rawBranch } = getQuery(event)
   const locale = ['de', 'en', 'fr', 'it'].includes(String(rawLocale)) ? String(rawLocale) : 'en'
+  /** Optional branch to display. Absent or unknown falls back to the default branch. */
+  const requestedBranchId = Number(rawBranch) > 0 ? Number(rawBranch) : null
 
   if (!username || !slug) {
     throw createError({ statusCode: 400, statusMessage: 'Username and slug are required' })
@@ -109,9 +111,21 @@ export default defineEventHandler(async (event) => {
   // ── Get branches ───────────────────────────────────────────
   const branches = await db.select().from(recipeBranches).where(eq(recipeBranches.recipeId, recipe.id))
 
-  // ── Get latest commit from default branch ──────────────────
+  /**
+   * Which branch this page shows.
+   *
+   * The default branch used to be the only one that could be *viewed* — the branches page
+   * offered "edit" and "history" links but nothing to read a variant, so a branch like
+   * "paleo" was reachable only through the editor. Everything below (ingredients, steps,
+   * nutrition, structured data) now keys off `selectedBranch`.
+   *
+   * The lookup is `find` over branches already filtered to this recipe, so an id belonging
+   * to somebody else's recipe cannot select anything — it falls through to the default
+   * rather than leaking a foreign snapshot.
+   */
   const defaultBranch = branches.find((b) => b.isDefault) || branches[0]
-  const headCommitId = defaultBranch?.headCommitId
+  const selectedBranch = (requestedBranchId ? branches.find((b) => b.id === requestedBranchId) : null) ?? defaultBranch
+  const headCommitId = selectedBranch?.headCommitId
 
   const currentIngredients = headCommitId
     ? await db
@@ -210,6 +224,8 @@ export default defineEventHandler(async (event) => {
     forkedFrom,
     branches,
     defaultBranch,
+    /** The branch actually rendered — equals `defaultBranch` unless `?branch=` selected another. */
+    selectedBranch,
     // Carries canonical `quantity`/`unit` PLUS `displayQuantity`/`displayUnit`
     // resolved for this viewer's measurement preference.
     currentIngredients: displayIngredients,

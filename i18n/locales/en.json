@@ -196,7 +196,8 @@
     "leave": "Leave",
     "help": "Help",
     "or": "or",
-    "create": "Create"
+    "create": "Create",
+    "view": "View"
   },
   "diff": {
     "title": "Changes",
@@ -365,7 +366,11 @@
     "created": "Variant created",
     "deleted": "Variant deleted",
     "viewHistory": "Version History",
-    "empty": "No variants yet."
+    "empty": "No variants yet.",
+    "switchTo": "Switch variant:",
+    "onlyDefault": "This recipe has no other variants yet.",
+    "filter": "Find a variant…",
+    "count": "{n} variants"
   },
   "onboarding": {
     "skipAll": "Skip",

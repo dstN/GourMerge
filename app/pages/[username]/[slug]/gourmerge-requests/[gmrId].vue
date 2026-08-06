@@ -193,7 +193,10 @@ useSeoMeta({
             data-tour="merge-button"
             @click="executeMerge()"
           />
-          <CommonHelpHint v-if="gmr.canMerge" i18n-key="glossary.merge.helpHint" size="sm" />
+          <!-- `lg` to match Merge and Close either side of it. DESIGNBOOK §2.3: one height
+               per cluster — at `sm` this rendered 28px against their 36px and read as
+               misaligned rather than as a quieter affordance. -->
+          <CommonHelpHint v-if="gmr.canMerge" i18n-key="glossary.merge.helpHint" size="lg" />
           <UButton
             v-if="gmr.status === 'open' && loggedIn"
             :label="t('gourmergeRequest.closeButton')"

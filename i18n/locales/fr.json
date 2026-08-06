@@ -196,7 +196,8 @@
     "leave": "Quitter",
     "help": "Aide",
     "or": "ou",
-    "create": "Créer"
+    "create": "Créer",
+    "view": "Voir"
   },
   "diff": {
     "title": "Modifications",
@@ -365,7 +366,11 @@
     "created": "Variante créée",
     "deleted": "Variante supprimée",
     "viewHistory": "Historique des versions",
-    "empty": "Aucune variante pour l'instant."
+    "empty": "Aucune variante pour l'instant.",
+    "switchTo": "Changer de variante :",
+    "onlyDefault": "Cette recette n’a pas encore d’autres variantes.",
+    "filter": "Rechercher une variante…",
+    "count": "{n} variantes"
   },
   "onboarding": {
     "skipAll": "Ignorer",

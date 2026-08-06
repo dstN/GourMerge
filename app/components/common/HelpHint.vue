@@ -15,8 +15,12 @@ const props = defineProps<{
   text?: string
   /** Optional heading (i18n key or raw string) */
   title?: string
-  /** Size of the ? icon */
-  size?: 'xs' | 'sm' | 'md'
+  /**
+   * Size of the ? icon. Must match the buttons it sits beside — DESIGNBOOK §2.3 asks for
+   * one height per cluster, and a hint that is 8px shorter than its neighbours reads as
+   * misalignment rather than as a quieter affordance. `lg` exists for exactly that.
+   */
+  size?: 'xs' | 'sm' | 'md' | 'lg'
 }>()
 
 const helpText = computed(() => props.text ?? (props.i18nKey ? t(props.i18nKey) : ''))

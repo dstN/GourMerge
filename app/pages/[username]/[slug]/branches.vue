@@ -133,6 +133,16 @@ const branchSourceOptions = computed(
 
           <!-- Row actions — all `sm`, per DESIGNBOOK §2 (same rank, same size) -->
           <div class="flex shrink-0 items-center gap-2">
+            <!-- The missing link: this page offered edit and history but no way to simply
+                 read a variant, so a branch could only be inspected through the editor. -->
+            <UButton
+              :label="t('common.view')"
+              icon="i-lucide-eye"
+              size="sm"
+              color="neutral"
+              variant="outline"
+              :to="branch.isDefault ? recipeUrl : `${recipeUrl}?branch=${branch.id}`"
+            />
             <UButton
               :label="t('branches.viewHistory')"
               icon="i-lucide-history"

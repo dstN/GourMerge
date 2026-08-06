@@ -47,6 +47,14 @@ export interface RecipeDetail {
   defaultBranch:
     | { id: number; recipeId: number; name: string; headCommitId: number | null; isDefault: boolean; createdAt: string }
     | undefined
+  /**
+   * The branch the payload actually describes. Equal to `defaultBranch` unless the request
+   * carried `?branch=<id>`; `currentIngredients`, `currentSteps` and the nutrition totals
+   * all belong to this branch.
+   */
+  selectedBranch:
+    | { id: number; recipeId: number; name: string; headCommitId: number | null; isDefault: boolean; createdAt: string }
+    | undefined
   currentIngredients: Array<{
     id: number
     ingredientId: number

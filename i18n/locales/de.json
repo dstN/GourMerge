@@ -196,7 +196,8 @@
     "leave": "Verlassen",
     "help": "Hilfe",
     "or": "oder",
-    "create": "Anlegen"
+    "create": "Anlegen",
+    "view": "Ansehen"
   },
   "diff": {
     "title": "Änderungen",
@@ -365,7 +366,11 @@
     "created": "Variante erstellt",
     "deleted": "Variante gelöscht",
     "viewHistory": "Versionsverlauf",
-    "empty": "Noch keine Varianten vorhanden."
+    "empty": "Noch keine Varianten vorhanden.",
+    "switchTo": "Variante wechseln:",
+    "onlyDefault": "Dieses Rezept hat noch keine weiteren Varianten.",
+    "filter": "Variante suchen…",
+    "count": "{n} Varianten"
   },
   "onboarding": {
     "skipAll": "Überspringen",

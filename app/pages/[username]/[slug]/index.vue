@@ -63,11 +63,34 @@ const {
   error,
 } = useFetch<RecipeDetail>(() => `/api/recipes/by-slug/${username.value}/${slug.value}`, {
   headers: useRequestHeaders(['cookie']),
-  query: { locale },
+  // `branch` is reactive and part of the key, so switching variant refetches and
+  // re-renders server-side — the nutrition totals and structured data have to match the
+  // branch on screen, which client-side swapping of the ingredient list would not give us.
+  query: computed(() => ({ locale: locale.value, branch: route.query.branch })),
 })
 
 const isOwner = computed(() => recipe.value?.owner?.id === user.value?.id)
 const recipeUrl = computed(() => (recipe.value ? `/${recipe.value.owner.username}/${recipe.value.slug}` : ''))
+
+// ── Branch switching ─────────────────────────────────────────
+const branchItems = computed(() =>
+  (recipe.value?.branches ?? []).map((b) => ({ label: b.name, value: b.id, isDefault: b.isDefault }))
+)
+
+/**
+ * Switching variant is a navigation, not local state: the branch lives in the URL so the
+ * view is shareable and bookmarkable, and the server recomputes the snapshot, the nutrition
+ * totals and the structured data for it. Swapping only the ingredient list client-side
+ * would leave those three describing a different branch than the page shows.
+ *
+ * The default branch drops the parameter entirely rather than pinning `?branch=<id>`, so
+ * the canonical URL of a recipe stays clean and does not depend on an internal id.
+ */
+function goToBranch(branchId: number) {
+  const target = recipe.value?.branches.find((b) => b.id === branchId)
+  if (!target) return
+  navigateTo(target.isDefault ? recipeUrl.value : `${recipeUrl.value}?branch=${target.id}`)
+}
 
 // ── Star toggle ──────────────────────────────────────────────
 const starred = ref(false)
@@ -355,15 +378,65 @@ useHead(() => {
       <!-- Tags row -->
       <RecipeTagList :tags="recipe.tags" class="mb-6" />
 
-      <!-- Branch info -->
-      <UCard v-if="recipe.defaultBranch" class="mb-6">
+      <!-- Branch selector.
+           This card used to print `defaultBranch.name` and nothing else, so a variant
+           could be created and edited but never read — the only links to one were "edit"
+           and "history". Every branch is now one click away, and the whole page (steps,
+           nutrition, structured data) follows the selection via `?branch=`. -->
+      <UCard v-if="recipe.selectedBranch" class="mb-6">
         <template #header>
-          <div class="flex items-center gap-2">
-            <UIcon name="i-lucide-git-branch" class="size-5 text-primary" aria-hidden="true" />
-            <h2 class="text-lg font-semibold">{{ recipe.defaultBranch.name }}</h2>
-            <UBadge color="primary" :label="t('recipe.defaultBranch')" />
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-2">
+              <UIcon name="i-lucide-git-branch" class="size-5 text-primary" aria-hidden="true" />
+              <h2 class="text-lg font-semibold">{{ recipe.selectedBranch.name }}</h2>
+              <UBadge v-if="recipe.selectedBranch.isDefault" color="primary" :label="t('recipe.defaultBranch')" />
+            </div>
+
+            <!-- Branch picker, shaped after GitHub's: a trigger carrying the current
+                 variant, a filterable list behind it, and the total as a separate link to
+                 the full page — their "master ▾ | 8 Branches" pairing. A row of buttons
+                 read as a segmented control and did not scale past a handful. -->
+            <div class="flex w-full items-center gap-2 sm:w-auto">
+              <USelectMenu
+                v-if="recipe.branches.length > 1"
+                :model-value="recipe.selectedBranch.id"
+                :items="branchItems"
+                value-key="value"
+                icon="i-lucide-git-branch"
+                :search-input="{ placeholder: t('branches.filter') }"
+                :aria-label="t('branches.switchTo')"
+                class="min-w-0 flex-1 sm:w-56 sm:flex-none"
+                @update:model-value="goToBranch"
+              >
+                <!-- Marks the default the way GitHub does, so it is identifiable in the
+                     list and not only from the card heading. -->
+                <template #item-trailing="{ item }">
+                  <UBadge
+                    v-if="item.isDefault"
+                    :label="t('recipe.defaultBranch')"
+                    color="neutral"
+                    variant="subtle"
+                    size="sm"
+                  />
+                </template>
+              </USelectMenu>
+
+              <UButton
+                :label="t('branches.count', { n: recipe.branches.length })"
+                icon="i-lucide-git-branch"
+                color="neutral"
+                variant="ghost"
+                size="sm"
+                class="shrink-0"
+                :to="`${recipeUrl}/branches`"
+              />
+            </div>
           </div>
         </template>
+
+        <p v-if="recipe.branches.length === 1" class="text-sm text-muted">
+          {{ t('branches.onlyDefault') }}
+        </p>
       </UCard>
 
       <!-- Ingredients -->
