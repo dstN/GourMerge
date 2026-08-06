@@ -52,7 +52,7 @@ export interface MailOptions {
 }
 
 export async function sendMail(opts: MailOptions): Promise<void> {
-  const from = process.env.SMTP_FROM || process.env.SMTP_USER || 'noreply@gourmerge.app'
+  const from = process.env.SMTP_FROM || process.env.SMTP_USER || 'noreply@gourmerge.de'
   const transporter = getTransporter()
 
   try {

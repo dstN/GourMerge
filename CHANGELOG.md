@@ -84,8 +84,8 @@ Coverage is now **93% lines / 86% branches** on the same thresholds.
 No new secrets and no new environment variables. But one thing to know: the WebAuthn
 RP ID is **the hostname of the incoming request** (`nuxt-auth-utils` derives it from
 `getRequestURL`, and nothing overrides it), which means passkeys are bound to the exact
-host they were created on. A key enrolled at `gourmerge.app` will not work at
-`www.gourmerge.app` or vice versa, and localhost keys never work in production. If the
+host they were created on. A key enrolled at `gourmerge.de` will not work at
+`www.gourmerge.de` or vice versa, and localhost keys never work in production. If the
 site is ever reachable at more than one hostname, redirect to a canonical one.
 Migration `0009` adds `user_passkeys` and `webauthn_challenges`.
 

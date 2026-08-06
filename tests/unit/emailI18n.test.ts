@@ -8,7 +8,7 @@ import {
 } from '../../server/utils/emailI18n'
 import { EMAIL_MESSAGES, type EmailBundle } from '../../server/utils/emailMessages'
 
-const URL = 'https://gourmerge.app/auth/verify?token=abc'
+const URL = 'https://gourmerge.de/auth/verify?token=abc'
 
 describe('buildVerificationEmail', () => {
   test('embeds the URL in both html and text', () => {

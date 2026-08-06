@@ -284,7 +284,7 @@ Restart after any change: `touch tmp/restart.txt`.
 | --------------------------------------- | ----------------------------------------------------- |
 | `DATABASE_URL`                          | `mysql://user:pass@host:3306/dbname`                  |
 | `NUXT_SESSION_PASSWORD`                 | ≥32-char random string for session encryption         |
-| `NUXT_PUBLIC_APP_URL`                   | `https://gourmerge.app` (no trailing slash)           |
+| `NUXT_PUBLIC_APP_URL`                   | `https://gourmerge.de` (no trailing slash)            |
 | `NUXT_PUBLIC_SENTRY_DSN`                | Sentry project DSN                                    |
 | `SMTP_HOST` / `SMTP_USER` / `SMTP_PASS` | Netcup SMTP credentials                               |
 | `TOTP_ENCRYPTION_KEY`                   | ≥32-char random string; encrypts 2FA secrets at rest  |
@@ -301,8 +301,8 @@ Restart after any change: `touch tmp/restart.txt`.
 does not map to the `runtimeConfig` path, so setting it under Passenger has no effect).
 
 **Passkeys need no variable, but they are bound to the hostname.** The WebAuthn RP ID is
-taken from the incoming request's `Host`, so a passkey enrolled at `https://gourmerge.app`
-will **not** work at `https://www.gourmerge.app`, and vice versa. Serve one canonical
+taken from the incoming request's `Host`, so a passkey enrolled at `https://gourmerge.de`
+will **not** work at `https://www.gourmerge.de`, and vice versa. Serve one canonical
 hostname and redirect the other. Changing the domain invalidates every enrolled passkey —
 users would have to re-enrol, though passwords (and TOTP, if set up) keep working, so it
 is not a lockout.
@@ -313,7 +313,7 @@ is not a lockout.
 
 - **Endpoint:** `GET /api/health`
 - **Expected response:** `{ "status": "ok", "db": "ok" }`
-- **UptimeRobot:** configure HTTP monitor at `https://gourmerge.app/api/health`, interval 5 min, alert on 2 consecutive failures
+- **UptimeRobot:** configure HTTP monitor at `https://gourmerge.de/api/health`, interval 5 min, alert on 2 consecutive failures
 
 ---
 

@@ -20,7 +20,7 @@ in a file under the webroot):
 
 ```apache
 # .htaccess — non-sensitive values only
-PassengerEnvVar NUXT_PUBLIC_APP_URL https://gourmerge.app
+PassengerEnvVar NUXT_PUBLIC_APP_URL https://gourmerge.de
 PassengerEnvVar LOG_LEVEL info
 PassengerEnvVar REQUIRE_EMAIL_VERIFICATION true
 ```

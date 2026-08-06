@@ -164,7 +164,7 @@ Two library traps, both of which shipped as bugs once and are now covered by
 
 **The RP ID is the hostname of the incoming request**, derived by `nuxt-auth-utils` from
 `getRequestURL` with nothing overriding it — not an env var. Passkeys are therefore bound
-to the exact host they were enrolled on: `gourmerge.app` and `www.gourmerge.app` are
+to the exact host they were enrolled on: `gourmerge.de` and `www.gourmerge.de` are
 different relying parties, and localhost keys never work in production. If the site ever
 answers on more than one hostname, redirect to a canonical one.
 
