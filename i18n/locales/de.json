@@ -174,7 +174,17 @@
     "unitLb": "lb",
     "unitCup": "Tasse",
     "unitFloz": "fl oz",
-    "translationOverridesMain": "Überschreibt den Haupttext für {locale}. Leer lassen, um den Haupttext zu verwenden."
+    "translationOverridesMain": "Überschreibt den Haupttext für {locale}. Leer lassen, um den Haupttext zu verwenden.",
+    "newIngredientTitle": "Neue Zutat anlegen",
+    "newIngredientHint": "Der kanonische Name verhindert Duplikate. Übersetzungen helfen anderen, die Zutat in ihrer Sprache zu finden.",
+    "ingredientCanonicalName": "Kanonischer Name",
+    "ingredientTranslations": "Namen je Sprache",
+    "ingredientCategory": "Kategorie",
+    "ingredientCategoryPlaceholder": "z. B. Gemüse, Gewürz, Milchprodukt",
+    "nutritionOptional": "Nährwerte je 100 g (optional)",
+    "nutritionOptionalHint": "Ohne Energiewert zählt diese Zutat nicht in die Nährwertsumme des Rezepts — sie wird als „fehlend“ gezählt.",
+    "nutritionSourceUser": "Quelle: selbst erfasst",
+    "ingredientCreated": "Zutat angelegt."
   },
   "common": {
     "edit": "Bearbeiten",
@@ -185,7 +195,8 @@
     "unsaved": "Ungespeicherte Änderungen",
     "leave": "Verlassen",
     "help": "Hilfe",
-    "or": "oder"
+    "or": "oder",
+    "create": "Anlegen"
   },
   "diff": {
     "title": "Änderungen",

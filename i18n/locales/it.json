@@ -174,7 +174,17 @@
     "unitLb": "lb",
     "unitCup": "tazza",
     "unitFloz": "fl oz",
-    "translationOverridesMain": "Sostituisce il testo principale per {locale}. Lascia vuoto per usare il testo principale."
+    "translationOverridesMain": "Sostituisce il testo principale per {locale}. Lascia vuoto per usare il testo principale.",
+    "newIngredientTitle": "Crea un nuovo ingrediente",
+    "newIngredientHint": "Il nome canonico evita i duplicati. Le traduzioni aiutano gli altri a trovare l’ingrediente nella loro lingua.",
+    "ingredientCanonicalName": "Nome canonico",
+    "ingredientTranslations": "Nomi per lingua",
+    "ingredientCategory": "Categoria",
+    "ingredientCategoryPlaceholder": "es. verdura, spezia, latticino",
+    "nutritionOptional": "Valori nutrizionali per 100 g (facoltativo)",
+    "nutritionOptionalHint": "Senza un valore energetico questo ingrediente non conta nei totali della ricetta — viene segnalato come mancante.",
+    "nutritionSourceUser": "Fonte: inserita da te",
+    "ingredientCreated": "Ingrediente creato."
   },
   "common": {
     "edit": "Modifica",
@@ -185,7 +195,8 @@
     "unsaved": "Modifiche non salvate",
     "leave": "Lascia",
     "help": "Aiuto",
-    "or": "oppure"
+    "or": "oppure",
+    "create": "Crea"
   },
   "diff": {
     "title": "Modifiche",

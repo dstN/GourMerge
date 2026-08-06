@@ -174,7 +174,17 @@
     "unitLb": "lb",
     "unitCup": "cup",
     "unitFloz": "fl oz",
-    "translationOverridesMain": "Overrides the main text for {locale}. Leave empty to use the main text."
+    "translationOverridesMain": "Overrides the main text for {locale}. Leave empty to use the main text.",
+    "newIngredientTitle": "Create a new ingredient",
+    "newIngredientHint": "The canonical name prevents duplicates. Translations help others find the ingredient in their language.",
+    "ingredientCanonicalName": "Canonical name",
+    "ingredientTranslations": "Names per language",
+    "ingredientCategory": "Category",
+    "ingredientCategoryPlaceholder": "e.g. vegetable, spice, dairy",
+    "nutritionOptional": "Nutrition per 100 g (optional)",
+    "nutritionOptionalHint": "Without an energy value this ingredient does not count toward the recipe totals — it is reported as missing instead.",
+    "nutritionSourceUser": "Source: self-reported",
+    "ingredientCreated": "Ingredient created."
   },
   "common": {
     "edit": "Edit",
@@ -185,7 +195,8 @@
     "unsaved": "Unsaved changes",
     "leave": "Leave",
     "help": "Help",
-    "or": "or"
+    "or": "or",
+    "create": "Create"
   },
   "diff": {
     "title": "Changes",

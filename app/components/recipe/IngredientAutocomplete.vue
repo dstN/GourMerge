@@ -67,11 +67,31 @@ watch(query, (q) => {
   }, 250)
 })
 
+// ── New-ingredient dialog ────────────────────────────────────
+// Choosing "create X" used to emit a row with `id: null`, and the edit page then created
+// the master row at commit time from the bare name — no translations, no category, no
+// nutrition, and no chance to supply them. It now opens a dialog and the row receives a
+// real id, so the ingredient is findable in every locale from the moment it exists.
+const createOpen = ref(false)
+const pendingName = ref('')
+
 function onSelect(option: IngredientOption) {
+  if (option.isNew) {
+    pendingName.value = option.name
+    createOpen.value = true
+    options.value = []
+    isFocused.value = false
+    return
+  }
   emit('update:modelValue', { id: option.id, name: option.localeName || option.name })
   query.value = option.localeName || option.name
   options.value = []
   isFocused.value = false
+}
+
+function onCreated(created: { id: number; name: string }) {
+  emit('update:modelValue', { id: created.id, name: created.name })
+  query.value = created.name
 }
 
 watch(
@@ -117,5 +137,7 @@ watch(
         </span>
       </button>
     </div>
+
+    <RecipeNewIngredientModal v-model:open="createOpen" :initial-name="pendingName" @created="onCreated" />
   </div>
 </template>

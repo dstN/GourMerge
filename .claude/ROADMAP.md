@@ -109,6 +109,28 @@ Not scoped, not scheduled. Roughly in the order they would earn their keep.
    expensive paths, not rendering.
 7. **Ingredient density table** — would let `g ↔ cup` convert properly. The
    conversion engine deliberately refuses mass↔volume today rather than guessing.
+8. **Machine translation of recipe text** (LibreTranslate). Assessed 2026-08-06 and
+   deferred rather than rejected — three things have to be settled first, and none
+   of them is code:
+   - It **contradicts locked decision 6**, which says user-generated recipe content
+     stays in the author's language. That decision would need revising, not
+     side-stepping.
+   - **Self-hosting almost certainly does not fit.** LibreTranslate is Flask +
+     Argos Translate; the models are multi-hundred-MB and want ~2–4 GB resident.
+     Python being available on the Netcup plan is not the binding constraint —
+     memory is, per Passenger worker. Confirm the RAM ceiling before writing
+     anything; a small VPS is the realistic home for it.
+   - The **public `libretranslate.com` API is not an option as things stand**:
+     recipe text would go to a third party, which the privacy policy currently
+     rules out ("no third party except Sentry", "die Daten verbleiben in der EU").
+     Same blocker that ruled out GitHub Actions for database dumps.
+
+   The cheap, high-value slice if this is ever picked up: translate **ingredient
+   names only** — short strings, translated once, cached in `name_translations`
+   forever, runnable as an offline script with no runtime service and no change to
+   locked decision 6. That is what makes the autocomplete work in all four locales.
+   The new-ingredient dialog now collects those names by hand, which covers the same
+   gap for anything created from now on.
 
 ---
 

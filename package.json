@@ -1,6 +1,6 @@
 {
   "name": "gourmerge",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "private": true,
   "description": "Fork the recipe, merge the flavor. A GitHub-clone for recipes.",
   "type": "module",

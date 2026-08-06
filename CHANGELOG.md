@@ -5,6 +5,109 @@ All notable changes to GourMerge are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versioning follows [Semantic Versioning](https://semver.org/).
 
+## [1.4.0] — 2026-08-06
+
+A pass over the recipe editor after using it on a phone. Most of what follows was
+reported as cosmetic and turned out to be functional.
+
+### Fixed — the ingredient editor could not be used on a phone
+
+- **The ingredient name collapsed to about three characters** ("Pou", "Kart") because five
+  controls shared one flex row. Rows now stack below `sm`: name full width, quantity and
+  unit beneath, notes below that. `sm:contents` dissolves the wrapper at `sm`, so the
+  desktop row stays a single line with no duplicated markup.
+- **An ingredient could not be removed at all on touch.** The remove button was
+  `opacity-0 group-hover:opacity-100`, and a touch device has no hover — so it was
+  permanently invisible. Hover-reveal now applies only from `sm` up, plus `focus-visible`
+  so it is keyboard-reachable on desktop.
+- **Notes could be neither read nor written on a phone**: the field was `hidden sm:block`.
+  The data existed; the only way to reach it did not.
+- On the public recipe page, `justify-between` put the name and the measurement in a
+  tug-of-war — a long note wrapped to two lines and collided with the ingredient name.
+
+Verified at a 390 px viewport against the running app: the name field measures 266 px, the
+remove button computes to opacity 1, and the row renders three inputs.
+
+### Fixed — add buttons required scrolling to the top
+
+`addIngredient` / `addStep` existed only in the card headers, so with a dozen ingredients
+every addition meant scrolling up — while new rows appear at the bottom, where you already
+are. Both lists now end with an add button too. Trailing rather than sticky: the layout is
+a fixed shell with one internal scroll container, where sticky-inside-a-card is fragile for
+no gain.
+
+### Fixed — clicking the logo while signed in flashed the landing page
+
+`pages/index.vue` redirected from its setup body with a bare `navigateTo('/dashboard')`
+whose promise was never returned. Fire-and-forget: the component rendered, _then_
+navigated. It now uses the `guest` middleware, which already existed and resolves before
+render, server-side included. The logo also points straight at `/dashboard` when signed in.
+
+### Changed — the working language is now named, and no longer offered as a translation
+
+The step editor had no language marker, so it was never clear which language the main text
+was in, and the translation panel offered the author their own language as one of four
+targets.
+
+Filling that box in would have been harmful, which is why this is **not** implemented as
+"copy the main text into the current locale". The read path is
+`contentTranslations[locale] ?? content`, so a copy _shadows_ the main field: every later
+edit to the main text would silently never reach readers of that language — one language,
+two sources of truth, and the stale one wins.
+
+Instead the main editor carries a locale badge, title and description carry the locale as a
+field hint, and the translation panel lists only the other three languages. One deliberate
+exception: a value already stored for the author's own locale stays visible and is flagged
+as overriding the main text, because recipes edited before this change can carry one and
+hiding it would leave an active override with no way to edit or clear it.
+
+### Added — a real dialog for creating an ingredient
+
+Choosing "create X" in the autocomplete used to create a master row from a bare name at
+commit time. The API had always accepted translations and a category; nothing ever asked.
+The result was an ingredient findable only in the language it happened to be typed in.
+
+The dialog now collects the canonical name, all four locale names (seeded with what you
+typed), a category picked from the values already in use, and — collapsed, because most
+people will not have the numbers — **optional per-100 g nutrition**: exactly the six fields
+`server/utils/nutrition.ts` actually reads, stored with `source: 'user'` so it stays
+distinguishable from the Swiss BLV import.
+
+Two details that matter more than they look:
+
+- **A nutrition row is written only when an energy value is given.** `computeNutrition`
+  treats a present row with `energyKcal100g === null` as _covered_, so a row of nulls would
+  claim coverage the data does not have and drag every total toward zero instead of being
+  reported as missing.
+- Values are accepted as strings and a decimal comma is normalised, so `0,5` stores as
+  `0.5` rather than becoming `NaN` — the column is `DECIMAL`, and routing through a JS
+  float would round on the way in.
+
+Creation happens on confirm rather than as a side effect of saving, which also makes it a
+deliberate act — the mechanism by which a dev database accumulates rows called
+`Butter 1785947886683`.
+
+New: `GET /api/ingredients/categories` (distinct values, for the picker) and
+`tests/e2e/api/ingredients.spec.ts` — six specs covering translation search, the
+energy-value rule, rejection of negative/absurd/non-numeric values, case-insensitive dedup,
+and that creation requires a session.
+
+### Deferred — machine translation of recipe text
+
+Assessed and moved to the post-v1 backlog with the findings recorded, rather than started:
+it contradicts locked decision 6 ("user-generated recipe content stays in the author's
+language"), self-hosting LibreTranslate wants ~2–4 GB resident which shared hosting will
+not give it, and the public API would send recipe text to a third party — the same blocker
+that ruled out GitHub Actions for database dumps. The cheap slice, if it is ever picked up,
+is ingredient names only, offline and cached; the new dialog covers that gap by hand for
+anything created from now on.
+
+### Stack / tests
+
+**46 API endpoints · 552 i18n keys ×4 · 219 unit tests · 32 Playwright specs.**
+
+---
+
 ## [1.3.0] — 2026-08-06
 
 Passkeys. With 1.2.0's TOTP in place the obvious next step was the credential that
@@ -93,8 +196,8 @@ deployed green and stayed live:
   and GDPR links mailed out pointed at localhost. Smoke test passed.
 
 Both are the normal failure mode on this host, not exotic ones: the deploy ships only
-`.output/` and `app.js`, so every runtime value arrives from `PassengerEnvVar` lines in
-a file that is deliberately never deployed. Forgetting one is expected.
+`.output/` and `app.js`, so every runtime value comes from Netcup's Node.js "custom
+environment variables" panel, which no deploy touches. Forgetting one is expected.
 
 The endpoint now reports **fitness to serve**, returning **503** — which fails the smoke
 test and triggers the rollback that already existed — when the database is unreachable,
@@ -125,8 +228,8 @@ Migration `0009` adds `user_passkeys` and `webauthn_challenges`.
 
 ### Stack / tests
 
-`@simplewebauthn/server` + `@simplewebauthn/browser` added. **45 API endpoints ·
-22 tables · 10 migrations · 540 i18n keys ×4 · 219 unit tests · 26 Playwright specs,
+`@simplewebauthn/server` + `@simplewebauthn/browser` added. **46 API endpoints ·
+22 tables · 10 migrations · 552 i18n keys ×4 · 219 unit tests · 32 Playwright specs,
 zero axe violations.** The passkey specs drive Chrome's WebAuthn virtual authenticator
 over CDP and run the real ceremonies — the two bugs above are exactly what a stubbed
 `navigator.credentials` would have hidden.
