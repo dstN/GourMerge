@@ -312,8 +312,34 @@ is not a lockout.
 ## Health Checks
 
 - **Endpoint:** `GET /api/health`
-- **Expected response:** `{ "status": "ok", "db": "ok" }`
+- **Healthy:** `200` with `{ "status": "ok", "database": "connected" }`
 - **UptimeRobot:** configure HTTP monitor at `https://gourmerge.de/api/health`, interval 5 min, alert on 2 consecutive failures
+
+The endpoint reports **fitness to serve, not just liveness**, because it is what the
+deploy smoke test and the auto-rollback key off. It returns **503** when the app is up
+but not fit to answer requests, listing the environment variable at fault under
+`problems`:
+
+| `problems` entry                                         | What is broken                                                                                                                                                                                                                    |
+| -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`                                           | The pool cannot reach MySQL. Nothing works                                                                                                                                                                                        |
+| `NUXT_PUBLIC_APP_URL (does not match the host …)`        | Unset or wrong, so it is still `http://localhost:3000`. **Every browser mutation returns 403** (the CSRF check compares the request origin against it) and every verification, reset and GDPR link mailed out points at localhost |
+| `NUXT_PUBLIC_APP_URL (not a valid URL)`                  | Typo — a missing scheme, or a trailing slash issue                                                                                                                                                                                |
+| `NUXT_SESSION_PASSWORD (missing or under 32 characters)` | Sessions and the pending-2FA cookie both fail mid-login                                                                                                                                                                           |
+
+A 503 here fails the smoke test, which rolls the release back automatically — that is
+the intended behaviour. Fix the `PassengerEnvVar` line in the **host** `.htaccess`,
+`touch tmp/restart.txt`, and redeploy.
+
+Non-fatal degradations return **200** with a `warnings` array instead, since a rollback
+loop would be worse than the degradation: unset `SMTP_*` (mail is discarded, not
+delivered — registration verification silently goes nowhere), unset
+`TOTP_ENCRYPTION_KEY` (falls back to the session secret), unset `CRON_SECRET`
+(`/tasks/*` refuse every request, so neither nightly sweep runs).
+
+> **Check the body, not just the status, after the first deploy.** A green smoke test
+> with three warnings means the site serves but cannot send email or run its retention
+> jobs — and the privacy policy promises both.
 
 ---
 

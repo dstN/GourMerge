@@ -79,6 +79,40 @@ the threshold:
 
 Coverage is now **93% lines / 86% branches** on the same thresholds.
 
+### Fixed — the deploy's own safety net could not see the two likeliest failures
+
+`GET /api/health` returned `200 {status:'ok'}` unconditionally — it even reported
+`database:'disconnected'` in the body while still answering 200. Since `deploy.yml`'s
+smoke test accepts any 200 and the auto-rollback keys off that test, two failures
+deployed green and stayed live:
+
+- **A bad `DATABASE_URL`** — smoke test passed, nothing worked.
+- **A missing `NUXT_PUBLIC_APP_URL`** — it falls back to `http://localhost:3000`, so the
+  CSRF middleware compared every request's origin against localhost and **returned 403
+  on every browser mutation** (login, register, every save), while verification, reset
+  and GDPR links mailed out pointed at localhost. Smoke test passed.
+
+Both are the normal failure mode on this host, not exotic ones: the deploy ships only
+`.output/` and `app.js`, so every runtime value arrives from `PassengerEnvVar` lines in
+a file that is deliberately never deployed. Forgetting one is expected.
+
+The endpoint now reports **fitness to serve**, returning **503** — which fails the smoke
+test and triggers the rollback that already existed — when the database is unreachable,
+`NUXT_PUBLIC_APP_URL` is absent or disagrees with the host the request actually arrived
+on, or `NUXT_SESSION_PASSWORD` is missing or under 32 characters. Comparing against the
+request's own host rather than a hardcoded name means it needs no extra flag and behaves
+correctly in dev, CI and production; it also catches an apex-vs-`www` mismatch, which
+matters because the WebAuthn RP ID is the request hostname.
+
+Degradations that still serve return 200 with a `warnings` array instead, because a
+rollback loop is worse than the degradation: unset `SMTP_*`, `TOTP_ENCRYPTION_KEY` or
+`CRON_SECRET`. The body names variables but never echoes values or the configured host —
+that detail goes to the log.
+
+Verified against the built artifact in all three states: correctly configured → 200 and a
+browser POST passes CSRF; `NUXT_PUBLIC_APP_URL` unset → 503 and the POST 403s exactly as
+predicted; unreachable database → 503.
+
 ### Notes for the operator
 
 No new secrets and no new environment variables. But one thing to know: the WebAuthn
