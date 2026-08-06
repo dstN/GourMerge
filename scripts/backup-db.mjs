@@ -39,6 +39,7 @@ import { createWriteStream, existsSync, mkdirSync, readdirSync, readFileSync, st
 import { resolve, dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { pipeline } from 'node:stream/promises'
+import { Transform } from 'node:stream'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = resolve(__dirname, '..')
@@ -127,10 +128,20 @@ console.log(`Dumping ${db} @ ${url.hostname} → ${outFile.replace(ROOT + '\\', 
 console.log(`Using ${BIN}`)
 
 // Password via the environment, never argv: process lists are world-readable.
-const child = spawn(BIN, args, {
-  env: { ...process.env, MYSQL_PWD: decodeURIComponent(url.password) },
-  stdio: ['ignore', 'pipe', 'pipe'],
-})
+let child
+try {
+  child = spawn(BIN, args, {
+    env: { ...process.env, MYSQL_PWD: decodeURIComponent(url.password) },
+    stdio: ['ignore', 'pipe', 'pipe'],
+  })
+} catch (err) {
+  // Node throws synchronously for some unspawnable targets — notably EINVAL for a .cmd
+  // or .bat on Windows without `shell: true`. Without this, an operator who points
+  // MYSQLDUMP at a wrapper script gets a raw stack trace instead of the actual problem.
+  console.error(`ERROR: could not run ${BIN} — ${err.code ?? err.message}`)
+  console.error('MYSQLDUMP must point at the mysqldump executable itself, not a .cmd/.bat wrapper.')
+  process.exit(1)
+}
 
 let stderr = ''
 child.stderr.on('data', (c) => {
@@ -148,8 +159,32 @@ const exited = new Promise((res) => {
   child.on('close', res)
 })
 
+/**
+ * Inspect the stream on its way past, so the dump can be judged on what mysqldump
+ * actually produced rather than on how well gzip compressed it. Checking the compressed
+ * size is meaningless: SQL compresses 20:1 or better, so a healthy dump and an empty one
+ * are both "small" — a 500-row fixture gzipped to 542 bytes while testing, which any
+ * plausible byte floor would have rejected.
+ */
+let rawBytes = 0
+let sawInsert = false
+let carry = ''
+const inspect = new Transform({
+  transform(chunk, _enc, cb) {
+    rawBytes += chunk.length
+    if (!sawInsert) {
+      // latin1 keeps this byte-exact; the needle is ASCII. The carry covers the case
+      // where the phrase straddles a chunk boundary.
+      const text = carry + chunk.toString('latin1')
+      if (text.includes('INSERT INTO')) sawInsert = true
+      else carry = text.slice(-16)
+    }
+    cb(null, chunk)
+  },
+})
+
 try {
-  await pipeline(child.stdout, createGzip({ level: 9 }), createWriteStream(outFile))
+  await pipeline(child.stdout, inspect, createGzip({ level: 9 }), createWriteStream(outFile))
 } catch (err) {
   console.error(`ERROR: writing the dump failed — ${err.message}`)
   process.exit(1)
@@ -178,16 +213,25 @@ if (noise) console.warn(noise)
 
 /**
  * Verify, because the failure mode that actually bites is a backup that exists and is
- * empty. An authentication failure or an empty database both yield a valid gzip of
- * almost nothing, and nobody notices until a restore is needed.
+ * empty. An authentication failure or a wrong database name both yield a valid gzip of
+ * comments and SET statements, and nobody notices until a restore is needed.
+ *
+ * Both checks are on the pre-compression stream: a byte floor, and the presence of real
+ * INSERT statements — which is the check that actually means "there is data in here".
  */
-const size = statSync(outFile).size
-if (size < 1024) {
-  console.error(`ERROR: the dump is only ${size} bytes — refusing to keep an empty backup.`)
+if (rawBytes < 4096) {
+  console.error(`ERROR: the dump is only ${rawBytes} bytes — refusing to keep an empty backup.`)
   unlinkSync(outFile)
   process.exit(1)
 }
-console.log(`✓ ${(size / 1024 / 1024).toFixed(2)} MB written`)
+if (!sawInsert) {
+  console.error('ERROR: the dump contains no INSERT statements — wrong database, or no data.')
+  unlinkSync(outFile)
+  process.exit(1)
+}
+
+const size = statSync(outFile).size
+console.log(`✓ ${(size / 1024 / 1024).toFixed(2)} MB compressed (${(rawBytes / 1024 / 1024).toFixed(2)} MB raw)`)
 
 // ── Rotation ────────────────────────────────────────────────
 const mine = readdirSync(OUT_DIR)

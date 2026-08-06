@@ -128,10 +128,43 @@ second FTP target is available: Plesk then handles the schedule, rotation and re
 itself, and the data stays with a German provider. Check
 **Backup Manager → Remote Storage Settings**.
 
-### `npm run db:backup` — the working path today
+### Nightly, on the host — `scripts/server-backup.sh`
+
+`mysqldump` **is** available on the host, so a Plesk **"Run a command"** scheduled task can
+dump the database directly. (This does not contradict the maintenance sweeps running over
+HTTP: those need `scripts/`, `package.json` and the app's injected environment, none of
+which exist on the host. `mysqldump` needs only itself and a credentials file.)
+
+Install once over SSH — full instructions are in the script's header:
+
+1. Write `/gourmerge.de/.my.cnf` with `[client]` host/user/password, then `chmod 600`. The
+   password must **never** be in the Plesk task or on a command line; process lists are
+   readable by other users on shared hosting.
+2. Upload `scripts/server-backup.sh` to `/gourmerge.de/` (File Manager or SFTP — the
+   deploy does not ship `scripts/`), `chmod +x`.
+3. Plesk → **Scheduled Tasks → Add Task** → type **Run a command** → command
+   `/bin/sh /gourmerge.de/server-backup.sh` → **daily at 03:15** (before the 04:30/04:45
+   sweeps).
+
+Before scheduling, confirm the host has what it needs:
+`command -v mysqldump gzip find date`. If `gzip` is absent, set `NO_GZIP=1` in the script —
+dumps stay uncompressed but valid. If `find` is absent, rotation is skipped with a warning
+instead of failing.
+
+> **Then check the dumps are not downloadable.** They land in `/gourmerge.de/backups`,
+> outside `httpdocs` and outside `.output/public`, so neither nginx nor Nitro serves them.
+> Verify once anyway — `curl -sI https://gourmerge.de/backups/` must return 404, never a
+> listing. A publicly fetchable SQL dump would be a reportable data breach.
+
+**A backup on the same webspace dies with the webspace**, so this covers the common cases
+(bad migration, accidental deletion, app bug) but not loss of the hosting itself. Pair it
+with the off-host copy below.
+
+### Off-host — `npm run db:backup`
 
 Pulls a compressed, verified dump to a machine you control, over the same external MySQL
-access the CI runner already uses for migrations.
+access the CI runner already uses for migrations. Run it periodically, and **always before
+a destructive migration**.
 
 ```bash
 npm run db:backup                            # DATABASE_URL from .env (local)
