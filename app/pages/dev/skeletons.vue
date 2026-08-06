@@ -42,14 +42,16 @@ const shapes = [
     <div class="mb-6">
       <h1 class="text-2xl font-bold">Skeleton preview</h1>
       <p class="mt-1 text-sm text-muted">
-        Dev-only. The sweep is a moving <code>background-position</code> over <code>--ui-bg-inverted</code> at 22%, so
-        it darkens in light mode and lightens in dark mode. Use the theme toggle in the header to compare.
+        Dev-only. The sweep is a moving <code>background-position-x</code> over <code>--ui-bg-inverted</code> at 22%, so
+        it darkens in light mode and lightens in dark mode. Use the theme toggle in the header to compare. The highlight
+        must travel <strong>left to right</strong>; because the gradient is wider than the box, the keyframes count 200%
+        → 0% to achieve that.
       </p>
     </div>
 
     <div class="mb-6 flex flex-wrap items-center gap-2">
       <UButton
-        :label="slow ? 'Normal speed (1.6s)' : 'Slow motion (6s)'"
+        :label="slow ? 'Normal speed (2s)' : 'Slow motion (6s)'"
         :icon="slow ? 'i-lucide-gauge' : 'i-lucide-snail'"
         color="neutral"
         variant="outline"

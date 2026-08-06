@@ -282,13 +282,20 @@
  * The moving band is a background-image on top of `bg-elevated`, so the resting
  * colour is unchanged and only the highlight moves. `background-position` is
  * animated rather than `transform` because the element is the surface itself —
- * there is no inner node to slide without adding one. */
+ * there is no inner node to slide without adding one.
+ *
+ * The percentages run DOWN, 200% → 0%, and that is not a typo. When the background
+ * image is wider than the box — here `background-size: 200%` — a percentage
+ * background-position resolves against (box − image) width, which is negative, so the
+ * usual meaning inverts: a rising percentage slides the image LEFT. The first version of
+ * this animated -150% → 250% and therefore swept right-to-left, the opposite of what its
+ * own comment claimed. Counting down is what makes the highlight travel left-to-right. */
 @keyframes gm-skeleton-sweep {
   from {
-    background-position: -150% 0;
+    background-position-x: 200%;
   }
   to {
-    background-position: 250% 0;
+    background-position-x: 0%;
   }
 }
 
@@ -304,16 +311,24 @@
    * an `app.config.ts` slot override with its own base rather than replacing it, so
    * `animate-pulse` stays in the class list. The shorthand resets its duration, timing
    * and iteration count too, so the sweep fully supersedes the pulse instead of
-   * inheriting half of it. */
+   * inheriting half of it.
+   *
+   * 100deg rather than 90deg tilts the band slightly, and the stops are deliberately
+   * lopsided — a long flat run, then a narrow highlight at 60% easing back out by 70%.
+   * A symmetrical 0/50/100 gradient spends the whole cycle half-lit, which reads as "this
+   * surface is a bit lighter in the middle"; a narrow stripe reads as one thing moving
+   * across. `ease-out` matches: the band enters quickly and settles, the way the platform
+   * skeletons this imitates behave. */
   background-image: linear-gradient(
-    90deg,
+    100deg,
     transparent 0%,
-    color-mix(in oklab, var(--ui-bg-inverted) 22%, transparent) 50%,
-    transparent 100%
+    transparent 50%,
+    color-mix(in oklab, var(--ui-bg-inverted) 22%, transparent) 60%,
+    transparent 70%
   );
   background-size: 200% 100%;
   background-repeat: no-repeat;
-  animation: gm-skeleton-sweep 1.6s ease-in-out infinite;
+  animation: gm-skeleton-sweep 2s ease-out infinite;
 }
 
 /* An indefinite looping animation is exactly what this setting is for. The
