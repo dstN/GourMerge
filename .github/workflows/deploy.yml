@@ -271,14 +271,26 @@ jobs:
       - name: Smoke test
         id: smoke
         run: |
-          for i in 1 2 3 4 5 6; do
-            sleep 10  # give Passenger time to boot the new release
-            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://${{ secrets.DEPLOY_DOMAIN }}/api/health" || true)
+          # Four minutes, not one. The first version allowed 6 × 10s and that was measured to
+          # be too short: it rejected a release that was merely still starting, the rollback
+          # duly swapped a WORKING build out for an older one, and the site then came up on
+          # its own a few minutes later. A too-eager health check does not just misreport —
+          # here it caused the outage it was meant to catch.
+          #
+          # Passenger spawns on the first request, and a cold start of a 26MB artifact on
+          # shared hosting means Nitro, Sentry and auth-utils initialising before anything
+          # answers. During that window Apache serves the document root, so the check sees
+          # 403/404 from a host that is in fact fine. There is no signal that distinguishes
+          # "still spawning" from "will never start" — only elapsed time — so the budget has
+          # to be generous enough that expiry really does mean broken.
+          for i in $(seq 1 16); do
+            sleep 15
+            STATUS=$(curl -s -m 20 -o /dev/null -w "%{http_code}" "https://${{ secrets.DEPLOY_DOMAIN }}/api/health" || true)
             if [ "$STATUS" = "200" ]; then
-              echo "Health check passed (HTTP $STATUS)"
+              echo "Health check passed (HTTP $STATUS) after $((i * 15))s"
               exit 0
             fi
-            echo "Attempt $i: health check returned $STATUS"
+            echo "Attempt $i/16 ($((i * 15))s): health check returned $STATUS"
           done
 
           # Six identical numbers and nothing else is not enough to act on. The status code
@@ -292,7 +304,7 @@ jobs:
           #            missing env vars first, then .output.failed on the host.
           #   000      DNS/TLS/network — the deploy never reached the site.
           ROOT=$(curl -s -o /dev/null -w "%{http_code}" "https://${{ secrets.DEPLOY_DOMAIN }}/" || true)
-          echo "Health check never returned 200. Last: /api/health → $STATUS, / → $ROOT"
+          echo "Health check never returned 200 in 4 minutes. Last: /api/health → $STATUS, / → $ROOT"
           case "$STATUS" in
             404 | 403)
               echo "::error::Apache answered, not the app: Passenger is not handling requests."
