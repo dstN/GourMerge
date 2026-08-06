@@ -380,12 +380,22 @@ useHead(() => {
           {{ t('recipe.noIngredients') }}
         </div>
 
+        <!--
+          Stacked below `sm`, two columns above it. `justify-between` on one line put the
+          name and the measurement in a tug-of-war: a long note ("oder jede andere Hot
+          Sauce") wrapped onto two lines and collided with the ingredient name beside it.
+          Amount under name reads cleanly at any width and never truncates either.
+        -->
         <div v-else class="divide-y divide-default">
-          <div v-for="ing in recipe.currentIngredients" :key="ing.id" class="flex items-center justify-between py-3">
+          <div
+            v-for="ing in recipe.currentIngredients"
+            :key="ing.id"
+            class="flex flex-col gap-0.5 py-3 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4"
+          >
             <span class="font-medium">{{ ing.ingredientName }}</span>
-            <span class="font-mono text-sm text-muted">
+            <span class="font-mono text-sm text-muted sm:shrink-0 sm:text-right">
               {{ formatQuantity(ing.displayQuantity) }} {{ translateUnit(ing.displayUnit) }}
-              <span v-if="ing.notes" class="text-dimmed italic ml-2"> ({{ ing.notes }}) </span>
+              <span v-if="ing.notes" class="text-dimmed italic">({{ ing.notes }})</span>
             </span>
           </div>
         </div>

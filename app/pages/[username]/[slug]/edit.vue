@@ -636,6 +636,24 @@ useSeoMeta({
             @update:model-value="updateIngredient(i, $event)"
             @remove="removeIngredient(i)"
           />
+
+          <!--
+            Second add button, at the end of the list. The one in the card header is the
+            only one that existed, so with a dozen ingredients you had to scroll back to
+            the top for every addition — and new rows appear at the bottom, which is where
+            your attention already is. A trailing button rather than a sticky one: the
+            layout is a fixed shell with a single internal scroll container, where sticky
+            positioning inside a card is fragile for no benefit here.
+          -->
+          <UButton
+            :label="t('recipe.addIngredient')"
+            icon="i-lucide-plus"
+            color="neutral"
+            variant="soft"
+            block
+            class="mt-3"
+            @click="addIngredient"
+          />
         </div>
       </UCard>
 
@@ -715,6 +733,18 @@ useSeoMeta({
               </div>
             </template>
           </ClientOnly>
+
+          <!-- Trailing add button — same reasoning as the ingredient list above.
+               Outside <ClientOnly> so it works without waiting for the editor to hydrate. -->
+          <UButton
+            :label="t('recipe.addStep')"
+            icon="i-lucide-plus"
+            color="neutral"
+            variant="soft"
+            block
+            class="mt-3"
+            @click="addStep"
+          />
         </div>
       </UCard>
 

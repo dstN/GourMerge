@@ -3,16 +3,17 @@
  * Landing Page — Public-facing page for non-authenticated users
  *
  * Shows brand hero, feature highlights, and CTA to register.
- * Redirects to /dashboard if already logged in.
+ *
+ * The redirect for signed-in visitors is the `guest` middleware, **not** a
+ * `navigateTo()` in this setup body. That is what it used to be, and the result was a
+ * visible flash of the marketing page: a bare `navigateTo` in setup is fire-and-forget
+ * (its promise is never returned), so the component rendered first and only then
+ * navigated. Middleware resolves before the page renders — server-side too — so there is
+ * nothing to see.
  */
+definePageMeta({ middleware: 'guest' })
 
 const { t } = useI18n()
-const { loggedIn } = useUserSession()
-
-// Redirect logged-in users to dashboard
-if (loggedIn.value) {
-  navigateTo('/dashboard')
-}
 
 useSeoMeta({
   title: 'GourMerge — Fork the recipe, merge the flavor.',

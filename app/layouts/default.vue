@@ -23,8 +23,12 @@ const localeSwitchItems = [
     <header class="shrink-0 bg-default border-b border-default">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16">
-          <!-- Logo / Brand -->
-          <NuxtLink to="/" class="flex items-center gap-2.5 group">
+          <!-- Logo / Brand.
+               Points at the dashboard when signed in. The `guest` middleware on `/`
+               would bounce them there anyway, but sending them straight there avoids a
+               wasted navigation — and makes the link's href honest, so the status bar
+               shows where the click actually goes. -->
+          <NuxtLink :to="loggedIn ? '/dashboard' : '/'" class="flex items-center gap-2.5 group">
             <CommonBrandLogo class="size-7 text-primary transition-opacity group-hover:opacity-80" />
             <span class="text-xl font-bold tracking-tight"> Gour<span class="text-primary">Merge</span> </span>
           </NuxtLink>
