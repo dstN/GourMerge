@@ -193,22 +193,31 @@
   text-decoration-color: currentColor;
 }
 
-/* ── One left edge inside the sidebar shell ────────────────────
- * `<CommonPageShell>` centres its cap with `mx-auto`, which is right when the page
- * is the whole viewport: a column of text centred in the window. Beside a sidebar it
- * is wrong, because each page centres a *different* cap and the left edge jumps —
- * measured at 1600px: dashboard 288px, recipe 480px, settings 592px. Three
- * starting points for the same nav, and nothing a reader could predict.
+/* ── One content width inside the sidebar shell ────────────────
+ * Beside the sidebar there is exactly one content width, and it stays centred.
  *
- * Aligning left keeps the caps (they still limit line length on the right) while
- * every page in the shell begins at the same place. The public layout is untouched
- * and stays centred, which is why this is scoped to the shell rather than changed in
- * PageShell itself.
+ * Why: each page declares its own cap (`wide` 7xl, `content` 4xl, `form` 2xl) and
+ * `mx-auto` centres it. In the full-viewport public layout that is correct. In the
+ * sidebar shell it produced three different left edges — measured at 1600px:
+ * dashboard 288px, recipe 480px, settings 592px — so the content jumped sideways as
+ * you moved between pages under an unmoving nav.
  *
- * Specificity: attribute + class beats Tailwind's single-class `.mx-auto`. */
+ * Left-aligning them was the first attempt and traded one flaw for another: the edge
+ * became stable, but a 4xl page then left ~450px of dead space on the right. The gap
+ * between the sidebar and the content is what makes the shell feel deliberate, and
+ * that gap is a *consequence of centring* — so the fix is to keep centring and remove
+ * the thing that actually varied: the cap.
+ *
+ * 4xl because it is the readable-prose width. `wide` pages (dashboard, explore) give
+ * up ~390px and drop to three comfortable grid columns instead of three wide ones;
+ * `form` pages gain room they do not need but stop being inset further than everything
+ * else. Pages keep declaring their own width for the public layout, where it still
+ * applies — this only overrides what happens beside a sidebar.
+ *
+ * Specificity: attribute + class beats Tailwind's single-class utilities. */
 [data-shell='sidebar'] .page-shell {
-  margin-inline-start: 0;
-  margin-inline-end: auto;
+  max-width: 56rem; /* = max-w-4xl, the `content` cap */
+  margin-inline: auto;
 }
 
 /* ── Skeleton loading: a sweep, not a pulse ────────────────────
