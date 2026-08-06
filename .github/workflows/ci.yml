@@ -40,10 +40,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '26'
           cache: 'npm'
@@ -97,10 +97,21 @@ jobs:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         run: npm run build
 
+      # This artifact IS the release — deploy.yml downloads it and ships it to the
+      # host, so anything missing here is missing in production.
       - name: Upload build artifact
         if: github.ref == 'refs/heads/master'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: gourmerge-output-${{ github.sha }}
           path: .output/
           retention-days: 7
+          # Not optional, and not related to the version bump above. Since
+          # upload-artifact v4.4 hidden files are EXCLUDED by default, and Nitro puts
+          # deduplicated runtime dependencies in `.output/server/node_modules/.nitro/`
+          # — a dot directory. Locally that holds `entities@7.0.1` and `entities@8.0.0`
+          # (28 files), with `node_modules/entities` symlinked into it. Dropping it means
+          # the artifact is missing a package the server requires at runtime, and the
+          # first deploy would have failed with a module-not-found nobody could explain
+          # from the build log, because the build was green.
+          include-hidden-files: true
