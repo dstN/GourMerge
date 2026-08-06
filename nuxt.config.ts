@@ -271,11 +271,30 @@ export default defineNuxtConfig({
       },
     },
     // Lighthouse: 390KiB of "est. savings" from missing cache headers, all of it hashed build
-    // assets. Nitro sets this itself for `/_nuxt/**` under most presets; behind Apache +
-    // Passenger it evidently does not survive, so it is declared. Safe by construction —
-    // every filename in there carries a content hash, so `immutable` can never serve a stale
-    // asset: a change produces a new URL. The one thing that must NOT get this treatment is
-    // the HTML, which is why the rule is scoped to the build directory and not to `/**`.
+    // assets, on desktop and mobile alike. Declaring it explicitly rather than relying on
+    // Nitro's own default, which is not reaching the browser today.
+    //
+    // Safe by construction: every filename under `/_nuxt/` carries a content hash, so
+    // `immutable` can never serve a stale asset — a change produces a new URL. Scoped to the
+    // build directory and never `/**`, which would put a one-year cache on the HTML and leave
+    // visitors on the old page after a deploy.
+    //
+    // ── Do not "fix" this in the web server. It belongs here.
+    //
+    // Production returns these files with an ETag, a Last-Modified and no Cache-Control, and
+    // `Server: nginx` on the response makes it look as though nginx were serving them off disk,
+    // past the app. It is not. A request for a NON-EXISTENT `/_nuxt/*.js` comes back as Nitro's
+    // JSON 404 with our own security headers and `X-Powered-By: Phusion Passenger` — so these
+    // requests do reach the app, and a route rule is exactly the right tool.
+    //
+    // That distinction cost real time, and the trap is worth naming: `Server: nginx` is on
+    // EVERY response here because nginx is the edge proxy. It says nothing about who produced
+    // the body. Chasing it led first to a Plesk "Additional nginx directives" block (the field
+    // does not exist on this hosting plan) and then to shipping a `public/.htaccess`, which
+    // would have meant switching off Plesk's "Smart static files processing" against the
+    // panel's own advice — all to replace a rule that was simply not deployed yet. The reason
+    // the header is missing in production is that the deploy that carried this rule had not
+    // run at the time Lighthouse was measured.
     '/_nuxt/**': {
       headers: { 'cache-control': 'public, max-age=31536000, immutable' },
     },
