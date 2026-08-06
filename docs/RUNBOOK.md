@@ -19,6 +19,12 @@
    - Checks out **the exact commit CI built** (`workflow_run.head_sha`), not master's tip
    - Runs `drizzle-kit migrate` against the production DB **from the runner** — a
      non-zero exit fails the deploy and leaves the live release untouched
+   - Then **seeds reference data** (`seed:swiss`, `db:seed`, `db:seed:tags`). Migrations
+     only create empty tables, so without this a fresh database has no ingredients and
+     nobody can author a recipe. All three are idempotent (upsert / existence check /
+     `INSERT IGNORE`), so they are safe on every deploy; the committed
+     `swiss-foods.jsonl` is therefore the source of truth for ingredient names, and a
+     hand-edit made directly in production is reverted on the next deploy
    - Streams the artifact as a tar over ssh into `.output.new/` (live `.output/`
      untouched). Not rsync, and not compressed: the chroot has neither `rsync` nor
      `gzip` — only `tar`, `sh`, `mv`, `touch`, `mkdir`. SSH-level compression
