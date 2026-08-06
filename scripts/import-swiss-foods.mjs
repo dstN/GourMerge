@@ -55,6 +55,8 @@ const SEED_FILE = resolve(ROOT, 'server/database/seeds/swiss-foods.jsonl')
 const isDryRun = process.argv.includes('--dry-run')
 const fromXlsx = process.argv.includes('--from-xlsx')
 const emitSeed = process.argv.includes('--emit-seed')
+/** Re-run the import even when the row count says it is already done. */
+const FORCE = process.argv.includes('--force')
 const limitArg = process.argv.indexOf('--limit')
 const LIMIT = limitArg >= 0 ? parseInt(process.argv[limitArg + 1], 10) : Infinity
 
@@ -386,6 +388,35 @@ async function main() {
   const conn = await createConnection(process.env.DATABASE_URL)
 
   try {
+    // ── Skip when the dataset is already in ────────────────────────────────
+    //
+    // This runs on EVERY deploy, before the artifact swap, and the loop below costs three
+    // sequential round trips per food (SELECT on external_id, then the ingredient write,
+    // then the nutrition upsert). Against the production MySQL — a separate host, so every
+    // one of those is real network latency — ~1200 foods took a quarter of an hour, at
+    // roughly 100 foods per 60–90s. Measured on the first production deploy, which is a
+    // late place to find out.
+    //
+    // Paying that to re-write rows that already match is the part worth removing. One
+    // COUNT is enough to know: `source` carries the dataset version (`swiss-blv-v7`), so a
+    // new BLV release changes the version string and this check stops matching by itself.
+    // Same version + same row count means the loop has nothing to do.
+    //
+    // It is a count and not a content hash on purpose. A hash would need somewhere to
+    // store it, and the failure it would catch — someone editing the seed file in place
+    // without touching the version — is better solved by `--force`, which is right there.
+    if (!FORCE && LIMIT === Infinity) {
+      const [[{ n }]] = await conn.execute(
+        `SELECT COUNT(*) AS n FROM ingredient_nutrition WHERE source = 'swiss-blv-v7'`
+      )
+      if (n === merged.length) {
+        console.log(`✓ ${n} Swiss foods already imported (source swiss-blv-v7) — nothing to do.`)
+        console.log('  Re-import anyway with --force.')
+        return
+      }
+      if (n > 0) console.log(`… ${n} of ${merged.length} present — continuing (partial import).`)
+    }
+
     let inserted = 0
     let updated = 0
     let count = 0

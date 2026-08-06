@@ -27,6 +27,54 @@ export default defineNuxtConfig({
     },
   },
 
+  // ── Icons ───────────────────────────────────────────────────
+  //
+  // Every E2E and a11y run was full of `[Icon] failed to load icon 'lucide:compass'` and
+  // ten more. Not log noise: measured on the built artifact, the SSR HTML contained
+  // `<span class="iconify i-lucide:compass">` with NO CSS defining that class. Those icons
+  // were invisible in the server-rendered page and only appeared once the client bundle
+  // hydrated — and never at all without JS.
+  //
+  // The cause is not the server bundle, which is a red herring I chased first: the
+  // production build DOES inline both collections (`.output/server/chunks/_/icons.mjs`,
+  // 1817 lucide icons, `compass` among them). That bundle exists to serve
+  // `/api/_nuxt_icon/:collection` to the browser. The SSR render path is different — the
+  // component calls `loadIcon()` in `@nuxt/icon/runtime/components/shared.js`, which
+  // checks the CLIENT bundle and otherwise falls back to `@iconify/vue`'s loader, i.e. an
+  // HTTP fetch to the Iconify API. Any icon missing from the client bundle therefore
+  // depends on a network call during SSR, and that is what was failing.
+  //
+  // And the client bundle was never scanning our source. `clientBundle.scan` is off by
+  // default; the 43 icons it did contain come from Nuxt UI, which contributes its own via
+  // the `icon:clientBundleIcons` hook. Every icon WE put in a template was missing, which
+  // is why the failures tracked whichever page had been rendered rather than looking like a
+  // config problem.
+  //
+  // Listing the missing names explicitly was the first attempt and it is whack-a-mole:
+  // eleven fixed, then five more appeared as soon as /help/glossary was rendered. `scan`
+  // is the actual answer — it walks the source for icon names, so adding an icon to a
+  // component stays a one-line change.
+  //
+  // The 256KB default `sizeLimitKb` is left alone: the whole set costs tens of KB, since
+  // only icons actually referenced get inlined, not the 1817-icon collection.
+  // Production confirmed the chain end to end: the browser first tried
+  // `https://api.iconify.design/lucide.json?icons=book-marked,chef-hat,compass,…`, our CSP
+  // refused it (`connect-src 'self' https://*.sentry.io`), and the retry against
+  // `/api/_nuxt_icon/lucide.json` came back 502. Two separate faults stacked on one symptom.
+  //
+  // `fallbackToApi: false` closes the first one for good. A third-party request for icons is
+  // the same problem as the Google Fonts <link> that was removed from `app.head` — it sends
+  // every visitor's IP to someone else's server on page load, before any consent. That the
+  // CSP already blocked it means the policy was doing its job while the app kept trying;
+  // this stops the trying. A missed icon now renders as nothing instead of as a blocked
+  // request, which is the honest failure mode.
+  icon: {
+    clientBundle: {
+      scan: true,
+    },
+    fallbackToApi: false,
+  },
+
   // ── i18n ────────────────────────────────────────────────────
   i18n: {
     locales: [
