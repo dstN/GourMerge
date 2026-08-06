@@ -34,9 +34,10 @@
 > to the webspace only, see _Manual migration_ below and drop the migrate step from
 > `deploy.yml`.
 
-> **`.htaccess` is deliberately never deployed.** It holds host-specific
-> `PassengerNodejs` / `PassengerEnvVar` values (see `docs/SECRETS.md`); overwriting it
-> would wipe the injected environment. Update it by hand when it changes in git.
+> **Runtime configuration lives in the Netcup panel, not in the repo.** Passenger and
+> every environment variable are configured under **Node.js → Custom environment
+> variables** (see _Environment Variables_), so a deploy never touches them and there is
+> no `.htaccess` to preserve.
 
 ### Manual Deploy (emergency)
 
@@ -67,8 +68,8 @@ DATABASE_URL="mysql://user:pass@host:3306/dbname" npx drizzle-kit migrate
 
 ### Release layout on the host
 
-The deploy keeps the outgoing release next to the live one — no symlinks, so Passenger's
-`PassengerStartupFile app.js` path stays valid:
+The deploy keeps the outgoing release next to the live one — no symlinks, so the startup
+file path configured in the Netcup panel (`app.js`) stays valid:
 
 | Directory         | Meaning                                          |
 | ----------------- | ------------------------------------------------ |
@@ -115,19 +116,37 @@ mysql -u <user> -p <dbname> < /backups/gourmerge-<date>.sql.gz | zcat
 
 ## Database Backups
 
-### Scheduled backup (Netcup cron)
+### Scheduled backup (Plesk Backup Manager)
 
-Add to Netcup's cron manager:
+Use the panel, not a `mysqldump` cron: **Websites & Domains → Backup Manager →
+Schedule**. It covers the webspace **and** the databases in one job, handles rotation
+itself, and does not depend on `mysqldump` existing in the chroot.
 
-```
-0 3 * * *  mysqldump -u <user> -p<pass> <dbname> | gzip > /backups/gourmerge-$(date +%F).sql.gz
-```
+| Setting            | Value                                                                     |
+| ------------------ | ------------------------------------------------------------------------- |
+| Run                | Daily, outside the nightly maintenance window (those run 04:30 and 04:45) |
+| Backup type        | Full, **including databases** — a webspace-only backup restores no data   |
+| Retain             | 14 days, or whatever the plan's storage allows                            |
+| **Remote Storage** | Configure it if the plan offers it                                        |
 
-Retain 14 days:
+> **Remote storage matters more than the schedule.** A backup stored on the same
+> webspace dies with the webspace. If remote storage is unavailable, download a copy
+> manually at least before any risky migration.
 
-```
-0 4 * * *  find /backups -name 'gourmerge-*.sql.gz' -mtime +14 -delete
-```
+### Restore drill — do this once, on purpose
+
+An untested backup is not a backup; it is a file you hope is a backup. The failure modes
+are silent — an empty dump, a truncated file, a job that has been failing for weeks.
+
+1. Take a backup from Backup Manager.
+2. Restore it into a **scratch database**, not production (Databases → create one).
+3. Confirm the row counts look sane: `users`, `recipes`, `recipe_commits`.
+4. Drop the scratch database.
+
+Repeat quarterly, and once more before any migration that drops or rewrites a column.
+This matters more here than usual: **migrations are forward-only**. There is no down
+migration, and a code rollback restores old code against the _new_ schema — so for a
+destructive migration the backup is the only way back.
 
 ---
 
@@ -147,9 +166,9 @@ and `app.js`, so there is:
 
 - no `scripts/` → `inactive-accounts.mjs` is not on the server
 - no `package.json` → `npm run db:inactive` does not exist
-- no `.env` → `DATABASE_URL` and the SMTP settings come from **`PassengerEnvVar`
-  directives in `.htaccess`**, which apply to the Passenger-managed app process and
-  are **not** inherited by a Plesk scheduled task
+- no `.env` → `DATABASE_URL` and the SMTP settings are **Node.js custom environment
+  variables**, which Passenger injects into the _app_ process and a Plesk scheduled task
+  does **not** inherit
 
 That is the same trap as the migration step that "could never run" (current_state
 §15): the host does not have what the command needs. Fetching a URL runs the job
@@ -166,20 +185,9 @@ useful **locally**, where `.env` is present. They are not the production path.
    openssl rand -hex 32
    ```
 
-   Add it to the **host copy of `.htaccess`** as a Passenger variable:
-
-   ```apache
-   PassengerEnvVar CRON_SECRET <the value>
-   ```
-
-   Netcup's Webhosting Control Panel is a reduced Plesk — it offers a Node.js
-   "secret" field but **no general Custom Environment Variables editor**, so
-   `PassengerEnvVar` in `.htaccess` is how every runtime variable reaches this app
-   (`DATABASE_URL` and the SMTP settings are already there). Edit it over SSH or the
-   File Manager; the file is deliberately never deployed, so the host copy survives
-   releases. The tracked copy carries a commented template.
-
-   Then restart: `touch tmp/restart.txt`.
+   Add it as `CRON_SECRET` under **Websites & Domains → gourmerge.de → Node.js →
+   Custom environment variables**, alongside `DATABASE_URL` and the SMTP settings,
+   then **Restart App**.
 
 2. Verify it works before scheduling anything, using the dry run — it sends no mail
    and deletes nothing:
@@ -266,35 +274,44 @@ Things worth knowing before the first production run:
 
 ## Environment Variables
 
-All runtime variables reach the app through **`PassengerEnvVar` directives in the
-host copy of `.htaccess`**. Netcup's Webhosting Control Panel is a reduced Plesk: it
-exposes a Node.js "secret" field but **no general Custom Environment Variables
-editor**, so there is no panel alternative.
+All runtime variables reach the app through **Custom environment variables** in Netcup's
+panel: **Websites & Domains → gourmerge.de → Node.js → Custom environment variables →
+[specify]**. The same page configures Passenger itself — application root, startup file
+(`app.js`), application mode (`production`) and the Node version.
 
-```apache
-PassengerEnvVar DATABASE_URL  mysql://user:pass@<db-host>:3306/dbname
-PassengerEnvVar CRON_SECRET   <value>
-```
+There is **no `.htaccess` on this host, and none is needed.** An earlier version of this
+runbook claimed runtime configuration had to go into `PassengerEnvVar` directives because
+the panel offered only a single Node.js "secret" field. That was wrong: the panel accepts
+as many variables as you like. Nothing in the repo ships an `.htaccess` any more, and
+adding one would be a second, weaker source of truth — there is also an nginx proxy in
+front of Apache, so `.htaccess` directives are not guaranteed to be consulted at all.
 
-`.htaccess` is **never deployed** (see Deploy Process), so the host copy with the
-real values survives every release. The tracked copy carries a commented template.
-Restart after any change: `touch tmp/restart.txt`.
+Restart after any change: **Restart App** in the panel, or `touch tmp/restart.txt`.
 
-| Variable                                | Description                                           |
-| --------------------------------------- | ----------------------------------------------------- |
-| `DATABASE_URL`                          | `mysql://user:pass@host:3306/dbname`                  |
-| `NUXT_SESSION_PASSWORD`                 | ≥32-char random string for session encryption         |
-| `NUXT_PUBLIC_APP_URL`                   | `https://gourmerge.de` (no trailing slash)            |
-| `NUXT_PUBLIC_SENTRY_DSN`                | Sentry project DSN                                    |
-| `SMTP_HOST` / `SMTP_USER` / `SMTP_PASS` | Netcup SMTP credentials                               |
-| `TOTP_ENCRYPTION_KEY`                   | ≥32-char random string; encrypts 2FA secrets at rest  |
-| `CRON_SECRET`                           | ≥16-char random string; guards the /tasks/* endpoints |
+| Variable                      | Required | Description                                                             |
+| ----------------------------- | -------- | ----------------------------------------------------------------------- |
+| `DATABASE_URL`                | yes      | `mysql://user:pass@host:3306/dbname`                                    |
+| `NUXT_SESSION_PASSWORD`       | yes      | ≥32-char random string for session encryption                           |
+| `NUXT_PUBLIC_APP_URL`         | yes      | `https://gourmerge.de` (no trailing slash, no `www.`)                   |
+| `SMTP_HOST` / `USER` / `PASS` | yes      | Netcup SMTP credentials — without all three, mail is discarded silently |
+| `SMTP_FROM`                   | no       | e.g. `GourMerge <noreply@gourmerge.de>`; falls back to `SMTP_USER`      |
+| `SMTP_PORT`                   | no       | Defaults to `587`                                                       |
+| `NUXT_PUBLIC_SENTRY_DSN`      | no       | Sentry project DSN; unset simply disables error reporting               |
+| `REQUIRE_EMAIL_VERIFICATION`  | prod     | `true` in production — gates publishing on a verified address           |
+| `LOG_LEVEL`                   | no       | Defaults to `info`                                                      |
+| `TOTP_ENCRYPTION_KEY`         | no       | ≥32 chars; encrypts 2FA secrets at rest                                 |
+| `CRON_SECRET`                 | yes\*    | ≥16 chars; guards `/tasks/*`. \*Required for the nightly sweeps to run  |
 
-> **`TOTP_ENCRYPTION_KEY` and `CRON_SECRET` are runtime-only** — read per request,
-> so they belong in `.htaccess` above, **not** in GitHub secrets. Without
-> `TOTP_ENCRYPTION_KEY` the code falls back to `NUXT_SESSION_PASSWORD`, which works
-> but means rotating the session secret invalidates every enrolled authenticator at
-> once. Without `CRON_SECRET` the maintenance endpoints refuse every request.
+`NODE_ENV` is set by Passenger from the panel's **Application Mode**, so it does not
+belong in this list.
+
+> **`TOTP_ENCRYPTION_KEY` and `CRON_SECRET` are runtime-only** — read per request, so
+> they belong in the panel, **not** in GitHub secrets. Without `TOTP_ENCRYPTION_KEY` the
+> code falls back to `NUXT_SESSION_PASSWORD`, which works but means rotating the session
+> secret invalidates every enrolled authenticator at once. Without `CRON_SECRET` the
+> maintenance endpoints refuse every request.
+
+`/api/health` reports which of the required ones actually arrived — see **Health Checks**.
 
 `NUXT_SENTRY_RELEASE` and `SENTRY_AUTH_TOKEN` are **build-time only** — set in
 `ci.yml`, not on the host. `NUXT_SENTRY_RELEASE` is baked into the artifact (its name
@@ -312,24 +329,28 @@ Three separate things key off the request's hostname, so one name has to win:
   mutation on the other host returns 403.
 - **`/api/health` returns 503** on the other host, for the same reason.
 
-The apex wins, because that is what `NUXT_PUBLIC_APP_URL` is set to. Netcup's panel has
-no canonical-host setting, so the redirect lives in `.htaccess`: `www` → apex and
-`http` → `https` in a **single hop**, with `/.well-known/acme-challenge/` deliberately
-excluded.
+The apex wins, because that is what `NUXT_PUBLIC_APP_URL` is set to.
 
-> **This does not reach the host by deploying.** `.htaccess` is never deployed — that is
-> what keeps the host's secrets alive across releases. Copy the `Canonical host + HTTPS`
-> block from the tracked `.htaccess` into the **host** copy by hand, then
-> `touch tmp/restart.txt`.
+**Handled in the app**, by `server/middleware/canonical-host.ts` — so it ships with the
+artifact and needs no manual step after a deploy. `www.` is stripped and the visitor is
+sent to `https://<apex>` with the path and query intact: 301 for GET/HEAD, 308 for
+everything else so a form POST keeps its method and body. `/.well-known/` is never
+redirected, so ACME validation cannot be broken by it.
 
-**The certificate must cover `www.gourmerge.de` too, or the redirect never runs.** TLS is
-negotiated before Apache sees the request, so a cert that only covers the apex makes
-`https://www.gourmerge.de` fail with a certificate error — and because the app sends HSTS
-with `includeSubDomains`, a browser that has already seen the apex will refuse to let the
-visitor click through. Tick the "include www" / SAN option when issuing the Let's Encrypt
-certificate. The ACME exclusion above exists so renewal keeps working for both names:
-`http-01` follows redirects, so without it `www`'s challenge would be answered with the
-apex's token and the `www` SAN would silently stop renewing.
+Only a leading `www.` is stripped, on purpose. Redirecting _any_ host that disagrees with
+`NUXT_PUBLIC_APP_URL` would loop forever if that variable were itself wrong; this rule
+cannot loop, because its target never matches the pattern that triggered it. Every other
+host mismatch is surfaced loudly by `/api/health` (503) instead of being papered over.
+
+HTTPS is **not** forced by the app: the host already answers `http://` on both names with
+a 301 to `https://`. Adding a second scheme-based redirect behind the nginx proxy is how
+redirect loops are made.
+
+State verified 2026-08-06: both names resolve to the same address, `http` → `https` 301s
+on both, and the Let's Encrypt certificate is a **wildcard** (`*.gourmerge.de` +
+`gourmerge.de`) that validates for `www` — so the redirect is reachable rather than dying
+in a TLS error, which matters because the app sends HSTS with `includeSubDomains` and a
+browser would not let a visitor click past a certificate warning.
 
 **Point the scheduled tasks at the apex.** A `www` URL gets a 301, and Plesk's
 "Fetch a URL" cannot be relied on to follow one — the job would simply never run.
@@ -355,8 +376,8 @@ but not fit to answer requests, listing the environment variable at fault under
 | `NUXT_SESSION_PASSWORD (missing or under 32 characters)` | Sessions and the pending-2FA cookie both fail mid-login                                                                                                                                                                           |
 
 A 503 here fails the smoke test, which rolls the release back automatically — that is
-the intended behaviour. Fix the `PassengerEnvVar` line in the **host** `.htaccess`,
-`touch tmp/restart.txt`, and redeploy.
+the intended behaviour. Fix the variable under **Node.js → Custom environment
+variables**, **Restart App**, and redeploy.
 
 Non-fatal degradations return **200** with a `warnings` array instead, since a rollback
 loop would be worse than the degradation: unset `SMTP_*` (mail is discarded, not
@@ -383,7 +404,7 @@ delivered — registration verification silently goes nowhere), unset
 
 1. Check `connectionLimit` in `server/utils/drizzle.ts` (should be 4 per process)
 2. Count Passenger processes: `ps aux | grep node`
-3. Reduce `PassengerMaxPoolSize` in `.htaccess` if needed
+3. Lower the app's process count in the Netcup **Node.js** panel if needed
 
 ### Passenger not restarting
 

@@ -7,15 +7,15 @@
  * in the body while still saying 200 — which made both of those guards blind:
  *
  *   - A deploy with a bad `DATABASE_URL` smoke-tested green and stayed live.
- *   - A host whose `.htaccess` is missing `NUXT_PUBLIC_APP_URL` smoke-tested green too,
- *     while every browser mutation returned 403 (the CSRF check compares the request
- *     origin against `public.appUrl`, which falls back to `http://localhost:3000`) and
- *     every verification, reset and GDPR link mailed out pointed at localhost.
+ *   - A host missing `NUXT_PUBLIC_APP_URL` smoke-tested green too, while every browser
+ *     mutation returned 403 (the CSRF check compares the request origin against
+ *     `public.appUrl`, which falls back to `http://localhost:3000`) and every
+ *     verification, reset and GDPR link mailed out pointed at localhost.
  *
  * Both failures are silent, catastrophic and exactly the kind this host keeps
  * producing — the deploy ships only `.output/` and `app.js`, so every runtime value
- * arrives from `PassengerEnvVar` directives in a file that is deliberately never
- * deployed. Forgetting one is the normal failure mode, not the exotic one.
+ * comes from Netcup's Node.js "custom environment variables" panel, which no deploy
+ * touches. Forgetting one is the normal failure mode, not the exotic one.
  *
  * So: a real problem is a **503**, which fails the smoke test and triggers the
  * rollback that already exists. Degradations that do not stop the app from serving are

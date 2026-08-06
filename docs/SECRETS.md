@@ -5,25 +5,24 @@ How secrets are stored, injected, and rotated. Companion to [`RUNBOOK.md`](./RUN
 
 > **Golden rule:** secrets live only in (a) the local, git-ignored `.env`, (b) GitHub
 > Actions secrets — deploy credentials as **environment** secrets on `production`, see
-> §2 — and (c) the Netcup hosting env injection. They are
-> **never** committed. `.env` and `.env.*` are git-ignored and `.htaccess` returns
-> 403 for `/.env`.
+> §2 — and (c) Netcup's **Node.js → Custom environment variables**. They are
+> **never** committed. `.env` and `.env.*` are git-ignored, and no `.env` is ever shipped:
+> the deploy sends only `.output/` and `app.js`.
 
 ---
 
 ## 1. Runtime secrets (injected on the Netcup host)
 
-These are read by the running app (Nitro `runtimeConfig` / `process.env`). Inject them
-via **Passenger env directives** in `.htaccess` for non-sensitive values, and via the
-**Netcup hosting panel environment settings** for sensitive ones (so they are not stored
-in a file under the webroot):
+These are read by the running app (Nitro `runtimeConfig` / `process.env`). All of them —
+sensitive or not — go in one place:
 
-```apache
-# .htaccess — non-sensitive values only
-PassengerEnvVar NUXT_PUBLIC_APP_URL https://gourmerge.de
-PassengerEnvVar LOG_LEVEL info
-PassengerEnvVar REQUIRE_EMAIL_VERIFICATION true
-```
+**Websites & Domains → gourmerge.de → Node.js → Custom environment variables →
+[specify]**, then **Restart App**.
+
+Nothing goes in an `.htaccess`. There is none on the host, the same panel configures
+Passenger itself, and an nginx proxy sits in front of Apache so `.htaccess` directives are
+not reliably consulted. Keeping secrets out of a file under the webroot is also simply
+safer.
 
 | Variable                                              | Sensitive | Purpose                                        |
 | ----------------------------------------------------- | --------- | ---------------------------------------------- |
@@ -101,7 +100,7 @@ on a routine cadence for long-lived credentials:
 
    | Copy                                       | Consumer                                     | When        |
    | ------------------------------------------ | -------------------------------------------- | ----------- |
-   | `PassengerEnvVar` in the host `.htaccess`  | the running app (`server/database/index.ts`) | runtime     |
+   | Netcup → Node.js → custom env variables    | the running app (`server/database/index.ts`) | runtime     |
    | GitHub → Environments → production secrets | `npx drizzle-kit migrate` on the runner      | deploy time |
 
    The runner cannot read Plesk's env and the host cannot read GitHub's secrets, hence
@@ -111,7 +110,7 @@ on a routine cadence for long-lived credentials:
    hostname the runner uses.
 
    Rotate: change the password in the Netcup panel → update **both** copies → restart
-   Passenger (`touch tmp/restart.txt`). Forgetting one fails differently:
+   Passenger (**Restart App**, or `touch tmp/restart.txt`). Forgetting one fails differently:
 
    - **Only Plesk updated** → the app keeps working; the next deploy fails at the
      migrate step. That step runs before the release is swapped, so nothing breaks.
@@ -139,6 +138,6 @@ on a routine cadence for long-lived credentials:
 - [ ] `git ls-files .env` returns nothing (untracked)
 - [ ] `git log --all -- .env` is empty (never committed)
 - [ ] `.env` and `.env.*` are in `.gitignore`
-- [ ] `.htaccess` returns 403 for `/.env` and `/.git`
+- [ ] No `.env` on the host — the deploy ships only `.output/` and `app.js`
 - [ ] No secret appears in `.env.example` (placeholders only)
 - [ ] Production secrets injected via Netcup panel, not committed files
