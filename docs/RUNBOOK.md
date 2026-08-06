@@ -165,10 +165,29 @@ instead of failing.
 Because the client and server are different vendors, the restore drill below is not
 optional politeness — it is the only thing that proves these dumps actually reload.
 
-> **Then check the dumps are not downloadable.** They land in `/gourmerge.de/backups`,
-> outside `httpdocs` and outside `.output/public`, so neither nginx nor Nitro serves them.
-> Verify once anyway — `curl -sI https://gourmerge.de/backups/` must return 404, never a
-> listing. A publicly fetchable SQL dump would be a reportable data breach.
+**Why the dumps cannot be downloaded.** `backups/` is a **sibling of the document root**,
+not a subdirectory of it:
+
+```text
+/gourmerge.de/              ← application root (Passenger)
+├── httpdocs/               ← DOCUMENT ROOT — the only thing a URL path can address
+├── .output/                ← the deployed artifact
+└── backups/                ← dumps live here
+```
+
+A request for `/backups/x.sql.gz` resolves to `/gourmerge.de/httpdocs/backups/x.sql.gz`,
+which does not exist, and `../` is normalised away by the web server before it reaches the
+filesystem — a URL simply cannot address a path above its document root. The app cannot
+reach them either: Nitro serves static files only from `.output/public`, and the server
+code contains **no filesystem reads at all** (verified by grep: no `readFile`,
+`createReadStream`, `sendStream`, `serveStatic`, and no path built from request input).
+
+So this is structural, not a mitigation to keep re-checking. It only stops being true if
+someone repoints the document root at the application root, or adds an endpoint that reads
+a request-supplied path. Both would be visible in review.
+
+If you want the five-second confirmation after a deploy anyway:
+`curl -sI https://gourmerge.de/backups/` → 404.
 
 **A backup on the same webspace dies with the webspace**, so this covers the common cases
 (bad migration, accidental deletion, app bug) but not loss of the hosting itself. Pair it
