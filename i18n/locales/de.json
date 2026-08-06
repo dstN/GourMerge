@@ -664,5 +664,8 @@
     "cancelled": "Abgebrochen.",
     "loginButton": "Mit Passkey anmelden",
     "loginError": "Anmeldung mit Passkey fehlgeschlagen."
+  },
+  "seo": {
+    "description": "Rezepte wie Code verwalten: forken, verzweigen, committen und zusammenführen. Jede Variante behält ihre Herkunft, mit Zutaten aus einer gemeinsamen Datenbank samt Nährwerten."
   }
 }

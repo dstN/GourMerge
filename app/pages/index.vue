@@ -16,8 +16,12 @@ definePageMeta({ middleware: 'guest' })
 const { t } = useI18n()
 
 useSeoMeta({
-  title: 'GourMerge — Fork the recipe, merge the flavor.',
-  description: 'A Git-inspired recipe management platform. Fork, branch, commit, and merge your culinary creations.',
+  // Translated, like everything else user-facing. Both of these were hardcoded English, which
+  // meant a French visitor got a French page with an English <title> and an English description
+  // in Google's results — and `/fr` inherited it rather than the localised default from app.vue,
+  // because a page-level `useSeoMeta` overrides the site-wide one by design.
+  title: () => `GourMerge — ${t('app.slogan')}`,
+  description: () => t('seo.description'),
 })
 
 const features = computed(() => [

@@ -664,5 +664,8 @@
     "cancelled": "Annulé.",
     "loginButton": "Se connecter avec une clé d’accès",
     "loginError": "La connexion par clé d’accès a échoué."
+  },
+  "seo": {
+    "description": "Gérez vos recettes comme du code : forkez, créez des branches, committez et fusionnez. Chaque variante conserve son origine, avec des ingrédients issus d’une base commune et leurs valeurs nutritionnelles."
   }
 }

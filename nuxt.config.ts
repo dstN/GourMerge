@@ -77,13 +77,36 @@ export default defineNuxtConfig({
 
   // ── i18n ────────────────────────────────────────────────────
   i18n: {
+    // `language` is the BCP47 tag, and it is REQUIRED for `hreflang` — not decoration.
+    // Without it `useLocaleHead()` skipped the alternate links silently: a correct
+    // `<link rel="canonical">` was emitted and `grep -c hreflang` returned 0, with nothing in
+    // any log. Turning on `experimental.strictSeo` converted that silence into
+    // `Locale 'language' ISO code is required to generate alternate link` and a 500, which is
+    // how the cause was finally visible.
+    //
+    // Region-less tags on purpose. `de-DE` / `en-US` would claim we target those countries;
+    // this content is German, English, French and Italian without regional variants, and a
+    // bare language tag is what tells Google "any German speaker" rather than "Germany".
     locales: [
-      { code: 'de', name: 'Deutsch', file: 'de.json' },
-      { code: 'en', name: 'English', file: 'en.json' },
-      { code: 'fr', name: 'Français', file: 'fr.json' },
-      { code: 'it', name: 'Italiano', file: 'it.json' },
+      { code: 'de', language: 'de', name: 'Deutsch', file: 'de.json' },
+      { code: 'en', language: 'en', name: 'English', file: 'en.json' },
+      { code: 'fr', language: 'fr', name: 'Français', file: 'fr.json' },
+      { code: 'it', language: 'it', name: 'Italiano', file: 'it.json' },
     ],
     defaultLocale: 'de',
+    /**
+     * Required for SEO, not cosmetic. `useLocaleHead()` in `app.vue` builds the `hreflang`
+     * alternates and the canonical link from this, and both must be ABSOLUTE URLs — with no
+     * `baseUrl` the tags are emitted with relative hrefs, which search engines ignore. Before
+     * this was set, production shipped neither tag at all.
+     *
+     * Baked at build time, with the production host as the fallback: `NUXT_PUBLIC_APP_URL` is a
+     * runtime variable on the host and is therefore NOT available while CI builds the artifact,
+     * so reading it here alone would have produced `http://localhost:3000` in the released
+     * build. If the domain ever changes, the runtime override is `NUXT_PUBLIC_I18N_BASE_URL` —
+     * i18n keeps this in `runtimeConfig.public.i18n`, so it can be corrected without a rebuild.
+     */
+    baseUrl: process.env.NUXT_PUBLIC_APP_URL || 'https://gourmerge.de',
     // `lazy` was removed in @nuxtjs/i18n v10 — lazy loading is unconditional now.
     langDir: 'locales',
     strategy: 'prefix_except_default',
@@ -297,6 +320,20 @@ export default defineNuxtConfig({
     // run at the time Lighthouse was measured.
     '/_nuxt/**': {
       headers: { 'cache-control': 'public, max-age=31536000, immutable' },
+    },
+    // Same reasoning, different directory. `@nuxt/fonts` (transitive via Nuxt UI) downloads
+    // DM Sans and JetBrains Mono at build time and serves them from here with hashed
+    // filenames, plus the generated fallback-metric faces. Fonts are the assets where a
+    // revalidation hurts most — a blocked font is invisible text.
+    '/_fonts/**': {
+      headers: { 'cache-control': 'public, max-age=31536000, immutable' },
+    },
+    // The opposite instruction, for the one route where a cached answer is a lie. UptimeRobot
+    // polls this every few minutes and the deploy smoke test gates a release on it; either
+    // reading a proxy's copy would report a healthy site that is not running. `no-store`
+    // rather than `no-cache`: no-cache still permits storing and revalidating.
+    '/api/health': {
+      headers: { 'cache-control': 'no-store, max-age=0' },
     },
   },
 

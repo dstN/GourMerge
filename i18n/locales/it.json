@@ -664,5 +664,8 @@
     "cancelled": "Annullato.",
     "loginButton": "Accedi con una passkey",
     "loginError": "Accesso con passkey non riuscito."
+  },
+  "seo": {
+    "description": "Gestisci le ricette come codice: fai un fork, crea rami, esegui commit e uniscili. Ogni variante conserva la sua origine, con ingredienti da un database condiviso e i loro valori nutrizionali."
   }
 }

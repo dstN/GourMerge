@@ -664,5 +664,8 @@
     "cancelled": "Cancelled.",
     "loginButton": "Sign in with a passkey",
     "loginError": "Passkey sign-in failed."
+  },
+  "seo": {
+    "description": "Manage recipes like code: fork, branch, commit and merge. Every variation keeps its lineage, with ingredients from a shared database including nutrition data."
   }
 }
