@@ -1,4 +1,4 @@
-import type { CommitDiff } from '~~/shared/types'
+import type { CommitDiff, DisplayUnit, MeasurementSystem } from '~~/shared/types'
 
 export type StepTranslations = Partial<Record<'de' | 'en' | 'fr' | 'it', string>>
 
@@ -51,8 +51,14 @@ export interface RecipeDetail {
     id: number
     ingredientId: number
     ingredientName: string
+    /** Canonical, metric. What the editor, diff engine and nutrition maths use. */
     quantity: string
+    /** Canonical unit — one of `CanonicalUnit`. */
     unit: string
+    /** Resolved for the viewer's measurement preference — for display only. */
+    displayQuantity: string
+    /** Resolved display unit; may be imperial (`oz`, `cup`, …) or scaled (`kg`, `l`). */
+    displayUnit: DisplayUnit
     notes: string | null
     sortOrder: number
   }>
@@ -66,6 +72,8 @@ export interface RecipeDetail {
   titleTranslations: StepTranslations | null
   descriptionTranslations: StepTranslations | null
   isStarred: boolean
+  /** The system `displayQuantity`/`displayUnit` were resolved for. */
+  measurementSystem: MeasurementSystem
   nutritionTotal: NutritionTotals | null
   nutritionPerServing: NutritionTotals | null
 }
@@ -77,10 +85,13 @@ export interface UserProfile {
     displayName: string | null
     bio: string | null
     avatarUrl: string | null
-    email: string
-    preferredLocale: string
-    preferredMeasurementSystem: string
     createdAt: string
+    /** Own profile only — omitted on a public profile, so optional. */
+    email?: string
+    /** Own profile only. */
+    preferredLocale?: string
+    /** Own profile only. */
+    preferredMeasurementSystem?: string
   }
   recipes: RecipeDetail[]
   /** Minimal card shape returned by GET /api/users/:username (not full RecipeDetail). */

@@ -26,6 +26,24 @@ function getTransporter(): Transporter {
   return _transporter
 }
 
+/**
+ * Whether a **real** SMTP transport is configured.
+ *
+ * Matters because `getTransporter()` deliberately falls back to a `streamTransport`
+ * when the credentials are missing, so `sendMail()` *succeeds* with nothing actually
+ * delivered. That is the right trade for local dev — verification and reset mails
+ * should not break a dev server — but it is dangerous for any job whose correctness
+ * depends on delivery.
+ *
+ * The inactivity sweep is exactly such a job: it records "notice sent" and deletes
+ * the account 24 hours later. With a silent stream transport, a missing SMTP
+ * variable in production would turn into accounts deleted without ever being warned.
+ * That sweep therefore refuses to run unless this returns true.
+ */
+export function isMailConfigured(): boolean {
+  return Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS)
+}
+
 export interface MailOptions {
   to: string
   subject: string

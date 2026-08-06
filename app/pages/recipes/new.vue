@@ -8,6 +8,7 @@ import type { FormSubmitEvent } from '@nuxt/ui'
 definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 
 const { t } = useI18n()
+const { apiError } = useApiError()
 
 useSeoMeta({
   title: `${t('nav.newRecipe')} — GourMerge`,
@@ -17,13 +18,34 @@ const loading = ref(false)
 const error = ref('')
 
 const schema = z.object({
-  title: z.string().min(2, t('recipe.titleRequired')).max(300),
-  description: z.string().max(5000).optional(),
-  servings: z.number().int().min(1).max(100).default(4),
-  prepTimeMinutes: z.number().int().min(0).max(1440).optional(),
-  cookTimeMinutes: z.number().int().min(0).max(1440).optional(),
-  difficulty: z.enum(['easy', 'medium', 'hard']).default('medium'),
-  visibility: z.enum(['public', 'private']).default('public'),
+  title: z
+    .string()
+    .min(2, t('recipe.titleRequired'))
+    .max(300, t('validation.tooLong', { max: 300 })),
+  description: z
+    .string()
+    .max(5000, t('validation.tooLong', { max: 5000 }))
+    .optional(),
+  servings: z
+    .number()
+    .int()
+    .min(1, t('validation.numberRange', { min: 1, max: 100 }))
+    .max(100, t('validation.numberRange', { min: 1, max: 100 }))
+    .default(4),
+  prepTimeMinutes: z
+    .number()
+    .int()
+    .min(0, t('validation.numberRange', { min: 0, max: 1440 }))
+    .max(1440, t('validation.numberRange', { min: 0, max: 1440 }))
+    .optional(),
+  cookTimeMinutes: z
+    .number()
+    .int()
+    .min(0, t('validation.numberRange', { min: 0, max: 1440 }))
+    .max(1440, t('validation.numberRange', { min: 0, max: 1440 }))
+    .optional(),
+  difficulty: z.enum(['easy', 'medium', 'hard'], { message: t('validation.selectOption') }).default('medium'),
+  visibility: z.enum(['public', 'private'], { message: t('validation.selectOption') }).default('public'),
 })
 
 type Schema = z.output<typeof schema>
@@ -60,7 +82,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     })
     navigateTo(`/${result.owner.username}/${result.slug}/edit`)
   } catch (err: unknown) {
-    error.value = (err as { data?: { statusMessage?: string } })?.data?.statusMessage || t('recipe.createError')
+    error.value = apiError(err, 'recipe.createError')
   } finally {
     loading.value = false
   }
@@ -68,32 +90,22 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 </script>
 
 <template>
-  <div class="max-w-2xl">
-    <h1 class="text-3xl font-bold mb-2">
-      {{ t('recipe.createTitle') }}
-    </h1>
-    <p class="text-[var(--ui-text-muted)] mb-8">
-      {{ t('recipe.createSubtitle') }}
-    </p>
+  <CommonPageShell width="form">
+    <CommonPageHeader :title="t('recipe.createTitle')" :subtitle="t('recipe.createSubtitle')" />
 
     <UCard>
       <UForm :schema="schema" :state="state" class="space-y-6" @submit="onSubmit">
-        <UAlert v-if="error" color="error" variant="subtle" icon="i-lucide-alert-circle" :title="error" />
+        <UAlert v-if="error" color="error" icon="i-lucide-alert-circle" :title="error" />
 
         <UFormField :label="t('recipe.title')" name="title" required>
-          <UInput
-            v-model="state.title"
-            :placeholder="t('recipe.titlePlaceholder')"
-            icon="i-lucide-chef-hat"
-            size="lg"
-          />
+          <UInput v-model="state.title" :placeholder="t('recipe.titlePlaceholder')" icon="i-lucide-chef-hat" />
         </UFormField>
 
         <UFormField :label="t('recipe.description')" name="description">
           <UTextarea v-model="state.description" :placeholder="t('recipe.descriptionPlaceholder')" :rows="3" />
         </UFormField>
 
-        <div class="grid grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <UFormField :label="t('recipe.servingsLabel')" name="servings">
             <UInput v-model.number="state.servings" type="number" :min="1" :max="100" icon="i-lucide-users" />
           </UFormField>
@@ -119,7 +131,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           </UFormField>
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <UFormField :label="t('recipe.difficultyLabel')" name="difficulty">
             <USelect v-model="state.difficulty" :items="difficultyOptions" value-key="value" />
           </UFormField>
@@ -139,5 +151,5 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         />
       </UForm>
     </UCard>
-  </div>
+  </CommonPageShell>
 </template>

@@ -2,36 +2,33 @@
 const { t } = useI18n()
 const props = defineProps<{ type?: string | null }>()
 
-// Light-mode text uses the -700 shade for WCAG AA contrast on the /10 tint;
-// dark mode keeps the lighter -400 shade (already high-contrast on dark bg).
+// The light/dark contrast pair for each tint lives in the `.tint-*` classes in
+// `main.css` (DESIGNBOOK §1.6), so this component names a tint rather than
+// re-deriving `text-*-700 dark:text-*-400` per case — which is what it used to do,
+// in the fourth copy of that pattern in the codebase.
 const config = computed(() => {
   switch (props.type) {
     case 'vegan':
-      return {
-        icon: 'i-lucide-leaf',
-        color: 'text-green-700 dark:text-green-400',
-        bg: 'bg-green-500/10',
-        label: t('recipe.dietaryVegan'),
-      }
+      return { icon: 'i-lucide-leaf', tint: 'tint-success', bg: 'bg-success-500/10', label: t('recipe.dietaryVegan') }
     case 'vegetarian':
       return {
         icon: 'i-lucide-sprout',
-        color: 'text-lime-700 dark:text-lime-400',
-        bg: 'bg-lime-500/10',
+        tint: 'tint-herb',
+        bg: 'bg-tint-herb',
         label: t('recipe.dietaryVegetarian'),
       }
     case 'pescatarian':
       return {
         icon: 'i-lucide-fish',
-        color: 'text-blue-700 dark:text-blue-400',
-        bg: 'bg-blue-500/10',
+        tint: 'tint-info',
+        bg: 'bg-info-500/10',
         label: t('recipe.dietaryPescatarian'),
       }
     case 'omnivore':
       return {
         icon: 'i-lucide-beef',
-        color: 'text-amber-700 dark:text-amber-400',
-        bg: 'bg-amber-500/10',
+        tint: 'tint-warning',
+        bg: 'bg-warning-500/10',
         label: t('recipe.dietaryOmnivore'),
       }
     default:
@@ -43,10 +40,10 @@ const config = computed(() => {
 <template>
   <span
     v-if="config"
-    class="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full"
-    :class="[config.color, config.bg]"
+    class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium"
+    :class="[config.tint, config.bg]"
   >
-    <UIcon :name="config.icon" class="size-3.5 shrink-0" />
+    <UIcon :name="config.icon" class="size-4 shrink-0" aria-hidden="true" />
     {{ config.label }}
   </span>
 </template>

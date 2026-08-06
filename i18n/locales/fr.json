@@ -163,7 +163,17 @@
     "forkError": "Impossible de créer votre remix.",
     "seoDescriptionFallback": "Découvrez et remixez cette recette sur GourMerge — la plateforme de développement collaboratif de recettes.",
     "forkedFrom": "Dérivé de",
-    "viewForks": "Voir les dérivés"
+    "viewForks": "Voir les dérivés",
+    "tagsLabel": "Étiquettes",
+    "tagsPlaceholder": "Ajouter une étiquette, appuyez sur Entrée",
+    "tagRemove": "Supprimer l’étiquette « {tag} »",
+    "unitLabel": "Unité",
+    "unitKg": "kg",
+    "unitL": "l",
+    "unitOz": "oz",
+    "unitLb": "lb",
+    "unitCup": "tasse",
+    "unitFloz": "fl oz"
   },
   "common": {
     "edit": "Modifier",
@@ -173,7 +183,8 @@
     "error": "Erreur",
     "unsaved": "Modifications non sauvegardées",
     "leave": "Quitter",
-    "help": "Aide"
+    "help": "Aide",
+    "or": "ou"
   },
   "diff": {
     "title": "Modifications",
@@ -328,7 +339,8 @@
     "sortForks": "Les plus remixées",
     "noResults": "Aucune recette trouvée.",
     "loadMore": "Charger plus",
-    "sortBy": "Trier par"
+    "sortBy": "Trier par",
+    "subtitle": "Découvrez les recettes publiques de la communauté."
   },
   "branches": {
     "title": "Variantes",
@@ -533,7 +545,11 @@
       "retentionLogs": "Journaux serveur : 7 jours, puis écrasés par rotation.",
       "retentionErrors": "Rapports d’erreurs chez Sentry : 90 jours.",
       "selfServiceTitle": "9. Libre-service",
-      "selfServiceDesc": "Tu peux lancer toi-même un export ou une suppression à tout moment, sans nous écrire :"
+      "selfServiceDesc": "Tu peux lancer toi-même un export ou une suppression à tout moment, sans nous écrire :",
+      "retentionInactive": "Comptes inactifs : si tu ne te connectes pas pendant trois ans, nous supprimons automatiquement ton compte. Nous t’avertissons trois fois par e-mail au préalable — six mois, quatre semaines et 24 heures avant la suppression. Une seule connexion suffit à conserver le compte, et le délai repart alors à zéro. Seule ta dernière connexion compte, pas l’ouverture d’un e-mail.",
+      "twofaTitle": "Authentification à deux facteurs (facultative)",
+      "twofaBody": "Tu peux protéger ton compte avec une application d’authentification (TOTP), à ta convenance. Nous conservons alors une clé chiffrée servant à générer les codes, ainsi que dix codes de récupération sous forme de hachage. Aucun numéro de téléphone n’est collecté et rien n’est transmis à des tiers : les codes sont générés uniquement sur ton appareil. Tu peux désactiver la fonction à tout moment dans tes réglages, ce qui supprime les données associées.",
+      "deletionHard": "Une suppression au titre de l’art. 17 du RGPD supprime réellement ton compte, et ne le désactive pas simplement. Les contributions inséparables de l’historique des recettes d’autres personnes — versions reprises dans leur propre copie, tes GourMerge Requests et tes commentaires dans leurs discussions — sont réattribuées à un compte anonyme. Ton nom, ton adresse e-mail et ton profil disparaissent entièrement."
     }
   },
   "editor": {
@@ -551,5 +567,82 @@
     "subtitle": "Recettes que vous avez mises en favori.",
     "empty": "Aucun favori pour l’instant",
     "emptyDesc": "Ajoutez des recettes en favori pour les retrouver ici."
+  },
+  "validation": {
+    "required": "Ce champ est obligatoire.",
+    "tooShort": "Au moins {min} caractères.",
+    "tooLong": "Au maximum {max} caractères.",
+    "numberRange": "Veuillez saisir une valeur entre {min} et {max}.",
+    "selectOption": "Veuillez sélectionner une option."
+  },
+  "twofa": {
+    "title": "Authentification à deux facteurs",
+    "subtitle": "Ajoute une deuxième étape à ta connexion avec une application d’authentification.",
+    "statusOn": "Activée",
+    "statusOff": "Non activée",
+    "appHint": "Compatible avec toutes les applications d’authentification — Google Authenticator, Authy, 1Password, Bitwarden ou Aegis.",
+    "enable": "Configurer",
+    "disable": "Désactiver",
+    "setupScan": "Scanne ce QR code avec ton application d’authentification :",
+    "setupManual": "Pas de scanner ? Saisis cette clé manuellement :",
+    "setupCodeLabel": "Code à six chiffres de l’application",
+    "setupConfirm": "Activer",
+    "setupCancel": "Annuler",
+    "recoveryTitle": "Tes codes de récupération",
+    "recoveryDesc": "Conserve-les en lieu sûr. Chaque code ne fonctionne qu’une seule fois et te permet de revenir si tu perds ton appareil. Ils ne s’affichent qu’une fois.",
+    "recoveryCopy": "Copier les codes",
+    "recoveryCopied": "Codes copiés",
+    "recoveryDone": "Je les ai enregistrés",
+    "recoveryRemaining": "{n} codes de récupération sur 10 encore utilisables",
+    "disableTitle": "Désactiver l’authentification à deux facteurs",
+    "disableDesc": "Nous demandons ton mot de passe plutôt qu’un code, afin qu’un appareil perdu ne te bloque pas hors de ce réglage.",
+    "disablePassword": "Mot de passe",
+    "disableConfirm": "Désactiver",
+    "enabledToast": "L’authentification à deux facteurs est activée.",
+    "disabledToast": "L’authentification à deux facteurs a été désactivée.",
+    "challengeTitle": "Confirme ta connexion",
+    "challengeDesc": "Saisis le code à six chiffres de ton application d’authentification.",
+    "challengeCode": "Code",
+    "challengeSubmit": "Se connecter",
+    "challengeRecoveryHint": "Appareil perdu ? Saisis plutôt un code de récupération.",
+    "challengeExpired": "Ta tentative de connexion a expiré. Reconnecte-toi.",
+    "invalidCode": "Ce code n’est pas valide.",
+    "usedRecoveryCode": "Tu as utilisé un code de récupération. Pense à en générer de nouveaux dans tes réglages."
+  },
+  "errors": {
+    "network": "Impossible de joindre le serveur. Vérifie ta connexion et réessaie.",
+    "unauthorized": "Tu n’as pas l’autorisation de faire cela.",
+    "notFound": "Nous n’avons pas trouvé cet élément.",
+    "conflict": "Cela n’a pas fonctionné — l’élément existe probablement déjà ou vient d’être modifié.",
+    "validation": "Vérifie tes saisies.",
+    "rateLimited": "Trop de tentatives. Patiente un instant et réessaie.",
+    "unavailable": "Le service est momentanément indisponible. Réessaie plus tard.",
+    "server": "Une erreur est survenue sur le serveur. Réessaie plus tard.",
+    "unknown": "Une erreur est survenue. Réessaie."
+  },
+  "passkey": {
+    "title": "Clés d’accès",
+    "subtitle": "Connecte-toi sans mot de passe — avec ton empreinte, ton visage ou le code de ton appareil.",
+    "explain": "Une clé d’accès reste sur ton appareil : elle ne peut être ni interceptée ni saisie sur un faux site. À la connexion, elle remplace à la fois ton mot de passe et ton code de vérification.",
+    "add": "Ajouter une clé d’accès",
+    "none": "Aucune clé d’accès configurée.",
+    "unsupported": "Ce navigateur ou cet appareil ne prend pas en charge les clés d’accès.",
+    "synced": "Synchronisée entre tes appareils",
+    "deviceBound": "Cet appareil uniquement",
+    "created": "Ajoutée le {date}",
+    "lastUsed": "Dernière utilisation le {date}",
+    "neverUsed": "Pas encore utilisée",
+    "rename": "Renommer",
+    "renameTitle": "Renommer la clé d’accès",
+    "nameLabel": "Nom",
+    "remove": "Supprimer",
+    "removeTitle": "Supprimer la clé d’accès",
+    "removeConfirm": "Cette clé d’accès cessera de fonctionner. Tu pourras toujours te connecter avec ton mot de passe.",
+    "addedToast": "Clé d’accès ajoutée.",
+    "removedToast": "Clé d’accès supprimée.",
+    "renamedToast": "Clé d’accès renommée.",
+    "cancelled": "Annulé.",
+    "loginButton": "Se connecter avec une clé d’accès",
+    "loginError": "La connexion par clé d’accès a échoué."
   }
 }

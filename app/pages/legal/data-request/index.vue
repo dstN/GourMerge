@@ -18,10 +18,18 @@ useSeoMeta({
   robots: 'noindex',
 })
 
+// Every constraint carries a translated message. The Zod locale map
+// (app/plugins/zod-locale.client.ts) is the safety net if one is ever forgotten;
+// these read better than Zod's generic wording. This schema previously had no
+// messages at all, so a German visitor submitting it empty got
+// "Invalid email address" and "Too small: expected string to have >=1 characters".
 const schema = z.object({
-  type: z.enum(['export', 'deletion']),
-  username: z.string().min(1).max(50),
-  email: z.string().email(),
+  type: z.enum(['export', 'deletion'], { message: t('validation.selectOption') }),
+  username: z
+    .string()
+    .min(1, t('validation.required'))
+    .max(50, t('validation.tooLong', { max: 50 })),
+  email: z.string().email(t('auth.emailInvalid')),
 })
 type Schema = z.output<typeof schema>
 
@@ -48,48 +56,48 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 </script>
 
 <template>
-  <div class="max-w-xl mx-auto px-4 py-12">
+  <CommonPageShell width="form">
     <UCard>
       <template #header>
         <h1 class="text-2xl font-bold">{{ t('legal.privacy.title') }}</h1>
       </template>
 
       <div v-if="sent" class="text-center py-6">
-        <UIcon name="i-lucide-mail-check" class="size-12 mx-auto mb-4 text-primary-500" />
+        <UIcon name="i-lucide-mail-check" class="size-12 mx-auto mb-4 text-primary" />
         <h2 class="text-lg font-semibold mb-2">{{ t('legal.privacy.sentTitle') }}</h2>
-        <p class="text-sm text-[var(--ui-text-muted)]">{{ t('legal.privacy.sentDesc') }}</p>
+        <p class="text-sm text-muted">{{ t('legal.privacy.sentDesc') }}</p>
       </div>
 
       <template v-else>
-        <p class="text-sm text-[var(--ui-text-muted)] mb-6">{{ t('legal.privacy.subtitle') }}</p>
+        <p class="text-sm text-muted mb-6">{{ t('legal.privacy.subtitle') }}</p>
 
         <UForm :schema="schema" :state="state" class="space-y-4" @submit="onSubmit">
-          <UFormField :label="t('legal.privacy.typeLabel')" name="type">
-            <USelect v-model="state.type" :items="typeItems" value-key="value" class="w-full" />
+          <UFormField :label="t('legal.privacy.typeLabel')" name="type" required>
+            <USelect v-model="state.type" :items="typeItems" value-key="value" />
           </UFormField>
 
-          <p class="text-xs text-[var(--ui-text-muted)] -mt-2">
+          <p class="text-xs text-muted -mt-2">
             {{ state.type === 'deletion' ? t('legal.privacy.typeDeletionDesc') : t('legal.privacy.typeExportDesc') }}
           </p>
 
-          <UFormField :label="t('legal.privacy.username')" name="username">
-            <UInput v-model="state.username" icon="i-lucide-at-sign" class="w-full" autocomplete="username" />
+          <UFormField :label="t('legal.privacy.username')" name="username" required>
+            <UInput v-model="state.username" icon="i-lucide-at-sign" autocomplete="username" />
           </UFormField>
 
-          <UFormField :label="t('legal.privacy.email')" name="email">
-            <UInput v-model="state.email" type="email" icon="i-lucide-mail" class="w-full" autocomplete="email" />
+          <UFormField :label="t('legal.privacy.email')" name="email" required>
+            <UInput v-model="state.email" type="email" icon="i-lucide-mail" autocomplete="email" />
           </UFormField>
 
           <UButton
             type="submit"
             :label="t('legal.privacy.submit')"
             icon="i-lucide-send"
-            :loading="loading"
             size="lg"
             block
+            :loading="loading"
           />
         </UForm>
       </template>
     </UCard>
-  </div>
+  </CommonPageShell>
 </template>

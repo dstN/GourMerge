@@ -13,14 +13,14 @@ const { t } = useI18n()
 
 <template>
   <div
-    class="bg-[var(--ui-bg)] border border-[var(--ui-border)] rounded-xl shadow-xl p-4 w-[min(20rem,calc(100vw-1rem))]"
+    class="bg-default border border-default rounded-xl shadow-xl p-4 w-[min(20rem,calc(100vw-1rem))]"
     role="dialog"
     aria-modal="true"
     :aria-label="t(step.titleKey)"
   >
     <!-- Progress -->
     <div class="flex items-center justify-between mb-3">
-      <span class="text-xs text-[var(--ui-text-dimmed)]"> {{ progress.current }} / {{ progress.total }} </span>
+      <span class="text-xs text-dimmed"> {{ progress.current }} / {{ progress.total }} </span>
       <UProgress :value="(progress.current / progress.total) * 100" size="xs" class="w-24" />
       <UButton
         icon="i-lucide-x"
@@ -34,7 +34,7 @@ const { t } = useI18n()
 
     <!-- Content -->
     <h3 class="font-semibold text-sm mb-1">{{ t(step.titleKey) }}</h3>
-    <p class="text-sm text-[var(--ui-text-muted)] mb-4">{{ t(step.descKey) }}</p>
+    <p class="text-sm text-muted mb-4">{{ t(step.descKey) }}</p>
 
     <!-- Navigation -->
     <div class="flex items-center justify-between gap-2">

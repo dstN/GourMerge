@@ -163,7 +163,17 @@
     "forkError": "Could not create your remix.",
     "seoDescriptionFallback": "Discover and remix this recipe on GourMerge — the platform for collaborative recipe development.",
     "forkedFrom": "Forked from",
-    "viewForks": "View forks"
+    "viewForks": "View forks",
+    "tagsLabel": "Tags",
+    "tagsPlaceholder": "Add a tag, press Enter",
+    "tagRemove": "Remove tag “{tag}”",
+    "unitLabel": "Unit",
+    "unitKg": "kg",
+    "unitL": "l",
+    "unitOz": "oz",
+    "unitLb": "lb",
+    "unitCup": "cup",
+    "unitFloz": "fl oz"
   },
   "common": {
     "edit": "Edit",
@@ -173,7 +183,8 @@
     "error": "Error",
     "unsaved": "Unsaved changes",
     "leave": "Leave",
-    "help": "Help"
+    "help": "Help",
+    "or": "or"
   },
   "diff": {
     "title": "Changes",
@@ -328,7 +339,8 @@
     "sortForks": "Most remixed",
     "noResults": "No recipes found.",
     "loadMore": "Load more",
-    "sortBy": "Sort by"
+    "sortBy": "Sort by",
+    "subtitle": "Discover public recipes from the community."
   },
   "branches": {
     "title": "Variants",
@@ -533,7 +545,11 @@
       "retentionLogs": "Server logs: 7 days, then rotated out.",
       "retentionErrors": "Error reports at Sentry: 90 days.",
       "selfServiceTitle": "9. Self-service",
-      "selfServiceDesc": "You can trigger an export or a deletion yourself at any time, without writing to us:"
+      "selfServiceDesc": "You can trigger an export or a deletion yourself at any time, without writing to us:",
+      "retentionInactive": "Inactive accounts: if you do not sign in for three years, we delete your account automatically. We warn you three times by email beforehand — six months, four weeks and 24 hours before deletion. A single sign-in is enough to keep the account, and the period then starts over. Only your last login counts, not opening an email.",
+      "twofaTitle": "Two-factor authentication (optional)",
+      "twofaBody": "You may optionally protect your account with an authenticator app (TOTP). We then store an encrypted key used to generate codes, plus ten recovery codes as hashes. No phone number is collected and nothing is shared with third parties — the codes are generated entirely on your own device. You can switch the feature off again at any time in your settings, which deletes the associated data.",
+      "deletionHard": "An erasure under Art. 17 GDPR deletes your account for real rather than merely disabling it. Contributions that are inseparable from other people’s recipe history — versions someone copied into their own fork, and your GourMerge Requests and comments in their discussions — are reassigned to an anonymous placeholder account. Your name, email address and profile are removed entirely."
     }
   },
   "editor": {
@@ -551,5 +567,82 @@
     "subtitle": "Recipes you have starred.",
     "empty": "No starred recipes yet",
     "emptyDesc": "Star recipes to find them here later."
+  },
+  "validation": {
+    "required": "This field is required.",
+    "tooShort": "At least {min} characters.",
+    "tooLong": "At most {max} characters.",
+    "numberRange": "Please enter a value between {min} and {max}.",
+    "selectOption": "Please select an option."
+  },
+  "twofa": {
+    "title": "Two-factor authentication",
+    "subtitle": "Add a second step to your sign-in using an authenticator app.",
+    "statusOn": "Enabled",
+    "statusOff": "Not enabled",
+    "appHint": "Works with any authenticator app — Google Authenticator, Authy, 1Password, Bitwarden or Aegis.",
+    "enable": "Set up",
+    "disable": "Disable",
+    "setupScan": "Scan this QR code with your authenticator app:",
+    "setupManual": "No scanner? Enter this key manually:",
+    "setupCodeLabel": "Six-digit code from the app",
+    "setupConfirm": "Enable",
+    "setupCancel": "Cancel",
+    "recoveryTitle": "Your recovery codes",
+    "recoveryDesc": "Keep these somewhere safe. Each code works exactly once and is your way back in if you lose your device. This is the only time they are shown.",
+    "recoveryCopy": "Copy codes",
+    "recoveryCopied": "Codes copied",
+    "recoveryDone": "I have saved them",
+    "recoveryRemaining": "{n} of 10 recovery codes still usable",
+    "disableTitle": "Disable two-factor authentication",
+    "disableDesc": "We ask for your password rather than a code, so a lost or broken device cannot lock you out of this setting.",
+    "disablePassword": "Password",
+    "disableConfirm": "Disable",
+    "enabledToast": "Two-factor authentication is now enabled.",
+    "disabledToast": "Two-factor authentication has been disabled.",
+    "challengeTitle": "Confirm your sign-in",
+    "challengeDesc": "Enter the six-digit code from your authenticator app.",
+    "challengeCode": "Code",
+    "challengeSubmit": "Sign in",
+    "challengeRecoveryHint": "Lost your device? Enter a recovery code instead.",
+    "challengeExpired": "Your sign-in attempt expired. Please sign in again.",
+    "invalidCode": "That code is not valid.",
+    "usedRecoveryCode": "You used a recovery code. Consider generating new codes in your settings."
+  },
+  "errors": {
+    "network": "Cannot reach the server. Check your connection and try again.",
+    "unauthorized": "You do not have permission to do that.",
+    "notFound": "We could not find that.",
+    "conflict": "That did not work — it probably already exists or was just changed.",
+    "validation": "Please check your input.",
+    "rateLimited": "Too many attempts. Wait a moment and try again.",
+    "unavailable": "The service is temporarily unavailable. Please try again later.",
+    "server": "Something went wrong on the server. Please try again later.",
+    "unknown": "Something went wrong. Please try again."
+  },
+  "passkey": {
+    "title": "Passkeys",
+    "subtitle": "Sign in without a password — using your fingerprint, face or device PIN.",
+    "explain": "A passkey stays on your device and cannot be intercepted or typed into a fake site. At sign-in it replaces both your password and your verification code.",
+    "add": "Add a passkey",
+    "none": "No passkey set up yet.",
+    "unsupported": "This browser or device does not support passkeys.",
+    "synced": "Synced across your devices",
+    "deviceBound": "This device only",
+    "created": "Added on {date}",
+    "lastUsed": "Last used on {date}",
+    "neverUsed": "Not used yet",
+    "rename": "Rename",
+    "renameTitle": "Rename passkey",
+    "nameLabel": "Name",
+    "remove": "Remove",
+    "removeTitle": "Remove passkey",
+    "removeConfirm": "This passkey will stop working. You can still sign in with your password.",
+    "addedToast": "Passkey added.",
+    "removedToast": "Passkey removed.",
+    "renamedToast": "Passkey renamed.",
+    "cancelled": "Cancelled.",
+    "loginButton": "Sign in with a passkey",
+    "loginError": "Passkey sign-in failed."
   }
 }

@@ -15,29 +15,40 @@ const localeSwitchItems = [
 </script>
 
 <template>
-  <div class="flex flex-col h-dvh overflow-hidden bg-[var(--ui-bg)] text-[var(--ui-text)]">
+  <div class="flex flex-col h-dvh overflow-hidden bg-default text-default">
     <!-- Skip-to-content for keyboard/screen reader users -->
     <a href="#main-content" class="skip-link">{{ t('a11y.skipToContent') }}</a>
 
     <!-- ── Header (fixed; only the content area scrolls) ────── -->
-    <header class="shrink-0 bg-[var(--ui-bg)] border-b border-[var(--ui-border)]">
+    <header class="shrink-0 bg-default border-b border-default">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16">
           <!-- Logo / Brand -->
           <NuxtLink to="/" class="flex items-center gap-2.5 group">
-            <CommonBrandLogo class="size-7 text-primary-500 group-hover:text-primary-400 transition-colors" />
-            <span class="text-xl font-bold tracking-tight"> Gour<span class="text-primary-500">Merge</span> </span>
+            <CommonBrandLogo class="size-7 text-primary transition-opacity group-hover:opacity-80" />
+            <span class="text-xl font-bold tracking-tight"> Gour<span class="text-primary">Merge</span> </span>
           </NuxtLink>
 
-          <!-- Navigation for logged-in users -->
-          <nav v-if="loggedIn" class="hidden md:flex items-center gap-1">
-            <UButton :label="t('nav.dashboard')" variant="ghost" icon="i-lucide-layout-dashboard" to="/dashboard" />
-            <UButton :label="t('nav.explore')" variant="ghost" icon="i-lucide-compass" to="/explore" />
+          <!-- Desktop navigation — DESIGNBOOK §2.
+               Explore is shown to EVERYONE: it is the only public browse surface,
+               and gating the whole nav on `loggedIn` left guests with no way to
+               reach it from the desktop header at all (the mobile menu did offer
+               it, which is how the inconsistency surfaced). -->
+          <nav class="hidden md:flex items-center gap-1">
             <UButton
+              v-if="loggedIn"
+              :label="t('nav.dashboard')"
+              color="neutral"
+              variant="ghost"
+              icon="i-lucide-layout-dashboard"
+              to="/dashboard"
+            />
+            <UButton :label="t('nav.explore')" color="neutral" variant="ghost" icon="i-lucide-compass" to="/explore" />
+            <UButton
+              v-if="loggedIn"
               :label="t('nav.newRecipe')"
               variant="soft"
               icon="i-lucide-plus"
-              color="primary"
               to="/recipes/new"
             />
           </nav>
@@ -49,7 +60,6 @@ const localeSwitchItems = [
                 :model-value="locale"
                 :items="localeSwitchItems"
                 value-key="value"
-                size="sm"
                 class="w-28"
                 :aria-label="t('a11y.selectLanguage')"
                 @update:model-value="setLocale($event as 'de' | 'en' | 'fr' | 'it')"
@@ -59,7 +69,7 @@ const localeSwitchItems = [
 
               <!-- Auth buttons for logged-out users -->
               <template v-if="!loggedIn">
-                <UButton :label="t('auth.login')" variant="ghost" to="/auth/login" />
+                <UButton :label="t('auth.login')" color="neutral" variant="subtle" to="/auth/login" />
                 <UButton :label="t('auth.register')" to="/auth/register" />
               </template>
 
@@ -74,31 +84,24 @@ const localeSwitchItems = [
       </div>
     </header>
 
-    <!-- ── Main Content (the only scrollable region) ───────── -->
-    <main id="main-content" tabindex="-1" class="flex-1 overflow-y-auto">
+    <!-- ── Main Content (the only scrollable region) ─────────
+         `tabindex="0"`, not `-1`: in this shell <main> is the ONLY scroll
+         container, so it has to be reachable by keyboard or the content cannot be
+         scrolled without a mouse. axe caught this as `scrollable-region-focusable`
+         on /help/glossary — the one page whose content holds nothing focusable, so
+         the region had no other way in. The skip-link still works either way. -->
+    <main id="main-content" tabindex="0" class="flex-1 overflow-y-auto">
       <slot />
     </main>
 
     <!-- ── Footer (fixed) ──────────────────────────────────── -->
-    <footer class="shrink-0 border-t border-[var(--ui-border)]">
+    <footer class="shrink-0 border-t border-default">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
         <div class="flex flex-col-reverse sm:flex-row items-center justify-between gap-2">
-          <p class="text-sm text-[var(--ui-text-muted)] text-center">
+          <p class="text-sm text-muted text-center">
             © {{ new Date().getFullYear() }} GourMerge<span class="hidden sm:inline"> — {{ t('app.slogan') }}</span>
           </p>
-          <div class="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
-            <UButton
-              label="GitHub"
-              variant="ghost"
-              size="xs"
-              icon="i-simple-icons-github"
-              to="https://github.com"
-              target="_blank"
-            />
-            <UButton :label="t('legal.impressum')" variant="ghost" size="xs" to="/legal/impressum" />
-            <UButton :label="t('legal.datenschutz')" variant="ghost" size="xs" to="/legal/datenschutz" />
-            <UButton :label="t('legal.contact')" variant="ghost" size="xs" to="/legal/contact" />
-          </div>
+          <LayoutFooterLinks />
         </div>
       </div>
     </footer>

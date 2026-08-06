@@ -8,6 +8,33 @@ PassengerAppEnv production
 # Select the Node version available on your Netcup plan (adjust as needed):
 # PassengerNodejs /usr/local/bin/node
 
+# ── Runtime environment ─────────────────────────────────────
+# Netcup's Webhosting Control Panel is a reduced Plesk: it exposes a Node.js
+# "secret" field but no general "Custom environment variables" editor. So the app's
+# runtime configuration is injected here, with PassengerEnvVar.
+#
+# ⚠️  Add the real values to the HOST copy of this file only — never commit them.
+#     This file is deliberately NOT deployed (see docs/RUNBOOK.md), precisely so the
+#     host copy with the secrets survives every release.
+#
+# After any change: touch tmp/restart.txt
+#
+# PassengerEnvVar DATABASE_URL           mysql://user:pass@<db-host>:3306/dbname
+# PassengerEnvVar NUXT_SESSION_PASSWORD  <≥32 random chars>
+# PassengerEnvVar NUXT_PUBLIC_APP_URL    https://gourmerge.de
+# PassengerEnvVar NUXT_PUBLIC_SENTRY_DSN <sentry dsn>
+# PassengerEnvVar SMTP_HOST              <netcup smtp host>
+# PassengerEnvVar SMTP_USER              <mailbox>
+# PassengerEnvVar SMTP_PASS              <mailbox password>
+# PassengerEnvVar SMTP_FROM              "GourMerge <noreply@gourmerge.de>"
+#
+# Required for the nightly maintenance tasks (openssl rand -hex 32):
+# PassengerEnvVar CRON_SECRET            <≥16 random chars>
+#
+# Optional. Falls back to NUXT_SESSION_PASSWORD when unset, but setting it means
+# rotating the session secret does not invalidate every enrolled authenticator:
+# PassengerEnvVar TOTP_ENCRYPTION_KEY    <≥32 random chars>
+
 # ── HTTPS / HSTS ────────────────────────────────────────────
 # Force HTTPS; Nitro handles HSTS header once behind SSL.
 RewriteEngine On

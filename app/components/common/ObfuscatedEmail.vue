@@ -49,7 +49,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <a :href="href" class="text-primary-700 dark:text-primary-400 underline">
+  <a :href="href" class="link">
     <span>{{ user }}</span>
     <span class="hidden" aria-hidden="true">{{ decoy }}</span>
     <span>@{{ domain }}</span>

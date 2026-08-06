@@ -24,6 +24,13 @@ export default defineEventHandler(async (event) => {
       avatarUrl: users.avatarUrl,
       bio: users.bio,
       createdAt: users.createdAt,
+      // Private fields — selected here but only returned on your own profile
+      // (see the response below). `UserProfile` declared all three, yet none were
+      // selected, so /settings read `undefined` for both preferences and rendered
+      // its hardcoded defaults instead of what the user had saved.
+      email: users.email,
+      preferredLocale: users.preferredLocale,
+      preferredMeasurementSystem: users.preferredMeasurementSystem,
     })
     .from(users)
     .where(eq(users.username, username))
@@ -82,6 +89,15 @@ export default defineEventHandler(async (event) => {
       avatarUrl: user.avatarUrl,
       bio: user.bio,
       createdAt: user.createdAt,
+      // Never leak the email or the account preferences on someone else's profile
+      // — this endpoint is public and unauthenticated.
+      ...(isOwnProfile
+        ? {
+            email: user.email,
+            preferredLocale: user.preferredLocale,
+            preferredMeasurementSystem: user.preferredMeasurementSystem,
+          }
+        : {}),
     },
     recipes: recipeRows,
     starredRecipes: starredRows,

@@ -8,7 +8,7 @@ on:
 
 jobs:
   ci:
-    name: Lint → Typecheck → i18n → Test → Build
+    name: Lint → Design → Typecheck → i18n → Test → Build
     runs-on: ubuntu-latest
 
     services:
@@ -53,6 +53,12 @@ jobs:
 
       - name: Lint
         run: npm run lint
+
+      # Enforces DESIGNBOOK.md. The axe gate checks contrast and the i18n gate
+      # checks parity; neither catches design *inconsistency* — competing colour
+      # spellings, ad-hoc button sizes, per-page content widths. This does.
+      - name: Design-system gate
+        run: npm run design:check
 
       - name: Format check
         run: npm run format:check

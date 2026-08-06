@@ -4,9 +4,14 @@ import AxeBuilder from '@axe-core/playwright'
 /**
  * Accessibility scans (axe-core, WCAG 2 A/AA) on public pages.
  *
- * Gate: fail on any CRITICAL violation. SERIOUS violations are reported as
- * warnings — the outstanding ones are brand-orange (`primary-500`) colour-contrast
- * that needs a design decision (darkening the brand to meet AA); tracked separately.
+ * Gate: fail on any CRITICAL violation. SERIOUS violations are logged as warnings.
+ *
+ * As of the design-system pass there are **zero** of either. The three that used to
+ * be logged and shrugged off were all real, and all fixed centrally in `main.css`:
+ * brand-orange contrast (light-mode palette darkening), `text-dimmed` measuring
+ * 3.74:1 on dark card surfaces, and `.link` being distinguishable by colour alone
+ * inside a paragraph. Keep this list at zero — a "serious" that stays logged is a
+ * defect that ships.
  */
 const PUBLIC_PAGES = [
   '/',

@@ -2,6 +2,7 @@
 definePageMeta({ layout: 'auth' })
 
 const { t } = useI18n()
+const { apiError } = useApiError()
 const route = useRoute()
 const toast = useAppToast()
 
@@ -22,7 +23,7 @@ async function submit() {
     await $fetch('/auth/reset-password', { method: 'POST', body: { token: token.value, password: password.value } })
     done.value = true
   } catch (e: unknown) {
-    toast.error((e as { data?: { statusMessage?: string } })?.data?.statusMessage || t('auth.resetPasswordError'))
+    toast.error(apiError(e, 'auth.resetPasswordError'))
   } finally {
     pending.value = false
   }
@@ -30,30 +31,50 @@ async function submit() {
 </script>
 
 <template>
-  <UCard class="max-w-md mx-auto mt-16">
+  <!-- Cap + centring come from the auth layout (DESIGNBOOK §4.1). -->
+  <UCard>
     <template #header>
-      <h1 class="text-xl font-bold">{{ t('auth.resetPassword') }}</h1>
+      <h1 class="text-2xl font-bold text-center">{{ t('auth.resetPassword') }}</h1>
     </template>
 
-    <div v-if="!token" class="text-center py-8">
+    <div v-if="!token" class="text-center py-8 space-y-4">
       <p class="text-error-500">{{ t('auth.resetTokenMissing') }}</p>
-      <UButton :label="t('auth.forgotPassword')" to="/auth/forgot-password" class="mt-4" />
+      <UButton :label="t('auth.forgotPassword')" to="/auth/forgot-password" />
     </div>
 
     <div v-else-if="done" class="text-center space-y-3 py-4">
-      <UIcon name="i-lucide-check-circle" class="size-12 text-success-500 mx-auto" />
+      <UIcon name="i-lucide-check-circle" class="size-12 text-success-500 mx-auto" aria-hidden="true" />
       <p>{{ t('auth.resetPasswordDone') }}</p>
       <UButton :label="t('auth.login')" to="/auth/login" />
     </div>
 
     <form v-else class="space-y-4" @submit.prevent="submit">
-      <UFormField :label="t('auth.newPassword')">
-        <UInput v-model="password" type="password" autocomplete="new-password" required minlength="8" />
+      <UFormField :label="t('auth.newPassword')" required>
+        <UInput
+          v-model="password"
+          type="password"
+          autocomplete="new-password"
+          icon="i-lucide-lock"
+          required
+          minlength="8"
+        />
       </UFormField>
-      <UFormField :label="t('auth.confirmPassword')" :error="mismatch ? t('auth.passwordMismatch') : undefined">
-        <UInput v-model="password2" type="password" autocomplete="new-password" required />
+      <UFormField
+        :label="t('auth.confirmPassword')"
+        :error="mismatch ? t('auth.passwordMismatch') : undefined"
+        required
+      >
+        <UInput v-model="password2" type="password" autocomplete="new-password" icon="i-lucide-lock" required />
       </UFormField>
-      <UButton type="submit" :label="t('auth.setNewPassword')" :loading="pending" :disabled="!!mismatch" block />
+      <UButton
+        type="submit"
+        :label="t('auth.setNewPassword')"
+        icon="i-lucide-key-round"
+        size="lg"
+        block
+        :loading="pending"
+        :disabled="!!mismatch"
+      />
     </form>
   </UCard>
 </template>

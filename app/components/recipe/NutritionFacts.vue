@@ -20,17 +20,23 @@ function fmt(n: number | null | undefined, decimals = 1) {
   return n.toFixed(decimals)
 }
 
+/**
+ * Macro swatch colours come from the `--gm-macro-*` tokens (DESIGNBOOK §1.1) via
+ * the `bg-macro-*` classes, so the legend dot and the bar segment it labels can
+ * never disagree. They were previously raw `bg-amber-500` / `bg-orange-500`
+ * literals duplicated between the compact and full layouts.
+ */
 const macros = computed(() => [
-  { key: 'protein', label: t('nutrition.protein'), value: current.value.protein, unit: 'g', color: 'bg-blue-500' },
-  { key: 'carbs', label: t('nutrition.carbs'), value: current.value.carbs, unit: 'g', color: 'bg-amber-500' },
-  { key: 'fat', label: t('nutrition.fat'), value: current.value.fat, unit: 'g', color: 'bg-orange-500' },
-  { key: 'fiber', label: t('nutrition.fiber'), value: current.value.fiber, unit: 'g', color: 'bg-green-500' },
+  { key: 'protein', label: t('nutrition.protein'), value: current.value.protein, unit: 'g', color: 'bg-macro-protein' },
+  { key: 'carbs', label: t('nutrition.carbs'), value: current.value.carbs, unit: 'g', color: 'bg-macro-carbs' },
+  { key: 'fat', label: t('nutrition.fat'), value: current.value.fat, unit: 'g', color: 'bg-macro-fat' },
+  { key: 'fiber', label: t('nutrition.fiber'), value: current.value.fiber, unit: 'g', color: 'bg-success-500' },
   {
     key: 'saturatedFat',
     label: t('nutrition.saturatedFat'),
     value: current.value.saturatedFat,
     unit: 'g',
-    color: 'bg-red-400',
+    color: 'bg-error-500',
   },
 ])
 
@@ -115,60 +121,68 @@ const hasMicros = computed(() => vitamins.value.length > 0 || minerals.value.len
 </script>
 
 <template>
-  <!-- ── Compact bar ──────────────────────────────────────── -->
-  <div v-if="compact" class="rounded-xl border border-[var(--ui-border)] bg-[var(--ui-bg-elevated)] px-4 py-3 mb-6">
-    <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+  <!-- ── Compact bar ────────────────────────────────────────
+       Layout switches at `sm` rather than wrapping. One flex row with
+       `flex-wrap` gave a ragged 3–4 line stack on a phone, with the separator
+       dots stranded at line ends and the macro bar orphaned between them.
+
+       Mobile: energy on its own line, then the full-width macro bar (which is
+       more readable wide than at 80px), then macros as a 2-column grid so the
+       values align in columns instead of reflowing.
+       ≥ sm: the original single row, which fits comfortably. -->
+  <div v-if="compact" class="rounded-lg border border-default bg-elevated px-4 py-3 mb-6">
+    <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-4 sm:gap-y-2">
       <!-- Energy -->
       <div class="flex items-center gap-1.5 shrink-0">
-        <UIcon name="i-lucide-flame" class="size-4 text-primary-500 shrink-0" />
+        <UIcon name="i-lucide-flame" class="size-4 text-primary shrink-0" aria-hidden="true" />
         <span class="text-lg font-bold leading-none">{{ fmt(perServing.kcal, 0) }}</span>
-        <span class="text-xs text-[var(--ui-text-muted)]">kcal</span>
-        <span class="text-xs text-[var(--ui-text-dimmed)]">/ {{ t('nutrition.perServing') }}</span>
+        <span class="text-xs text-muted">kcal</span>
+        <span class="text-xs text-dimmed">/ {{ t('nutrition.perServing') }}</span>
       </div>
 
-      <!-- Macro ratio bar -->
-      <div class="flex h-1.5 w-20 rounded-full overflow-hidden bg-[var(--ui-bg)] shrink-0">
-        <div class="bg-blue-500 transition-all" :style="{ width: macroKcal.protein + '%' }" />
-        <div class="bg-amber-500 transition-all" :style="{ width: macroKcal.carbs + '%' }" />
-        <div class="bg-orange-500 transition-all" :style="{ width: macroKcal.fat + '%' }" />
+      <!-- Macro ratio bar: full width on mobile, thumbnail inline from sm up -->
+      <div class="flex h-1.5 w-full overflow-hidden rounded-full bg-default sm:w-20 sm:shrink-0">
+        <div class="bg-macro-protein transition-all" :style="{ width: macroKcal.protein + '%' }" />
+        <div class="bg-macro-carbs transition-all" :style="{ width: macroKcal.carbs + '%' }" />
+        <div class="bg-macro-fat transition-all" :style="{ width: macroKcal.fat + '%' }" />
       </div>
 
-      <!-- Macros inline -->
-      <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+      <!-- Macros: 2-column grid on mobile, inline with dot separators from sm up -->
+      <div
+        class="grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm sm:flex sm:flex-wrap sm:items-center sm:gap-x-3 sm:gap-y-1"
+      >
         <span class="flex items-center gap-1">
-          <span class="inline-block size-2 rounded-full bg-blue-500 shrink-0" />
+          <span class="inline-block size-2 rounded-full bg-macro-protein shrink-0" />
           <span class="font-medium">{{ fmt(perServing.protein, 0) }}g</span>
-          <span class="text-[var(--ui-text-muted)]">{{ t('nutrition.protein') }}</span>
+          <span class="text-muted">{{ t('nutrition.protein') }}</span>
         </span>
-        <span class="text-[var(--ui-border-accented)] select-none">·</span>
+        <span class="hidden text-dimmed select-none sm:inline" aria-hidden="true">·</span>
         <span class="flex items-center gap-1">
-          <span class="inline-block size-2 rounded-full bg-amber-500 shrink-0" />
+          <span class="inline-block size-2 rounded-full bg-macro-carbs shrink-0" />
           <span class="font-medium">{{ fmt(perServing.carbs, 0) }}g</span>
-          <span class="text-[var(--ui-text-muted)]">{{ t('nutrition.carbs') }}</span>
+          <span class="text-muted">{{ t('nutrition.carbs') }}</span>
         </span>
-        <span class="text-[var(--ui-border-accented)] select-none">·</span>
+        <span class="hidden text-dimmed select-none sm:inline" aria-hidden="true">·</span>
         <span class="flex items-center gap-1">
-          <span class="inline-block size-2 rounded-full bg-orange-500 shrink-0" />
+          <span class="inline-block size-2 rounded-full bg-macro-fat shrink-0" />
           <span class="font-medium">{{ fmt(perServing.fat, 0) }}g</span>
-          <span class="text-[var(--ui-text-muted)]">{{ t('nutrition.fat') }}</span>
+          <span class="text-muted">{{ t('nutrition.fat') }}</span>
         </span>
         <template v-if="perServing.fiber && perServing.fiber > 0">
-          <span class="text-[var(--ui-border-accented)] select-none">·</span>
+          <span class="hidden text-dimmed select-none sm:inline" aria-hidden="true">·</span>
           <span class="flex items-center gap-1">
-            <span class="inline-block size-2 rounded-full bg-green-500 shrink-0" />
+            <span class="inline-block size-2 rounded-full bg-success-500 shrink-0" />
             <span class="font-medium">{{ fmt(perServing.fiber, 0) }}g</span>
-            <span class="text-[var(--ui-text-muted)]">{{ t('nutrition.fiber') }}</span>
+            <span class="text-muted">{{ t('nutrition.fiber') }}</span>
           </span>
         </template>
       </div>
 
       <!-- Micros toggle + coverage -->
-      <div class="ml-auto flex items-center gap-3">
-        <UPopover v-if="total.missingCount > 0" mode="hover" class="hidden sm:flex">
-          <button
-            class="flex items-center gap-1 text-xs text-[var(--ui-text-dimmed)] hover:text-[var(--ui-text-muted)] transition-colors"
-          >
-            <UIcon name="i-lucide-info" class="size-3 shrink-0" />
+      <div class="flex items-center justify-between gap-3 sm:ml-auto sm:justify-end">
+        <UPopover v-if="total.missingCount > 0" mode="hover">
+          <button class="flex items-center gap-1 text-xs text-dimmed hover:text-muted transition-colors">
+            <UIcon name="i-lucide-info" class="size-4 shrink-0" aria-hidden="true" />
             {{ t('nutrition.missingCount', { n: total.missingCount }) }}
           </button>
           <template #content>
@@ -178,9 +192,9 @@ const hasMicros = computed(() => vitamins.value.length > 0 || minerals.value.len
                 <li
                   v-for="name in total.missingIngredients"
                   :key="name"
-                  class="text-xs text-[var(--ui-text-muted)] flex items-center gap-1.5"
+                  class="text-xs text-muted flex items-center gap-1.5"
                 >
-                  <span class="inline-block size-1.5 rounded-full bg-[var(--ui-text-dimmed)] shrink-0" />
+                  <span class="inline-block size-1.5 rounded-full bg-accented shrink-0" />
                   {{ name }}
                 </li>
               </ul>
@@ -189,42 +203,40 @@ const hasMicros = computed(() => vitamins.value.length > 0 || minerals.value.len
         </UPopover>
         <button
           v-if="hasMicros"
-          class="flex items-center gap-1 text-xs text-primary-500 hover:text-primary-400 transition-colors shrink-0"
+          class="flex items-center gap-1 link text-xs shrink-0"
           @click="showMicros = !showMicros"
         >
           {{ t('nutrition.showMicros') }}
-          <UIcon :name="showMicros ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'" class="size-3.5" />
+          <UIcon :name="showMicros ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'" class="size-4" />
         </button>
       </div>
     </div>
 
     <!-- Expanded micros -->
     <template v-if="showMicros && hasMicros">
-      <div class="mt-3 pt-3 border-t border-[var(--ui-border)] grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3">
+      <div class="mt-3 pt-3 border-t border-default grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3">
         <div v-if="vitamins.length > 0">
-          <p class="text-xs font-semibold uppercase tracking-wide text-[var(--ui-text-dimmed)] mb-1.5">
+          <p class="text-xs font-semibold uppercase tracking-wide text-dimmed mb-1.5">
             {{ t('nutrition.vitamins') }}
           </p>
           <div class="grid grid-cols-3 sm:grid-cols-4 gap-1.5">
-            <div v-for="m in vitamins" :key="m.key" class="rounded bg-[var(--ui-bg)] px-2 py-1">
-              <div class="text-xs text-[var(--ui-text-muted)] truncate">{{ m.label }}</div>
+            <div v-for="m in vitamins" :key="m.key" class="rounded bg-default px-2 py-1">
+              <div class="text-xs text-muted truncate">{{ m.label }}</div>
               <div class="text-xs font-medium">
-                {{ fmt(m.value, m.unit === 'mg' ? 1 : 2)
-                }}<span class="text-[var(--ui-text-dimmed)]"> {{ m.unit }}</span>
+                {{ fmt(m.value, m.unit === 'mg' ? 1 : 2) }}<span class="text-dimmed"> {{ m.unit }}</span>
               </div>
             </div>
           </div>
         </div>
         <div v-if="minerals.length > 0">
-          <p class="text-xs font-semibold uppercase tracking-wide text-[var(--ui-text-dimmed)] mb-1.5">
+          <p class="text-xs font-semibold uppercase tracking-wide text-dimmed mb-1.5">
             {{ t('nutrition.minerals') }}
           </p>
           <div class="grid grid-cols-3 sm:grid-cols-4 gap-1.5">
-            <div v-for="m in minerals" :key="m.key" class="rounded bg-[var(--ui-bg)] px-2 py-1">
-              <div class="text-xs text-[var(--ui-text-muted)] truncate">{{ m.label }}</div>
+            <div v-for="m in minerals" :key="m.key" class="rounded bg-default px-2 py-1">
+              <div class="text-xs text-muted truncate">{{ m.label }}</div>
               <div class="text-xs font-medium">
-                {{ fmt(m.value, m.unit === 'mg' ? 1 : 2)
-                }}<span class="text-[var(--ui-text-dimmed)]"> {{ m.unit }}</span>
+                {{ fmt(m.value, m.unit === 'mg' ? 1 : 2) }}<span class="text-dimmed"> {{ m.unit }}</span>
               </div>
             </div>
           </div>
@@ -238,7 +250,7 @@ const hasMicros = computed(() => vitamins.value.length > 0 || minerals.value.len
     <template #header>
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
-          <UIcon name="i-lucide-flame" class="size-5 text-primary-500" />
+          <UIcon name="i-lucide-flame" class="size-5 text-primary" />
           <h2 class="text-lg font-semibold">{{ t('nutrition.title') }}</h2>
           <UBadge
             v-if="total.isApproximate"
@@ -251,11 +263,11 @@ const hasMicros = computed(() => vitamins.value.length > 0 || minerals.value.len
         </div>
 
         <!-- Per-serving / Total toggle -->
-        <div class="flex rounded-lg overflow-hidden border border-[var(--ui-border)] text-sm">
+        <div class="flex rounded-lg overflow-hidden border border-default text-sm">
           <button
             :class="[
               'px-3 py-1 transition-colors',
-              activeTab === 'serving' ? 'bg-primary-500 text-white' : 'hover:bg-[var(--ui-bg-elevated)]',
+              activeTab === 'serving' ? 'bg-primary text-inverted' : 'hover:bg-elevated',
             ]"
             @click="activeTab = 'serving'"
           >
@@ -264,7 +276,7 @@ const hasMicros = computed(() => vitamins.value.length > 0 || minerals.value.len
           <button
             :class="[
               'px-3 py-1 transition-colors',
-              activeTab === 'total' ? 'bg-primary-500 text-white' : 'hover:bg-[var(--ui-bg-elevated)]',
+              activeTab === 'total' ? 'bg-primary text-inverted' : 'hover:bg-elevated',
             ]"
             @click="activeTab = 'total'"
           >
@@ -276,9 +288,9 @@ const hasMicros = computed(() => vitamins.value.length > 0 || minerals.value.len
 
     <!-- Energy highlight -->
     <div class="flex items-baseline gap-2 mb-4">
-      <span class="text-4xl font-bold text-primary-500">{{ fmt(current.kcal, 0) }}</span>
-      <span class="text-[var(--ui-text-muted)]">kcal</span>
-      <span class="text-sm text-[var(--ui-text-dimmed)] ml-auto">
+      <span class="text-4xl font-bold text-primary">{{ fmt(current.kcal, 0) }}</span>
+      <span class="text-muted">kcal</span>
+      <span class="text-sm text-dimmed ml-auto">
         {{
           activeTab === 'serving'
             ? t('nutrition.perServingLabel', { n: servings })
@@ -288,31 +300,28 @@ const hasMicros = computed(() => vitamins.value.length > 0 || minerals.value.len
     </div>
 
     <!-- Macro ratio bar -->
-    <div class="flex h-2 rounded-full overflow-hidden mb-6 bg-[var(--ui-bg-elevated)]">
-      <div class="bg-blue-500 transition-all" :style="{ width: macroKcal.protein + '%' }" />
-      <div class="bg-amber-500 transition-all" :style="{ width: macroKcal.carbs + '%' }" />
-      <div class="bg-orange-500 transition-all" :style="{ width: macroKcal.fat + '%' }" />
+    <div class="flex h-2 rounded-full overflow-hidden mb-6 bg-elevated">
+      <div class="bg-macro-protein transition-all" :style="{ width: macroKcal.protein + '%' }" />
+      <div class="bg-macro-carbs transition-all" :style="{ width: macroKcal.carbs + '%' }" />
+      <div class="bg-macro-fat transition-all" :style="{ width: macroKcal.fat + '%' }" />
     </div>
 
     <!-- Macros grid -->
     <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-      <div v-for="m in macros" :key="m.key" class="rounded-lg bg-[var(--ui-bg-elevated)] px-3 py-2">
+      <div v-for="m in macros" :key="m.key" class="rounded-lg bg-elevated px-3 py-2">
         <div class="flex items-center gap-1.5 mb-0.5">
           <span class="inline-block size-2 rounded-full" :class="m.color" />
-          <span class="text-xs text-[var(--ui-text-muted)]">{{ m.label }}</span>
+          <span class="text-xs text-muted">{{ m.label }}</span>
         </div>
         <span class="font-semibold">{{ fmt(m.value) }}</span>
-        <span class="text-xs text-[var(--ui-text-dimmed)]"> {{ m.unit }}</span>
+        <span class="text-xs text-dimmed"> {{ m.unit }}</span>
       </div>
     </div>
 
     <!-- Micronutrients (collapsible) -->
     <template v-if="hasMicros">
-      <div class="mt-4 border-t border-[var(--ui-border)] pt-4">
-        <button
-          class="flex items-center gap-1.5 text-sm text-primary-500 hover:text-primary-400 transition-colors"
-          @click="showMicros = !showMicros"
-        >
+      <div class="mt-4 border-t border-default pt-4">
+        <button class="flex items-center gap-1.5 link text-sm" @click="showMicros = !showMicros">
           <UIcon :name="showMicros ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'" class="size-4" />
           {{ t('nutrition.showMicros') }}
         </button>
@@ -320,15 +329,15 @@ const hasMicros = computed(() => vitamins.value.length > 0 || minerals.value.len
         <template v-if="showMicros">
           <!-- Vitamins -->
           <div v-if="vitamins.length > 0" class="mt-3">
-            <p class="text-xs font-semibold uppercase tracking-wide text-[var(--ui-text-dimmed)] mb-2">
+            <p class="text-xs font-semibold uppercase tracking-wide text-dimmed mb-2">
               {{ t('nutrition.vitamins') }}
             </p>
             <div class="grid grid-cols-3 sm:grid-cols-4 gap-2">
-              <div v-for="m in vitamins" :key="m.key" class="rounded bg-[var(--ui-bg-elevated)] px-2 py-1.5">
-                <div class="text-xs text-[var(--ui-text-muted)] truncate">{{ m.label }}</div>
+              <div v-for="m in vitamins" :key="m.key" class="rounded bg-elevated px-2 py-1.5">
+                <div class="text-xs text-muted truncate">{{ m.label }}</div>
                 <div class="text-sm font-medium leading-tight">
                   {{ fmt(m.value, m.unit === 'mg' ? 1 : 2) }}
-                  <span class="text-xs text-[var(--ui-text-dimmed)]">{{ m.unit }}</span>
+                  <span class="text-xs text-dimmed">{{ m.unit }}</span>
                 </div>
               </div>
             </div>
@@ -336,15 +345,15 @@ const hasMicros = computed(() => vitamins.value.length > 0 || minerals.value.len
 
           <!-- Minerals -->
           <div v-if="minerals.length > 0" class="mt-3">
-            <p class="text-xs font-semibold uppercase tracking-wide text-[var(--ui-text-dimmed)] mb-2">
+            <p class="text-xs font-semibold uppercase tracking-wide text-dimmed mb-2">
               {{ t('nutrition.minerals') }}
             </p>
             <div class="grid grid-cols-3 sm:grid-cols-4 gap-2">
-              <div v-for="m in minerals" :key="m.key" class="rounded bg-[var(--ui-bg-elevated)] px-2 py-1.5">
-                <div class="text-xs text-[var(--ui-text-muted)] truncate">{{ m.label }}</div>
+              <div v-for="m in minerals" :key="m.key" class="rounded bg-elevated px-2 py-1.5">
+                <div class="text-xs text-muted truncate">{{ m.label }}</div>
                 <div class="text-sm font-medium leading-tight">
                   {{ fmt(m.value, m.unit === 'mg' ? 1 : 2) }}
-                  <span class="text-xs text-[var(--ui-text-dimmed)]">{{ m.unit }}</span>
+                  <span class="text-xs text-dimmed">{{ m.unit }}</span>
                 </div>
               </div>
             </div>
@@ -355,9 +364,7 @@ const hasMicros = computed(() => vitamins.value.length > 0 || minerals.value.len
 
     <!-- Coverage disclaimer with popover -->
     <UPopover v-if="total.missingCount > 0" mode="hover" class="mt-4">
-      <button
-        class="flex items-center gap-1 text-xs text-[var(--ui-text-dimmed)] hover:text-[var(--ui-text-muted)] transition-colors"
-      >
+      <button class="flex items-center gap-1 text-xs text-dimmed hover:text-muted transition-colors">
         <UIcon name="i-lucide-info" class="size-3.5 shrink-0" />
         {{ t('nutrition.missingCount', { n: total.missingCount }) }}
       </button>
@@ -368,9 +375,9 @@ const hasMicros = computed(() => vitamins.value.length > 0 || minerals.value.len
             <li
               v-for="name in total.missingIngredients"
               :key="name"
-              class="text-xs text-[var(--ui-text-muted)] flex items-center gap-1.5"
+              class="text-xs text-muted flex items-center gap-1.5"
             >
-              <span class="inline-block size-1.5 rounded-full bg-[var(--ui-text-dimmed)] shrink-0" />
+              <span class="inline-block size-1.5 rounded-full bg-accented shrink-0" />
               {{ name }}
             </li>
           </ul>

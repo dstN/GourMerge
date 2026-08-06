@@ -10,6 +10,15 @@ export default defineNuxtConfig({
 
   css: ['~/assets/css/main.css'],
 
+  // ── nuxt-auth-utils ─────────────────────────────────────────
+  // `webAuthn` gates the passkey handlers and the `useWebAuthn()` composable behind
+  // an explicit opt-in, and makes the module hard-fail at build time if
+  // `@simplewebauthn/{server,browser}` are missing — better than discovering it at
+  // runtime when someone tries to enrol a key.
+  auth: {
+    webAuthn: true,
+  },
+
   // ── Nuxt UI v4 ──────────────────────────────────────────────
   ui: {
     theme: {

@@ -1,9 +1,15 @@
 <script setup lang="ts">
 import type { RecipeDetail } from '~~/shared/types/recipe'
 
-definePageMeta({ middleware: ['validate-recipe-route'], auth: true })
+/**
+ * `auth: true` was dead metadata — nothing reads `route.meta.auth`, so this page
+ * had no client-side guard at all and an anonymous visitor got a form that could
+ * only fail server-side. The named `auth` middleware is what actually guards.
+ */
+definePageMeta({ middleware: ['validate-recipe-route', 'auth'] })
 
 const { t } = useI18n()
+const { apiError } = useApiError()
 const route = useRoute()
 const toast = useAppToast()
 
@@ -18,12 +24,16 @@ const { data: recipe } = useFetch<Pick<RecipeDetail, 'id' | 'branches' | 'title'
 
 // If the user is looking at another user's recipe, they need their own forked recipe's branches
 // For simplicity, show branches from the recipe being viewed + potentially their own fork
+//
+// `undefined`, not `null`, for the unset branch ids: USelect's model is
+// `T | undefined`, and the previous `null` only type-checked because the item
+// mappers below were annotated `(b: any)`, which widened `value` to `any`.
 const form = reactive({
   title: '',
   description: '',
-  sourceBranchId: null as number | null,
-  targetBranchId: null as number | null,
-  sourceRecipeId: null as number | null,
+  sourceBranchId: undefined as number | undefined,
+  targetBranchId: undefined as number | undefined,
+  sourceRecipeId: undefined as number | undefined,
 })
 
 const targetBranches = computed(() => (recipe.value?.branches ?? []).filter((b) => b.isDefault || true))
@@ -47,7 +57,7 @@ async function submit() {
     toast.success(t('gourmergeRequest.submitSuccess'))
     await navigateTo(`${recipeUrl.value}/gourmerge-requests/${res.id}`)
   } catch (e: unknown) {
-    toast.error((e as { data?: { statusMessage?: string } })?.data?.statusMessage || t('gourmergeRequest.submitError'))
+    toast.error(apiError(e, 'gourmergeRequest.submitError'))
   } finally {
     submitting.value = false
   }
@@ -57,44 +67,30 @@ useSeoMeta({ title: () => `${t('gourmergeRequest.new')} — GourMerge` })
 </script>
 
 <template>
-  <div class="max-w-2xl mx-auto px-4 py-8">
-    <!-- Breadcrumb -->
-    <div class="flex items-center gap-2 text-sm text-[var(--ui-text-muted)] mb-4">
-      <NuxtLink :to="recipeUrl" class="hover:text-primary-500 transition-colors">{{ recipe?.title }}</NuxtLink>
-      <UIcon name="i-lucide-chevron-right" class="size-4" />
-      <NuxtLink :to="`${recipeUrl}/gourmerge-requests`" class="hover:text-primary-500 transition-colors">
-        {{ t('gourmergeRequest.titlePlural') }}
-      </NuxtLink>
-      <UIcon name="i-lucide-chevron-right" class="size-4" />
-      <span>{{ t('gourmergeRequest.new') }}</span>
-    </div>
+  <CommonPageShell width="form">
+    <CommonPageHeader
+      :title="t('gourmergeRequest.createTitle')"
+      :subtitle="t('gourmergeRequest.createSubtitle')"
+      icon="i-lucide-git-pull-request"
+      :back-to="`${recipeUrl}/gourmerge-requests`"
+      :back-label="t('gourmergeRequest.titlePlural')"
+    />
 
     <UCard>
-      <template #header>
-        <h1 class="text-xl font-bold">{{ t('gourmergeRequest.createTitle') }}</h1>
-        <p class="text-sm text-[var(--ui-text-muted)] mt-1">{{ t('gourmergeRequest.createSubtitle') }}</p>
-      </template>
-
       <div class="space-y-5">
         <UFormField :label="t('gourmergeRequest.requestTitle')" required>
-          <UInput v-model="form.title" :placeholder="t('gourmergeRequest.requestTitlePlaceholder')" class="w-full" />
+          <UInput v-model="form.title" :placeholder="t('gourmergeRequest.requestTitlePlaceholder')" />
         </UFormField>
 
         <UFormField :label="t('gourmergeRequest.description')">
-          <UTextarea
-            v-model="form.description"
-            :placeholder="t('gourmergeRequest.descriptionPlaceholder')"
-            :rows="4"
-            class="w-full"
-          />
+          <UTextarea v-model="form.description" :placeholder="t('gourmergeRequest.descriptionPlaceholder')" :rows="4" />
         </UFormField>
 
         <UFormField :label="t('gourmergeRequest.sourceBranch')" required>
           <USelect
             v-model="form.sourceBranchId"
-            :items="(recipe?.branches ?? []).map((b: any) => ({ label: b.name, value: b.id }))"
+            :items="(recipe?.branches ?? []).map((b) => ({ label: b.name, value: b.id }))"
             value-key="value"
-            class="w-full"
             :placeholder="t('gourmergeRequest.sourceBranch')"
           />
         </UFormField>
@@ -102,17 +98,21 @@ useSeoMeta({ title: () => `${t('gourmergeRequest.new')} — GourMerge` })
         <UFormField :label="t('gourmergeRequest.targetBranch')" required>
           <USelect
             v-model="form.targetBranchId"
-            :items="targetBranches.map((b: any) => ({ label: b.name, value: b.id }))"
+            :items="targetBranches.map((b) => ({ label: b.name, value: b.id }))"
             value-key="value"
-            class="w-full"
             :placeholder="t('gourmergeRequest.targetBranch')"
           />
         </UFormField>
       </div>
 
       <template #footer>
-        <div class="flex justify-between items-center">
-          <UButton :label="t('common.cancel')" variant="ghost" :to="`${recipeUrl}/gourmerge-requests`" />
+        <div class="flex items-center justify-end gap-2">
+          <UButton
+            :label="t('common.cancel')"
+            color="neutral"
+            variant="subtle"
+            :to="`${recipeUrl}/gourmerge-requests`"
+          />
           <UButton
             :label="t('gourmergeRequest.submit')"
             icon="i-lucide-git-pull-request"
@@ -123,5 +123,5 @@ useSeoMeta({ title: () => `${t('gourmergeRequest.new')} — GourMerge` })
         </div>
       </template>
     </UCard>
-  </div>
+  </CommonPageShell>
 </template>

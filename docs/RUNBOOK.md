@@ -131,19 +131,122 @@ Retain 14 days:
 
 ---
 
-## Retention cleanup (required — the privacy policy promises it)
+## Scheduled maintenance (required — the privacy policy promises it)
 
-`npm run db:cleanup` enforces the windows named in §7 of the privacy policy.
-This is not optional housekeeping: the policy states concrete retention periods
-under Art. 13(2)(a) GDPR, and an unenforced period is a claim you cannot back up.
-Before this job existed, `contact_messages` and `rate_limit_hits` had no delete
-path anywhere in the codebase.
+Two nightly jobs, both **triggered over HTTP** rather than run as shell commands:
 
-Add to Netcup's cron manager, nightly:
+| Job               | URL                        | What it does                                           |
+| ----------------- | -------------------------- | ------------------------------------------------------ |
+| Retention cleanup | `/tasks/retention`         | Enforces the windows named in §7 of the privacy policy |
+| Inactive accounts | `/tasks/inactive-accounts` | Warns, then deletes, accounts dormant for three years  |
 
-```
-30 4 * * *  cd /gourmerge.de && npm run db:cleanup >> logs/cleanup.log 2>&1
-```
+### Why a URL and not `npm run …`
+
+Because a shell cron **cannot work on this host**. The deploy ships only `.output/`
+and `app.js`, so there is:
+
+- no `scripts/` → `inactive-accounts.mjs` is not on the server
+- no `package.json` → `npm run db:inactive` does not exist
+- no `.env` → `DATABASE_URL` and the SMTP settings come from **`PassengerEnvVar`
+  directives in `.htaccess`**, which apply to the Passenger-managed app process and
+  are **not** inherited by a Plesk scheduled task
+
+That is the same trap as the migration step that "could never run" (current_state
+§15): the host does not have what the command needs. Fetching a URL runs the job
+_inside the app_, which already holds the DB pool, the mailer and the injected env.
+
+The CLI scripts (`npm run db:cleanup`, `npm run db:inactive`) still exist and are
+useful **locally**, where `.env` is present. They are not the production path.
+
+### One-time setup
+
+1. Generate the shared secret and add it to Plesk:
+
+   ```bash
+   openssl rand -hex 32
+   ```
+
+   Add it to the **host copy of `.htaccess`** as a Passenger variable:
+
+   ```apache
+   PassengerEnvVar CRON_SECRET <the value>
+   ```
+
+   Netcup's Webhosting Control Panel is a reduced Plesk — it offers a Node.js
+   "secret" field but **no general Custom Environment Variables editor**, so
+   `PassengerEnvVar` in `.htaccess` is how every runtime variable reaches this app
+   (`DATABASE_URL` and the SMTP settings are already there). Edit it over SSH or the
+   File Manager; the file is deliberately never deployed, so the host copy survives
+   releases. The tracked copy carries a commented template.
+
+   Then restart: `touch tmp/restart.txt`.
+
+2. Verify it works before scheduling anything, using the dry run — it sends no mail
+   and deletes nothing:
+
+   ```bash
+   curl -s "https://gourmerge.de/tasks/inactive-accounts?key=<CRON_SECRET>&dryRun=1"
+   ```
+
+   Expect a plain-text summary. A `503 Maintenance tasks are not configured` means
+   `CRON_SECRET` did not reach the app — check step 1 and that you restarted.
+   A `401` means the key does not match.
+
+### Creating the scheduled tasks
+
+**Plesk → Websites & Domains → Scheduled Tasks → Add Task**, twice:
+
+| Field         | Retention cleanup                                        | Inactive accounts                                                |
+| ------------- | -------------------------------------------------------- | ---------------------------------------------------------------- |
+| **Task type** | **Fetch a URL**                                          | **Fetch a URL**                                                  |
+| **URL**       | `https://gourmerge.de/tasks/retention?key=<CRON_SECRET>` | `https://gourmerge.de/tasks/inactive-accounts?key=<CRON_SECRET>` |
+| **Run**       | Daily at `04:30`                                         | Daily at `04:45`                                                 |
+| **Notify**    | Errors only                                              | Errors only                                                      |
+
+Notes:
+
+- **"Fetch a URL", not "Run a command"** — see above.
+- Plesk's task timezone is shown on the form (Europe/Berlin). It does not need to
+  match anything; both jobs are idempotent and time-of-day is only about load.
+- Stagger them. Running the retention cleanup first keeps the `rate_limit_hits`
+  table small before the inactivity sweep scans `users`.
+- **"Errors only"** means you get an email if the job fails and silence when it
+  works. "Every time" mails you the summary nightly, which is useful for the first
+  week and noise after that.
+- The secret sits in the task URL, which is visible to anyone with Plesk access.
+  That is the same trust boundary as the environment variables themselves.
+
+### The inactive-account job in detail
+
+| Point in time      | What happens         |
+| ------------------ | -------------------- |
+| 3 years − 6 months | First warning email  |
+| 3 years − 4 weeks  | Second warning email |
+| 3 years − 24 hours | Final warning email  |
+| 3 years            | Account hard-deleted |
+
+**The clock is `users.last_login_at`, and only a login resets it.** A warning email
+does not — otherwise the notice would keep extending the very period it warns about.
+Accounts that never logged in fall back to `created_at`.
+
+Things worth knowing before the first production run:
+
+- **Nothing is deleted until the final notice has been sent and 24 hours have
+  passed.** Without that interlock, the first run after deploy would delete every
+  account older than three years the same night, with no warning at all. In practice
+  the first run only _warns_; deletion starts the following night.
+- **SMTP must work**, or every notice is skipped and logged as a failure. Notices are
+  recorded only after a successful send, so a mail outage delays deletion rather than
+  causing a silent one.
+- **Deletion is a real `DELETE`**, not a flag. Attribution that lives inside other
+  users' recipes (a commit copied into their fork, a GourMerge Request, a comment) is
+  reassigned to the shared anonymous `ghost` account first — four FKs into `users`
+  are NOT NULL + RESTRICT, so it can be neither deleted nor nulled. See
+  `server/utils/hardDeleteUser.ts`.
+- **The `ghost` row must exist.** Migration `0008` seeds it. It is excluded from both
+  sweeps and is not loginable.
+
+### Retention cleanup rules
 
 | Rule                                | Window               |
 | ----------------------------------- | -------------------- |
@@ -153,37 +256,56 @@ Add to Netcup's cron manager, nightly:
 | `data_requests` (GDPR self-service) | completed or expired |
 | `rate_limit_hits`                   | 24 hours             |
 
-Preview without deleting: `node scripts/cleanup-retention.mjs --dry-run`.
-
-> Change a window here and §7 of `app/pages/legal/datenschutz.vue` has to change
-> with it — they are two statements of the same fact.
-
-### Verify restore (run quarterly)
-
-```bash
-mysql -u <user> -p -e "CREATE DATABASE gourmerge_restore;"
-zcat /backups/gourmerge-<date>.sql.gz | mysql -u <user> -p gourmerge_restore
-mysql -u <user> -p gourmerge_restore -e "SELECT COUNT(*) FROM users;"
-mysql -u <user> -p -e "DROP DATABASE gourmerge_restore;"
-```
+> These periods are stated in §7 of `app/pages/legal/datenschutz.vue`. Change one
+> without the other and the policy becomes false. The windows live in
+> `server/utils/maintenanceConfig.json` and `server/utils/retentionSweep.ts`, and
+> `tests/unit/inactivityEmails.test.ts` asserts the schedule matches the documented
+> one.
 
 ---
 
 ## Environment Variables
 
-Set via Passenger `.htaccess` directives or Netcup hosting panel:
+All runtime variables reach the app through **`PassengerEnvVar` directives in the
+host copy of `.htaccess`**. Netcup's Webhosting Control Panel is a reduced Plesk: it
+exposes a Node.js "secret" field but **no general Custom Environment Variables
+editor**, so there is no panel alternative.
 
-| Variable                                | Description                                   |
-| --------------------------------------- | --------------------------------------------- |
-| `DATABASE_URL`                          | `mysql://user:pass@host:3306/dbname`          |
-| `NUXT_SESSION_PASSWORD`                 | ≥32-char random string for session encryption |
-| `NUXT_PUBLIC_APP_URL`                   | `https://gourmerge.app` (no trailing slash)   |
-| `NUXT_PUBLIC_SENTRY_DSN`                | Sentry project DSN                            |
-| `SMTP_HOST` / `SMTP_USER` / `SMTP_PASS` | Netcup SMTP credentials                       |
+```apache
+PassengerEnvVar DATABASE_URL  mysql://user:pass@<db-host>:3306/dbname
+PassengerEnvVar CRON_SECRET   <value>
+```
+
+`.htaccess` is **never deployed** (see Deploy Process), so the host copy with the
+real values survives every release. The tracked copy carries a commented template.
+Restart after any change: `touch tmp/restart.txt`.
+
+| Variable                                | Description                                           |
+| --------------------------------------- | ----------------------------------------------------- |
+| `DATABASE_URL`                          | `mysql://user:pass@host:3306/dbname`                  |
+| `NUXT_SESSION_PASSWORD`                 | ≥32-char random string for session encryption         |
+| `NUXT_PUBLIC_APP_URL`                   | `https://gourmerge.app` (no trailing slash)           |
+| `NUXT_PUBLIC_SENTRY_DSN`                | Sentry project DSN                                    |
+| `SMTP_HOST` / `SMTP_USER` / `SMTP_PASS` | Netcup SMTP credentials                               |
+| `TOTP_ENCRYPTION_KEY`                   | ≥32-char random string; encrypts 2FA secrets at rest  |
+| `CRON_SECRET`                           | ≥16-char random string; guards the /tasks/* endpoints |
+
+> **`TOTP_ENCRYPTION_KEY` and `CRON_SECRET` are runtime-only** — read per request,
+> so they belong in `.htaccess` above, **not** in GitHub secrets. Without
+> `TOTP_ENCRYPTION_KEY` the code falls back to `NUXT_SESSION_PASSWORD`, which works
+> but means rotating the session secret invalidates every enrolled authenticator at
+> once. Without `CRON_SECRET` the maintenance endpoints refuse every request.
 
 `NUXT_SENTRY_RELEASE` and `SENTRY_AUTH_TOKEN` are **build-time only** — set in
 `ci.yml`, not on the host. `NUXT_SENTRY_RELEASE` is baked into the artifact (its name
 does not map to the `runtimeConfig` path, so setting it under Passenger has no effect).
+
+**Passkeys need no variable, but they are bound to the hostname.** The WebAuthn RP ID is
+taken from the incoming request's `Host`, so a passkey enrolled at `https://gourmerge.app`
+will **not** work at `https://www.gourmerge.app`, and vice versa. Serve one canonical
+hostname and redirect the other. Changing the domain invalidates every enrolled passkey —
+users would have to re-enrol, though passwords (and TOTP, if set up) keep working, so it
+is not a lockout.
 
 ---
 

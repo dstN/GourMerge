@@ -1,7 +1,14 @@
 <script setup lang="ts">
 import type { UserProfile } from '~~/shared/types/recipe'
 
-definePageMeta({ auth: true })
+/**
+ * `auth: true` was dead metadata — nothing reads `route.meta.auth` (there is no
+ * global middleware), so this page had NO client-side guard and fell back to the
+ * `default` layout instead of the dashboard shell. The API it calls is protected
+ * server-side, so nothing leaked; an anonymous visitor just got a broken page
+ * instead of a redirect to login.
+ */
+definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 
 const { t } = useI18n()
 const { user, fetch: refreshSession } = useUserSession()
@@ -11,8 +18,11 @@ const form = reactive({
   displayName: '',
   bio: '',
   avatarUrl: '',
-  preferredLocale: 'de' as 'de' | 'en',
-  preferredMeasurementSystem: 'metric' as 'metric' | 'imperial',
+  // All four locales are supported — this was typed `'de' | 'en'`, predating the
+  // FR/IT rollout, so picking Français here was a type error that only didn't
+  // surface because the value was never loaded from the profile either.
+  preferredLocale: 'de' as 'de' | 'en' | 'fr' | 'it',
+  preferredMeasurementSystem: 'metric' as MeasurementSystem,
 })
 
 // Fetch current settings
@@ -27,6 +37,12 @@ watch(
       form.displayName = p.user.displayName || ''
       form.bio = p.user.bio || ''
       form.avatarUrl = p.user.avatarUrl || ''
+      // These two were NOT loaded, so both selects always rendered their
+      // hardcoded defaults ("Deutsch" / metric) no matter what was stored — and
+      // because `save()` sends the whole form, editing only your bio silently
+      // reset your language and measurement preference.
+      form.preferredLocale = (p.user.preferredLocale as typeof form.preferredLocale) || 'de'
+      form.preferredMeasurementSystem = (p.user.preferredMeasurementSystem as MeasurementSystem) || 'metric'
     }
   },
   { immediate: true }
@@ -60,21 +76,21 @@ useSeoMeta({ title: `${t('settings.title')} — GourMerge` })
 </script>
 
 <template>
-  <div class="max-w-2xl mx-auto px-4 py-8">
-    <h1 class="text-2xl font-bold mb-6">{{ t('settings.title') }}</h1>
+  <CommonPageShell width="form">
+    <CommonPageHeader :title="t('settings.title')" icon="i-lucide-settings" />
 
     <UCard>
       <div class="space-y-6">
         <UFormField :label="t('auth.displayName')">
-          <UInput v-model="form.displayName" :placeholder="t('auth.displayNamePlaceholder')" class="w-full" />
+          <UInput v-model="form.displayName" :placeholder="t('auth.displayNamePlaceholder')" icon="i-lucide-user" />
         </UFormField>
 
         <UFormField :label="t('settings.bio')">
-          <UTextarea v-model="form.bio" :placeholder="t('settings.bioPlaceholder')" :rows="3" class="w-full" />
+          <UTextarea v-model="form.bio" :placeholder="t('settings.bioPlaceholder')" :rows="3" />
         </UFormField>
 
         <UFormField :label="t('settings.avatarUrl')">
-          <UInput v-model="form.avatarUrl" :placeholder="t('settings.avatarUrlPlaceholder')" class="w-full" />
+          <UInput v-model="form.avatarUrl" :placeholder="t('settings.avatarUrlPlaceholder')" icon="i-lucide-image" />
         </UFormField>
 
         <UFormField :label="t('settings.language')">
@@ -87,7 +103,6 @@ useSeoMeta({ title: `${t('settings.title')} — GourMerge` })
               { label: 'Italiano', value: 'it' },
             ]"
             value-key="value"
-            class="w-full"
           />
         </UFormField>
 
@@ -99,7 +114,6 @@ useSeoMeta({ title: `${t('settings.title')} — GourMerge` })
               { label: t('settings.imperial'), value: 'imperial' },
             ]"
             value-key="value"
-            class="w-full"
           />
         </UFormField>
       </div>
@@ -110,5 +124,14 @@ useSeoMeta({ title: `${t('settings.title')} — GourMerge` })
         </div>
       </template>
     </UCard>
-  </div>
+
+    <!-- Sign-in security. Both opt-in; nothing here prompts for either.
+         Passkeys come first: they replace the password entirely, so they are the
+         stronger and simpler option, and TOTP below is the fallback for people who
+         stay on passwords. -->
+    <div class="mt-6 space-y-6">
+      <CommonPasskeyCard />
+      <CommonTwoFactorCard />
+    </div>
+  </CommonPageShell>
 </template>

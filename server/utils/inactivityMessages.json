@@ -1,0 +1,82 @@
+{
+  "de": {
+    "sixMonths": {
+      "subject": "Dein GourMerge-Konto wird in 6 Monaten gelöscht",
+      "intro": "Du hast dich seit fast drei Jahren nicht bei GourMerge angemeldet. Nach drei Jahren Inaktivität löschen wir Konten automatisch — dein Konto ist für den {date} vorgesehen.",
+      "linkLabel": "Jetzt anmelden",
+      "outro": "Es genügt, dich einmal anzumelden — damit bleibt dein Konto erhalten und die Frist beginnt neu. Wenn du nichts tust, werden dein Konto und deine Rezepte am {date} endgültig gelöscht."
+    },
+    "fourWeeks": {
+      "subject": "Nur noch 4 Wochen: Dein GourMerge-Konto wird gelöscht",
+      "intro": "Wir haben dich vor einigen Monaten informiert: Dein GourMerge-Konto wird wegen Inaktivität gelöscht. Der Termin ist der {date} — das ist in etwa vier Wochen.",
+      "linkLabel": "Jetzt anmelden",
+      "outro": "Es genügt, dich einmal anzumelden — damit bleibt dein Konto erhalten und die Frist beginnt neu. Andernfalls werden dein Konto und deine Rezepte am {date} endgültig gelöscht."
+    },
+    "finalDay": {
+      "subject": "Letzte Erinnerung: Dein GourMerge-Konto wird morgen gelöscht",
+      "intro": "Dies ist die letzte Erinnerung. Dein GourMerge-Konto wird am {date} — also in etwa 24 Stunden — wegen Inaktivität endgültig gelöscht.",
+      "linkLabel": "Konto jetzt behalten",
+      "outro": "Es genügt, dich einmal anzumelden — damit bleibt dein Konto erhalten und die Frist beginnt neu. Danach lässt sich die Löschung nicht mehr rückgängig machen."
+    }
+  },
+  "en": {
+    "sixMonths": {
+      "subject": "Your GourMerge account will be deleted in 6 months",
+      "intro": "You have not signed in to GourMerge for almost three years. We delete accounts automatically after three years of inactivity — yours is scheduled for {date}.",
+      "linkLabel": "Sign in now",
+      "outro": "Simply signing in is enough — your account stays, and the period starts over. If you do nothing, your account and recipes will be permanently deleted on {date}."
+    },
+    "fourWeeks": {
+      "subject": "Four weeks left: your GourMerge account will be deleted",
+      "intro": "We wrote to you a few months ago: your GourMerge account is scheduled for deletion because of inactivity. The date is {date} — about four weeks from now.",
+      "linkLabel": "Sign in now",
+      "outro": "Simply signing in is enough — your account stays, and the period starts over. Otherwise your account and recipes will be permanently deleted on {date}."
+    },
+    "finalDay": {
+      "subject": "Final reminder: your GourMerge account is deleted tomorrow",
+      "intro": "This is the last reminder. Your GourMerge account will be permanently deleted on {date} — in about 24 hours — because of inactivity.",
+      "linkLabel": "Keep my account",
+      "outro": "Simply signing in is enough — your account stays, and the period starts over. After that, the deletion cannot be undone."
+    }
+  },
+  "fr": {
+    "sixMonths": {
+      "subject": "Ton compte GourMerge sera supprimé dans 6 mois",
+      "intro": "Tu ne t’es pas connecté à GourMerge depuis presque trois ans. Nous supprimons automatiquement les comptes après trois ans d’inactivité — le tien est prévu pour le {date}.",
+      "linkLabel": "Se connecter",
+      "outro": "Il suffit de te connecter une fois : ton compte est conservé et le délai repart à zéro. Sans action de ta part, ton compte et tes recettes seront définitivement supprimés le {date}."
+    },
+    "fourWeeks": {
+      "subject": "Plus que quatre semaines : ton compte GourMerge sera supprimé",
+      "intro": "Nous t’avons écrit il y a quelques mois : ton compte GourMerge est prévu pour suppression en raison de son inactivité. La date est le {date}, soit dans environ quatre semaines.",
+      "linkLabel": "Se connecter",
+      "outro": "Il suffit de te connecter une fois : ton compte est conservé et le délai repart à zéro. Sinon, ton compte et tes recettes seront définitivement supprimés le {date}."
+    },
+    "finalDay": {
+      "subject": "Dernier rappel : ton compte GourMerge sera supprimé demain",
+      "intro": "Ceci est le dernier rappel. Ton compte GourMerge sera définitivement supprimé le {date}, soit dans environ 24 heures, en raison de son inactivité.",
+      "linkLabel": "Conserver mon compte",
+      "outro": "Il suffit de te connecter une fois : ton compte est conservé et le délai repart à zéro. Passé ce délai, la suppression est irréversible."
+    }
+  },
+  "it": {
+    "sixMonths": {
+      "subject": "Il tuo account GourMerge sarà cancellato tra 6 mesi",
+      "intro": "Non accedi a GourMerge da quasi tre anni. Cancelliamo automaticamente gli account dopo tre anni di inattività — il tuo è previsto per il {date}.",
+      "linkLabel": "Accedi ora",
+      "outro": "Basta accedere una volta: il tuo account viene conservato e il periodo riparte da zero. Se non fai nulla, il tuo account e le tue ricette saranno cancellati definitivamente il {date}."
+    },
+    "fourWeeks": {
+      "subject": "Ancora quattro settimane: il tuo account GourMerge sarà cancellato",
+      "intro": "Ti abbiamo scritto qualche mese fa: il tuo account GourMerge è previsto per la cancellazione a causa dell’inattività. La data è il {date}, cioè tra circa quattro settimane.",
+      "linkLabel": "Accedi ora",
+      "outro": "Basta accedere una volta: il tuo account viene conservato e il periodo riparte da zero. In caso contrario, il tuo account e le tue ricette saranno cancellati definitivamente il {date}."
+    },
+    "finalDay": {
+      "subject": "Ultimo promemoria: il tuo account GourMerge sarà cancellato domani",
+      "intro": "Questo è l’ultimo promemoria. Il tuo account GourMerge sarà cancellato definitivamente il {date}, cioè tra circa 24 ore, a causa dell’inattività.",
+      "linkLabel": "Mantieni il mio account",
+      "outro": "Basta accedere una volta: il tuo account viene conservato e il periodo riparte da zero. Dopodiché la cancellazione non è più reversibile."
+    }
+  }
+}

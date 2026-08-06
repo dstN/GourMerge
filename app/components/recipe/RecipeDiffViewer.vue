@@ -128,7 +128,7 @@ function getSegmentClass(type: number): string {
     <UCard v-if="hasChanges" class="mb-6">
       <template #header>
         <div class="flex items-center gap-3">
-          <UIcon name="i-lucide-git-compare" class="text-primary-500 size-5" />
+          <UIcon name="i-lucide-git-compare" class="text-primary size-5" />
           <h3 class="text-lg font-semibold">
             {{ t('diff.title') }}
           </h3>
@@ -185,7 +185,7 @@ function getSegmentClass(type: number): string {
     <!-- ── No Changes ──────────────────────────────────────── -->
     <UCard v-if="!hasChanges" class="text-center py-8">
       <UIcon name="i-lucide-check-circle" class="text-success-500 size-12 mb-3 mx-auto" />
-      <p class="text-lg font-medium text-[var(--ui-text-muted)]">
+      <p class="text-lg font-medium text-muted">
         {{ t('diff.noChanges') }}
       </p>
     </UCard>
@@ -195,14 +195,14 @@ function getSegmentClass(type: number): string {
       <template #content="{ item }">
         <!-- ── Ingredient Diff Tab ─────────────────────────── -->
         <div v-if="item.value === 'ingredients'" class="mt-4">
-          <div v-if="filteredIngredients.length === 0" class="text-center py-6 text-[var(--ui-text-muted)]">
+          <div v-if="filteredIngredients.length === 0" class="text-center py-6 text-muted">
             {{ t('diff.noChanges') }}
           </div>
 
-          <div v-else class="rounded-lg border border-[var(--ui-border)] overflow-hidden">
+          <div v-else class="rounded-lg border border-default overflow-hidden">
             <!-- Table Header -->
             <div
-              class="grid grid-cols-12 gap-0 bg-[var(--ui-bg-elevated)] border-b border-[var(--ui-border)] px-4 py-2.5 text-sm font-semibold text-[var(--ui-text-muted)]"
+              class="grid grid-cols-12 gap-0 bg-elevated border-b border-default px-4 py-2.5 text-sm font-semibold text-muted"
             >
               <div class="col-span-1" />
               <div class="col-span-4">
@@ -222,7 +222,7 @@ function getSegmentClass(type: number): string {
               v-for="(entry, idx) in filteredIngredients"
               :key="`ing-${entry.ingredientId}-${idx}`"
               :class="[
-                'grid grid-cols-12 gap-0 px-4 py-2.5 border-b border-[var(--ui-border)] last:border-b-0 transition-colors text-sm',
+                'grid grid-cols-12 gap-0 px-4 py-2.5 border-b border-default last:border-b-0 transition-colors text-sm',
                 getDiffRowClass(entry.type),
               ]"
             >
@@ -246,11 +246,11 @@ function getSegmentClass(type: number): string {
                 <template v-else-if="entry.type === 'unchanged'">
                   {{ entry.oldQuantity }} {{ entry.oldUnit }}
                 </template>
-                <span v-else class="text-[var(--ui-text-dimmed)]">—</span>
+                <span v-else class="text-dimmed">—</span>
               </div>
 
               <!-- Arrow -->
-              <div class="col-span-1 flex items-center justify-center text-[var(--ui-text-dimmed)]">
+              <div class="col-span-1 flex items-center justify-center text-dimmed">
                 <UIcon v-if="entry.type === 'modified'" name="i-lucide-arrow-right" class="size-4" />
               </div>
 
@@ -262,7 +262,7 @@ function getSegmentClass(type: number): string {
                 <template v-else-if="entry.type === 'unchanged'">
                   {{ entry.newQuantity }} {{ entry.newUnit }}
                 </template>
-                <span v-else class="text-[var(--ui-text-dimmed)]">—</span>
+                <span v-else class="text-dimmed">—</span>
               </div>
             </div>
           </div>
@@ -298,7 +298,7 @@ function getSegmentClass(type: number): string {
             </UFieldGroup>
           </div>
 
-          <div v-if="filteredSteps.length === 0" class="text-center py-6 text-[var(--ui-text-muted)]">
+          <div v-if="filteredSteps.length === 0" class="text-center py-6 text-muted">
             {{ t('diff.noChanges') }}
           </div>
 
@@ -364,34 +364,30 @@ function getSegmentClass(type: number): string {
               <!-- Split view -->
               <div v-else class="grid grid-cols-2 gap-4">
                 <!-- Old (left) -->
-                <div class="rounded-md border border-[var(--ui-border)] overflow-hidden">
-                  <div
-                    class="px-3 py-1.5 bg-[var(--ui-bg-elevated)] text-xs font-semibold text-[var(--ui-text-muted)] border-b border-[var(--ui-border)]"
-                  >
+                <div class="rounded-md border border-default overflow-hidden">
+                  <div class="px-3 py-1.5 bg-elevated text-xs font-semibold text-muted border-b border-default">
                     {{ t('diff.oldValue') }}
                   </div>
                   <div class="p-3 font-mono text-sm whitespace-pre-wrap">
                     <template v-if="step.oldContent">
                       {{ step.oldContent }}
                     </template>
-                    <span v-else class="text-[var(--ui-text-dimmed)] italic">
+                    <span v-else class="text-dimmed italic">
                       {{ t('diff.noChanges') }}
                     </span>
                   </div>
                 </div>
 
                 <!-- New (right) -->
-                <div class="rounded-md border border-[var(--ui-border)] overflow-hidden">
-                  <div
-                    class="px-3 py-1.5 bg-[var(--ui-bg-elevated)] text-xs font-semibold text-[var(--ui-text-muted)] border-b border-[var(--ui-border)]"
-                  >
+                <div class="rounded-md border border-default overflow-hidden">
+                  <div class="px-3 py-1.5 bg-elevated text-xs font-semibold text-muted border-b border-default">
                     {{ t('diff.newValue') }}
                   </div>
                   <div class="p-3 font-mono text-sm whitespace-pre-wrap">
                     <template v-if="step.newContent">
                       {{ step.newContent }}
                     </template>
-                    <span v-else class="text-[var(--ui-text-dimmed)] italic">
+                    <span v-else class="text-dimmed italic">
                       {{ t('diff.noChanges') }}
                     </span>
                   </div>

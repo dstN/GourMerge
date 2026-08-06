@@ -14,9 +14,14 @@ import type { CanonicalUnit } from '~~/shared/types'
 definePageMeta({ layout: 'dashboard', middleware: ['validate-recipe-route', 'auth'] })
 
 const { t, locale } = useI18n()
+const { apiError } = useApiError()
 const route = useRoute()
 const router = useRouter()
-const toast = useToast()
+const toast = useAppToast()
+
+/** The four supported locales, hoisted so the two per-locale `v-for`s below can't
+ *  drift apart from each other. */
+const LOCALES = ['de', 'en', 'fr', 'it'] as const
 
 const username = computed(() => route.params.username as string)
 const slug = computed(() => route.params.slug as string)
@@ -243,11 +248,11 @@ async function deleteRecipe() {
   deleting.value = true
   try {
     await $fetch(`/api/recipes/${recipe.value.id}`, { method: 'DELETE' })
-    toast.add({ title: t('recipe.deleteSuccess'), icon: 'i-lucide-trash-2', color: 'success' })
+    toast.success(t('recipe.deleteSuccess'))
     allowLeave.value = true
     await navigateTo('/recipes')
   } catch {
-    toast.add({ title: t('recipe.deleteError'), icon: 'i-lucide-alert-circle', color: 'error' })
+    toast.error(t('recipe.deleteError'))
   } finally {
     deleting.value = false
     showDeleteModal.value = false
@@ -303,7 +308,7 @@ async function commitChanges() {
   // Validate: every ingredient must have a name and quantity
   const invalid = ingredients.value.some((ing) => !ing.name.trim() || !ing.quantity)
   if (invalid) {
-    toast.add({ title: t('recipe.ingredientIncomplete'), color: 'error', icon: 'i-lucide-alert-circle' })
+    toast.error(t('recipe.ingredientIncomplete'))
     return
   }
 
@@ -388,20 +393,12 @@ async function commitChanges() {
       }),
     ])
 
-    toast.add({
-      title: t('recipe.commitSuccess'),
-      icon: 'i-lucide-git-commit-vertical',
-      color: 'success',
-    })
+    toast.success(t('recipe.commitSuccess'))
     commitMessage.value = ''
     // Reset dirty tracking after successful commit
     initialSnapshot.value = JSON.stringify({ ingredients: ingredients.value, steps: stepsForSnapshot.value })
   } catch (err: unknown) {
-    toast.add({
-      title: (err as { data?: { statusMessage?: string } })?.data?.statusMessage || t('recipe.commitError'),
-      icon: 'i-lucide-alert-circle',
-      color: 'error',
-    })
+    toast.error(apiError(err, 'recipe.commitError'))
   } finally {
     committing.value = false
   }
@@ -413,88 +410,84 @@ useSeoMeta({
 </script>
 
 <template>
-  <div class="max-w-4xl mx-auto py-8 px-4">
+  <CommonPageShell width="content">
     <div v-if="pending || snapshotLoading" class="space-y-4">
       <USkeleton class="h-8 w-1/2" />
-      <USkeleton class="h-64 w-full rounded-xl" />
+      <USkeleton class="h-64 w-full rounded-lg" />
     </div>
 
     <template v-else-if="recipe">
       <!-- Header ──────────────────────────────────────────────── -->
-      <div class="flex items-start justify-between mb-6 gap-4">
-        <div>
-          <div class="flex items-center gap-1.5 text-sm text-neutral-500 mb-1">
-            <UIcon name="i-lucide-git-branch" class="size-4 text-primary-500" />
-            <span>{{ currentBranch?.name ?? 'main' }}</span>
-            <UBadge v-if="isDirty" size="xs" color="warning" variant="soft">{{ t('common.unsaved') }}</UBadge>
+      <CommonPageHeader :title="recipe.title" :back-to="`/${username}/${slug}`" :back-label="t('recipe.viewRecipe')">
+        <template #meta>
+          <div class="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted">
+            <UIcon name="i-lucide-git-branch" class="size-4 text-primary" aria-hidden="true" />
+            <span class="font-mono">{{ currentBranch?.name ?? 'main' }}</span>
+            <UBadge v-if="isDirty" color="warning" :label="t('common.unsaved')" />
           </div>
-          <h1 class="text-2xl font-bold">{{ recipe.title }}</h1>
-        </div>
+        </template>
 
-        <div class="flex items-center gap-2 shrink-0">
-          <!-- Branch selector -->
+        <template #actions>
+          <!-- Explicit width allowed: horizontal cluster (DESIGNBOOK §3.4) -->
           <USelect
             v-if="recipe.branches?.length > 1"
             :model-value="selectedBranchId"
-            :items="recipe.branches.map((b: any) => ({ label: b.name, value: b.id }))"
+            :items="recipe.branches.map((b) => ({ label: b.name, value: b.id }))"
             value-key="value"
             size="sm"
             icon="i-lucide-git-branch"
+            class="w-40"
+            :aria-label="t('branches.title')"
             @update:model-value="(val) => router.replace({ query: { branch: val } })"
           />
           <UButton
             :label="t('recipe.viewRecipe')"
             icon="i-lucide-eye"
-            variant="outline"
-            color="neutral"
             size="sm"
+            color="neutral"
+            variant="outline"
             :to="`/${username}/${slug}`"
           />
           <UButton
             :label="t('recipe.deleteTitle')"
             icon="i-lucide-trash-2"
-            variant="outline"
-            color="error"
             size="sm"
+            color="error"
+            variant="outline"
             @click="
               () => {
                 showDeleteModal = true
               }
             "
           />
-        </div>
-      </div>
+        </template>
+      </CommonPageHeader>
 
       <!-- Metadata ────────────────────────────────────────────── -->
       <UCard class="mb-6">
         <template #header>
           <div class="flex items-center gap-2">
-            <UIcon name="i-lucide-settings" class="size-5 text-primary-500" />
-            <h2 class="font-semibold">{{ t('recipe.metadata') }}</h2>
+            <UIcon name="i-lucide-settings" class="size-5 text-primary" aria-hidden="true" />
+            <h2 class="text-lg font-semibold">{{ t('recipe.metadata') }}</h2>
           </div>
         </template>
         <div class="space-y-4">
           <!-- Title -->
-          <UFormField :label="t('recipe.title')">
-            <UInput v-model="metaTitle" :placeholder="t('recipe.titlePlaceholder')" class="w-full" />
+          <UFormField :label="t('recipe.title')" required>
+            <UInput v-model="metaTitle" :placeholder="t('recipe.titlePlaceholder')" />
           </UFormField>
 
           <!-- Description -->
           <UFormField :label="t('recipe.description')">
-            <UTextarea
-              v-model="metaDescription"
-              :placeholder="t('recipe.descriptionPlaceholder')"
-              :rows="2"
-              class="w-full"
-            />
+            <UTextarea v-model="metaDescription" :placeholder="t('recipe.descriptionPlaceholder')" :rows="2" />
           </UFormField>
 
           <!-- Title & description translations -->
           <div>
             <UButton
               size="xs"
-              variant="ghost"
               color="neutral"
+              variant="ghost"
               :icon="metaTranslationsOpen ? 'i-lucide-chevron-up' : 'i-lucide-languages'"
               :label="metaTranslationsOpen ? t('recipe.hideTranslations') : t('recipe.addTranslations')"
               @click="
@@ -506,22 +499,17 @@ useSeoMeta({
           </div>
 
           <div v-if="metaTranslationsOpen" class="ml-4 border-l-2 border-primary-500/20 pl-3 space-y-4">
-            <p class="text-xs text-neutral-400">{{ t('recipe.metaTranslationsHint') }}</p>
-            <div v-for="loc in ['de', 'en', 'fr', 'it'] as const" :key="loc" class="space-y-2">
-              <p class="text-xs font-semibold text-neutral-500 uppercase">{{ loc }}</p>
+            <p class="text-xs text-dimmed">{{ t('recipe.metaTranslationsHint') }}</p>
+            <div v-for="loc in LOCALES" :key="loc" class="space-y-2">
+              <p class="text-xs font-semibold uppercase text-muted">{{ loc }}</p>
               <UFormField :label="t('recipe.title')">
-                <UInput
-                  v-model="metaTitleTranslations[loc]"
-                  :placeholder="t('recipe.titlePlaceholder')"
-                  class="w-full"
-                />
+                <UInput v-model="metaTitleTranslations[loc]" :placeholder="t('recipe.titlePlaceholder')" />
               </UFormField>
               <UFormField :label="t('recipe.description')">
                 <UTextarea
                   v-model="metaDescriptionTranslations[loc]"
                   :placeholder="t('recipe.descriptionPlaceholder')"
                   :rows="2"
-                  class="w-full"
                 />
               </UFormField>
             </div>
@@ -551,36 +539,38 @@ useSeoMeta({
             <UFormField :label="t('recipe.dietaryType')">
               <USelect v-model="selectedDietaryType" :items="dietaryOptions" value-key="value" />
             </UFormField>
-            <UFormField label="Tags">
+            <UFormField :label="t('recipe.tagsLabel')">
+              <!-- Attached tags: removable chips -->
               <div class="flex flex-wrap gap-1 mb-2">
-                <span
-                  v-for="tag in currentTags"
-                  :key="tag"
-                  class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-primary-500/10 text-primary-600 border border-primary-500/20"
-                >
+                <UBadge v-for="tag in currentTags" :key="tag" color="primary">
                   {{ tag }}
-                  <button type="button" class="hover:text-error-500 transition-colors" @click="removeTag(tag)">
-                    <UIcon name="i-lucide-x" class="size-3" />
+                  <button
+                    type="button"
+                    class="ml-1 transition-colors hover:text-error-500"
+                    :aria-label="t('recipe.tagRemove', { tag })"
+                    @click="removeTag(tag)"
+                  >
+                    <UIcon name="i-lucide-x" class="size-3" aria-hidden="true" />
                   </button>
-                </span>
+                </UBadge>
               </div>
               <UInput
                 v-model="tagInput"
-                placeholder="Tag hinzufügen, Enter drücken"
-                size="sm"
+                :placeholder="t('recipe.tagsPlaceholder')"
                 @keydown="onTagInputKeydown"
                 @blur="tagInput.trim() && addTag(tagInput)"
               />
+              <!-- Suggestions: a toggle row, so buttons (DESIGNBOOK §2) -->
               <div v-if="availableTags?.length" class="flex flex-wrap gap-1 mt-2">
-                <button
+                <UButton
                   v-for="suggestion in availableTags.filter((s) => !currentTags.includes(s.name)).slice(0, 10)"
                   :key="suggestion.id"
-                  type="button"
-                  class="text-xs px-2 py-0.5 rounded-full border border-[var(--ui-border)] text-[var(--ui-text-muted)] hover:border-primary-500/50 transition-colors"
+                  :label="`+ ${suggestion.name}`"
+                  size="xs"
+                  color="neutral"
+                  variant="outline"
                   @click="addTag(suggestion.name)"
-                >
-                  + {{ suggestion.name }}
-                </button>
+                />
               </div>
             </UFormField>
           </div>
@@ -590,33 +580,36 @@ useSeoMeta({
       <!-- Ingredients ─────────────────────────────────────────── -->
       <UCard class="mb-6" data-tour="ingredient-section">
         <template #header>
-          <div class="flex items-center justify-between">
+          <div class="flex items-center justify-between gap-2">
             <div class="flex items-center gap-2">
-              <UIcon name="i-lucide-shopping-basket" class="size-5 text-primary-500" />
-              <h2 class="font-semibold">{{ t('recipe.ingredients') }}</h2>
-              <UBadge v-if="ingredients.length > 0" size="xs" color="neutral" variant="soft">{{
-                ingredients.length
-              }}</UBadge>
+              <UIcon name="i-lucide-shopping-basket" class="size-5 text-primary" aria-hidden="true" />
+              <h2 class="text-lg font-semibold">{{ t('recipe.ingredients') }}</h2>
+              <UBadge
+                v-if="ingredients.length > 0"
+                color="neutral"
+                variant="subtle"
+                :label="String(ingredients.length)"
+              />
             </div>
             <UButton
               :label="t('recipe.addIngredient')"
               icon="i-lucide-plus"
+              size="sm"
+              color="neutral"
               variant="outline"
-              size="xs"
               data-tour="add-ingredient"
               @click="addIngredient"
             />
           </div>
         </template>
 
-        <div v-if="ingredients.length === 0" class="text-center py-8 text-neutral-400 dark:text-neutral-500">
-          <UIcon name="i-lucide-shopping-basket" class="size-10 mx-auto mb-2 opacity-30" />
-          <p class="text-sm">{{ t('recipe.noIngredients') }}</p>
+        <div v-if="ingredients.length === 0" class="text-center py-8">
+          <UIcon name="i-lucide-shopping-basket" class="size-12 mx-auto mb-2 text-dimmed" aria-hidden="true" />
+          <p class="text-sm text-muted">{{ t('recipe.noIngredients') }}</p>
           <UButton
             :label="t('recipe.addIngredient')"
             icon="i-lucide-plus"
             variant="soft"
-            size="sm"
             class="mt-3"
             @click="addIngredient"
           />
@@ -625,12 +618,12 @@ useSeoMeta({
         <div v-else class="space-y-2">
           <!-- Column headers -->
           <div
-            class="grid grid-cols-[1.5rem_1fr_5rem_6rem_8rem_1.5rem] gap-2 px-1 text-xs text-neutral-400 font-medium hidden sm:grid"
+            class="grid grid-cols-[1.5rem_1fr_5rem_6rem_8rem_1.5rem] gap-2 px-1 text-xs text-dimmed font-medium hidden sm:grid"
           >
             <span />
             <span>{{ t('recipe.ingredientName') }}</span>
             <span>{{ t('recipe.quantity') }}</span>
-            <span>Unit</span>
+            <span>{{ t('recipe.unitLabel') }}</span>
             <span>{{ t('recipe.notes') }}</span>
             <span />
           </div>
@@ -649,34 +642,28 @@ useSeoMeta({
       <!-- Steps ───────────────────────────────────────────────── -->
       <UCard class="mb-6" data-tour="steps-section">
         <template #header>
-          <div class="flex items-center justify-between">
+          <div class="flex items-center justify-between gap-2">
             <div class="flex items-center gap-2">
-              <UIcon name="i-lucide-list-ordered" class="size-5 text-primary-500" />
-              <h2 class="font-semibold">{{ t('recipe.steps') }}</h2>
-              <UBadge v-if="steps.length > 0" size="xs" color="neutral" variant="soft">{{ steps.length }}</UBadge>
+              <UIcon name="i-lucide-list-ordered" class="size-5 text-primary" aria-hidden="true" />
+              <h2 class="text-lg font-semibold">{{ t('recipe.steps') }}</h2>
+              <UBadge v-if="steps.length > 0" color="neutral" variant="subtle" :label="String(steps.length)" />
             </div>
             <UButton
               :label="t('recipe.addStep')"
               icon="i-lucide-plus"
+              size="sm"
+              color="neutral"
               variant="outline"
-              size="xs"
               data-tour="add-step"
               @click="addStep"
             />
           </div>
         </template>
 
-        <div v-if="steps.length === 0" class="text-center py-8 text-neutral-400 dark:text-neutral-500">
-          <UIcon name="i-lucide-list-ordered" class="size-10 mx-auto mb-2 opacity-30" />
-          <p class="text-sm">{{ t('recipe.noSteps') }}</p>
-          <UButton
-            :label="t('recipe.addStep')"
-            icon="i-lucide-plus"
-            variant="soft"
-            size="sm"
-            class="mt-3"
-            @click="addStep"
-          />
+        <div v-if="steps.length === 0" class="text-center py-8">
+          <UIcon name="i-lucide-list-ordered" class="size-12 mx-auto mb-2 text-dimmed" aria-hidden="true" />
+          <p class="text-sm text-muted">{{ t('recipe.noSteps') }}</p>
+          <UButton :label="t('recipe.addStep')" icon="i-lucide-plus" variant="soft" class="mt-3" @click="addStep" />
         </div>
 
         <div v-else class="space-y-3">
@@ -692,8 +679,8 @@ useSeoMeta({
               <div class="pl-1">
                 <UButton
                   size="xs"
-                  variant="ghost"
                   color="neutral"
+                  variant="ghost"
                   :icon="step.translationsOpen ? 'i-lucide-chevron-up' : 'i-lucide-languages'"
                   :label="step.translationsOpen ? t('recipe.hideTranslations') : t('recipe.addTranslations')"
                   @click="
@@ -705,9 +692,9 @@ useSeoMeta({
               </div>
 
               <div v-if="step.translationsOpen" class="ml-4 space-y-2 border-l-2 border-primary-500/20 pl-3">
-                <p class="text-xs text-neutral-400">{{ t('recipe.translationsHint') }}</p>
-                <div v-for="loc in ['de', 'en', 'fr', 'it'] as const" :key="loc">
-                  <p class="text-xs font-medium text-neutral-500 mb-1 uppercase">{{ loc }}</p>
+                <p class="text-xs text-dimmed">{{ t('recipe.translationsHint') }}</p>
+                <div v-for="loc in LOCALES" :key="loc">
+                  <p class="text-xs font-medium uppercase text-muted mb-1">{{ loc }}</p>
                   <StepEditor
                     :model-value="step.contentTranslations[loc]"
                     :index="i"
@@ -722,7 +709,7 @@ useSeoMeta({
               <div
                 v-for="(step, i) in steps"
                 :key="i"
-                class="border border-neutral-200 dark:border-neutral-700 rounded-lg p-3 min-h-[4rem] text-sm text-neutral-500"
+                class="border border-default rounded-lg p-3 min-h-16 text-sm text-muted"
               >
                 {{ step.content || t('recipe.stepPlaceholder') }}
               </div>
@@ -735,13 +722,13 @@ useSeoMeta({
       <UCard data-tour="commit-panel">
         <template #header>
           <div class="flex items-center gap-2">
-            <UIcon name="i-lucide-git-commit-vertical" class="size-5 text-primary-500" />
-            <h2 class="font-semibold">{{ t('recipe.commitChanges') }}</h2>
+            <UIcon name="i-lucide-git-commit-vertical" class="size-5 text-primary" aria-hidden="true" />
+            <h2 class="text-lg font-semibold">{{ t('recipe.commitChanges') }}</h2>
           </div>
         </template>
 
-        <div class="flex flex-col sm:flex-row items-start sm:items-end gap-3">
-          <UFormField :label="t('recipe.commitMessage')" :hint="t('recipe.commitHint')" class="flex-1">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
+          <UFormField :label="t('recipe.commitMessage')" :hint="t('recipe.commitHint')" class="flex-1" required>
             <UInput
               v-model="commitMessage"
               :placeholder="t('recipe.commitMessagePlaceholder')"
@@ -752,6 +739,8 @@ useSeoMeta({
           <UButton
             :label="t('recipe.commit')"
             icon="i-lucide-git-commit-vertical"
+            size="lg"
+            class="shrink-0"
             :disabled="!commitMessage.trim() || committing"
             :loading="committing"
             data-tour="commit-button"
@@ -761,16 +750,16 @@ useSeoMeta({
       </UCard>
     </template>
 
-    <!-- Delete recipe confirmation modal -->
+    <!-- Delete recipe confirmation modal (DESIGNBOOK §6.4) -->
     <UModal v-model:open="showDeleteModal" :title="t('recipe.deleteTitle')">
       <template #body>
         <p class="text-sm">{{ t('recipe.deleteConfirm') }}</p>
       </template>
       <template #footer>
-        <div class="flex gap-2 justify-end w-full">
+        <div class="flex w-full justify-end gap-2">
           <UButton
-            variant="outline"
             color="neutral"
+            variant="subtle"
             :label="t('common.cancel')"
             :disabled="deleting"
             @click="
@@ -796,11 +785,11 @@ useSeoMeta({
         <p class="text-sm">{{ t('recipe.unsavedChanges') }}</p>
       </template>
       <template #footer>
-        <div class="flex gap-2 justify-end w-full">
-          <UButton variant="outline" color="neutral" :label="t('common.cancel')" @click="cancelLeave" />
+        <div class="flex w-full justify-end gap-2">
+          <UButton color="neutral" variant="subtle" :label="t('common.cancel')" @click="cancelLeave" />
           <UButton color="error" :label="t('common.leave')" @click="confirmLeave" />
         </div>
       </template>
     </UModal>
-  </div>
+  </CommonPageShell>
 </template>

@@ -53,34 +53,24 @@ useSeoMeta({
 </script>
 
 <template>
-  <div class="max-w-5xl mx-auto py-8 px-4">
-    <!-- Header -->
-    <div class="mb-8">
-      <NuxtLink
-        :to="recipeUrl"
-        class="text-sm text-[var(--ui-text-muted)] hover:text-primary-500 mb-2 inline-flex items-center gap-1"
-      >
-        <UIcon name="i-lucide-arrow-left" class="size-4" aria-hidden="true" />
-        {{ recipe?.title }}
-      </NuxtLink>
-      <h1 class="text-2xl font-bold flex items-center gap-2">
-        <UIcon name="i-lucide-git-fork" class="size-6 text-primary-500" aria-hidden="true" />
-        {{ t('forks.title') }}
-        <span class="text-[var(--ui-text-dimmed)] font-normal">({{ forksData?.total ?? 0 }})</span>
-      </h1>
-      <p class="text-sm text-[var(--ui-text-muted)] mt-1">{{ t('forks.subtitle') }}</p>
-    </div>
+  <CommonPageShell width="wide">
+    <CommonPageHeader
+      :title="t('forks.title')"
+      :subtitle="t('forks.subtitle')"
+      icon="i-lucide-git-fork"
+      :back-to="recipeUrl"
+      :back-label="recipe?.title"
+    >
+      <template #title-suffix>
+        <span class="font-normal text-dimmed">({{ forksData?.total ?? 0 }})</span>
+      </template>
+    </CommonPageHeader>
 
     <!-- Forks grid -->
-    <div v-if="forks.length" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div v-if="forks.length" :class="CARD_GRID">
       <RecipeCard v-for="fork in forks" :key="fork.id" :recipe="fork" />
     </div>
 
-    <!-- Empty state -->
-    <UCard v-else class="text-center py-12">
-      <UIcon name="i-lucide-git-fork" class="size-12 mx-auto mb-4 text-[var(--ui-text-dimmed)]" aria-hidden="true" />
-      <p class="text-lg font-semibold mb-1">{{ t('forks.empty') }}</p>
-      <p class="text-[var(--ui-text-muted)]">{{ t('forks.emptyDesc') }}</p>
-    </UCard>
-  </div>
+    <CommonEmptyState v-else icon="i-lucide-git-fork" :title="t('forks.empty')" :description="t('forks.emptyDesc')" />
+  </CommonPageShell>
 </template>

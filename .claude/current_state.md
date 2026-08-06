@@ -1,7 +1,9 @@
 # GourMerge — Ground Truth (August 2026)
 
 > Single document of current project state. Updated as features ship.
-> For future plans see `ROADMAP.md`. For architectural rules see `ARCHITECTURE.md`. For ops see `docs/RUNBOOK.md`.
+> For future plans see `ROADMAP.md`. For architectural rules see `ARCHITECTURE.md`.
+> **For how the UI looks and the rules that keep it consistent see `DESIGNBOOK.md`.**
+> For ops see `docs/RUNBOOK.md`.
 
 ---
 
@@ -48,31 +50,35 @@ round.
 ```
 GourMerge/
 ├── app/                        # All frontend source (Nuxt 4 convention)
-│   ├── assets/css/main.css     # Tailwind v4 @theme + custom tokens
+│   ├── assets/css/main.css     # Tailwind v4 @theme + design tokens (see DESIGNBOOK.md)
 │   ├── components/             # Auto-imported Vue components
-│   │   ├── common/             # BrandLogo, GlossaryTerm, HelpHint
-│   │   ├── layout/             # DashboardSidebar, UserDropdown
+│   │   ├── common/             # BrandLogo, GlossaryTerm, HelpHint, ObfuscatedEmail,
+│   │   │                       # PageShell, PageHeader, EmptyState  (design system)
+│   │   ├── layout/             # DashboardSidebar, UserDropdown, MobileMenu, FooterLinks
 │   │   ├── onboarding/         # ConceptIntro, HelpMenu, TourOverlay, TourStep
 │   │   └── recipe/             # IngredientAutocomplete, IngredientRow, StepEditor,
-│   │                           # RecipeCard, RecipeDiffViewer, DietaryBadge, NutritionFacts
+│   │                           # RecipeCard, RecipeDiffViewer, DietaryBadge, NutritionFacts,
+│   │                           # TagList, DifficultyBadge
 │   ├── layouts/                # default.vue, dashboard.vue, auth.vue
-│   ├── middleware/             # validate-recipe-route.ts, auth.ts
+│   ├── middleware/             # validate-recipe-route.ts, auth.ts, guest.ts
 │   ├── pages/                  # 27 pages (see §5)
+│   ├── utils/                  # markdown.ts (sanitizer), ui.ts (shared UI maps)
 │   ├── app.vue                 # <UApp><NuxtLayout><NuxtPage />
-│   └── app.config.ts           # Nuxt UI theme overrides
+│   └── app.config.ts           # Nuxt UI theme + central component defaults
 ├── server/
-│   ├── api/                    # 37 REST endpoints (see §6)
+│   ├── api/                    # 41 REST endpoints (see §6)
 │   ├── database/
-│   │   ├── schema.ts           # Drizzle ORM schema (18 tables)
-│   │   └── migrations/         # 8 versioned SQL migrations (0000–0007)
+│   │   ├── schema.ts           # Drizzle ORM schema (20 tables)
+│   │   └── migrations/         # 9 versioned SQL migrations (0000–0008)
 │   ├── middleware/             # Nitro middleware
 │   ├── plugins/                # Nitro plugins (db, logger, sentry)
 │   └── utils/                  # drizzle.ts, diff.ts, merge.ts, units.ts, slug.ts
 ├── shared/types/               # TypeScript types shared app ↔ server
-├── i18n/locales/               # de.json, en.json, fr.json, it.json (455 keys, 4-way parity)
+├── i18n/locales/               # de.json, en.json, fr.json, it.json (516 keys, 4-way parity)
 ├── scripts/                    # Maintenance + setup scripts (see §8)
 ├── public/                     # PWA icons, favicon, apple-touch-icon
 ├── docs/RUNBOOK.md             # Production operations playbook
+├── DESIGNBOOK.md               # Design system — the source of truth for the UI
 ├── .claude/                    # AI + team reference docs
 ├── nuxt.config.ts              # Main config (CSP, i18n, PWA, runtime config)
 ├── drizzle.config.ts           # Drizzle Kit config
@@ -82,7 +88,7 @@ GourMerge/
 
 ---
 
-## 4. Database Schema (18 tables)
+## 4. Database Schema (20 tables)
 
 All migrations versioned in `server/database/migrations/`. **Never use `db:push` against production.**
 
@@ -106,6 +112,10 @@ All migrations versioned in `server/database/migrations/`. **Never use `db:push`
 | `rate_limit_hits`           | DB-backed rate limiter (multi-process safe) | —                                    |
 | `contact_messages`          | Contact form submissions                    | —                                    |
 | `data_requests`             | GDPR self-service tokens (export/erasure)   | CASCADE on user delete               |
+| `user_totp`                 | Opt-in TOTP enrolment (secret encrypted)    | CASCADE on user delete               |
+| `user_recovery_codes`       | Single-use 2FA recovery codes (hashed)      | CASCADE on user delete               |
+| `user_passkeys`             | WebAuthn credentials (`credential_id` uniq) | CASCADE on user delete               |
+| `webauthn_challenges`       | Single-use ceremony challenges, 5-min TTL   | —                                    |
 
 ### FK cascade gaps (manually handled in API)
 
@@ -116,11 +126,13 @@ Two FKs use NO ACTION (= RESTRICT in MySQL) and require pre-delete cleanup:
 
 This is handled in `server/api/recipes/[id].delete.ts`, and repeated in `server/api/privacy/delete.post.ts` for the "delete my recipes too" path.
 
-### Four RESTRICT FKs make a hard user delete impossible
+### Four RESTRICT FKs, and how a hard delete works anyway
 
-`recipes.owner_id`, `recipe_commits.author_id`, `gourmerge_requests.author_id` and `gm_request_comments.author_id` are all **NOT NULL** and NO ACTION. On top of that `fork.post.ts` copies commits keeping the **original** `author_id`, so a forked recipe contains commits authored by someone else. `DELETE FROM users` therefore either fails on the constraint or requires destroying rows inside another user's recipe history.
+`recipes.owner_id`, `recipe_commits.author_id`, `gourmerge_requests.author_id` and `gm_request_comments.author_id` are all **NOT NULL** and NO ACTION. On top of that `fork.post.ts` copies commits keeping the **original** `author_id`, so a stranger's fork legitimately contains commits authored by the departing user. A bare `DELETE FROM users` therefore either fails on the constraint or destroys rows inside another user's recipe history.
 
-Account erasure consequently **anonymises the row in place** (`users.anonymized_at` + overwritten identifying columns) rather than deleting it — GitHub's `ghost`, but per-user so two erased accounts stay distinguishable in a thread. Git can orphan attribution for free because it stores the author as free text in the commit object; our `author_id` is a real foreign key.
+**Account deletion is nonetheless a real `DELETE`** (changed 2026-08-05; it used to anonymise the row in place). A single shared tombstone account — `users.is_ghost`, username `ghost`, seeded by migration `0008` — inherits the orphaned attribution first, which is GitHub's pattern. The user's own content is deleted outright; only their fingerprints inside other people's forks and threads survive, and those read as the anonymous ghost. Git can orphan attribution for free because it stores the author as free text; our `author_id` is a real foreign key, hence the tombstone.
+
+One implementation, `server/utils/hardDeleteUser.ts`, serves both callers — the self-service GDPR erasure and the nightly inactivity job. Two copies would drift on exactly the constraints that make this hard. The ghost is never loginable (`password_hash` is a sentinel no bcrypt comparison can match) and is excluded from every sweep.
 
 ### Key schema decisions
 
@@ -169,7 +181,7 @@ Account erasure consequently **anonymises the row in place** (`users.anonymized_
 
 ---
 
-## 6. API Routes (37 endpoints)
+## 6. API Routes (41 endpoints)
 
 All routes: Zod-validated body/query, `requireUserSession()` where auth required, `createError()` for errors.
 
@@ -254,7 +266,7 @@ link, because a user locked out of their account still holds both rights.
 
 - **4 locales**: `de` (default), `en`, `fr`, `it`
 - **Strategy**: `prefix_except_default` — German has no prefix; `/en/`, `/fr/`, `/it/` prefixed
-- **Key count**: 455 keys, 4-way parity (verified by `npm run i18n:check`)
+- **Key count**: 516 keys, 4-way parity (verified by `npm run i18n:check`)
 - **Locale files**: `i18n/locales/{de,en,fr,it}.json`
 - **CI gate**: `scripts/i18n-check.mjs` — fails if any locale has a missing key or empty value
 - **Translated**: all UI labels, navigation, errors, toasts, onboarding, glossary, legal pages, auth flows
@@ -353,9 +365,9 @@ The `ingredients` master table is populated from the **Swiss BLV Food Compositio
 - **Explore**: public browse with text search, difficulty/tag filter, sort (stars/newest/forks), pagination
 - **User profiles**: public profile (recipes, starred, bio, avatar), settings page
 - **GourMerge Requests**: full lifecycle — create, list, view with diff, comment (Markdown), status (draft→open→closed/merged), three-way snapshot merge with conflict detection + **interactive per-conflict resolution** (keep source/target), merge commit. Merge is transactional with a `SELECT … FOR UPDATE` guard against concurrent double-merge; merged ingredient `sortOrder` is normalized
-- **i18n**: 4 locales (DE/EN/FR/IT), 455 keys in parity, 4-way CI gate — incl. transactional emails (verification + password reset) localized per recipient's `preferredLocale`
+- **i18n**: 4 locales (DE/EN/FR/IT), 516 keys in parity, 4-way CI gate — incl. transactional emails (verification + password reset) localized per recipient's `preferredLocale`
 - **Onboarding**: concept explainer, interactive skippable/re-runnable tour, guided first-recipe flow, contextual help (`<HelpHint>`), glossary page
-- **GDPR self-service**: data export (Art. 15/20) and account erasure (Art. 17) at `/legal/data-request`, both confirmed by email rather than by a session. Exports are built per request and streamed — never written to disk — and exclude the password hash. Erasure anonymises in place and lets the user choose whether recipes go too (see §4 for why a hard delete is impossible). Retention windows are stated in the policy **and enforced** by `npm run db:cleanup`
+- **GDPR self-service**: data export (Art. 15/20) and account erasure (Art. 17) at `/legal/data-request`, both confirmed by email rather than by a session. Exports are built per request and streamed — never written to disk — and exclude the password hash. Erasure **hard-deletes the account row** and lets the user choose whether recipes go too; the four RESTRICT FKs are handled by reassigning attribution that lives inside other people's recipes to a shared `ghost` account first (see §4). Retention windows are stated in the policy **and enforced** by `npm run db:cleanup`
 - **Legal texts**: imprint + privacy policy fully translated in all four locales (they were hardcoded German with only the title translated). Contact email rendered via `<CommonObfuscatedEmail>` — readable without JS, `aria-hidden` decoy against scrapers, `mailto:` attached only on mount, so the address never appears in the SSR payload
 - **Dirty-state guard**: edit page navigation guard via UModal (not `window.confirm` — suppressed in Chromium)
 - **Delete recipe**: from edit page with confirmation modal; cascade handles all FK cleanup
@@ -364,12 +376,18 @@ The `ingredients` master table is populated from the **Swiss BLV Food Compositio
 - **Observability**: Pino logging with file rotation + client/server Sentry capture + `/api/health` (see §11)
 - **Security headers**: static headers in `nuxt.config.ts` `routeRules`; CSP set per-request in `server/plugins/csp.ts` (nonce-based `script-src` in production)
 - **Markdown sanitization**: user step content sanitized via allowlist before `v-html` (`app/utils/markdown.ts`)
-- **Brand**: GourMerge SVG logo (`BrandLogo.vue`), orange primary color, DM Sans + JetBrains Mono fonts
+- **Brand**: GourMerge SVG logo (`BrandLogo.vue`), saffron primary ramp, DM Sans + JetBrains Mono fonts
+- **Two-factor authentication (opt-in)**: TOTP per RFC 6238, working with any authenticator app — the enrolment URI uses the standard SHA1 / 6-digit / 30 s parameters because Google Authenticator _ignores_ non-default values and would otherwise import a secret whose codes never validate. Secret encrypted at rest (AES-256-GCM), ten bcrypt-hashed single-use recovery codes shown once, replay protection on the accepted time step, 8-per-5-min rate limit on every verify path. The post-password state is a short-lived HMAC-signed cookie, **not** a session — a half-authenticated session would make `requireUserSession()` succeed and render the second factor decorative. Disabling requires the password, not a code, so a broken phone cannot lock you out of the setting
+- **Passkeys (opt-in, WebAuthn/FIDO2)**: usernameless sign-in with no email, password or TOTP code — add one in `/settings`, then use the login page's passkey button. A successful assertion completes the login outright, and that is stronger rather than weaker: the private key never leaves the authenticator and the origin is bound into the assertion, so it is phishing-resistant in a way TOTP is not. TOTP stays the second factor for **password** logins. Enrolment requires a session (the trust anchor) and the client-supplied `userName` is discarded in favour of it. Challenges are DB-backed, single-use, 5-min TTL — not session-backed, because a passwordless login has no session yet and Passenger's multiple processes would split the two halves of a ceremony. Counter regression is refused as the clone signal, except that `0` is tolerated because synced passkeys always report it. Two things must be stated explicitly and are easy to lose: `residentKey: 'required'` (nuxt-auth-utils replaces SimpleWebAuthn's `authenticatorSelection` wholesale, which silently makes the credential non-discoverable and the whole feature unusable) and `userVerification: 'required'` **plus an own `userVerified` assertion** (the library verifies with a hardcoded `requireUserVerification: false`, so a presence-only assertion would otherwise bypass password _and_ 2FA). Both are covered by `tests/e2e/passkey.spec.ts`, which drives a real virtual authenticator
+- **Inactive-account deletion**: three years without a login → hard delete, preceded by warning emails at 6 months, 4 weeks and 24 hours (`npm run db:inactive`, nightly). The clock is `users.last_login_at` and **only a login resets it** — a notice does not, or it would extend the period it warns about. Nothing is deleted unless the final notice went out ≥24 h earlier, which is what stops the first post-deploy run from deleting every dormant account unwarned
+- **Maintenance tasks run over HTTP, not cron**: `GET /tasks/retention` and `GET /tasks/inactive-accounts`, guarded by `CRON_SECRET` (constant-time compare; unset means refuse everything). A shell cron cannot work on this host — the deploy ships only `.output/` + `app.js`, so there is no `scripts/`, no `package.json` and no `.env`, and a Plesk scheduled task does not inherit the `PassengerEnvVar` values that reach the app process via the host `.htaccess` (Netcup’s reduced Plesk has no Custom Environment Variables editor). Plesk's **"Fetch a URL"** task type runs the job inside the app instead. Sweep logic in `server/utils/{retention,inactivity}Sweep.ts`; the CLI scripts stay for local use and share `maintenanceConfig.json` so the paths cannot drift
+- **The inactivity sweep refuses to run without SMTP**: `sendMail()` falls back to a `streamTransport` that succeeds while delivering nothing (deliberate, so local dev is not blocked), which for this job would stamp the notice column and hard-delete the account 24h later unwarned. Both the endpoint and the CLI now stop; dry runs still work
 
 ### ✓ Complete (test + delivery pipeline)
 
-- **Tests**: **unit** — 118 cases (`tests/unit/`: diff, merge incl. resolution, units, slug, uuid, nutrition, markdown-XSS, emailI18n, i18n-gate), 97% line coverage enforced in CI. **E2E/API/a11y** — 24 Playwright specs across 5 files (`tests/e2e/`): auth lifecycle + authz matrix, recipe CRUD/fork/star, merge conflict-detect → interactive resolve → verify → immutable, SSR render, register UI journey, and axe scans (critical-gated). Run via `npm run test:e2e` + the `E2E` workflow on master
-- **CI** (`ci.yml`): lint → format:check → knip → typecheck → i18n → `npm audit` (critical) → migrate → test **with coverage gate** → build → upload artifact. Build stamps `NUXT_SENTRY_RELEASE` = commit SHA
+- **Tests**: **unit** — 219 cases (`tests/unit/`: diff, merge incl. resolution, units incl. the display read path, slug, uuid, nutrition, markdown-XSS, emailI18n, i18n-gate, totp, webauthn, seal/pendingTotp, dataRequest, inactivityEmails, ui), **93% line coverage** against a 75/75/70 gate in CI. **E2E/API/a11y** — 26 Playwright specs across 6 files (`tests/e2e/`): auth lifecycle + authz matrix, recipe CRUD/fork/star, merge conflict-detect → interactive resolve → verify → immutable, SSR render, register UI journey, passkey ceremonies over CDP, and axe scans (critical-gated). Run via `npm run test:e2e` + the `E2E` workflow on master
+  - `passkey.spec.ts` drives Chrome's **WebAuthn virtual authenticator** over CDP, because nothing weaker proves anything: the browser will not sign without an authenticator and a stubbed `navigator.credentials` would only test the stub — it is what caught both passkey bugs. Two constraints to know before touching it: navigating while an authenticator is attached crashes the renderer, so every ceremony runs on **one page load** via in-page fetches; and it needs `CI=1` (built artifact) like the rest of the suite
+- **CI** (`ci.yml`): lint → **design:check** → format:check → knip → typecheck → i18n → `npm audit` (critical) → migrate → test **with coverage gate** → build → upload artifact. Build stamps `NUXT_SENTRY_RELEASE` = commit SHA
 - **CD** (`deploy.yml`): preflight secrets → E2E gate → `production` environment gate → checkout of the CI-built SHA → migrate from the runner (fail-fast) → **tar-over-ssh** into `.output.new` → atomic rename swap (previous kept as `.output.prev`) → restart → polling smoke test → **auto-rollback on smoke-test failure**. Password auth via `sshpass` over plain `ssh` (Netcup offers no key auth; `rsync` and `gzip` do not exist in the chroot)
 - **Dependabot + audit gate**: `.github/dependabot.yml` proposes high/moderate fixes; CI fails on critical
 
@@ -381,16 +399,7 @@ The `ingredients` master table is populated from the **Swiss BLV Food Compositio
 - **Manual/infra steps** (owner actions, not code): Let's Encrypt SSL, Passenger env injection, UptimeRobot monitor, nightly `mysqldump` cron + quarterly restore drill — all documented in `docs/RUNBOOK.md`
 - ~~Majors held~~ — **all taken (2026-08-05):** `zod` 4.4.3, `eslint` 10.8.0, `typescript` 6.0.3, `vue-router` 5.2.0, `@nuxtjs/i18n` 10.6.0, `@vite-pwa/nuxt` 1.1.1, `drizzle-kit` 0.31.10, `diff-match-patch-es` 2.0.0, plus `nuxt` 4.5.1 / `vite` 8.2.0. **Still blocked: `typescript` 7** — `@nuxt/ui@4.10.0` declares peer `typescript "^5.6.3 || ^6.0.0"`, so npm refuses 7. Re-check when Nuxt UI widens that range.
 
-- **UI consistency audit** (reported 2026-08-05, nothing changed yet — deliberately left for a focused pass):
-
-  The UI has drifted. Reported symptoms, to be treated as examples rather than the full list:
-  - **Button colours** — inconsistent use of `color`/`variant` for the same semantic action
-  - **Button sizes** — same-rank actions rendered at different `size`s
-  - **Link colours** — several in-text link styles coexist (`text-primary-500` vs the darkened `text-primary-700 dark:text-primary-400` introduced for the light-mode contrast fix, see §13)
-  - **Form field sizes** — register vs. contact form differ visibly; likely `size` and `class="w-full"` applied unevenly across `UInput`/`UFormField`
-  - Suspected root cause: styling decided per page instead of centrally. `app/app.config.ts` (Nuxt UI theme) and `main.css` exist for exactly this, so the fix is probably to pin defaults there and delete the per-call-site overrides, not to hand-tune each page.
-  - Worth building an inventory first (grep every `UButton`/`UInput` for `size`/`color`/`variant`/`class`) so the audit is driven by data rather than by whichever page is open.
-  - The axe a11y gate covers contrast, not consistency — it will not catch any of this.
+- ~~**UI consistency audit**~~ — **done (2026-08-05).** See §16.
 
 ---
 
@@ -420,6 +429,14 @@ The `ingredients` master table is populated from the **Swiss BLV Food Compositio
 - **Scroll container reaches the viewport edge**: the dashboard layout's body row is **full-width** (`flex-1 flex` — no `max-w` on the row), so the sidebar sits at the left edge and `<main>`'s scrollbar sits at the right edge. Content is capped + centred **inside** `<main>` (`max-w-screen-2xl mx-auto`). Capping the row instead (a previous bug) left the scrollbar floating ~512px from the edge on wide screens.
 - **Onboarding vs. Tour** (one flow, two parts): **onboarding** = the `ConceptIntro` "Welcome" modal (explains fork/branch/commit/merge aliases), shown once on first login; **tour** = `useProductTour` + `TourOverlay`, a guided walkthrough that highlights `data-tour` anchors. The intro's "Got it" now actually launches the tour. Both are **mounted globally in `app.vue`** (not per-layout) so they work in every layout — previously they lived only in `default.vue`, so the tour silently did nothing on dashboard pages. The tour driver carries a `route` per step (`'@recipe'` resolves to a public recipe the viewer can fork, fetched on `start()`); the overlay **navigates** to each step's route, **polls** for the anchor (~2.5s), **clamps** the panel inside the viewport (mobile-safe), and **auto-skips** any step whose anchor never appears so it can't dead-end. Anchors: `explore-search` (/explore), `new-recipe-btn` (/dashboard page button), and `fork-button`/`star-button`/`history-link`/`gourmerge-requests-link` (recipe detail). Verified frame-by-frame on desktop + 390px mobile.
 - **Fork carries history**: `POST /api/recipes/[id]/fork` replays the source default branch's **full commit chain** (root→head) into the fork, preserving `parentCommitId` lineage, original `authorId`/`createdAt` and step `contentTranslations` (the old version copied only the head snapshot and dropped translations). Commits inserted one-by-one (child parent refs the freshly-created parent); ingredient/step rows batch-inserted after. `mergeSourceCommitId` remapped only if in the copied set, else null. Bounded by `MAX_FORK_HISTORY` (1000).
+
+- **Nuxt UI form controls are NOT full width by default**: `UInput`/`UTextarea`/`UInputMenu`/`UInputNumber` have an `inline-flex` **`root`** slot, and `USelect`/`USelectMenu` an `inline-flex` **`base`** slot, so a control shrinks to content width unless something adds `w-full`. `app/app.config.ts` appends it to those slots once, centrally — never write `class="w-full"` on a form control. (Before that, `w-full` was on 9 controls and missing from 23, so login's email field was ~20 characters wide while the settings fields were full width.)
+- **`app.config.ts` is the supported central lever**: components resolve props through `useComponentProps`, which reads `appConfig.ui.<component>.defaultVariants.<prop>` — it beats the component's own default and loses to an explicitly-passed prop. Slot classes (`ui.<component>.slots.<slot>`) merge into the theme via `tv({ extend: theme, ...appConfig.ui.<component> })` with tailwind-merge, so adding a class appends it everywhere.
+- **`route.meta.auth` is not a thing** — there is no global middleware reading it. `definePageMeta({ auth: true })` compiles fine, type-checks fine, and does **nothing**. Guarding a page requires `middleware: 'auth'`. Two pages shipped unguarded this way (see §16).
+- **Only `<main>` scrolls, so `<main>` needs `tabindex="0"`** — with `tabindex="-1"` the sole scroll container is unreachable by keyboard, which axe reports as `scrollable-region-focusable`. It only shows up on a page whose content contains nothing focusable (`/help/glossary`), which is why it hid for so long. The skip-link works with either value.
+- **An in-text link must not rely on colour alone** (WCAG 1.4.1): `.link` is always underlined, with a dialled-back `text-decoration-color` that goes solid on hover. Underline-on-hover-only fails axe's `link-in-text-block`.
+- **Dark mode needed its own contrast fix**: Nuxt UI's dark `text-dimmed` (neutral-500) measures **3.74:1** on our dark card surface. `main.css` lifts dark `--ui-text-muted`/`--ui-text-dimmed` one step each. The light-mode darkening block is _not_ sufficient on its own — both modes need pinning.
+- **axe "serious" is not a free pass**: the gate fails on critical only, so three real defects sat in the console log for months. Treat a logged serious as a defect (see §16).
 
 ---
 
@@ -455,7 +472,7 @@ The "to gold-plated v1" finishing plan ran end to end. Committed phases:
 - **i18n** — all 4 locales saveable; transactional emails localized.
 - **Schema/data** — FULLTEXT search; Vanilla Sugar seed; **migration `meta/` un-ignored** (migrations previously applied nothing on fresh checkouts).
 - **GMR merge** — interactive per-conflict resolution + `FOR UPDATE` guard; repaired build-breaking handlers + 5 broken `:options` dropdowns (GMR creation was unusable).
-- **Tests** — 118 unit (97% gate) + 24 Playwright (API/journey/axe); CI coverage gate + `E2E` workflow.
+- **Tests** — 118 unit (97% gate) + 24 Playwright (API/journey/axe); CI coverage gate + `E2E` workflow. (Now 150 unit at 94.7% lines — see §16.)
 - **Dead code** — knip gate; removed dead composable/types/keys; drizzle-orm CVE upgrade; Dependabot + critical-audit gate.
 - **a11y** — `<html lang>`, combobox labels, StepEditor labels i18n'd; axe critical-gate.
 
@@ -480,4 +497,125 @@ Verified **not** a problem despite looking like one: `ci.yml` sets `NODE_ENV: te
 
 Also added: **deploy now waits on the `E2E` run for the same commit** and refuses to proceed unless it passed — previously a green `CI` could deploy while the only end-to-end coverage of the fork → GMR → merge flow was still running.
 
-**Remaining owner actions (infra, not code):** Let's Encrypt SSL; Passenger env injection; UptimeRobot on `/api/health`; nightly `mysqldump` cron + restore drill; confirm prod MySQL reachability from Actions. **Deferred:** no staging environment; dedicated component-mount tests; held major upgrades.
+**Remaining owner actions (infra, not code):** Let's Encrypt SSL; Passenger env injection; UptimeRobot on `/api/health`; nightly `mysqldump` cron + restore drill. **Deferred:** no staging environment; dedicated component-mount tests.
+
+---
+
+## 16. Design System (2026-08-05)
+
+`DESIGNBOOK.md` is the source of truth for how the app looks. This section records
+what the consistency pass found and changed; the rules themselves live there.
+
+### The measured drift
+
+Styling had been decided per call site rather than centrally:
+
+| Symptom            | Measured on the pre-pass tree                                                                                             |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| Button sizes       | 4 sizes across 105 `UButton`s (`xs` 42, `sm` 27, `lg` 24, `xl` 3) with no rule mapping size to rank                       |
+| Form-control width | `class="w-full"` on **9** controls, absent from **23** identical ones                                                     |
+| Form-control size  | `lg` on login/register/contact, default elsewhere                                                                         |
+| Page content width | **9** different caps (`max-w-xl` … `max-w-screen-2xl`) against a `max-w-7xl` header                                       |
+| Page gutters       | flat `px-4` on pages vs `px-4 sm:px-6 lg:px-8` on the header → content misaligned with nav by up to 16px                  |
+| Colour spelling    | **207** `text-[var(--ui-text-muted)]`-style arbitrary classes where Nuxt UI ships `text-muted`; **0** uses of the utility |
+| Raw palette hues   | 8 `amber-*`/`orange-*` utilities competing with the brand ramp, plus ~15 hand-applied `text-*-700 dark:text-*-400` pairs  |
+| Heading scale      | `h1` at `text-xl`, `text-2xl`, `text-3xl` and `text-5xl`                                                                  |
+| Duplicated logic   | GMR status→colour map in 2 files; difficulty→colour in 3; nav-link classes byte-identical in 2                            |
+
+**The `w-full` finding was the substantive one.** `UInput`/`UTextarea`/`UInputMenu`/
+`UInputNumber` have an `inline-flex` **root** and `USelect`/`USelectMenu` an
+`inline-flex` **base**, so a form control collapses to content width unless
+something adds `w-full`. Login's inputs were ~20 characters wide; settings' were
+full width. That is not a taste difference, it is a broken form.
+
+### What changed centrally
+
+- **`app/app.config.ts`** — `defaultVariants` for `button` (`md`/`primary`/`solid`),
+  `badge` (`sm`/`neutral`/`subtle`), `card` (`outline`), `alert` (`subtle`); and
+  `w-full` appended to the root/base slot of all six form controls. A
+  standard-rank button is now `<UButton :label="…" />` with no props, and no call
+  site passes `w-full` or `size` to a form control.
+- **`app/assets/css/main.css`** — `.link` (the single in-text link style),
+  `.tint-{success,warning,error,info,herb}` (the light/dark contrast pairs,
+  collected from ~15 call sites), `--gm-macro-{protein,carbs,fat}` +
+  `bg-macro-*`, and the dark-mode neutral-text lift (below).
+- **New primitives** — `<CommonPageShell>` (3 widths, one gutter set),
+  `<CommonPageHeader>`, `<CommonEmptyState>`, `<RecipeTagList>`,
+  `<RecipeDifficultyBadge>`, `<LayoutFooterLinks>`, and `app/utils/ui.ts`
+  (`GMR_STATUS_COLOR`, `DIFFICULTY_COLOR`, `TINT_CLASS`, `CARD_GRID`,
+  `navLinkClass`).
+- **Layouts** — `dashboard.vue`'s `<main>` no longer wraps content in its own
+  `max-w-screen-2xl px-4 … py-8`; that wrapper fought each page's own cap and
+  doubled the padding. All three layouts now share the same `h-dvh` shell, and
+  `auth.vue` owns the `max-w-md` cap that two auth pages used to re-apply
+  themselves (rendering narrower and 64px lower than login).
+
+### Enforcement
+
+`scripts/design-check.mjs` (`npm run design:check`, in `npm run lint` and its own
+CI step) fails on nine mechanically-detectable rules: arbitrary `--ui-*` classes,
+raw palette hues in template _or_ script, redundant `w-full`, `size` on a form
+control, `size="xl"` on a button, a page root that isn't `<CommonPageShell>`,
+layout classes on a page root, the retired link spelling, and the forbidden
+"Pull Request" term. Each finding cites its design-book section. Lines may opt out
+with a `design-check-ignore` marker; there is exactly one, on the schema comment
+that states the naming rule.
+
+### Three real a11y defects surfaced by verifying the work
+
+All three had been shipping. The axe gate only fails on **critical**, and all
+three were **serious** — logged to the console and ignored.
+
+- **Dark-mode `text-dimmed` measured 3.74:1** on the card surface — below AA for
+  the 12px meta text on `RecipeCard` (6 failing nodes on `/explore`). §1.6 of the
+  design book claimed contrast was solved centrally, but the fix was light-mode
+  only. Dark now lifts `--ui-text-muted`/`--ui-text-dimmed` one step each
+  (slate-300/slate-400), keeping a three-tier hierarchy with all tiers over AA.
+- **`.link` was distinguishable by colour alone** inside a paragraph
+  (`link-in-text-block` on the imprint page) — a regression from this very pass,
+  since the first `.link` draft underlined on hover only. Now always underlined,
+  with a dialled-back `text-decoration-color` that goes solid on hover.
+- **`<main>` was not keyboard-scrollable** (`scrollable-region-focusable` on
+  `/help/glossary`). In this shell `<main>` is the only scroll container, so
+  `tabindex="-1"` meant content could not be scrolled without a mouse — visible
+  only on the one page whose content holds nothing focusable. Now `tabindex="0"`
+  in all three layouts; the skip-link still works.
+
+**axe is now at zero critical _and_ zero serious violations on every public page
+in both colour schemes.** Keep it there — a logged "serious" is a defect that
+ships.
+
+### Bugs found and fixed along the way
+
+- **`definePageMeta({ auth: true })` was dead metadata** on `/settings` and
+  `/[username]/[slug]/gourmerge-requests/new`. Nothing reads `route.meta.auth` —
+  there is no global middleware — so neither page had a client-side guard, and
+  `/settings` also fell back to the `default` layout instead of the dashboard
+  shell. The APIs are protected server-side, so nothing leaked; an anonymous
+  visitor just got a broken page instead of a redirect. Both now use
+  `middleware: 'auth'`.
+- **The Metric/Imperial setting did nothing.** `users.preferred_measurement_system`
+  was persisted by `/settings` and read by no read path: the entire conversion
+  engine in `server/utils/units.ts` was reachable only from its own unit test.
+  `by-slug` now resolves the viewer's preference and returns
+  `displayQuantity`/`displayUnit` alongside the canonical pair (verified
+  end-to-end: 250 g → 8.82 oz, canonical preserved). Conversion is server-side
+  because the session cookie does not carry the preference — and the row is read
+  fresh, so a preference change takes effect without re-login. `getBestDisplayUnit`
+  also handles metric scaling (1200 g → 1.2 kg), so it runs for both systems.
+- **`/settings` silently reset your preferences.** `preferredLocale` and
+  `preferredMeasurementSystem` were in the form but never loaded from the profile,
+  so both selects always rendered their hardcoded defaults — and because `save()`
+  submits the whole form, editing your bio reset your language to German. Root
+  cause was one layer down: `GET /api/users/[username]` never selected those
+  columns (nor `email`) though `UserProfile` declared all three. Now selected and
+  returned **only on your own profile**, so a public profile does not leak an
+  email address. `preferredLocale` was also typed `'de' | 'en'`, predating the
+  FR/IT rollout.
+
+### Not changed, deliberately
+
+The landing page keeps its display type scale (`text-5xl`…`text-7xl` hero) — it is
+marketing copy, and the exception is documented in §1.4 rather than left implicit.
+Explore's filter row and three other controls keep explicit widths; they sit in
+horizontal clusters, not form columns, and §3.4 lists them exhaustively.

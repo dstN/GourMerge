@@ -9,23 +9,24 @@ A git-like recipe platform. Recipes are repositories — they have branches, com
 
 ## Tech Stack
 
-| Layer      | Technology                                     |
-| ---------- | ---------------------------------------------- |
-| Framework  | Nuxt 4.5 · Vite 8 · Vue 3.5 (Composition API)  |
-| Language   | TypeScript 6                                   |
-| UI         | Nuxt UI v4 (Reka UI + Tailwind CSS v4)         |
-| Database   | MySQL 8.4 via Drizzle ORM (mysql2)             |
-| Validation | Zod 4                                          |
-| Auth       | nuxt-auth-utils (session-based)                |
-| i18n       | @nuxtjs/i18n 10 — DE (default), EN, FR, IT     |
-| Editor     | TipTap 3 (Markdown output, no images)          |
-| Diff       | diff-match-patch-es 2                          |
-| PWA        | @vite-pwa/nuxt                                 |
-| Runtime    | Node 26                                        |
-| Deployment | Netcup Webhosting + Phusion Passenger (Apache) |
+| Layer      | Technology                                       |
+| ---------- | ------------------------------------------------ |
+| Framework  | Nuxt 4.5 · Vite 8 · Vue 3.5 (Composition API)    |
+| Language   | TypeScript 6                                     |
+| UI         | Nuxt UI v4 (Reka UI + Tailwind CSS v4)           |
+| Database   | MySQL 8.4 via Drizzle ORM (mysql2)               |
+| Validation | Zod 4                                            |
+| Auth       | nuxt-auth-utils — session, opt-in TOTP, passkeys |
+| i18n       | @nuxtjs/i18n 10 — DE (default), EN, FR, IT       |
+| Editor     | TipTap 3 (Markdown output, no images)            |
+| Diff       | diff-match-patch-es 2                            |
+| PWA        | @vite-pwa/nuxt                                   |
+| Runtime    | Node 26                                          |
+| Deployment | Netcup Webhosting + Phusion Passenger (Apache)   |
 
-At a glance: **27 pages · 37 API endpoints · 18 tables · 455 i18n keys × 4
-locales · 132 unit tests at 93.8 % line coverage · `npm audit` at zero.**
+At a glance: **27 pages · 45 API endpoints · 22 tables · 540 i18n keys × 4
+locales · 219 unit tests · 26 Playwright specs · zero axe
+violations · `npm audit` at zero.**
 
 Fonts and icons are self-hosted — no Google Fonts, no Iconify API at runtime, so
 no visitor IP reaches a third party. See [CHANGELOG.md](CHANGELOG.md) for the
@@ -81,7 +82,7 @@ and you cannot author a recipe, which is the core loop.
 
 | Step           | Provides                                                                         |
 | -------------- | -------------------------------------------------------------------------------- |
-| `db:migrate`   | Schema — 8 versioned migrations                                                  |
+| `db:migrate`   | Schema — 10 versioned migrations                                                 |
 | `seed:swiss`   | 1191 foods + per-100g nutrition, DE/EN/FR/IT names, from the committed seed file |
 | `db:seed`      | Curated ingredients absent from the Swiss dataset (e.g. Vanillezucker)           |
 | `db:seed:tags` | Base culinary tags                                                               |
@@ -94,27 +95,30 @@ dependency. See [Swiss ingredient data](#swiss-ingredient-data) for regenerating
 
 ## Scripts
 
-| Command                    | Description                                         |
-| -------------------------- | --------------------------------------------------- |
-| `npm run dev`              | Start dev server                                    |
-| `npm run build`            | Build for production (Nitro node-server)            |
-| `npm run typecheck`        | TypeScript type check                               |
-| `npm run lint`             | ESLint                                              |
-| `npm run lint:fix`         | ESLint auto-fix                                     |
-| `npm run format`           | Prettier format                                     |
-| `npm test`                 | Vitest unit tests (coverage-gated)                  |
-| `npm run test:e2e`         | Playwright API + journey + axe a11y tests           |
-| `npm run knip`             | Dead-code check (unused files/exports/deps)         |
-| `npm run i18n:check`       | 4-way locale parity gate (DE/EN/FR/IT)              |
-| `npm run db:generate`      | Generate a new Drizzle migration                    |
-| `npm run db:migrate`       | Apply pending migrations                            |
-| `npm run db:setup`         | Migrate + all seeds (first-run convenience)         |
-| `npm run db:studio`        | Drizzle Studio (visual DB explorer)                 |
-| `npm run seed:swiss`       | Load the committed Swiss BLV seed file into the DB  |
-| `npm run seed:swiss:regen` | Regenerate that seed file from the BLV spreadsheets |
-| `npm run db:seed`          | Curated ingredients not in the Swiss dataset        |
-| `npm run db:seed:tags`     | Base culinary tags                                  |
-| `npm run generate:icons`   | Regenerate PWA/favicon assets from brand SVG        |
+| Command                    | Description                                            |
+| -------------------------- | ------------------------------------------------------ |
+| `npm run dev`              | Start dev server                                       |
+| `npm run build`            | Build for production (Nitro node-server)               |
+| `npm run typecheck`        | TypeScript type check                                  |
+| `npm run lint`             | ESLint + design-system gate                            |
+| `npm run lint:fix`         | ESLint auto-fix                                        |
+| `npm run design:check`     | DESIGNBOOK.md conformance gate                         |
+| `npm run format`           | Prettier format                                        |
+| `npm test`                 | Vitest unit tests (coverage-gated)                     |
+| `npm run test:e2e`         | Playwright API + journey + axe a11y tests              |
+| `npm run knip`             | Dead-code check (unused files/exports/deps)            |
+| `npm run i18n:check`       | 4-way locale parity gate (DE/EN/FR/IT)                 |
+| `npm run db:generate`      | Generate a new Drizzle migration                       |
+| `npm run db:migrate`       | Apply pending migrations                               |
+| `npm run db:setup`         | Migrate + all seeds (first-run convenience)            |
+| `npm run db:cleanup`       | Retention windows, locally (production: /tasks/*)      |
+| `npm run db:inactive`      | Same, locally (production uses /tasks/* — see runbook) |
+| `npm run db:studio`        | Drizzle Studio (visual DB explorer)                    |
+| `npm run seed:swiss`       | Load the committed Swiss BLV seed file into the DB     |
+| `npm run seed:swiss:regen` | Regenerate that seed file from the BLV spreadsheets    |
+| `npm run db:seed`          | Curated ingredients not in the Swiss dataset           |
+| `npm run db:seed:tags`     | Base culinary tags                                     |
+| `npm run generate:icons`   | Regenerate PWA/favicon assets from brand SVG           |
 
 > **Never run `npm run db:push` against production.** It mutates the DB directly without a migration file.
 
@@ -262,4 +266,6 @@ node scripts/cleanup-seed-ingredients.mjs --execute # apply
 
 See [`.claude/current_state.md`](.claude/current_state.md) — full feature implementation status, API inventory, DB schema summary, and known quirks.
 
-See [`.claude/ROADMAP.md`](.claude/ROADMAP.md) — v1 delivery plan and remaining work.
+See [`.claude/ROADMAP.md`](.claude/ROADMAP.md) — what is still open (owner/infra actions, deliberate deferrals) and the post-v1 backlog.
+
+See [`DESIGNBOOK.md`](DESIGNBOOK.md) — the design system: how the UI looks, where a visual decision is allowed to live, and what `npm run design:check` enforces. **Read this before changing anything visual.**

@@ -1,9 +1,17 @@
 <script setup lang="ts">
 /**
- * MobileMenu — hamburger + offcanvas slideover for small screens (md:hidden).
+ * MobileMenu — hamburger + offcanvas panel for small screens (md:hidden).
  *
- * Collapses the header nav, dashboard nav, language switcher, theme toggle and
- * tour helper into a single tidy panel so the mobile header stays uncluttered.
+ * Structure is deliberately ordered by what the visitor came for:
+ *   1. Account CTA (guests) — signing up is the primary action; it used to sit at
+ *      the very bottom under two blocks of preference chrome.
+ *   2. Navigation.
+ *   3. Help.
+ *   4. Account actions (signed in).
+ *   5. Preferences, last, as a compact single row — they were previously two
+ *      full-width rows with uppercase micro-headings, which for a guest meant more
+ *      chrome than content: the whole panel was "Sprache", "Darstellung" and one
+ *      nav link.
  */
 const { t, locale, setLocale } = useI18n()
 const { loggedIn, user, clear } = useUserSession()
@@ -26,6 +34,7 @@ const localeItems = [
   { label: 'Italiano', value: 'it' },
 ]
 
+/** Mirrors the desktop header: Explore is public, the rest needs an account. */
 const navLinks = computed(() =>
   loggedIn.value
     ? [
@@ -50,22 +59,33 @@ function startTour() {
   tour.start()
 }
 
-const linkClass = (to: string) => [
-  'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
-  route.path === to
-    ? 'bg-primary-500/10 text-primary-500'
-    : 'text-[var(--ui-text-muted)] hover:text-[var(--ui-text)] hover:bg-[var(--ui-bg-elevated)]',
-]
+// Shared with <LayoutDashboardSidebar> via navLinkClass() (app/utils/ui.ts)
+const linkClass = (to: string) => navLinkClass(route.path === to)
 </script>
 
 <template>
   <div class="md:hidden">
     <USlideover v-model:open="open" side="right" :title="t('nav.menu')">
-      <UButton icon="i-lucide-menu" variant="ghost" color="neutral" :aria-label="t('a11y.openMenu')" />
+      <UButton icon="i-lucide-menu" color="neutral" variant="ghost" :aria-label="t('a11y.openMenu')" />
 
       <template #body>
-        <div class="flex flex-col gap-6">
-          <!-- Primary navigation -->
+        <div class="flex flex-col gap-5">
+          <!-- Guests: the reason most of them opened this panel. Solid + subtle
+               pair per DESIGNBOOK §2.2 so both boxes read the same size. -->
+          <div v-if="!loggedIn" class="flex flex-col gap-2">
+            <UButton :label="t('auth.register')" icon="i-lucide-user-plus" size="lg" block to="/auth/register" />
+            <UButton
+              :label="t('auth.login')"
+              icon="i-lucide-log-in"
+              size="lg"
+              color="neutral"
+              variant="subtle"
+              block
+              to="/auth/login"
+            />
+          </div>
+
+          <!-- Navigation -->
           <nav class="flex flex-col gap-1">
             <NuxtLink v-for="item in navLinks" :key="item.to" :to="item.to" :class="linkClass(item.to)">
               <UIcon :name="item.icon" class="size-5 shrink-0" aria-hidden="true" />
@@ -73,78 +93,43 @@ const linkClass = (to: string) => [
             </NuxtLink>
           </nav>
 
-          <!-- Preferences -->
-          <div class="border-t border-[var(--ui-border)] pt-4 flex flex-col gap-4">
-            <div class="flex flex-col gap-1.5">
-              <span class="text-xs font-semibold uppercase tracking-wider text-[var(--ui-text-dimmed)]">
-                {{ t('nav.language') }}
-              </span>
-              <USelect
-                :model-value="locale"
-                :items="localeItems"
-                value-key="value"
-                :aria-label="t('a11y.selectLanguage')"
-                @update:model-value="setLocale($event as 'de' | 'en' | 'fr' | 'it')"
-              />
-            </div>
-
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-semibold uppercase tracking-wider text-[var(--ui-text-dimmed)]">
-                {{ t('nav.appearance') }}
-              </span>
-              <UColorModeButton />
-            </div>
-
-            <!-- Tour / help (logged-in only) -->
-            <div v-if="loggedIn" class="flex flex-col gap-1">
-              <UButton
-                :label="t('help.startTour')"
-                icon="i-lucide-compass"
-                variant="ghost"
-                color="neutral"
-                block
-                class="justify-start"
-                @click="startTour"
-              />
-              <UButton
-                :label="t('help.glossary')"
-                icon="i-lucide-book-open"
-                variant="ghost"
-                color="neutral"
-                block
-                class="justify-start"
-                to="/help/glossary"
-              />
-            </div>
+          <!-- Help. The glossary explains the git-for-recipes model, so it is the
+               single most useful link for someone who has not signed up yet. -->
+          <div class="flex flex-col gap-1 border-t border-default pt-4">
+            <NuxtLink to="/help/glossary" :class="linkClass('/help/glossary')">
+              <UIcon name="i-lucide-book-marked" class="size-5 shrink-0" aria-hidden="true" />
+              {{ t('help.glossary') }}
+            </NuxtLink>
+            <button v-if="loggedIn" type="button" :class="navLinkClass(false)" @click="startTour">
+              <UIcon name="i-lucide-compass" class="size-5 shrink-0" aria-hidden="true" />
+              {{ t('help.startTour') }}
+            </button>
           </div>
 
-          <!-- Account -->
-          <div class="border-t border-[var(--ui-border)] pt-4">
-            <template v-if="loggedIn">
-              <p class="px-3 mb-2 text-sm font-medium truncate">{{ user?.displayName || user?.username }}</p>
-              <UButton
-                :label="t('nav.editProfile')"
-                icon="i-lucide-user-pen"
-                variant="ghost"
-                color="neutral"
-                block
-                class="justify-start"
-                to="/settings"
-              />
-              <UButton
-                :label="t('auth.logout')"
-                icon="i-lucide-log-out"
-                variant="ghost"
-                color="neutral"
-                block
-                class="justify-start"
-                @click="logout"
-              />
-            </template>
-            <template v-else>
-              <UButton :label="t('auth.login')" variant="ghost" color="neutral" block to="/auth/login" />
-              <UButton :label="t('auth.register')" color="primary" block class="mt-2" to="/auth/register" />
-            </template>
+          <!-- Signed-in account actions -->
+          <div v-if="loggedIn" class="flex flex-col gap-1 border-t border-default pt-4">
+            <p class="px-3 pb-1 text-sm font-medium truncate">{{ user?.displayName || user?.username }}</p>
+            <NuxtLink to="/settings" :class="linkClass('/settings')">
+              <UIcon name="i-lucide-user-pen" class="size-5 shrink-0" aria-hidden="true" />
+              {{ t('nav.editProfile') }}
+            </NuxtLink>
+            <button type="button" :class="navLinkClass(false)" @click="logout">
+              <UIcon name="i-lucide-log-out" class="size-5 shrink-0" aria-hidden="true" />
+              {{ t('auth.logout') }}
+            </button>
+          </div>
+
+          <!-- Preferences, compact and last: one row, no headings. -->
+          <div class="flex items-center gap-2 border-t border-default pt-4">
+            <USelect
+              :model-value="locale"
+              :items="localeItems"
+              value-key="value"
+              icon="i-lucide-languages"
+              :aria-label="t('a11y.selectLanguage')"
+              @update:model-value="setLocale($event as 'de' | 'en' | 'fr' | 'it')"
+            />
+            <UColorModeButton class="shrink-0" />
           </div>
         </div>
       </template>

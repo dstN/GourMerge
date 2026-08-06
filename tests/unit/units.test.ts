@@ -121,3 +121,69 @@ describe('formatQuantityUnit', () => {
     expect(result).toBe('1,5 kg')
   })
 })
+
+/**
+ * The read-path mapping the recipe detail endpoint performs.
+ *
+ * Worth its own test because the conversion engine above was, until the design
+ * pass, reachable ONLY from this file: /settings persisted a Metric/Imperial
+ * choice that no read path ever consulted. These cases pin the behaviour that
+ * `by-slug/[username]/[slug].get.ts` now depends on.
+ */
+describe('display resolution on the recipe read path', () => {
+  const CANONICAL: Array<[number, 'g' | 'ml' | 'piece' | 'pinch' | 'tsp' | 'tbsp']> = [
+    [250, 'g'],
+    [1200, 'g'],
+    [500, 'ml'],
+    [2, 'piece'],
+    [1, 'pinch'],
+    [3, 'tsp'],
+    [2, 'tbsp'],
+  ]
+
+  it('leaves every canonical unit displayable in metric', () => {
+    for (const [qty, unit] of CANONICAL) {
+      const out = getBestDisplayUnit(qty, unit, 'metric')
+      expect(out.quantity).toBeGreaterThan(0)
+      expect(out.unit).toBeTruthy()
+    }
+  })
+
+  it('scales large metric masses and volumes up a tier', () => {
+    expect(getBestDisplayUnit(1200, 'g', 'metric')).toEqual({ quantity: 1.2, unit: 'kg' })
+    expect(getBestDisplayUnit(1500, 'ml', 'metric')).toEqual({ quantity: 1.5, unit: 'l' })
+  })
+
+  it('does not scale below the tier threshold', () => {
+    expect(getBestDisplayUnit(999, 'g', 'metric')).toEqual({ quantity: 999, unit: 'g' })
+    expect(getBestDisplayUnit(999, 'ml', 'metric')).toEqual({ quantity: 999, unit: 'ml' })
+  })
+
+  it('never converts count- or spoon-based units, in either system', () => {
+    for (const system of ['metric', 'imperial'] as const) {
+      expect(getBestDisplayUnit(2, 'piece', system).unit).toBe('piece')
+      expect(getBestDisplayUnit(1, 'pinch', system).unit).toBe('pinch')
+      expect(getBestDisplayUnit(3, 'tsp', system).unit).toBe('tsp')
+      expect(getBestDisplayUnit(2, 'tbsp', system).unit).toBe('tbsp')
+    }
+  })
+
+  it('produces a unit the page has an i18n label for', () => {
+    // Mirrors UNIT_I18N in app/pages/[username]/[slug]/index.vue — a unit the
+    // engine can emit but the page cannot label would render as a raw token.
+    const LABELLED = new Set(['g', 'ml', 'piece', 'pinch', 'tsp', 'tbsp', 'kg', 'l', 'oz', 'lb', 'cup', 'floz'])
+    for (const [qty, unit] of CANONICAL) {
+      for (const system of ['metric', 'imperial'] as const) {
+        expect(LABELLED).toContain(getBestDisplayUnit(qty, unit, system).unit)
+      }
+    }
+    // Boundary values on both sides of every imperial threshold.
+    for (const qty of [1, 200, 453, 454, 999, 1000, 1200, 236, 237, 1500]) {
+      for (const unit of ['g', 'ml'] as const) {
+        for (const system of ['metric', 'imperial'] as const) {
+          expect(LABELLED).toContain(getBestDisplayUnit(qty, unit, system).unit)
+        }
+      }
+    }
+  })
+})

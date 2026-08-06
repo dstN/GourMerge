@@ -45,7 +45,7 @@ function update(patch: Partial<IngredientRowData>) {
 <template>
   <div class="flex items-start gap-2 group" :data-tour="`ingredient-row-${index}`">
     <!-- Drag handle -->
-    <div class="mt-2.5 cursor-grab text-neutral-400 hover:text-neutral-600 shrink-0" aria-hidden="true">
+    <div class="mt-2.5 cursor-grab text-dimmed transition-colors hover:text-muted shrink-0" aria-hidden="true">
       <UIcon name="i-lucide-grip-vertical" class="size-4" />
     </div>
 

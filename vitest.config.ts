@@ -21,6 +21,19 @@ export default defineVitestConfig({
         'server/utils/dataExport.ts', // pure DB reads — covered by the GDPR API tests
         // dataRequest.ts is NOT excluded: hashToken is a pure security primitive
         // and is unit-tested. Only its DB lookup is left to the API tests.
+
+        // The 1.2.0 batch. These are DB/SMTP/session orchestration end to end — no
+        // branch in any of them decides anything a mock could not trivially fake.
+        // Their *rules* are unit-tested where the rules actually live: the notice
+        // schedule in inactivityEmails.test.ts (which also asserts the Nitro and CLI
+        // consumers cannot drift), and the sealing primitive in seal.test.ts.
+        'server/utils/completeLogin.ts', // setUserSession + one UPDATE
+        'server/utils/hardDeleteUser.ts', // FK-ordered deletes — proved by the GDPR API tests
+        'server/utils/inactivitySweep.ts', // DB scan + mail send, driven by /tasks/*
+        'server/utils/retentionSweep.ts', // DB scan + delete, driven by /tasks/*
+        'server/utils/maintenanceConfig.json', // data, not code — v8 counts it as two lines
+        // seal.ts and pendingTotp.ts are deliberately NOT excluded: a forgeable seal or
+        // a TTL that does not expire would silently defeat the second factor.
       ],
       thresholds: {
         lines: 75,

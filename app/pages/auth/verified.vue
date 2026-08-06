@@ -5,10 +5,12 @@ useSeoMeta({ title: () => `${t('auth.verifiedTitle')} — GourMerge`, robots: 'n
 </script>
 
 <template>
-  <div class="text-center py-16 space-y-4">
-    <UIcon name="i-lucide-circle-check" class="size-16 text-success-500 mx-auto" />
-    <h1 class="text-2xl font-bold">{{ t('auth.verifiedTitle') }}</h1>
-    <p class="text-[var(--ui-text-muted)]">{{ t('auth.verifiedMessage') }}</p>
-    <UButton :label="t('auth.login')" to="/auth/login" />
-  </div>
+  <UCard>
+    <div class="text-center py-6 space-y-4">
+      <UIcon name="i-lucide-circle-check" class="size-12 text-success-500 mx-auto" aria-hidden="true" />
+      <h1 class="text-2xl font-bold">{{ t('auth.verifiedTitle') }}</h1>
+      <p class="text-muted">{{ t('auth.verifiedMessage') }}</p>
+      <UButton :label="t('auth.login')" icon="i-lucide-log-in" to="/auth/login" />
+    </div>
+  </UCard>
 </template>

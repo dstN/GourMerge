@@ -25,23 +25,33 @@ async function submit() {
 </script>
 
 <template>
-  <UCard class="max-w-md mx-auto mt-16">
+  <!-- The `max-w-md` cap and centring live in the auth layout (DESIGNBOOK §4.1),
+       not here — this card used to add `max-w-md mx-auto mt-16` of its own, so it
+       rendered narrower and 64px lower than the login card. -->
+  <UCard>
     <template #header>
-      <h1 class="text-xl font-bold">{{ t('auth.forgotPassword') }}</h1>
+      <h1 class="text-2xl font-bold text-center">{{ t('auth.forgotPassword') }}</h1>
     </template>
 
     <div v-if="sent" class="text-center space-y-3 py-4">
-      <UIcon name="i-lucide-mail-check" class="size-12 text-success-500 mx-auto" />
-      <p class="text-[var(--ui-text-muted)]">{{ t('auth.forgotPasswordSent') }}</p>
+      <UIcon name="i-lucide-mail-check" class="size-12 text-success-500 mx-auto" aria-hidden="true" />
+      <p class="text-muted">{{ t('auth.forgotPasswordSent') }}</p>
     </div>
 
     <form v-else class="space-y-4" @submit.prevent="submit">
-      <UFormField :label="t('auth.email')">
-        <UInput v-model="email" type="email" autocomplete="email" :placeholder="t('auth.emailPlaceholder')" required />
+      <UFormField :label="t('auth.email')" required>
+        <UInput
+          v-model="email"
+          type="email"
+          autocomplete="email"
+          :placeholder="t('auth.emailPlaceholder')"
+          icon="i-lucide-mail"
+          required
+        />
       </UFormField>
-      <UButton type="submit" :label="t('auth.sendResetLink')" :loading="pending" block />
-      <p class="text-center text-sm text-[var(--ui-text-muted)]">
-        <NuxtLink to="/auth/login" class="text-primary-500 hover:underline">{{ t('auth.backToLogin') }}</NuxtLink>
+      <UButton type="submit" :label="t('auth.sendResetLink')" icon="i-lucide-send" size="lg" block :loading="pending" />
+      <p class="text-center text-sm text-muted">
+        <NuxtLink to="/auth/login" class="link">{{ t('auth.backToLogin') }}</NuxtLink>
       </p>
     </form>
   </UCard>

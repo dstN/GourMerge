@@ -20,7 +20,7 @@ const errorConfig = computed(() => {
       icon: 'i-lucide-search-x',
       title: t('error.notFoundTitle'),
       description: t('error.notFoundDescription'),
-      color: 'text-primary-500',
+      color: 'text-primary',
     }
   }
 
@@ -29,7 +29,7 @@ const errorConfig = computed(() => {
       icon: 'i-lucide-shield-x',
       title: t('error.forbiddenTitle'),
       description: t('error.forbiddenDescription'),
-      color: 'text-red-500',
+      color: 'text-error-500',
     }
   }
 
@@ -37,7 +37,7 @@ const errorConfig = computed(() => {
     icon: 'i-lucide-server-crash',
     title: t('error.serverTitle'),
     description: t('error.serverDescription'),
-    color: 'text-red-500',
+    color: 'text-error-500',
   }
 })
 
@@ -47,27 +47,28 @@ function handleClearError() {
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-[var(--ui-bg)] px-4">
+  <!-- `h-dvh` not `min-h-screen`, matching the app shell (DESIGNBOOK §4.1) -->
+  <div class="flex h-dvh items-center justify-center overflow-y-auto bg-default text-default px-4 py-10">
     <div class="text-center max-w-md">
       <!-- Logo -->
       <NuxtLink to="/" class="inline-flex items-center gap-2 mb-8 group">
-        <CommonBrandLogo class="size-8 text-primary-500 group-hover:text-primary-400 transition-colors" />
-        <span class="text-xl font-bold"> Gour<span class="text-primary-500">Merge</span> </span>
+        <CommonBrandLogo class="size-8 text-primary transition-opacity group-hover:opacity-80" />
+        <span class="text-xl font-bold"> Gour<span class="text-primary">Merge</span> </span>
       </NuxtLink>
 
       <!-- Error Code -->
-      <div class="text-8xl font-black text-[var(--ui-text-dimmed)] opacity-20 mb-4">
+      <div class="text-8xl font-black text-dimmed opacity-20 mb-4">
         {{ error.statusCode }}
       </div>
 
       <!-- Icon -->
-      <UIcon :name="errorConfig.icon" :class="['size-16 mx-auto mb-4', errorConfig.color]" />
+      <UIcon :name="errorConfig.icon" :class="['size-12 mx-auto mb-4', errorConfig.color]" aria-hidden="true" />
 
       <!-- Title & Description -->
-      <h1 class="text-2xl font-bold mb-2">
+      <h1 class="text-2xl font-bold tracking-tight mb-2">
         {{ errorConfig.title }}
       </h1>
-      <p class="text-[var(--ui-text-muted)] mb-8">
+      <p class="text-muted mb-8">
         {{ errorConfig.description }}
       </p>
 
@@ -77,8 +78,8 @@ function handleClearError() {
         <UButton
           :label="t('error.goBack')"
           icon="i-lucide-arrow-left"
-          variant="outline"
           color="neutral"
+          variant="subtle"
           size="lg"
           @click="$router.back()"
         />
@@ -86,12 +87,10 @@ function handleClearError() {
 
       <!-- Debug info (dev only) -->
       <details v-if="error.statusMessage" class="mt-8 text-left">
-        <summary class="text-xs text-[var(--ui-text-dimmed)] cursor-pointer hover:text-[var(--ui-text-muted)]">
+        <summary class="text-xs text-dimmed cursor-pointer hover:text-muted">
           {{ t('error.details') }}
         </summary>
-        <pre
-          class="mt-2 p-4 rounded-lg bg-[var(--ui-bg-elevated)] text-xs text-[var(--ui-text-muted)] overflow-x-auto"
-          >{{ error.statusMessage }}</pre>
+        <pre class="mt-2 p-4 rounded-lg bg-elevated text-xs text-muted overflow-x-auto">{{ error.statusMessage }}</pre>
       </details>
     </div>
   </div>

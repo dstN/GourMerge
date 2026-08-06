@@ -36,9 +36,9 @@ async function startTour() {
         <!-- Hero -->
         <div class="text-center">
           <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary-500/10 mb-4">
-            <UIcon name="i-lucide-git-fork" class="size-8 text-primary-500" />
+            <UIcon name="i-lucide-git-fork" class="size-8 text-primary" />
           </div>
-          <p class="text-[var(--ui-text-muted)] text-base leading-relaxed">
+          <p class="text-muted text-base leading-relaxed">
             {{ t('onboarding.conceptIntro.subtitle') }}
           </p>
         </div>
@@ -48,7 +48,7 @@ async function startTour() {
           <div
             v-for="concept in ['recipe', 'fork', 'branch', 'commit', 'merge', 'gourmergeRequest']"
             :key="concept"
-            class="flex items-start gap-3 p-3 rounded-xl bg-[var(--ui-bg-elevated)]"
+            class="flex items-start gap-3 p-3 rounded-xl bg-elevated"
           >
             <div class="shrink-0 mt-0.5">
               <UIcon
@@ -65,7 +65,7 @@ async function startTour() {
                             ? 'i-lucide-git-merge'
                             : 'i-lucide-git-pull-request'
                 "
-                class="size-5 text-primary-500"
+                class="size-5 text-primary"
               />
             </div>
             <div>
@@ -78,7 +78,7 @@ async function startTour() {
                   :label="t(`onboarding.conceptIntro.${concept}.canonical`)"
                 />
               </div>
-              <p class="text-sm text-[var(--ui-text-muted)]">
+              <p class="text-sm text-muted">
                 {{ t(`onboarding.conceptIntro.${concept}.desc`) }}
               </p>
             </div>

@@ -19,34 +19,34 @@ const {
 </script>
 
 <template>
-  <div>
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold mb-1 flex items-center gap-2">
-        <UIcon name="i-lucide-star" class="size-7 text-primary-500" aria-hidden="true" />
-        {{ t('nav.starred') }}
-      </h1>
-      <p class="text-[var(--ui-text-muted)]">{{ t('starred.subtitle') }}</p>
+  <CommonPageShell width="wide">
+    <CommonPageHeader :title="t('nav.starred')" :subtitle="t('starred.subtitle')" icon="i-lucide-star" />
+
+    <div v-if="pending" :class="CARD_GRID">
+      <USkeleton v-for="i in 6" :key="i" class="h-48 rounded-lg" />
     </div>
 
-    <div v-if="pending" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <USkeleton v-for="i in 6" :key="i" class="h-48 rounded-xl" />
-    </div>
+    <CommonEmptyState
+      v-else-if="error"
+      tone="error"
+      icon="i-lucide-alert-circle"
+      :title="t('dashboard.errorTitle')"
+      :description="t('dashboard.errorDescription')"
+    />
 
-    <UCard v-else-if="error" class="text-center py-16">
-      <UIcon name="i-lucide-alert-circle" class="size-16 text-red-500 mx-auto mb-4" aria-hidden="true" />
-      <h2 class="text-xl font-semibold mb-2">{{ t('dashboard.errorTitle') }}</h2>
-      <p class="text-[var(--ui-text-muted)] mb-6 max-w-md mx-auto">{{ t('dashboard.errorDescription') }}</p>
-    </UCard>
+    <CommonEmptyState
+      v-else-if="!recipes || recipes.length === 0"
+      icon="i-lucide-star"
+      :title="t('starred.empty')"
+      :description="t('starred.emptyDesc')"
+    >
+      <template #actions>
+        <UButton :label="t('nav.explore')" icon="i-lucide-compass" to="/explore" />
+      </template>
+    </CommonEmptyState>
 
-    <UCard v-else-if="!recipes || recipes.length === 0" class="text-center py-16">
-      <UIcon name="i-lucide-star" class="size-16 text-[var(--ui-text-dimmed)] mx-auto mb-4" aria-hidden="true" />
-      <h2 class="text-xl font-semibold mb-2">{{ t('starred.empty') }}</h2>
-      <p class="text-[var(--ui-text-muted)] mb-6 max-w-md mx-auto">{{ t('starred.emptyDesc') }}</p>
-      <UButton :label="t('nav.explore')" icon="i-lucide-compass" size="lg" to="/explore" />
-    </UCard>
-
-    <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div v-else :class="CARD_GRID">
       <RecipeCard v-for="recipe in recipes" :key="recipe.id" :recipe="recipe" />
     </div>
-  </div>
+  </CommonPageShell>
 </template>

@@ -163,7 +163,17 @@
     "forkError": "Impossibile creare il remix.",
     "seoDescriptionFallback": "Scopri e remixa questa ricetta su GourMerge — la piattaforma per lo sviluppo collaborativo di ricette.",
     "forkedFrom": "Derivato da",
-    "viewForks": "Vedi i derivati"
+    "viewForks": "Vedi i derivati",
+    "tagsLabel": "Tag",
+    "tagsPlaceholder": "Aggiungi un tag, premi Invio",
+    "tagRemove": "Rimuovi il tag «{tag}»",
+    "unitLabel": "Unità",
+    "unitKg": "kg",
+    "unitL": "l",
+    "unitOz": "oz",
+    "unitLb": "lb",
+    "unitCup": "tazza",
+    "unitFloz": "fl oz"
   },
   "common": {
     "edit": "Modifica",
@@ -173,7 +183,8 @@
     "error": "Errore",
     "unsaved": "Modifiche non salvate",
     "leave": "Lascia",
-    "help": "Aiuto"
+    "help": "Aiuto",
+    "or": "oppure"
   },
   "diff": {
     "title": "Modifiche",
@@ -328,7 +339,8 @@
     "sortForks": "Più remixate",
     "noResults": "Nessuna ricetta trovata.",
     "loadMore": "Carica altro",
-    "sortBy": "Ordina per"
+    "sortBy": "Ordina per",
+    "subtitle": "Scopri le ricette pubbliche della community."
   },
   "branches": {
     "title": "Varianti",
@@ -533,7 +545,11 @@
       "retentionLogs": "Log del server: 7 giorni, poi sovrascritti a rotazione.",
       "retentionErrors": "Segnalazioni di errore su Sentry: 90 giorni.",
       "selfServiceTitle": "9. Self-service",
-      "selfServiceDesc": "Puoi avviare tu stesso un export o una cancellazione in qualsiasi momento, senza scriverci:"
+      "selfServiceDesc": "Puoi avviare tu stesso un export o una cancellazione in qualsiasi momento, senza scriverci:",
+      "retentionInactive": "Account inattivi: se non accedi per tre anni, cancelliamo automaticamente il tuo account. Ti avvisiamo tre volte via e-mail prima — sei mesi, quattro settimane e 24 ore prima della cancellazione. Un solo accesso è sufficiente per conservare l’account, e il periodo riparte da zero. Conta solo il tuo ultimo accesso, non l’apertura di un’e-mail.",
+      "twofaTitle": "Autenticazione a due fattori (facoltativa)",
+      "twofaBody": "Puoi proteggere il tuo account, se lo desideri, con un’app di autenticazione (TOTP). In tal caso conserviamo una chiave cifrata per generare i codici e dieci codici di recupero sotto forma di hash. Non raccogliamo numeri di telefono e non condividiamo nulla con terze parti: i codici vengono generati esclusivamente sul tuo dispositivo. Puoi disattivare la funzione in qualsiasi momento nelle impostazioni, il che cancella i dati associati.",
+      "deletionHard": "Una cancellazione ai sensi dell’art. 17 GDPR elimina davvero il tuo account, non lo disattiva soltanto. I contributi inseparabili dalla cronologia delle ricette di altre persone — versioni che qualcuno ha copiato nella propria, le tue GourMerge Request e i tuoi commenti nelle loro discussioni — vengono riassegnati a un account anonimo segnaposto. Nome, indirizzo e-mail e profilo vengono rimossi completamente."
     }
   },
   "editor": {
@@ -551,5 +567,82 @@
     "subtitle": "Ricette che hai contrassegnato con una stella.",
     "empty": "Nessun preferito ancora",
     "emptyDesc": "Aggiungi ricette ai preferiti per ritrovarle qui."
+  },
+  "validation": {
+    "required": "Questo campo è obbligatorio.",
+    "tooShort": "Almeno {min} caratteri.",
+    "tooLong": "Massimo {max} caratteri.",
+    "numberRange": "Inserisci un valore tra {min} e {max}.",
+    "selectOption": "Seleziona un’opzione."
+  },
+  "twofa": {
+    "title": "Autenticazione a due fattori",
+    "subtitle": "Aggiungi un secondo passaggio all’accesso con un’app di autenticazione.",
+    "statusOn": "Attiva",
+    "statusOff": "Non attiva",
+    "appHint": "Funziona con qualsiasi app di autenticazione — Google Authenticator, Authy, 1Password, Bitwarden o Aegis.",
+    "enable": "Configura",
+    "disable": "Disattiva",
+    "setupScan": "Inquadra questo codice QR con la tua app di autenticazione:",
+    "setupManual": "Non puoi scansionare? Inserisci questa chiave manualmente:",
+    "setupCodeLabel": "Codice a sei cifre dall’app",
+    "setupConfirm": "Attiva",
+    "setupCancel": "Annulla",
+    "recoveryTitle": "I tuoi codici di recupero",
+    "recoveryDesc": "Conservali in un posto sicuro. Ogni codice funziona una sola volta ed è il tuo modo per rientrare se perdi il dispositivo. Vengono mostrati solo questa volta.",
+    "recoveryCopy": "Copia i codici",
+    "recoveryCopied": "Codici copiati",
+    "recoveryDone": "Li ho salvati",
+    "recoveryRemaining": "{n} di 10 codici di recupero ancora utilizzabili",
+    "disableTitle": "Disattiva l’autenticazione a due fattori",
+    "disableDesc": "Chiediamo la password anziché un codice, così un dispositivo perso o rotto non ti blocca fuori da questa impostazione.",
+    "disablePassword": "Password",
+    "disableConfirm": "Disattiva",
+    "enabledToast": "L’autenticazione a due fattori è attiva.",
+    "disabledToast": "L’autenticazione a due fattori è stata disattivata.",
+    "challengeTitle": "Conferma l’accesso",
+    "challengeDesc": "Inserisci il codice a sei cifre dalla tua app di autenticazione.",
+    "challengeCode": "Codice",
+    "challengeSubmit": "Accedi",
+    "challengeRecoveryHint": "Dispositivo perso? Inserisci invece un codice di recupero.",
+    "challengeExpired": "Il tentativo di accesso è scaduto. Accedi di nuovo.",
+    "invalidCode": "Questo codice non è valido.",
+    "usedRecoveryCode": "Hai usato un codice di recupero. Genera nuovi codici nelle impostazioni."
+  },
+  "errors": {
+    "network": "Impossibile raggiungere il server. Controlla la connessione e riprova.",
+    "unauthorized": "Non hai i permessi per farlo.",
+    "notFound": "Non siamo riusciti a trovarlo.",
+    "conflict": "Non è stato possibile — probabilmente esiste già o è stato appena modificato.",
+    "validation": "Controlla i dati inseriti.",
+    "rateLimited": "Troppi tentativi. Attendi un momento e riprova.",
+    "unavailable": "Il servizio non è disponibile al momento. Riprova più tardi.",
+    "server": "Si è verificato un errore sul server. Riprova più tardi.",
+    "unknown": "Si è verificato un errore. Riprova."
+  },
+  "passkey": {
+    "title": "Passkey",
+    "subtitle": "Accedi senza password — con impronta, volto o PIN del dispositivo.",
+    "explain": "Una passkey resta sul tuo dispositivo e non può essere intercettata né inserita su un sito falso. All’accesso sostituisce sia la password sia il codice di verifica.",
+    "add": "Aggiungi una passkey",
+    "none": "Nessuna passkey configurata.",
+    "unsupported": "Questo browser o dispositivo non supporta le passkey.",
+    "synced": "Sincronizzata tra i tuoi dispositivi",
+    "deviceBound": "Solo questo dispositivo",
+    "created": "Aggiunta il {date}",
+    "lastUsed": "Ultimo utilizzo il {date}",
+    "neverUsed": "Non ancora utilizzata",
+    "rename": "Rinomina",
+    "renameTitle": "Rinomina passkey",
+    "nameLabel": "Nome",
+    "remove": "Rimuovi",
+    "removeTitle": "Rimuovi passkey",
+    "removeConfirm": "Questa passkey smetterà di funzionare. Potrai ancora accedere con la password.",
+    "addedToast": "Passkey aggiunta.",
+    "removedToast": "Passkey rimossa.",
+    "renamedToast": "Passkey rinominata.",
+    "cancelled": "Annullato.",
+    "loginButton": "Accedi con una passkey",
+    "loginError": "Accesso con passkey non riuscito."
   }
 }

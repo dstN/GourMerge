@@ -91,66 +91,60 @@ function formatDate(dateStr: string) {
 </script>
 
 <template>
-  <div class="max-w-4xl mx-auto py-8 px-4">
-    <!-- Header -->
-    <div class="flex items-center justify-between mb-8">
-      <div>
-        <NuxtLink
-          :to="recipeUrl"
-          class="text-sm text-[var(--ui-text-muted)] hover:text-primary-500 mb-2 inline-flex items-center gap-1"
-        >
-          <UIcon name="i-lucide-arrow-left" class="size-4" />
-          {{ recipe?.title }}
-        </NuxtLink>
-        <h1 class="text-2xl font-bold flex items-center gap-2">
-          <UIcon name="i-lucide-history" class="size-6 text-primary-500" aria-hidden="true" />
-          {{ t('history.title') }}
-        </h1>
-        <p class="text-sm text-[var(--ui-text-muted)] mt-1">
+  <CommonPageShell width="content">
+    <CommonPageHeader
+      :title="t('history.title')"
+      icon="i-lucide-history"
+      :back-to="recipeUrl"
+      :back-label="recipe?.title"
+    >
+      <template #meta>
+        <p class="mt-1 text-sm text-muted">
           <CommonGlossaryTerm term="commit" icon />
         </p>
-      </div>
-
-      <!-- Branch selector -->
-      <USelect
-        v-model="selectedBranchId"
-        :items="branchOptions"
-        value-key="value"
-        icon="i-lucide-git-branch"
-        class="w-48"
-      />
-    </div>
+      </template>
+      <template #actions>
+        <!-- Explicit width allowed: horizontal cluster, not a form column
+             (DESIGNBOOK §3.4) -->
+        <USelect
+          v-model="selectedBranchId"
+          :items="branchOptions"
+          value-key="value"
+          icon="i-lucide-git-branch"
+          class="w-48"
+          :aria-label="t('branches.title')"
+        />
+      </template>
+    </CommonPageHeader>
 
     <!-- Commit Timeline -->
     <div v-if="commits?.length" class="relative">
       <!-- Vertical line -->
-      <div class="absolute left-6 top-0 bottom-0 w-px bg-[var(--ui-border)]" />
+      <div class="absolute left-6 top-0 bottom-0 w-px bg-accented" />
 
       <div v-for="(commit, index) in commits" :key="commit.id" class="relative flex items-start gap-4 mb-6">
         <!-- Timeline dot -->
         <div
           :class="[
             'relative z-10 flex items-center justify-center size-12 rounded-full border-2 shrink-0',
-            index === 0
-              ? 'bg-primary-500/20 border-primary-500'
-              : 'bg-[var(--ui-bg-elevated)] border-[var(--ui-border)]',
+            index === 0 ? 'bg-primary-500/20 border-primary-500' : 'bg-elevated border-default',
           ]"
         >
           <UIcon
             :name="index === 0 ? 'i-lucide-git-commit-vertical' : 'i-lucide-dot'"
-            :class="['size-5', index === 0 ? 'text-primary-500' : 'text-[var(--ui-text-muted)]']"
+            :class="['size-5', index === 0 ? 'text-primary' : 'text-muted']"
           />
         </div>
 
         <!-- Commit card -->
-        <UCard class="flex-1" :ui="{ root: 'overflow-hidden' }">
-          <div class="flex items-start justify-between gap-4">
-            <div>
-              <p class="font-semibold text-base">{{ commit.message }}</p>
-              <div class="flex items-center gap-2 mt-1 text-sm text-[var(--ui-text-muted)]">
-                <UIcon name="i-lucide-user" class="size-3.5" />
+        <UCard class="flex-1">
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div class="min-w-0">
+              <h2 class="text-base font-semibold">{{ commit.message }}</h2>
+              <div class="flex flex-wrap items-center gap-2 mt-1 text-sm text-muted">
+                <UIcon name="i-lucide-user" class="size-4" aria-hidden="true" />
                 <span>{{ commit.author?.displayName || commit.author?.username }}</span>
-                <span>·</span>
+                <span aria-hidden="true">·</span>
                 <span>{{ formatDate(commit.createdAt) }}</span>
               </div>
             </div>
@@ -160,47 +154,48 @@ function formatDate(dateStr: string) {
               v-if="commit.parentCommitId && index < (commits?.length || 0) - 1"
               :label="t('history.viewDiff')"
               icon="i-lucide-diff"
+              size="sm"
+              color="neutral"
               variant="outline"
-              size="xs"
+              class="shrink-0"
               @click="viewDiff(commits![index + 1]!, commit)"
             />
             <UBadge
               v-else-if="!commit.parentCommitId"
               :label="t('history.initialCommit')"
               color="primary"
-              variant="subtle"
-              size="sm"
+              class="shrink-0"
             />
           </div>
         </UCard>
       </div>
     </div>
 
-    <!-- Empty state -->
-    <UCard v-else class="text-center py-12">
-      <UIcon name="i-lucide-history" class="size-12 mx-auto mb-4 text-[var(--ui-text-dimmed)]" />
-      <p class="text-lg font-semibold mb-1">{{ t('history.empty') }}</p>
-      <p class="text-[var(--ui-text-muted)]">{{ t('history.emptyDesc') }}</p>
-    </UCard>
+    <CommonEmptyState
+      v-else
+      icon="i-lucide-history"
+      :title="t('history.empty')"
+      :description="t('history.emptyDesc')"
+    />
 
     <!-- Diff Modal -->
     <UModal v-model:open="showDiff" :title="t('diff.title')">
       <template #body>
         <div v-if="diffLoading" class="flex items-center justify-center py-12">
-          <UIcon name="i-lucide-loader-2" class="size-8 animate-spin text-primary-500" />
+          <UIcon name="i-lucide-loader-2" class="size-8 animate-spin text-primary" aria-hidden="true" />
         </div>
         <template v-else-if="diffData">
-          <div class="mb-4 text-sm text-[var(--ui-text-muted)] flex items-center gap-2">
-            <UBadge color="neutral" variant="subtle">{{ diffCommits.from?.message }}</UBadge>
-            <UIcon name="i-lucide-arrow-right" class="size-4" />
-            <UBadge color="primary" variant="subtle">{{ diffCommits.to?.message }}</UBadge>
+          <div class="mb-4 text-sm text-muted flex flex-wrap items-center gap-2">
+            <UBadge color="neutral" variant="subtle" :label="diffCommits.from?.message" />
+            <UIcon name="i-lucide-arrow-right" class="size-4" aria-hidden="true" />
+            <UBadge color="primary" :label="diffCommits.to?.message" />
           </div>
           <RecipeDiffViewer :diff="diffData" />
         </template>
-        <div v-else class="text-center py-8 text-[var(--ui-text-muted)]">
+        <div v-else class="text-center py-8 text-muted">
           {{ t('history.diffError') }}
         </div>
       </template>
     </UModal>
-  </div>
+  </CommonPageShell>
 </template>

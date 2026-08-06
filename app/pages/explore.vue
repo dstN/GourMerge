@@ -54,12 +54,11 @@ useSeoMeta({ title: `${t('nav.explore')} — GourMerge` })
 
 <template>
   <NuxtLayout :name="loggedIn ? 'dashboard' : 'default'">
-    <div class="max-w-6xl mx-auto px-4 py-8">
-      <div class="flex items-center justify-between mb-6">
-        <h1 class="text-2xl font-bold">{{ t('nav.explore') }}</h1>
-      </div>
+    <CommonPageShell width="wide">
+      <CommonPageHeader :title="t('nav.explore')" :subtitle="t('explore.subtitle')" icon="i-lucide-compass" />
 
-      <!-- Filters -->
+      <!-- Filters — the one place form controls may set an explicit width,
+           because they sit in a horizontal cluster (DESIGNBOOK §3.4). -->
       <div class="flex flex-wrap gap-3 mb-6">
         <UInput
           v-model="search"
@@ -109,34 +108,33 @@ useSeoMeta({ title: `${t('nav.explore')} — GourMerge` })
         />
       </div>
 
-      <!-- Tag filter chips -->
+      <!-- Tag filter — a toggle row, so these are buttons per DESIGNBOOK §2, not
+           pills. They used to be hand-rolled <button>s with bespoke pill styles. -->
       <div v-if="allTags?.length" class="flex flex-wrap gap-2 mb-6">
-        <button
+        <UButton
           v-for="tag in allTags"
           :key="tag.name"
-          class="text-xs px-3 py-1 rounded-full border transition-colors"
-          :class="
-            selectedTag === tag.name
-              ? 'bg-primary-500 border-primary-500 text-white'
-              : 'border-[var(--ui-border)] hover:border-primary-500/50 text-[var(--ui-text-muted)]'
+          :label="tag.name"
+          size="xs"
+          :color="selectedTag === tag.name ? 'primary' : 'neutral'"
+          :variant="selectedTag === tag.name ? 'solid' : 'outline'"
+          :aria-pressed="selectedTag === tag.name"
+          @click="
+            () => {
+              selectedTag = selectedTag === tag.name ? '' : tag.name
+            }
           "
-          @click="selectedTag = selectedTag === tag.name ? '' : tag.name"
-        >
-          {{ tag.name }}
-        </button>
+        />
       </div>
 
       <!-- Results -->
-      <div v-if="pending" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <USkeleton v-for="i in 6" :key="i" class="h-40 rounded-xl" />
+      <div v-if="pending" :class="CARD_GRID">
+        <USkeleton v-for="i in 6" :key="i" class="h-48 rounded-lg" />
       </div>
 
-      <div v-else-if="!data?.recipes?.length" class="text-center py-16 text-[var(--ui-text-muted)]">
-        <UIcon name="i-lucide-search-x" class="size-12 mx-auto mb-4 opacity-40" />
-        <p>{{ t('explore.noResults') }}</p>
-      </div>
+      <CommonEmptyState v-else-if="!data?.recipes?.length" icon="i-lucide-search-x" :title="t('explore.noResults')" />
 
-      <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div v-else :class="CARD_GRID">
         <RecipeCard
           v-for="r in data.recipes"
           :key="r.id"
@@ -148,6 +146,6 @@ useSeoMeta({ title: `${t('nav.explore')} — GourMerge` })
       <div v-if="data && page * 20 < data.total" class="mt-8 flex justify-center">
         <UButton :label="t('explore.loadMore')" variant="outline" color="neutral" @click="loadMore()" />
       </div>
-    </div>
+    </CommonPageShell>
   </NuxtLayout>
 </template>

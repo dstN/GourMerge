@@ -6,55 +6,46 @@ useSeoMeta({
   description: () => t('glossary.seoDescription'),
 })
 
-const terms = ['recipe', 'fork', 'branch', 'commit', 'merge', 'gourmergeRequest', 'diff', 'history'] as const
+/** Icon per glossary term — a lookup, rather than the eight-deep nested ternary
+ *  that used to sit in the template. */
+const TERM_ICONS = {
+  recipe: 'i-lucide-book-open',
+  fork: 'i-lucide-git-fork',
+  branch: 'i-lucide-git-branch',
+  commit: 'i-lucide-save',
+  merge: 'i-lucide-git-merge',
+  gourmergeRequest: 'i-lucide-git-pull-request',
+  diff: 'i-lucide-diff',
+  history: 'i-lucide-history',
+} as const
+
+const terms = Object.keys(TERM_ICONS) as Array<keyof typeof TERM_ICONS>
 </script>
 
 <template>
-  <div class="max-w-3xl mx-auto px-4 py-12">
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold mb-2">{{ t('help.glossary') }}</h1>
-      <p class="text-[var(--ui-text-muted)]">{{ t('glossary.subtitle') }}</p>
-    </div>
+  <CommonPageShell width="content">
+    <CommonPageHeader :title="t('help.glossary')" :subtitle="t('glossary.subtitle')" icon="i-lucide-book-marked" />
 
     <div class="space-y-4">
       <UCard v-for="term in terms" :key="term">
         <div class="flex items-start gap-4">
-          <UIcon
-            :name="
-              term === 'recipe'
-                ? 'i-lucide-book-open'
-                : term === 'fork'
-                  ? 'i-lucide-git-fork'
-                  : term === 'branch'
-                    ? 'i-lucide-git-branch'
-                    : term === 'commit'
-                      ? 'i-lucide-save'
-                      : term === 'merge'
-                        ? 'i-lucide-git-merge'
-                        : term === 'gourmergeRequest'
-                          ? 'i-lucide-git-pull-request'
-                          : term === 'diff'
-                            ? 'i-lucide-diff'
-                            : 'i-lucide-history'
-            "
-            class="size-6 text-primary-500 shrink-0 mt-0.5"
-          />
+          <UIcon :name="TERM_ICONS[term]" class="size-5 text-primary shrink-0 mt-0.5" aria-hidden="true" />
           <div class="flex-1">
             <div class="flex items-center gap-2 mb-1">
-              <h2 class="font-semibold text-base">
+              <h2 class="text-base font-semibold">
                 {{ t(`glossary.${term}.alias`) }}
               </h2>
-              <UBadge color="neutral" variant="subtle" size="xs" :label="t(`glossary.${term}.canonical`)" />
+              <UBadge color="neutral" variant="subtle" :label="t(`glossary.${term}.canonical`)" />
             </div>
-            <p class="text-sm text-[var(--ui-text-muted)] leading-relaxed">
+            <p class="text-sm text-muted leading-relaxed">
               {{ t(`glossary.${term}.description`) }}
             </p>
-            <p class="text-xs text-[var(--ui-text-dimmed)] mt-1.5 italic">
+            <p class="text-xs text-dimmed mt-1.5 italic">
               {{ t(`glossary.${term}.helpHint`) }}
             </p>
           </div>
         </div>
       </UCard>
     </div>
-  </div>
+  </CommonPageShell>
 </template>

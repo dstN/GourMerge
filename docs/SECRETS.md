@@ -101,7 +101,7 @@ on a routine cadence for long-lived credentials:
 
    | Copy                                       | Consumer                                     | When        |
    | ------------------------------------------ | -------------------------------------------- | ----------- |
-   | Plesk → Custom environment variables       | the running app (`server/database/index.ts`) | runtime     |
+   | `PassengerEnvVar` in the host `.htaccess`  | the running app (`server/database/index.ts`) | runtime     |
    | GitHub → Environments → production secrets | `npx drizzle-kit migrate` on the runner      | deploy time |
 
    The runner cannot read Plesk's env and the host cannot read GitHub's secrets, hence

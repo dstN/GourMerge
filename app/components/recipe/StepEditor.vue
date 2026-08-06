@@ -71,15 +71,10 @@ onBeforeUnmount(() => editor.value?.destroy())
 </script>
 
 <template>
-  <div
-    class="border border-neutral-200 dark:border-neutral-700 rounded-lg overflow-hidden group"
-    :data-tour="`step-editor-${index}`"
-  >
+  <div class="group overflow-hidden rounded-lg border border-default" :data-tour="`step-editor-${index}`">
     <!-- Toolbar -->
-    <div
-      class="flex items-center gap-1 px-2 py-1 border-b border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800"
-    >
-      <span class="text-xs font-medium text-neutral-500 mr-2">{{ t('diff.stepNumber', { n: index + 1 }) }}</span>
+    <div class="flex items-center gap-1 border-b border-default bg-elevated px-2 py-1">
+      <span class="mr-2 text-xs font-medium text-muted">{{ t('diff.stepNumber', { n: index + 1 }) }}</span>
 
       <UButton
         v-if="editor"
@@ -87,7 +82,7 @@ onBeforeUnmount(() => editor.value?.destroy())
         size="xs"
         variant="ghost"
         color="neutral"
-        :class="{ 'bg-neutral-200 dark:bg-neutral-700': editor.isActive('bold') }"
+        :class="{ 'bg-accented': editor.isActive('bold') }"
         :aria-label="t('editor.bold')"
         @click="
           () => {
@@ -101,7 +96,7 @@ onBeforeUnmount(() => editor.value?.destroy())
         size="xs"
         variant="ghost"
         color="neutral"
-        :class="{ 'bg-neutral-200 dark:bg-neutral-700': editor.isActive('italic') }"
+        :class="{ 'bg-accented': editor.isActive('italic') }"
         :aria-label="t('editor.italic')"
         @click="
           () => {
@@ -115,7 +110,7 @@ onBeforeUnmount(() => editor.value?.destroy())
         size="xs"
         variant="ghost"
         color="neutral"
-        :class="{ 'bg-neutral-200 dark:bg-neutral-700': editor.isActive('bulletList') }"
+        :class="{ 'bg-accented': editor.isActive('bulletList') }"
         :aria-label="t('editor.bulletList')"
         @click="
           () => {
@@ -138,8 +133,8 @@ onBeforeUnmount(() => editor.value?.destroy())
     </div>
 
     <!-- Editor content area -->
-    <EditorContent v-if="editor" :editor="editor" class="bg-white dark:bg-neutral-900" />
-    <div v-else class="min-h-[4rem] p-3 text-neutral-400 text-sm">
+    <EditorContent v-if="editor" :editor="editor" class="bg-default" />
+    <div v-else class="min-h-16 p-3 text-sm text-dimmed">
       {{ placeholder ?? t('recipe.stepPlaceholder') }}
     </div>
   </div>

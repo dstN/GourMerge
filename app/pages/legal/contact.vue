@@ -8,16 +8,22 @@ import type { FormSubmitEvent } from '@nuxt/ui'
 definePageMeta({ layout: 'default' })
 
 const { t } = useI18n()
-const toast = useToast()
+const toast = useAppToast()
 
 useSeoMeta({
   title: `${t('legal.contactTitle')} — GourMerge`,
 })
 
 const schema = z.object({
-  name: z.string().min(2, t('legal.contactName')).max(100),
+  name: z
+    .string()
+    .min(2, t('validation.tooShort', { min: 2 }))
+    .max(100, t('validation.tooLong', { max: 100 })),
   email: z.string().email(t('auth.emailInvalid')),
-  message: z.string().min(10).max(2000),
+  message: z
+    .string()
+    .min(10, t('validation.tooShort', { min: 10 }))
+    .max(2000, t('validation.tooLong', { max: 2000 })),
 })
 
 type Schema = z.output<typeof schema>
@@ -47,11 +53,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     state.message = ''
     honeypot.value = ''
   } catch {
-    toast.add({
-      color: 'error',
-      title: t('legal.contactError'),
-      icon: 'i-lucide-alert-circle',
-    })
+    toast.error(t('legal.contactError'))
   } finally {
     loading.value = false
   }
@@ -59,13 +61,13 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 </script>
 
 <template>
-  <div class="max-w-2xl mx-auto px-4 py-12">
+  <CommonPageShell width="form">
     <UCard>
       <template #header>
         <h1 class="text-2xl font-bold">
           {{ t('legal.contactTitle') }}
         </h1>
-        <p class="text-sm text-[var(--ui-text-muted)] mt-1">
+        <p class="text-sm text-muted mt-1">
           {{ t('legal.contactSubtitle') }}
         </p>
       </template>
@@ -74,7 +76,6 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       <UAlert
         v-if="success"
         color="success"
-        variant="subtle"
         icon="i-lucide-check-circle"
         :title="t('legal.contactSuccess')"
         class="mb-4"
@@ -85,13 +86,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         <input v-model="honeypot" name="website" class="hidden" tabindex="-1" autocomplete="off" />
 
         <UFormField :label="t('legal.contactName')" name="name" required>
-          <UInput
-            v-model="state.name"
-            :placeholder="t('legal.contactNamePlaceholder')"
-            icon="i-lucide-user"
-            size="lg"
-            class="w-full"
-          />
+          <UInput v-model="state.name" :placeholder="t('legal.contactNamePlaceholder')" icon="i-lucide-user" />
         </UFormField>
 
         <UFormField :label="t('legal.contactEmail')" name="email" required>
@@ -100,19 +95,11 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
             type="email"
             :placeholder="t('legal.contactEmailPlaceholder')"
             icon="i-lucide-mail"
-            size="lg"
-            class="w-full"
           />
         </UFormField>
 
         <UFormField :label="t('legal.contactMessage')" name="message" required>
-          <UTextarea
-            v-model="state.message"
-            :placeholder="t('legal.contactMessagePlaceholder')"
-            :rows="6"
-            size="lg"
-            class="w-full"
-          />
+          <UTextarea v-model="state.message" :placeholder="t('legal.contactMessagePlaceholder')" :rows="6" />
         </UFormField>
 
         <UButton
@@ -125,5 +112,5 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         />
       </UForm>
     </UCard>
-  </div>
+  </CommonPageShell>
 </template>

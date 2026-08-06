@@ -97,17 +97,17 @@ watch(
     />
     <div
       v-if="showDropdown"
-      class="fixed z-[200] bg-[var(--ui-bg)] border border-[var(--ui-border)] rounded-lg shadow-lg max-h-48 overflow-y-auto"
+      class="fixed z-[200] bg-default border border-default rounded-lg shadow-lg max-h-48 overflow-y-auto"
       :style="dropdownPos"
     >
       <button
         v-for="option in options"
         :key="option.id ?? `new-${option.name}`"
         type="button"
-        class="w-full text-left px-3 py-2 text-sm hover:bg-[var(--ui-bg-elevated)] transition-colors"
+        class="w-full text-left px-3 py-2 text-sm hover:bg-elevated transition-colors"
         @mousedown.prevent="onSelect(option)"
       >
-        <span v-if="option.isNew" class="flex items-center gap-1.5 text-primary-500">
+        <span v-if="option.isNew" class="flex items-center gap-1.5 text-primary">
           <UIcon name="i-lucide-plus-circle" class="size-4 shrink-0" />
           {{ t('recipe.createIngredient', { name: option.localeName }) }}
         </span>

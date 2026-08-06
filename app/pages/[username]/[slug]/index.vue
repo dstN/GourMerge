@@ -18,7 +18,13 @@ function resolveTranslation(translations: StepTranslations | null | undefined, f
 }
 
 const { t, locale } = useI18n()
+const { apiError } = useApiError()
 
+/**
+ * Unit labels. Covers the canonical set AND the display-only units the API can
+ * return once the viewer's measurement preference is applied (`kg`/`l` for scaled
+ * metric, `oz`/`lb`/`cup`/`floz` for imperial) — see the by-slug endpoint.
+ */
 const UNIT_I18N: Record<string, string> = {
   g: 'recipe.unitG',
   ml: 'recipe.unitMl',
@@ -26,10 +32,23 @@ const UNIT_I18N: Record<string, string> = {
   pinch: 'recipe.unitPinch',
   tsp: 'recipe.unitTsp',
   tbsp: 'recipe.unitTbsp',
+  kg: 'recipe.unitKg',
+  l: 'recipe.unitL',
+  oz: 'recipe.unitOz',
+  lb: 'recipe.unitLb',
+  cup: 'recipe.unitCup',
+  floz: 'recipe.unitFloz',
 }
 function translateUnit(unit: string): string {
   const key = UNIT_I18N[unit]
   return key ? t(key) : unit
+}
+
+/** Locale-aware number formatting: "1.2 kg" in EN, "1,2 kg" in DE. */
+function formatQuantity(value: string): string {
+  const n = Number(value)
+  if (!Number.isFinite(n)) return value
+  return new Intl.NumberFormat(locale.value, { maximumFractionDigits: 2 }).format(n)
 }
 const route = useRoute()
 const { user, loggedIn } = useUserSession()
@@ -93,7 +112,7 @@ async function forkRecipe() {
     toast.success(t('recipe.forkSuccess'))
     await navigateTo(`/${res.owner.username}/${res.slug}`)
   } catch (e: unknown) {
-    toast.error((e as { data?: { statusMessage?: string } })?.data?.statusMessage || t('recipe.forkError'))
+    toast.error(apiError(e, 'recipe.forkError'))
   } finally {
     forkPending.value = false
   }
@@ -133,8 +152,10 @@ useSeoMeta({
 useHead(() => {
   if (!recipe.value) return {}
   const r = recipe.value
+  // Display form, so the structured data matches what the page actually shows.
+  // For anonymous crawlers (which is what gets indexed) display === canonical.
   const ingredients = (r.currentIngredients || []).map(
-    (ing) => `${ing.quantity} ${ing.unit} ${ing.ingredientName}${ing.notes ? ` (${ing.notes})` : ''}`
+    (ing) => `${ing.displayQuantity} ${ing.displayUnit} ${ing.ingredientName}${ing.notes ? ` (${ing.notes})` : ''}`
   )
   const steps = (r.currentSteps || []).map((s, i) => ({
     '@type': 'HowToStep',
@@ -171,34 +192,37 @@ useHead(() => {
 </script>
 
 <template>
-  <div class="max-w-4xl mx-auto px-4 py-8">
+  <CommonPageShell width="content">
     <!-- Loading -->
     <div v-if="pending" class="space-y-4">
       <USkeleton class="h-8 w-2/3" />
       <USkeleton class="h-4 w-1/3" />
-      <USkeleton class="h-64 w-full rounded-xl" />
+      <USkeleton class="h-64 w-full rounded-lg" />
     </div>
 
     <!-- Error -->
-    <UCard v-else-if="error" class="text-center py-16">
-      <UIcon name="i-lucide-alert-triangle" class="size-16 text-error-500 mx-auto mb-4" />
-      <h2 class="text-xl font-semibold">{{ t('common.error') }}</h2>
-      <p class="text-[var(--ui-text-muted)]">{{ error.statusMessage || t('recipe.notFound') }}</p>
-    </UCard>
+    <CommonEmptyState
+      v-else-if="error"
+      tone="error"
+      icon="i-lucide-alert-triangle"
+      :title="t('common.error')"
+      :description="error.statusMessage || t('recipe.notFound')"
+    />
 
     <!-- Recipe content -->
     <div v-else-if="recipe">
       <!-- Header -->
       <div class="mb-6">
-        <!-- Top row: breadcrumb + action buttons -->
+        <!-- Top row: owner path + action cluster. Every action here is the same
+             rank, so every button is `sm` (DESIGNBOOK §2). -->
         <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-3">
-          <div class="flex items-center gap-x-2 text-sm text-[var(--ui-text-muted)] min-w-0">
-            <UIcon name="i-lucide-user-circle" class="size-4 shrink-0" />
-            <NuxtLink :to="`/${recipe.owner.username}`" class="shrink-0 hover:text-primary-500 transition-colors">
+          <div class="flex items-center gap-x-2 text-sm text-muted min-w-0">
+            <UIcon name="i-lucide-user-circle" class="size-4 shrink-0" aria-hidden="true" />
+            <NuxtLink :to="`/${recipe.owner.username}`" class="shrink-0 transition-colors hover:text-default">
               {{ recipe.owner.displayName || recipe.owner.username }}
             </NuxtLink>
             <span aria-hidden="true" class="shrink-0">/</span>
-            <span class="font-semibold text-[var(--ui-text)] truncate">{{ recipe.slug }}</span>
+            <span class="font-semibold text-default truncate">{{ recipe.slug }}</span>
           </div>
 
           <div class="flex items-center gap-2 shrink-0 flex-wrap">
@@ -209,26 +233,26 @@ useHead(() => {
               icon="i-lucide-lock"
               :label="t('recipe.private')"
             />
-            <!-- Star button (logged-in, not owner) -->
+            <!-- Star toggle -->
             <UButton
               v-if="loggedIn"
-              :icon="starred ? 'i-lucide-star' : 'i-lucide-star'"
+              icon="i-lucide-star"
+              size="sm"
               :color="starred ? 'warning' : 'neutral'"
               :variant="starred ? 'soft' : 'outline'"
-              size="sm"
+              :aria-pressed="starred"
               :loading="starPending"
               :label="`${starCount}`"
               data-tour="star-button"
               @click="toggleStar"
             />
-            <!-- Fork button (logged-in, not owner) -->
             <UButton
               v-if="loggedIn && !isOwner"
               icon="i-lucide-git-fork"
               :label="t('recipe.fork')"
-              variant="outline"
-              color="neutral"
               size="sm"
+              color="neutral"
+              variant="outline"
               :loading="forkPending"
               data-tour="fork-button"
               @click="forkRecipe"
@@ -237,26 +261,26 @@ useHead(() => {
             <UButton
               :label="t('gourmergeRequest.titlePlural')"
               icon="i-lucide-git-pull-request"
-              variant="outline"
-              color="neutral"
               size="sm"
+              color="neutral"
+              variant="outline"
               :to="`${recipeUrl}/gourmerge-requests`"
               data-tour="gourmerge-requests-link"
             />
             <UButton
               :label="t('branches.title')"
               icon="i-lucide-git-branch"
-              variant="outline"
-              color="neutral"
               size="sm"
+              color="neutral"
+              variant="outline"
               :to="`${recipeUrl}/branches`"
             />
             <UButton
               :label="t('history.title')"
               icon="i-lucide-history"
-              variant="outline"
-              color="neutral"
               size="sm"
+              color="neutral"
+              variant="outline"
               :to="`${recipeUrl}/history`"
               data-tour="history-link"
             />
@@ -264,6 +288,7 @@ useHead(() => {
               v-if="isOwner"
               :label="t('common.edit')"
               icon="i-lucide-pencil"
+              size="sm"
               variant="soft"
               :to="`${recipeUrl}/edit`"
             />
@@ -271,18 +296,20 @@ useHead(() => {
         </div>
 
         <!-- Title block (full width) -->
-        <h1 class="text-3xl font-bold mb-2">{{ resolveTranslation(recipe.titleTranslations, recipe.title) }}</h1>
-        <p v-if="recipe.forkedFrom" class="text-sm text-[var(--ui-text-muted)] mb-2">
+        <h1 class="text-2xl font-bold tracking-tight sm:text-3xl mb-2">
+          {{ resolveTranslation(recipe.titleTranslations, recipe.title) }}
+        </h1>
+        <p v-if="recipe.forkedFrom" class="text-sm text-muted mb-2">
           <UIcon name="i-lucide-git-fork" class="size-4 inline-block align-text-bottom mr-1" aria-hidden="true" />{{
             t('recipe.forkedFrom')
           }}:
           <NuxtLink
             :to="`/${recipe.forkedFrom.username}/${recipe.forkedFrom.slug}`"
-            class="text-primary-500 hover:underline font-medium break-words"
+            class="link font-medium break-words"
             >{{ recipe.forkedFrom.displayName || recipe.forkedFrom.username }}/{{ recipe.forkedFrom.slug }}</NuxtLink
           >
         </p>
-        <p v-if="recipe.description" class="text-[var(--ui-text-muted)] text-lg">
+        <p v-if="recipe.description" class="text-muted text-lg">
           {{ resolveTranslation(recipe.descriptionTranslations, recipe.description) }}
         </p>
       </div>
@@ -309,49 +336,32 @@ useHead(() => {
           icon="i-lucide-flame"
           :label="`${recipe.cookTimeMinutes} min ${t('recipe.cookTime')}`"
         />
-        <UBadge
-          :color="recipe.difficulty === 'easy' ? 'success' : recipe.difficulty === 'hard' ? 'error' : 'warning'"
-          variant="subtle"
-          :class="
-            recipe.difficulty === 'easy'
-              ? 'text-green-700 dark:text-green-400'
-              : recipe.difficulty === 'hard'
-                ? 'text-red-700 dark:text-red-400'
-                : 'text-amber-700 dark:text-amber-400'
-          "
-          :label="t(`recipe.${recipe.difficulty}`)"
-        />
+        <RecipeDifficultyBadge :difficulty="recipe.difficulty" />
         <RecipeDietaryBadge v-if="recipe.dietaryType" :type="recipe.dietaryType" />
-        <div class="ml-auto flex items-center gap-3 text-sm text-[var(--ui-text-dimmed)]">
-          <span class="flex items-center gap-1"> <UIcon name="i-lucide-star" class="size-4" /> {{ starCount }} </span>
+        <div class="ml-auto flex items-center gap-3 text-sm text-dimmed">
+          <span class="flex items-center gap-1">
+            <UIcon name="i-lucide-star" class="size-4" aria-hidden="true" /> {{ starCount }}
+          </span>
           <NuxtLink
             :to="`${recipeUrl}/forks`"
-            class="flex items-center gap-1 hover:text-primary-500 transition-colors"
+            class="flex items-center gap-1 transition-colors hover:text-default"
             :title="t('recipe.viewForks')"
           >
-            <UIcon name="i-lucide-git-fork" class="size-4" /> {{ recipe.forkCount }}
+            <UIcon name="i-lucide-git-fork" class="size-4" aria-hidden="true" /> {{ recipe.forkCount }}
           </NuxtLink>
         </div>
       </div>
 
       <!-- Tags row -->
-      <div v-if="recipe.tags?.length" class="flex flex-wrap gap-2 mb-6">
-        <span
-          v-for="tag in recipe.tags"
-          :key="tag"
-          class="text-xs px-2.5 py-1 rounded-full bg-[var(--ui-bg-elevated)] border border-[var(--ui-border)] text-[var(--ui-text-muted)]"
-          >{{ tag }}</span
-        >
-      </div>
-      <div v-else class="mb-6" />
+      <RecipeTagList :tags="recipe.tags" class="mb-6" />
 
       <!-- Branch info -->
       <UCard v-if="recipe.defaultBranch" class="mb-6">
         <template #header>
           <div class="flex items-center gap-2">
-            <UIcon name="i-lucide-git-branch" class="size-5 text-primary-500" />
-            <span class="font-semibold">{{ recipe.defaultBranch.name }}</span>
-            <UBadge color="primary" variant="subtle" :label="t('recipe.defaultBranch')" size="xs" />
+            <UIcon name="i-lucide-git-branch" class="size-5 text-primary" aria-hidden="true" />
+            <h2 class="text-lg font-semibold">{{ recipe.defaultBranch.name }}</h2>
+            <UBadge color="primary" :label="t('recipe.defaultBranch')" />
           </div>
         </template>
       </UCard>
@@ -360,22 +370,22 @@ useHead(() => {
       <UCard class="mb-6">
         <template #header>
           <div class="flex items-center gap-2">
-            <UIcon name="i-lucide-shopping-basket" class="size-5 text-primary-500" />
+            <UIcon name="i-lucide-shopping-basket" class="size-5 text-primary" aria-hidden="true" />
             <h2 class="text-lg font-semibold">{{ t('recipe.ingredients') }}</h2>
-            <UBadge color="neutral" variant="subtle" :label="String(recipe.currentIngredients.length)" size="xs" />
+            <UBadge color="neutral" variant="subtle" :label="String(recipe.currentIngredients.length)" />
           </div>
         </template>
 
-        <div v-if="recipe.currentIngredients.length === 0" class="text-center py-8 text-[var(--ui-text-muted)]">
+        <div v-if="recipe.currentIngredients.length === 0" class="text-center py-8 text-muted">
           {{ t('recipe.noIngredients') }}
         </div>
 
-        <div v-else class="divide-y divide-[var(--ui-border)]">
+        <div v-else class="divide-y divide-default">
           <div v-for="ing in recipe.currentIngredients" :key="ing.id" class="flex items-center justify-between py-3">
             <span class="font-medium">{{ ing.ingredientName }}</span>
-            <span class="font-mono text-sm text-[var(--ui-text-muted)]">
-              {{ ing.quantity }} {{ translateUnit(ing.unit) }}
-              <span v-if="ing.notes" class="text-[var(--ui-text-dimmed)] italic ml-2"> ({{ ing.notes }}) </span>
+            <span class="font-mono text-sm text-muted">
+              {{ formatQuantity(ing.displayQuantity) }} {{ translateUnit(ing.displayUnit) }}
+              <span v-if="ing.notes" class="text-dimmed italic ml-2"> ({{ ing.notes }}) </span>
             </span>
           </div>
         </div>
@@ -394,20 +404,20 @@ useHead(() => {
       <UCard>
         <template #header>
           <div class="flex items-center gap-2">
-            <UIcon name="i-lucide-list-ordered" class="size-5 text-primary-500" />
+            <UIcon name="i-lucide-list-ordered" class="size-5 text-primary" aria-hidden="true" />
             <h2 class="text-lg font-semibold">{{ t('recipe.steps') }}</h2>
-            <UBadge color="neutral" variant="subtle" :label="String(recipe.currentSteps.length)" size="xs" />
+            <UBadge color="neutral" variant="subtle" :label="String(recipe.currentSteps.length)" />
           </div>
         </template>
 
-        <div v-if="recipe.currentSteps.length === 0" class="text-center py-8 text-[var(--ui-text-muted)]">
+        <div v-if="recipe.currentSteps.length === 0" class="text-center py-8 text-muted">
           {{ t('recipe.noSteps') }}
         </div>
 
         <div v-else class="space-y-6">
           <div v-for="step in recipe.currentSteps" :key="step.id" class="flex gap-4">
             <div
-              class="shrink-0 w-8 h-8 rounded-full bg-primary-500/10 text-primary-500 flex items-center justify-center font-bold text-sm"
+              class="shrink-0 size-8 rounded-full bg-primary-500/10 text-primary flex items-center justify-center font-bold text-sm"
             >
               {{ step.sortOrder }}
             </div>
@@ -417,5 +427,5 @@ useHead(() => {
         </div>
       </UCard>
     </div>
-  </div>
+  </CommonPageShell>
 </template>

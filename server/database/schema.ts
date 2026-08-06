@@ -71,6 +71,35 @@ export const users = mysqlTable('users', {
    * per-user, so two deleted accounts stay distinguishable in a thread.
    */
   anonymizedAt: datetime('anonymized_at'),
+
+  /**
+   * Marks the single shared tombstone account that inherits attribution from
+   * hard-deleted users (`ghost`). It is never loginable: `password_hash` holds a
+   * value no password can produce. Exactly one row has this set.
+   */
+  isGhost: boolean('is_ghost').notNull().default(false),
+
+  /**
+   * Last successful login. **This is the clock for inactivity deletion** — not
+   * `updated_at`, which is a `timestamp … ON UPDATE CURRENT_TIMESTAMP` and so moves
+   * on any write to the row (a locale change, a counter touch), which would make an
+   * abandoned account look active forever.
+   *
+   * A login is the only thing that resets it. Warning emails deliberately do not:
+   * otherwise the notice itself would keep extending the retention period.
+   */
+  lastLoginAt: datetime('last_login_at'),
+
+  /**
+   * Inactivity-notice bookkeeping — one column per stage rather than a counter, so
+   * the nightly job is idempotent (it can ask "was THIS notice already sent?"
+   * instead of trusting an ordering) and so support can see exactly what a user was
+   * told and when. All three are cleared on login.
+   */
+  inactivityNotice6mAt: datetime('inactivity_notice_6m_at'),
+  inactivityNotice4wAt: datetime('inactivity_notice_4w_at'),
+  inactivityNotice24hAt: datetime('inactivity_notice_24h_at'),
+
   createdAt: datetime('created_at')
     .notNull()
     .default(sql`CURRENT_TIMESTAMP`),
@@ -79,6 +108,136 @@ export const users = mysqlTable('users', {
     .default(sql`CURRENT_TIMESTAMP`)
     .onUpdateNow(),
 })
+
+// ═══════════════════════════════════════════════════════════════
+// TWO-FACTOR AUTHENTICATION (TOTP, RFC 6238)
+// ═══════════════════════════════════════════════════════════════
+// App-agnostic on purpose: the standard `otpauth://totp/…` URI with the default
+// SHA1 / 6 digits / 30s parameters works in Google Authenticator, Authy,
+// 1Password, Bitwarden, Aegis and Microsoft Authenticator alike. Google
+// Authenticator in particular *ignores* non-default `algorithm`/`digits`
+// parameters, so deviating from those defaults silently breaks it.
+
+export const userTotp = mysqlTable('user_totp', {
+  id: int('id').primaryKey().autoincrement(),
+  userId: int('user_id')
+    .notNull()
+    .unique()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  /**
+   * Base32 TOTP secret, **encrypted at rest** (AES-256-GCM, see
+   * `server/utils/totp.ts`). A plaintext secret in the database is a bearer token
+   * for every account that has 2FA enabled — a DB dump would defeat the feature it
+   * is supposed to provide.
+   */
+  secretEncrypted: text('secret_encrypted').notNull(),
+  /**
+   * Null until the user proves possession by entering a first valid code. An
+   * unconfirmed row must never gate a login, or a failed setup would lock the user
+   * out of their own account.
+   */
+  confirmedAt: datetime('confirmed_at'),
+  /**
+   * Highest 30-second time step already accepted. Replay protection: a code is
+   * valid for its whole window, so without this an intercepted code could be
+   * reused within the same period.
+   */
+  lastUsedCounter: int('last_used_counter'),
+  createdAt: datetime('created_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+})
+
+/**
+ * Single-use recovery codes, bcrypt-hashed like every other credential here.
+ * Without these, a lost phone is an unrecoverable lockout — which is the most
+ * common reason 2FA rollouts generate support load.
+ */
+export const userRecoveryCodes = mysqlTable(
+  'user_recovery_codes',
+  {
+    id: int('id').primaryKey().autoincrement(),
+    userId: int('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    codeHash: varchar('code_hash', { length: 255 }).notNull(),
+    usedAt: datetime('used_at'),
+    createdAt: datetime('created_at')
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [index('user_recovery_codes_user_idx').on(table.userId)]
+)
+
+// ═══════════════════════════════════════════════════════════════
+// PASSKEYS (WebAuthn / FIDO2)
+// ═══════════════════════════════════════════════════════════════
+// A passkey replaces the password entirely rather than adding a step to it: the
+// private key never leaves the authenticator, and unlocking it requires the device
+// plus a biometric or PIN. That is already two factors, which is why a passkey login
+// does NOT then ask for a TOTP code — see server/routes/auth/passkey-authenticate.post.ts.
+
+export const userPasskeys = mysqlTable(
+  'user_passkeys',
+  {
+    id: int('id').primaryKey().autoincrement(),
+    userId: int('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    /**
+     * The credential id from the authenticator, base64url. Globally unique, and the
+     * lookup key during authentication — the browser sends it before we know who is
+     * signing in, which is what makes usernameless login possible.
+     */
+    credentialId: varchar('credential_id', { length: 255 }).notNull().unique(),
+    /** COSE public key, base64url. Public by definition, so no encryption needed. */
+    publicKey: text('public_key').notNull(),
+    /**
+     * Signature counter. Authenticators that implement it increment on every
+     * assertion; a counter that fails to advance is the documented signal of a cloned
+     * credential. Many passkeys (iCloud, Google) always report 0 — see
+     * `verifyPasskeyCounter` for why that is not treated as an error.
+     */
+    counter: int('counter').notNull().default(0),
+    /** True for a synced passkey (iCloud Keychain, Google Password Manager). */
+    backedUp: boolean('backed_up').notNull().default(false),
+    /** JSON array of hints such as `["internal","hybrid"]`, used on re-auth. */
+    transports: json('transports').$type<string[]>(),
+    /** User-facing label, so a person with three keys can tell them apart. */
+    name: varchar('name', { length: 100 }).notNull(),
+    lastUsedAt: datetime('last_used_at'),
+    createdAt: datetime('created_at')
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [index('user_passkeys_user_idx').on(table.userId)]
+)
+
+/**
+ * Short-lived WebAuthn challenges.
+ *
+ * A challenge is issued in one request and verified in the next, so it has to
+ * survive between them. It deliberately does **not** live in the user session:
+ * authentication starts with no session at all, and Passenger runs several processes,
+ * so in-memory storage would break as soon as the two requests hit different workers
+ * (the same reason the rate limiter is DB-backed).
+ *
+ * Rows are single-use and swept by the retention job.
+ */
+export const webauthnChallenges = mysqlTable(
+  'webauthn_challenges',
+  {
+    id: int('id').primaryKey().autoincrement(),
+    /** Opaque id echoed by the client to pair the two halves of the ceremony. */
+    attemptId: varchar('attempt_id', { length: 255 }).notNull().unique(),
+    challenge: varchar('challenge', { length: 255 }).notNull(),
+    expiresAt: datetime('expires_at').notNull(),
+    createdAt: datetime('created_at')
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [index('webauthn_challenges_expires_idx').on(table.expiresAt)]
+)
 
 // ═══════════════════════════════════════════════════════════════
 // INGREDIENTS (Global Master Table)
@@ -388,7 +547,7 @@ export const recipeCommitSteps = mysqlTable(
 // ═══════════════════════════════════════════════════════════════
 // GOURMERGE REQUESTS (branched change proposals — propose/review/merge model)
 // ═══════════════════════════════════════════════════════════════
-// ⚠️  WORDING: Never use "pull_request" anywhere. It's "gourmerge_request".
+// ⚠️  WORDING: Never use "pull_request" anywhere. It's "gourmerge_request". (design-check-ignore: states the rule)
 
 export const gourmergeRequests = mysqlTable(
   'gourmerge_requests',

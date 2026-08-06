@@ -9,8 +9,9 @@ import type { RecipeDetail } from '~~/shared/types/recipe'
 definePageMeta({ layout: 'dashboard', middleware: ['validate-recipe-route', 'auth'] })
 
 const { t } = useI18n()
+const { apiError } = useApiError()
 const route = useRoute()
-const toast = useToast()
+const toast = useAppToast()
 
 const username = computed(() => route.params.username as string)
 const slug = computed(() => route.params.slug as string)
@@ -49,16 +50,12 @@ async function createBranch() {
         fromBranchId: sourceBranchId.value,
       },
     })
-    toast.add({ title: t('branches.created'), color: 'success', icon: 'i-lucide-check' })
+    toast.success(t('branches.created'))
     newBranchName.value = ''
     showCreateModal.value = false
     await refreshBranches()
   } catch (err: unknown) {
-    toast.add({
-      title: (err as { data?: { statusMessage?: string } })?.data?.statusMessage || t('common.error'),
-      color: 'error',
-      icon: 'i-lucide-alert-circle',
-    })
+    toast.error(apiError(err, 'common.error'))
   } finally {
     creating.value = false
   }
@@ -73,14 +70,10 @@ async function deleteBranch(branchId: number) {
     await $fetch(`/api/recipes/${recipeId.value}/branches/${branchId}`, {
       method: 'DELETE',
     })
-    toast.add({ title: t('branches.deleted'), color: 'success', icon: 'i-lucide-check' })
+    toast.success(t('branches.deleted'))
     await refreshBranches()
   } catch (err: unknown) {
-    toast.add({
-      title: (err as { data?: { statusMessage?: string } })?.data?.statusMessage || t('common.error'),
-      color: 'error',
-      icon: 'i-lucide-alert-circle',
-    })
+    toast.error(apiError(err, 'common.error'))
   } finally {
     deleting.value = null
   }
@@ -96,81 +89,73 @@ const branchSourceOptions = computed(
 </script>
 
 <template>
-  <div class="max-w-4xl mx-auto py-8 px-4">
-    <!-- Header -->
-    <div class="flex items-center justify-between mb-8">
-      <div>
-        <NuxtLink
-          :to="recipeUrl"
-          class="text-sm text-[var(--ui-text-muted)] hover:text-primary-500 mb-2 inline-flex items-center gap-1"
-        >
-          <UIcon name="i-lucide-arrow-left" class="size-4" />
-          {{ recipe?.title }}
-        </NuxtLink>
-        <h1 class="text-2xl font-bold flex items-center gap-2">
-          <UIcon name="i-lucide-git-branch" class="size-6 text-primary-500" />
-          {{ t('branches.title') }}
-        </h1>
-      </div>
-
-      <UButton
-        :label="t('branches.create')"
-        icon="i-lucide-plus"
-        @click="
-          () => {
-            showCreateModal = true
-          }
-        "
-      />
-    </div>
+  <CommonPageShell width="content">
+    <CommonPageHeader
+      :title="t('branches.title')"
+      icon="i-lucide-git-branch"
+      :back-to="recipeUrl"
+      :back-label="recipe?.title"
+    >
+      <template #actions>
+        <UButton
+          :label="t('branches.create')"
+          icon="i-lucide-plus"
+          size="lg"
+          @click="
+            () => {
+              showCreateModal = true
+            }
+          "
+        />
+      </template>
+    </CommonPageHeader>
 
     <!-- Branches list -->
     <div class="space-y-3">
-      <UCard v-for="branch in branches" :key="branch.id" :ui="{ root: 'overflow-hidden' }">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-3">
+      <UCard v-for="branch in branches" :key="branch.id">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div class="flex items-center gap-3 min-w-0">
             <UIcon
               name="i-lucide-git-branch"
-              :class="['size-5', branch.isDefault ? 'text-primary-500' : 'text-[var(--ui-text-muted)]']"
+              :class="['size-5 shrink-0', branch.isDefault ? 'text-primary' : 'text-muted']"
+              aria-hidden="true"
             />
-            <div>
+            <div class="min-w-0">
               <div class="flex items-center gap-2">
-                <span class="font-semibold">{{ branch.name }}</span>
-                <UBadge
-                  v-if="branch.isDefault"
-                  :label="t('recipe.defaultBranch')"
-                  color="primary"
-                  variant="subtle"
-                  size="xs"
-                />
+                <span class="font-semibold truncate">{{ branch.name }}</span>
+                <UBadge v-if="branch.isDefault" :label="t('recipe.defaultBranch')" color="primary" />
               </div>
-              <p class="text-xs text-[var(--ui-text-muted)] mt-0.5">
+              <p class="text-xs text-muted mt-0.5 font-mono">
                 HEAD: {{ branch.headCommitId ? `#${branch.headCommitId}` : '—' }}
               </p>
             </div>
           </div>
 
-          <div class="flex items-center gap-2">
+          <!-- Row actions — all `sm`, per DESIGNBOOK §2 (same rank, same size) -->
+          <div class="flex shrink-0 items-center gap-2">
             <UButton
               :label="t('branches.viewHistory')"
               icon="i-lucide-history"
+              size="sm"
+              color="neutral"
               variant="outline"
-              size="xs"
               :to="`${recipeUrl}/history`"
             />
             <UButton
               :label="t('common.edit')"
               icon="i-lucide-pencil"
+              size="sm"
+              color="neutral"
               variant="outline"
-              size="xs"
               :to="`${recipeUrl}/edit?branch=${branch.id}`"
             />
             <UButton
               v-if="!branch.isDefault"
               icon="i-lucide-trash-2"
-              variant="ghost"
+              size="sm"
               color="error"
-              size="xs"
+              variant="outline"
+              :aria-label="t('common.delete')"
               :loading="deleting === branch.id"
               @click="deleteBranch(branch.id)"
             />
@@ -179,16 +164,13 @@ const branchSourceOptions = computed(
       </UCard>
     </div>
 
-    <!-- Empty state -->
-    <UCard v-if="!branches?.length" class="text-center py-12">
-      <p class="text-[var(--ui-text-muted)]">{{ t('branches.empty') }}</p>
-    </UCard>
+    <CommonEmptyState v-if="!branches?.length" icon="i-lucide-git-branch" :title="t('branches.empty')" />
 
     <!-- Create Branch Modal -->
     <UModal v-model:open="showCreateModal" :title="t('branches.createTitle')">
       <template #body>
         <div class="space-y-4">
-          <UFormField :label="t('branches.name')">
+          <UFormField :label="t('branches.name')" required>
             <UInput v-model="newBranchName" :placeholder="t('branches.namePlaceholder')" icon="i-lucide-git-branch" />
           </UFormField>
 
@@ -208,8 +190,8 @@ const branchSourceOptions = computed(
         <div class="flex justify-end gap-2">
           <UButton
             :label="t('common.cancel')"
-            variant="outline"
             color="neutral"
+            variant="subtle"
             @click="
               () => {
                 showCreateModal = false
@@ -226,5 +208,5 @@ const branchSourceOptions = computed(
         </div>
       </template>
     </UModal>
-  </div>
+  </CommonPageShell>
 </template>

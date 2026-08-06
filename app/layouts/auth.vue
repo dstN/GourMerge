@@ -1,48 +1,45 @@
 <script setup lang="ts">
 /**
- * Auth Layout — Minimal centered layout for login/register pages
+ * Auth Layout — minimal centred shell for login/register/reset.
+ *
+ * Uses the same app shell as `default`/`dashboard` (DESIGNBOOK §4.1): `h-dvh`,
+ * `overflow-hidden`, and only `<main>` scrolls. It previously used `min-h-screen`
+ * on the outer div, which double-scrolls on mobile once the browser chrome is
+ * counted. `min-h-full` on the inner flex row keeps the card centred when it fits
+ * and lets it scroll when it doesn't (the register form is taller than a short
+ * viewport).
+ *
+ * The `max-w-md` cap lives HERE, not on the pages — see the note in
+ * `forgot-password.vue`'s history: two pages used to cap and offset their own
+ * card, so they rendered 64px lower and narrower than login.
  */
 const { t } = useI18n()
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-[var(--ui-bg)] p-4">
-    <div class="w-full max-w-md">
-      <!-- Brand -->
-      <div class="text-center mb-8">
-        <NuxtLink to="/" class="inline-flex items-center gap-2.5 group">
-          <CommonBrandLogo class="size-10 text-primary-500 group-hover:text-primary-400 transition-colors" />
-          <span class="text-3xl font-bold tracking-tight"> Gour<span class="text-primary-500">Merge</span> </span>
-        </NuxtLink>
-      </div>
+  <div class="flex flex-col h-dvh overflow-hidden bg-default text-default">
+    <a href="#main-content" class="skip-link">{{ t('a11y.skipToContent') }}</a>
 
-      <!-- Content -->
-      <slot />
+    <main id="main-content" tabindex="0" class="flex-1 overflow-y-auto">
+      <div class="flex min-h-full items-center justify-center px-4 py-10">
+        <div class="w-full max-w-md">
+          <!-- Brand -->
+          <div class="text-center mb-8">
+            <NuxtLink to="/" class="inline-flex items-center gap-2.5 group">
+              <CommonBrandLogo class="size-10 text-primary transition-opacity group-hover:opacity-80" />
+              <span class="text-3xl font-bold tracking-tight"> Gour<span class="text-primary">Merge</span> </span>
+            </NuxtLink>
+          </div>
 
-      <!-- Footer -->
-      <div class="mt-8 flex flex-col items-center gap-2">
-        <p class="text-center text-sm text-[var(--ui-text-dimmed)]">© {{ new Date().getFullYear() }} GourMerge</p>
-        <div class="flex items-center gap-3 flex-wrap justify-center">
-          <NuxtLink
-            to="/legal/impressum"
-            class="text-xs text-[var(--ui-text-muted)] hover:text-[var(--ui-text)] transition-colors"
-          >
-            {{ t('legal.impressum') }}
-          </NuxtLink>
-          <NuxtLink
-            to="/legal/datenschutz"
-            class="text-xs text-[var(--ui-text-muted)] hover:text-[var(--ui-text)] transition-colors"
-          >
-            {{ t('legal.datenschutz') }}
-          </NuxtLink>
-          <NuxtLink
-            to="/legal/contact"
-            class="text-xs text-[var(--ui-text-muted)] hover:text-[var(--ui-text)] transition-colors"
-          >
-            {{ t('legal.contact') }}
-          </NuxtLink>
+          <slot />
+
+          <!-- Footer -->
+          <div class="mt-8 flex flex-col items-center gap-2">
+            <p class="text-center text-sm text-dimmed">© {{ new Date().getFullYear() }} GourMerge</p>
+            <LayoutFooterLinks />
+          </div>
         </div>
       </div>
-    </div>
+    </main>
   </div>
 </template>

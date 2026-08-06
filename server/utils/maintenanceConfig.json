@@ -1,0 +1,22 @@
+{
+  "_comment": [
+    "Retention windows, in ONE place, read by three consumers:",
+    "  1. server/utils/inactivitySweep.ts  (the production path, via /api/tasks/*)",
+    "  2. scripts/inactive-accounts.mjs    (local/manual CLI, no TS pipeline)",
+    "  3. tests/unit/inactivityEmails.test.ts (asserts policy and code agree)",
+    "",
+    "JSON rather than a .ts module because the cron CLI runs as plain Node and",
+    "cannot import TypeScript. These numbers are also stated in section 7 of",
+    "app/pages/legal/datenschutz.vue — changing one without the other makes the",
+    "privacy policy false."
+  ],
+  "inactivity": {
+    "retentionDays": 1095,
+    "notices": [
+      { "key": "sixMonths", "column": "inactivity_notice_6m_at", "daysBefore": 182 },
+      { "key": "fourWeeks", "column": "inactivity_notice_4w_at", "daysBefore": 28 },
+      { "key": "finalDay", "column": "inactivity_notice_24h_at", "daysBefore": 1 }
+    ],
+    "minHoursAfterFinalNotice": 24
+  }
+}

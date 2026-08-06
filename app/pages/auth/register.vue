@@ -8,6 +8,7 @@ import type { FormSubmitEvent } from '@nuxt/ui'
 definePageMeta({ layout: 'auth', middleware: 'guest' })
 
 const { t } = useI18n()
+const { apiError } = useApiError()
 const { fetch: fetchSession } = useUserSession()
 
 useSeoMeta({
@@ -21,11 +22,14 @@ const schema = z.object({
   username: z
     .string()
     .min(3, t('auth.usernameMin'))
-    .max(50)
+    .max(50, t('validation.tooLong', { max: 50 }))
     .regex(/^[a-zA-Z0-9_-]+$/, t('auth.usernameFormat')),
   email: z.string().email(t('auth.emailInvalid')),
   password: z.string().min(8, t('auth.passwordMin')),
-  displayName: z.string().max(100).optional(),
+  displayName: z
+    .string()
+    .max(100, t('validation.tooLong', { max: 100 }))
+    .optional(),
 })
 
 type Schema = z.output<typeof schema>
@@ -49,7 +53,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     await fetchSession()
     navigateTo('/dashboard')
   } catch (err: unknown) {
-    error.value = (err as { data?: { statusMessage?: string } })?.data?.statusMessage || t('auth.registerError')
+    error.value = apiError(err, 'auth.registerError')
   } finally {
     loading.value = false
   }
@@ -62,7 +66,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       <h1 class="text-2xl font-bold text-center">
         {{ t('auth.register') }}
       </h1>
-      <p class="text-sm text-[var(--ui-text-muted)] text-center mt-1">
+      <p class="text-sm text-muted text-center mt-1">
         {{ t('auth.registerSubtitle') }}
       </p>
     </template>
@@ -72,38 +76,21 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       <UAlert
         v-if="error"
         color="error"
-        variant="subtle"
         icon="i-lucide-alert-circle"
         :title="error"
         :close-button="{ onClick: () => (error = '') }"
       />
 
       <UFormField :label="t('auth.displayName')" name="displayName">
-        <UInput
-          v-model="state.displayName"
-          :placeholder="t('auth.displayNamePlaceholder')"
-          icon="i-lucide-user"
-          size="lg"
-        />
+        <UInput v-model="state.displayName" :placeholder="t('auth.displayNamePlaceholder')" icon="i-lucide-user" />
       </UFormField>
 
       <UFormField :label="t('auth.username')" name="username" required>
-        <UInput
-          v-model="state.username"
-          :placeholder="t('auth.usernamePlaceholder')"
-          icon="i-lucide-at-sign"
-          size="lg"
-        />
+        <UInput v-model="state.username" :placeholder="t('auth.usernamePlaceholder')" icon="i-lucide-at-sign" />
       </UFormField>
 
       <UFormField :label="t('auth.email')" name="email" required>
-        <UInput
-          v-model="state.email"
-          type="email"
-          :placeholder="t('auth.emailPlaceholder')"
-          icon="i-lucide-mail"
-          size="lg"
-        />
+        <UInput v-model="state.email" type="email" :placeholder="t('auth.emailPlaceholder')" icon="i-lucide-mail" />
       </UFormField>
 
       <UFormField :label="t('auth.password')" name="password" required>
@@ -112,7 +99,6 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           type="password"
           :placeholder="t('auth.passwordPlaceholder')"
           icon="i-lucide-lock"
-          size="lg"
         />
       </UFormField>
 
@@ -127,9 +113,9 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     </UForm>
 
     <template #footer>
-      <p class="text-sm text-center text-[var(--ui-text-muted)]">
+      <p class="text-sm text-center text-muted">
         {{ t('auth.hasAccount') }}
-        <NuxtLink to="/auth/login" class="text-primary-500 font-medium hover:underline">
+        <NuxtLink to="/auth/login" class="link font-medium">
           {{ t('auth.loginLink') }}
         </NuxtLink>
       </p>

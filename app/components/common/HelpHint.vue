@@ -40,7 +40,7 @@ const open = ref(false)
     <template #content>
       <div class="p-3 max-w-xs">
         <p v-if="titleText" class="font-medium text-sm mb-1">{{ titleText }}</p>
-        <p class="text-sm text-neutral-600 dark:text-neutral-300">{{ helpText }}</p>
+        <p class="text-sm text-muted">{{ helpText }}</p>
       </div>
     </template>
   </UPopover>

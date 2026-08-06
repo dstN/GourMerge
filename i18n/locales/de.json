@@ -163,7 +163,17 @@
     "forkError": "Eigene Version konnte nicht erstellt werden.",
     "seoDescriptionFallback": "Entdecke und remixe dieses Rezept auf GourMerge — die Plattform für kollaborative Rezeptentwicklung.",
     "forkedFrom": "Abgeleitet von",
-    "viewForks": "Remixe ansehen"
+    "viewForks": "Remixe ansehen",
+    "tagsLabel": "Tags",
+    "tagsPlaceholder": "Tag hinzufügen, Enter drücken",
+    "tagRemove": "Tag „{tag}“ entfernen",
+    "unitLabel": "Einheit",
+    "unitKg": "kg",
+    "unitL": "l",
+    "unitOz": "oz",
+    "unitLb": "lb",
+    "unitCup": "Tasse",
+    "unitFloz": "fl oz"
   },
   "common": {
     "edit": "Bearbeiten",
@@ -173,7 +183,8 @@
     "error": "Fehler",
     "unsaved": "Ungespeicherte Änderungen",
     "leave": "Verlassen",
-    "help": "Hilfe"
+    "help": "Hilfe",
+    "or": "oder"
   },
   "diff": {
     "title": "Änderungen",
@@ -328,7 +339,8 @@
     "sortForks": "Meiste Remixes",
     "noResults": "Keine Rezepte gefunden.",
     "loadMore": "Mehr laden",
-    "sortBy": "Sortieren nach"
+    "sortBy": "Sortieren nach",
+    "subtitle": "Entdecke öffentliche Rezepte der Community."
   },
   "branches": {
     "title": "Varianten",
@@ -533,7 +545,11 @@
       "retentionLogs": "Server-Logs: 7 Tage, danach werden sie rotierend überschrieben.",
       "retentionErrors": "Fehlerberichte bei Sentry: 90 Tage.",
       "selfServiceTitle": "9. Selbstbedienung",
-      "selfServiceDesc": "Auskunft und Löschung kannst du jederzeit selbst anstoßen — ohne uns zu schreiben:"
+      "selfServiceDesc": "Auskunft und Löschung kannst du jederzeit selbst anstoßen — ohne uns zu schreiben:",
+      "retentionInactive": "Inaktive Konten: Wenn du dich drei Jahre lang nicht anmeldest, löschen wir dein Konto automatisch. Wir warnen dich vorher dreimal per E-Mail — sechs Monate, vier Wochen und 24 Stunden vor der Löschung. Eine einzige Anmeldung genügt, damit dein Konto erhalten bleibt; die Frist beginnt dann neu. Maßgeblich ist ausschließlich dein letzter Login, nicht das Öffnen einer E-Mail.",
+      "twofaTitle": "Zwei-Faktor-Authentifizierung (optional)",
+      "twofaBody": "Du kannst dein Konto freiwillig mit einer Authenticator-App (TOTP) zusätzlich schützen. Wir speichern dann einen verschlüsselten Schlüssel für die Code-Erzeugung sowie zehn Wiederherstellungscodes als Hash. Es werden keine Telefonnummern erhoben und keine Daten an Dritte übermittelt — die Codes entstehen ausschließlich auf deinem Gerät. Du kannst die Funktion jederzeit in den Einstellungen wieder deaktivieren; die zugehörigen Daten werden dabei gelöscht.",
+      "deletionHard": "Bei einer Löschung nach Art. 17 DSGVO wird dein Konto tatsächlich gelöscht, nicht nur gesperrt. Beiträge, die untrennbar zur Historie fremder Rezepte gehören — etwa Versionen, die jemand anderes in seine eigene Kopie übernommen hat, sowie deine GourMerge Requests und Kommentare in fremden Diskussionen — werden einem anonymen Platzhalterkonto zugeordnet. Dein Name, deine E-Mail-Adresse und dein Profil verschwinden dabei vollständig."
     }
   },
   "editor": {
@@ -551,5 +567,82 @@
     "subtitle": "Rezepte, die du mit einem Stern markiert hast.",
     "empty": "Noch keine Favoriten",
     "emptyDesc": "Markiere Rezepte mit einem Stern, um sie hier wiederzufinden."
+  },
+  "validation": {
+    "required": "Dieses Feld ist erforderlich.",
+    "tooShort": "Mindestens {min} Zeichen.",
+    "tooLong": "Maximal {max} Zeichen.",
+    "numberRange": "Bitte einen Wert zwischen {min} und {max} angeben.",
+    "selectOption": "Bitte eine Option auswählen."
+  },
+  "twofa": {
+    "title": "Zwei-Faktor-Authentifizierung",
+    "subtitle": "Schütze dein Konto zusätzlich mit einer Authenticator-App.",
+    "statusOn": "Aktiv",
+    "statusOff": "Nicht aktiv",
+    "appHint": "Funktioniert mit jeder Authenticator-App — z. B. Google Authenticator, Authy, 1Password, Bitwarden oder Aegis.",
+    "enable": "Einrichten",
+    "disable": "Deaktivieren",
+    "setupScan": "Scanne diesen QR-Code mit deiner Authenticator-App:",
+    "setupManual": "Kein Scanner? Gib diesen Schlüssel manuell ein:",
+    "setupCodeLabel": "Sechsstelliger Code aus der App",
+    "setupConfirm": "Aktivieren",
+    "setupCancel": "Abbrechen",
+    "recoveryTitle": "Deine Wiederherstellungscodes",
+    "recoveryDesc": "Bewahre diese Codes an einem sicheren Ort auf. Jeder Code funktioniert genau einmal und ist dein Weg zurück, falls du dein Gerät verlierst. Sie werden nur dieses eine Mal angezeigt.",
+    "recoveryCopy": "Codes kopieren",
+    "recoveryCopied": "Codes kopiert",
+    "recoveryDone": "Ich habe sie gespeichert",
+    "recoveryRemaining": "{n} von 10 Wiederherstellungscodes noch nutzbar",
+    "disableTitle": "Zwei-Faktor-Authentifizierung deaktivieren",
+    "disableDesc": "Zur Bestätigung brauchen wir dein Passwort — nicht einen Code, damit du dich auch bei verlorenem Gerät nicht aussperrst.",
+    "disablePassword": "Passwort",
+    "disableConfirm": "Deaktivieren",
+    "enabledToast": "Zwei-Faktor-Authentifizierung ist aktiv.",
+    "disabledToast": "Zwei-Faktor-Authentifizierung wurde deaktiviert.",
+    "challengeTitle": "Bestätige deine Anmeldung",
+    "challengeDesc": "Gib den sechsstelligen Code aus deiner Authenticator-App ein.",
+    "challengeCode": "Code",
+    "challengeSubmit": "Anmelden",
+    "challengeRecoveryHint": "Gerät verloren? Gib stattdessen einen Wiederherstellungscode ein.",
+    "challengeExpired": "Der Anmeldeversuch ist abgelaufen. Bitte melde dich erneut an.",
+    "invalidCode": "Dieser Code ist nicht gültig.",
+    "usedRecoveryCode": "Du hast einen Wiederherstellungscode verwendet. Erstelle bei Gelegenheit neue Codes in den Einstellungen."
+  },
+  "errors": {
+    "network": "Der Server ist nicht erreichbar. Prüfe deine Verbindung und versuche es erneut.",
+    "unauthorized": "Dazu fehlt dir die Berechtigung.",
+    "notFound": "Das konnten wir nicht finden.",
+    "conflict": "Das geht so nicht — vermutlich existiert es schon oder wurde gerade geändert.",
+    "validation": "Bitte überprüfe deine Eingaben.",
+    "rateLimited": "Zu viele Versuche. Warte einen Moment und versuche es erneut.",
+    "unavailable": "Der Dienst ist gerade nicht verfügbar. Bitte versuche es später erneut.",
+    "server": "Auf dem Server ist etwas schiefgelaufen. Bitte versuche es später erneut.",
+    "unknown": "Etwas ist schiefgelaufen. Bitte versuche es erneut."
+  },
+  "passkey": {
+    "title": "Passkeys",
+    "subtitle": "Melde dich ohne Passwort an — mit Fingerabdruck, Gesicht oder Geräte-PIN.",
+    "explain": "Ein Passkey bleibt auf deinem Gerät und lässt sich nicht abfangen oder auf einer gefälschten Seite eingeben. Er ersetzt bei der Anmeldung Passwort und Bestätigungscode.",
+    "add": "Passkey hinzufügen",
+    "none": "Noch kein Passkey eingerichtet.",
+    "unsupported": "Dieser Browser oder dieses Gerät unterstützt keine Passkeys.",
+    "synced": "Geräteübergreifend synchronisiert",
+    "deviceBound": "Nur auf diesem Gerät",
+    "created": "Hinzugefügt am {date}",
+    "lastUsed": "Zuletzt verwendet am {date}",
+    "neverUsed": "Noch nicht verwendet",
+    "rename": "Umbenennen",
+    "renameTitle": "Passkey umbenennen",
+    "nameLabel": "Name",
+    "remove": "Entfernen",
+    "removeTitle": "Passkey entfernen",
+    "removeConfirm": "Dieser Passkey funktioniert danach nicht mehr. Mit Passwort kannst du dich weiterhin anmelden.",
+    "addedToast": "Passkey hinzugefügt.",
+    "removedToast": "Passkey entfernt.",
+    "renamedToast": "Passkey umbenannt.",
+    "cancelled": "Abgebrochen.",
+    "loginButton": "Mit Passkey anmelden",
+    "loginError": "Anmeldung mit Passkey fehlgeschlagen."
   }
 }

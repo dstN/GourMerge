@@ -18,6 +18,8 @@ import {
   tags,
 } from '~~/server/database/schema'
 import { computeNutritionTotals, perServing } from '~~/server/utils/nutrition'
+import { getBestDisplayUnit } from '~~/server/utils/units'
+import type { CanonicalUnit, MeasurementSystem } from '~~/shared/types'
 
 export default defineEventHandler(async (event) => {
   const username = getRouterParam(event, 'username')
@@ -82,6 +84,9 @@ export default defineEventHandler(async (event) => {
 
   // ── Check if current user has starred this recipe ──────────
   let isStarred = false
+  // Guests get metric — it is the storage form and the default for the German
+  // primary audience.
+  let viewerMeasurementSystem: MeasurementSystem = 'metric'
   if (session?.user) {
     const [star] = await db
       .select({ id: recipeStars.id })
@@ -89,6 +94,16 @@ export default defineEventHandler(async (event) => {
       .where(and(eq(recipeStars.recipeId, recipe.id), eq(recipeStars.userId, session.user.id)))
       .limit(1)
     isStarred = !!star
+
+    // Read from the row, not the session: the session cookie predates this field
+    // and is only refreshed on login, so an existing session would otherwise
+    // never see a preference change.
+    const [viewer] = await db
+      .select({ system: users.preferredMeasurementSystem })
+      .from(users)
+      .where(eq(users.id, session.user.id))
+      .limit(1)
+    if (viewer?.system) viewerMeasurementSystem = viewer.system as MeasurementSystem
   }
 
   // ── Get branches ───────────────────────────────────────────
@@ -114,6 +129,33 @@ export default defineEventHandler(async (event) => {
         .where(eq(recipeCommitIngredients.commitId, headCommitId))
         .orderBy(recipeCommitIngredients.sortOrder)
     : []
+
+  /**
+   * Apply the viewer's measurement preference on the READ path.
+   *
+   * Storage stays metric-canonical (g/ml/piece/pinch/tsp/tbsp) — see
+   * current_state §4. `getBestDisplayUnit` also handles the metric niceties
+   * (1200 g → 1.2 kg), so this runs for both systems, not just imperial.
+   *
+   * This closes a gap where /settings offered a Metric/Imperial select that was
+   * persisted to `users.preferred_measurement_system` and then never read by
+   * anything: the whole conversion engine in `server/utils/units.ts` was reachable
+   * only from its own unit test. Conversion happens here rather than client-side
+   * because the session cookie does not carry the preference.
+   */
+  const measurementSystem: MeasurementSystem = viewerMeasurementSystem
+  const displayIngredients = currentIngredients.map((ing) => {
+    const raw = Number(ing.quantity)
+    if (!Number.isFinite(raw)) return { ...ing, displayQuantity: ing.quantity, displayUnit: ing.unit }
+    const best = getBestDisplayUnit(raw, ing.unit as CanonicalUnit, measurementSystem)
+    return {
+      ...ing,
+      // Canonical `quantity`/`unit` are preserved above: the editor, the diff
+      // engine and the nutrition maths all depend on them.
+      displayQuantity: String(best.quantity),
+      displayUnit: best.unit,
+    }
+  })
 
   const currentSteps = headCommitId
     ? await db
@@ -168,9 +210,12 @@ export default defineEventHandler(async (event) => {
     forkedFrom,
     branches,
     defaultBranch,
-    currentIngredients,
+    // Carries canonical `quantity`/`unit` PLUS `displayQuantity`/`displayUnit`
+    // resolved for this viewer's measurement preference.
+    currentIngredients: displayIngredients,
     currentSteps,
     isStarred,
+    measurementSystem,
     nutritionTotal,
     nutritionPerServing,
   }
