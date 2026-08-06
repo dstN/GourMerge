@@ -184,7 +184,11 @@
     "nutritionOptional": "Nährwerte je 100 g (optional)",
     "nutritionOptionalHint": "Ohne Energiewert zählt diese Zutat nicht in die Nährwertsumme des Rezepts — sie wird als „fehlend“ gezählt.",
     "nutritionSourceUser": "Quelle: selbst erfasst",
-    "ingredientCreated": "Zutat angelegt."
+    "ingredientCreated": "Zutat angelegt.",
+    "copyIngredients": "Zutaten kopieren",
+    "shareIngredients": "Zutaten teilen",
+    "ingredientsCopied": "Einkaufsliste kopiert.",
+    "copyFailed": "Kopieren war nicht möglich."
   },
   "common": {
     "edit": "Bearbeiten",

@@ -184,7 +184,11 @@
     "nutritionOptional": "Valeurs nutritionnelles pour 100 g (facultatif)",
     "nutritionOptionalHint": "Sans valeur énergétique, cet ingrédient ne compte pas dans les totaux de la recette — il est signalé comme manquant.",
     "nutritionSourceUser": "Source : saisie personnelle",
-    "ingredientCreated": "Ingrédient créé."
+    "ingredientCreated": "Ingrédient créé.",
+    "copyIngredients": "Copier les ingrédients",
+    "shareIngredients": "Partager les ingrédients",
+    "ingredientsCopied": "Liste de courses copiée.",
+    "copyFailed": "Impossible de copier dans le presse-papiers."
   },
   "common": {
     "edit": "Modifier",

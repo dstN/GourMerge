@@ -24,8 +24,8 @@ A git-like recipe platform. Recipes are repositories — they have branches, com
 | Runtime    | Node 26                                          |
 | Deployment | Netcup Webhosting + Phusion Passenger (Apache)   |
 
-At a glance: **27 pages · 46 API endpoints · 22 tables · 552 i18n keys × 4
-locales · 242 unit tests · 32 Playwright specs · zero axe
+At a glance: **27 pages · 46 API endpoints · 22 tables · 560 i18n keys × 4
+locales · 251 unit tests · 39 Playwright specs · zero axe
 violations · `npm audit` at zero.**
 
 Fonts and icons are self-hosted — no Google Fonts, no Iconify API at runtime, so

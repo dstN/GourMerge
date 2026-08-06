@@ -184,7 +184,11 @@
     "nutritionOptional": "Nutrition per 100 g (optional)",
     "nutritionOptionalHint": "Without an energy value this ingredient does not count toward the recipe totals — it is reported as missing instead.",
     "nutritionSourceUser": "Source: self-reported",
-    "ingredientCreated": "Ingredient created."
+    "ingredientCreated": "Ingredient created.",
+    "copyIngredients": "Copy ingredients",
+    "shareIngredients": "Share ingredients",
+    "ingredientsCopied": "Shopping list copied.",
+    "copyFailed": "Could not copy to the clipboard."
   },
   "common": {
     "edit": "Edit",

@@ -102,6 +102,46 @@ New: `GET /api/ingredients/categories` (distinct values, for the picker) and
 energy-value rule, rejection of negative/absurd/non-numeric values, case-insensitive dedup,
 and that creation requires a session.
 
+### Added — take the ingredient list with you
+
+A **copy** button on the ingredients card, plus **share** where the platform offers a share
+sheet. Copy first because it works everywhere; the share sheet is what actually puts the
+list into Notes, Reminders or a messenger on a phone, so it appears beside it when
+`navigator.share` exists — feature-detected on mount, never guessed from a user agent.
+
+Output is plain text, because every destination accepts it and Markdown would paste as
+literal syntax:
+
+```text
+Garlic Butter Chicken and Potatoes Skillet
+4 Portionen
+
+- 650 g Poulet, Brust, ohne Haut, roh (in Streifen geschnitten)
+- 2 EL Olivenöl
+- 1 Prise Salz, Meersalz, Fleur de sel
+
+https://gourmerge.de/testkoch/garlic-butter-chicken-and-potatoes-skillet
+```
+
+Details that make it a shopping list rather than a dump: each line starts with a dash and a
+space, which Apple Notes and Google Keep turn into a real checklist on paste; it is built
+from the **display**
+values, so an imperial reader gets their own units rather than grams; units are translated
+(`EL`, `Prise`, not `tbsp`, `pinch`); recipe order is preserved because that is the order a
+cook reads; and the source URL is appended so a pasted list can be traced back.
+
+The formatter is a pure function in `app/utils/shoppingList.ts` with nine unit tests, and it
+returns an empty string when there is nothing to list — so the buttons are simply absent on
+a recipe with no ingredients rather than present and inert.
+
+Two things the E2E spec had to get right, both worth knowing:
+
+- It reads the clipboard back rather than trusting the toast. A button that says "copied"
+  while writing nothing is the failure worth catching, and a toast-only assertion misses it.
+- It runs serially. `clipboard.writeText` only resolves for a focused document, and pages in
+  parallel workers contend for focus — in parallel the test failed with an empty clipboard,
+  which is a property of the harness and not of the feature.
+
 ### Deferred — machine translation of recipe text
 
 Assessed and moved to the post-v1 backlog with the findings recorded, rather than started:
@@ -114,7 +154,7 @@ anything created from now on.
 
 ### Stack / tests
 
-**46 API endpoints · 552 i18n keys ×4 · 242 unit tests · 32 Playwright specs.**
+**46 API endpoints · 560 i18n keys ×4 · 251 unit tests · 39 Playwright specs.**
 
 ---
 
@@ -238,8 +278,8 @@ Migration `0009` adds `user_passkeys` and `webauthn_challenges`.
 
 ### Stack / tests
 
-`@simplewebauthn/server` + `@simplewebauthn/browser` added. **46 API endpoints ·
-22 tables · 10 migrations · 552 i18n keys ×4 · 219 unit tests · 32 Playwright specs,
+`@simplewebauthn/server` + `@simplewebauthn/browser` added. **45 API endpoints ·
+22 tables · 10 migrations · 540 i18n keys ×4 · 219 unit tests · 26 Playwright specs,
 zero axe violations.** The passkey specs drive Chrome's WebAuthn virtual authenticator
 over CDP and run the real ceremonies — the two bugs above are exactly what a stubbed
 `navigator.credentials` would have hidden.

@@ -74,6 +74,69 @@ const recipeUrl = computed(() => (recipe.value ? `/${recipe.value.owner.username
 
 const openGmrCount = computed(() => recipe.value?.openGmrCount ?? 0)
 
+// ── Ingredients → clipboard / share sheet ────────────────────
+/**
+ * Built from the DISPLAY values, so the list you get is the list you were reading —
+ * including the viewer's metric/imperial preference. Using the canonical metric values
+ * would hand an imperial reader a list in grams.
+ */
+const shoppingList = computed(() =>
+  buildShoppingList({
+    title: resolveTranslation(recipe.value?.titleTranslations, recipe.value?.title ?? ''),
+    subtitle: recipe.value?.servings ? `${recipe.value.servings} ${t('recipe.servingsLabel')}` : null,
+    items: (recipe.value?.currentIngredients ?? []).map((ing) => ({
+      amount: `${formatQuantity(ing.displayQuantity)} ${translateUnit(ing.displayUnit)}`,
+      name: ing.ingredientName,
+      notes: ing.notes,
+    })),
+    sourceUrl: recipe.value ? `${appUrl}${recipeUrl.value}` : null,
+  })
+)
+
+/**
+ * The share sheet is the actual feature on a phone — it is what puts the list into Notes,
+ * Reminders or a messenger. It exists only in a secure context on mobile browsers, so the
+ * button is feature-detected on mount rather than guessed from the user agent, and copy is
+ * always offered beside it.
+ */
+const canShare = ref(false)
+onMounted(() => {
+  canShare.value = typeof navigator !== 'undefined' && typeof navigator.share === 'function'
+})
+
+const copied = ref(false)
+let copiedTimer: ReturnType<typeof setTimeout> | undefined
+onBeforeUnmount(() => clearTimeout(copiedTimer))
+
+async function copyIngredients() {
+  const text = shoppingList.value
+  if (!text) return
+  try {
+    await navigator.clipboard.writeText(text)
+    // Confirm on the button itself as well as in a toast: the toast may be missed, and
+    // "did that work?" is the only question a copy action raises.
+    copied.value = true
+    clearTimeout(copiedTimer)
+    copiedTimer = setTimeout(() => (copied.value = false), 2000)
+    toast.success(t('recipe.ingredientsCopied'))
+  } catch {
+    // Denied permission, or an insecure context where the API is absent entirely.
+    toast.error(t('recipe.copyFailed'))
+  }
+}
+
+async function shareIngredients() {
+  const text = shoppingList.value
+  if (!text) return
+  try {
+    await navigator.share({ title: recipe.value?.title, text })
+  } catch (e: unknown) {
+    // Dismissing the share sheet raises AbortError. That is a decision, not a failure.
+    if (e instanceof DOMException && e.name === 'AbortError') return
+    await copyIngredients()
+  }
+}
+
 // ── Branch switching ─────────────────────────────────────────
 const branchItems = computed(() =>
   (recipe.value?.branches ?? []).map((b) => ({ label: b.name, value: b.id, isDefault: b.isDefault }))
@@ -436,10 +499,34 @@ useHead(() => {
       <!-- Ingredients -->
       <UCard class="mb-6">
         <template #header>
-          <div class="flex items-center gap-2">
+          <div class="flex flex-wrap items-center gap-2">
             <UIcon name="i-lucide-shopping-basket" class="size-5 text-primary" aria-hidden="true" />
             <h2 class="text-lg font-semibold">{{ t('recipe.ingredients') }}</h2>
             <UBadge color="neutral" variant="subtle" :label="String(recipe.currentIngredients.length)" />
+
+            <!-- Take the list with you. Both `sm` per DESIGNBOOK §2.3, and both hidden when
+                 there is nothing to copy rather than offered and inert. Share sits first
+                 where it exists, because on a phone it is the better of the two. -->
+            <div v-if="recipe.currentIngredients.length > 0" class="ml-auto flex items-center gap-2">
+              <UButton
+                v-if="canShare"
+                :label="t('recipe.shareIngredients')"
+                icon="i-lucide-share-2"
+                size="sm"
+                color="neutral"
+                variant="outline"
+                @click="shareIngredients"
+              />
+              <UButton
+                :label="copied ? t('recipe.ingredientsCopied') : t('recipe.copyIngredients')"
+                :icon="copied ? 'i-lucide-check' : 'i-lucide-clipboard-list'"
+                size="sm"
+                :color="copied ? 'success' : 'neutral'"
+                variant="outline"
+                data-test="copy-ingredients"
+                @click="copyIngredients"
+              />
+            </div>
           </div>
         </template>
 
