@@ -378,66 +378,54 @@ useHead(() => {
       <!-- Tags row -->
       <RecipeTagList :tags="recipe.tags" class="mb-6" />
 
-      <!-- Branch selector.
-           This card used to print `defaultBranch.name` and nothing else, so a variant
-           could be created and edited but never read — the only links to one were "edit"
-           and "history". Every branch is now one click away, and the whole page (steps,
-           nutrition, structured data) follows the selection via `?branch=`. -->
-      <UCard v-if="recipe.selectedBranch" class="mb-6">
-        <template #header>
-          <div class="flex flex-wrap items-center justify-between gap-3">
-            <div class="flex items-center gap-2">
-              <UIcon name="i-lucide-git-branch" class="size-5 text-primary" aria-hidden="true" />
-              <h2 class="text-lg font-semibold">{{ recipe.selectedBranch.name }}</h2>
-              <UBadge v-if="recipe.selectedBranch.isDefault" color="primary" :label="t('recipe.defaultBranch')" />
-            </div>
+      <!-- Branch selector — a toolbar row, not a card.
+           The card version printed the branch name in its heading AND again in the picker
+           trigger, then left an empty body with a divider under it. The picker already
+           states which variant is shown, so the heading was duplication and the card was
+           a box around one control. This is GitHub's arrangement: picker, then the count
+           as a link to the full page. Both `sm`, per DESIGNBOOK §2.3.
 
-            <!-- Branch picker, shaped after GitHub's: a trigger carrying the current
-                 variant, a filterable list behind it, and the total as a separate link to
-                 the full page — their "master ▾ | 8 Branches" pairing. A row of buttons
-                 read as a segmented control and did not scale past a handful. -->
-            <div class="flex w-full items-center gap-2 sm:w-auto">
-              <USelectMenu
-                v-if="recipe.branches.length > 1"
-                :model-value="recipe.selectedBranch.id"
-                :items="branchItems"
-                value-key="value"
-                icon="i-lucide-git-branch"
-                :search-input="{ placeholder: t('branches.filter') }"
-                :aria-label="t('branches.switchTo')"
-                class="min-w-0 flex-1 sm:w-56 sm:flex-none"
-                @update:model-value="goToBranch"
-              >
-                <!-- Marks the default the way GitHub does, so it is identifiable in the
-                     list and not only from the card heading. -->
-                <template #item-trailing="{ item }">
-                  <UBadge
-                    v-if="item.isDefault"
-                    :label="t('recipe.defaultBranch')"
-                    color="neutral"
-                    variant="subtle"
-                    size="sm"
-                  />
-                </template>
-              </USelectMenu>
+           Until this existed the detail page ignored `?branch=` entirely and always
+           rendered the default, so a variant could be created and edited but never read. -->
+      <div v-if="recipe.selectedBranch" class="mb-6 flex flex-wrap items-center gap-2">
+        <USelectMenu
+          :model-value="recipe.selectedBranch.id"
+          :items="branchItems"
+          value-key="value"
+          icon="i-lucide-git-branch"
+          size="sm"
+          :search-input="recipe.branches.length > 4 ? { placeholder: t('branches.filter') } : false"
+          :aria-label="t('branches.switchTo')"
+          class="sm:w-64"
+          @update:model-value="goToBranch"
+        >
+          <template #item-trailing="{ item }">
+            <UBadge
+              v-if="item.isDefault"
+              :label="t('recipe.defaultBranch')"
+              color="neutral"
+              variant="subtle"
+              size="sm"
+            />
+          </template>
+        </USelectMenu>
 
-              <UButton
-                :label="t('branches.count', { n: recipe.branches.length })"
-                icon="i-lucide-git-branch"
-                color="neutral"
-                variant="ghost"
-                size="sm"
-                class="shrink-0"
-                :to="`${recipeUrl}/branches`"
-              />
-            </div>
-          </div>
-        </template>
+        <UBadge
+          v-if="recipe.selectedBranch.isDefault"
+          color="primary"
+          variant="subtle"
+          :label="t('recipe.defaultBranch')"
+        />
 
-        <p v-if="recipe.branches.length === 1" class="text-sm text-muted">
-          {{ t('branches.onlyDefault') }}
-        </p>
-      </UCard>
+        <UButton
+          :label="t('branches.count', { n: recipe.branches.length })"
+          icon="i-lucide-git-branch"
+          color="neutral"
+          variant="ghost"
+          size="sm"
+          :to="`${recipeUrl}/branches`"
+        />
+      </div>
 
       <!-- Ingredients -->
       <UCard class="mb-6">

@@ -368,7 +368,6 @@
     "viewHistory": "Version History",
     "empty": "No variants yet.",
     "switchTo": "Switch variant:",
-    "onlyDefault": "This recipe has no other variants yet.",
     "filter": "Find a variant…",
     "count": "{n} variants"
   },

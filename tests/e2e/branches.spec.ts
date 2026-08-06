@@ -75,10 +75,14 @@ test('a non-default branch can be viewed and switched to', async ({ page, reques
   expect(counts.variant).toBe(counts.main + 1)
 
   // ── Switching back via the picker ────────────────────────────
-  const trigger = page.locator('button', { hasText: 'paleo' }).first()
-  await trigger.click()
-  await page.waitForTimeout(400)
-  await page.getByRole('option', { name: /main/i }).first().click()
+  // Targeted by aria-label, not by its visible text: the trigger's label is the branch
+  // name, which changes with the selection, and `aria-label` is what makes it stable.
+  await page
+    .getByLabel(/Variante wechseln|Switch variant/i)
+    .first()
+    .click()
+  await page.getByRole('option').first().waitFor({ timeout: 10_000 })
+  await page.getByRole('option', { name: /^main/i }).first().click()
   await page.waitForURL((u) => !u.search.includes('branch='), { timeout: 15_000 })
   await expect(page.getByText('Nur Mehl auf main.')).toBeVisible({ timeout: 20_000 })
   console.log('  picker switched back to main and dropped ?branch= from the URL')

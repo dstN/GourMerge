@@ -368,7 +368,6 @@
     "viewHistory": "Historique des versions",
     "empty": "Aucune variante pour l'instant.",
     "switchTo": "Changer de variante :",
-    "onlyDefault": "Cette recette n’a pas encore d’autres variantes.",
     "filter": "Rechercher une variante…",
     "count": "{n} variantes"
   },

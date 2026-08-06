@@ -368,7 +368,6 @@
     "viewHistory": "Versionsverlauf",
     "empty": "Noch keine Varianten vorhanden.",
     "switchTo": "Variante wechseln:",
-    "onlyDefault": "Dieses Rezept hat noch keine weiteren Varianten.",
     "filter": "Variante suchen…",
     "count": "{n} Varianten"
   },
