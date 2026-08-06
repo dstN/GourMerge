@@ -280,7 +280,32 @@ jobs:
             fi
             echo "Attempt $i: health check returned $STATUS"
           done
-          echo "Health check never returned 200 — failing the deploy."
+
+          # Six identical numbers and nothing else is not enough to act on. The status code
+          # says WHO answered, and that is the difference between a broken release and a
+          # misconfigured host:
+          #
+          #   404/403  Apache answered, Passenger never saw the request. The app root has no
+          #            startup file — i.e. DEPLOY_PATH is not the Plesk "Application Root",
+          #            or Node.js is off for the domain. Nothing in the artifact can fix that.
+          #   500/502  Passenger tried and the app failed to boot. That IS the release: check
+          #            missing env vars first, then .output.failed on the host.
+          #   000      DNS/TLS/network — the deploy never reached the site.
+          ROOT=$(curl -s -o /dev/null -w "%{http_code}" "https://${{ secrets.DEPLOY_DOMAIN }}/" || true)
+          echo "Health check never returned 200. Last: /api/health → $STATUS, / → $ROOT"
+          case "$STATUS" in
+            404 | 403)
+              echo "::error::Apache answered, not the app: Passenger is not handling requests."
+              echo "::error::Check that DEPLOY_PATH equals Plesk's Node.js *Application Root*"
+              echo "::error::(it is the directory Passenger looks for app.js in — often httpdocs,"
+              echo "::error::not the domain root) and that the startup file is set to app.js."
+              ;;
+            500 | 502 | 503)
+              echo "::error::Passenger booted the app and it failed. Check the runtime env vars"
+              echo "::error::first — /api/health 503s by design when config is missing."
+              ;;
+            000) echo "::error::No HTTP response at all — DNS, TLS or firewall." ;;
+          esac
           exit 1
 
       # The retained artifact only earns its keep if a bad release is actually
@@ -311,3 +336,18 @@ jobs:
 
           echo "Rolled back to the previous release (bad build kept in .output.failed)."
           REMOTE
+
+          # A rollback that is never checked is a guess. `.output.prev` only means "what was
+          # there before", not "what worked" — on the first deploys it can be a partial or
+          # hand-assembled tree, so restoring it can leave the site MORE broken than the
+          # release that just failed. Say which of the two happened, in the log, at the time.
+          sleep 15
+          BACK=$(curl -s -o /dev/null -w "%{http_code}" "https://${{ secrets.DEPLOY_DOMAIN }}/api/health" || true)
+          if [ "$BACK" = "200" ]; then
+            echo "Rollback verified: the site is serving again (HTTP $BACK)."
+          else
+            echo "::error::Rollback did NOT restore a working site (/api/health → $BACK)."
+            echo "::error::The site is down. .output.failed holds the release that was just"
+            echo "::error::rejected and .output the one restored — neither answers. Fix on the"
+            echo "::error::host; do not re-run this workflow expecting it to recover."
+          fi
