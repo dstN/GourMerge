@@ -220,6 +220,56 @@
   margin-inline: auto;
 }
 
+/* From `lg` up, the column spans the header's own working area: its left edge meets the
+ * FIRST NAV ITEM ("Dashboard") and its right edge ends with the USER CONTROLS. Content
+ * and chrome then share one frame instead of two that nearly agree — the earlier 43px
+ * near-miss read as sloppy, where plainly-different would have read as deliberate.
+ *
+ * Both edges are expressible as constants because both derive from the same thing: the
+ * header's `max-w-7xl` container, centred in the viewport. Working in the coordinate
+ * space of `<main>` (which begins at the sidebar's edge, `16rem`):
+ *
+ *   W                 = main's width  (= viewport − 16rem, so 50% below means W/2)
+ *   container-left    = W/2 − 48rem   … relative to main
+ *   lead   → nav item = container-left + 17.3125rem  ⇒  50% − 30.6875rem
+ *   trail  → controls = container-right − 2rem (its `lg:px-8`)  ⇒  50% − 30rem
+ *
+ * These ARE magic numbers, tied to the header's internal layout — the brand width, the
+ * gap before the nav, the container padding. They are not left to rot:
+ * `tests/e2e/layout-alignment.spec.ts` asserts both edges against the real nav link and
+ * the real user menu at four widths, so changing the header fails a test instead of
+ * quietly drifting.
+ *
+ * `max-width` is cleared because the two insets now define the width (a constant 971px
+ * at every width ≥ lg). Only from `lg`, since the sidebar is `hidden lg:block` — below
+ * that there is no shell to align inside and the header reflows anyway. */
+@media (min-width: 64rem) {
+  [data-shell='sidebar'] .page-shell {
+    /* Fixed gap after the sidebar. NOT derived from the top nav, deliberately: the
+       header is `justify-between` with three groups, so the centre group's position is
+       set by the side groups' widths — and the user menu carries the username. Measured
+       at 1600px, the first nav item sits at 461px for a 5-character name and 389px for a
+       28-character one. Aligning to it would mean the content column moving 72px
+       depending on who is signed in, so there is nothing stable to align to. */
+    --gm-shell-lead: 14rem; /* 224px */
+    /* The trailing edge IS stable: the controls sit flush against the header container's
+       padding edge, and that container is `max-w-7xl` centred with fixed padding — so it
+       lands on the same pixel regardless of username. */
+    --gm-shell-trail: 30.3125rem; /* 485px — lands on the header container's inner right edge */
+
+    max-width: none;
+    /* `width: auto` is required, not tidy-up: PageShell carries `w-full`, and a fixed
+       width makes the end margin push the box out of the viewport instead of shrinking
+       it — which overflowed horizontally and shifted the header by the scrollbar's
+       width. With `auto`, the two insets define the width. */
+    width: auto;
+    /* `min()`/`max()` keep the column from collapsing on a narrow-but-still-lg viewport:
+       the gap gives way before the content does. */
+    margin-inline-start: min(var(--gm-shell-lead), 12%);
+    margin-inline-end: max(0px, calc(50% - var(--gm-shell-trail)));
+  }
+}
+
 /* ── Skeleton loading: a sweep, not a pulse ────────────────────
  * Nuxt UI's skeleton is `animate-pulse rounded-md bg-elevated` — the whole block
  * fades in and out together, which reads as "something is broken and blinking"
@@ -243,10 +293,22 @@
 }
 
 .gm-skeleton {
+  /* `--ui-bg-inverted` flips with the colour scheme — dark in light mode, light in dark
+   * mode — so a single low-alpha mix reads as a visible band in both, without hardcoding
+   * a colour per mode. Two earlier attempts were invisible for the same reason and are
+   * worth recording: `--ui-text-dimmed` at 18% (far too faint), then `--ui-bg-accented`,
+   * which is only ~4% lighter than `bg-elevated` in light mode. Both computed correctly
+   * and both animated correctly; a loading affordance nobody can see is still not one.
+   *
+   * `animation` is the shorthand, not `animation-name`, and that matters: Nuxt UI MERGES
+   * an `app.config.ts` slot override with its own base rather than replacing it, so
+   * `animate-pulse` stays in the class list. The shorthand resets its duration, timing
+   * and iteration count too, so the sweep fully supersedes the pulse instead of
+   * inheriting half of it. */
   background-image: linear-gradient(
     90deg,
     transparent 0%,
-    color-mix(in oklab, var(--ui-text-dimmed) 18%, transparent) 50%,
+    color-mix(in oklab, var(--ui-bg-inverted) 9%, transparent) 50%,
     transparent 100%
   );
   background-size: 200% 100%;

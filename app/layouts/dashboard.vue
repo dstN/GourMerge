@@ -91,7 +91,16 @@ const localeSwitchItems = [
       <!-- `data-shell="sidebar"` tells the page shell to align its cap left instead of
            centring it. All three layouts use `#main-content`, so that id cannot
            distinguish them; this attribute can. -->
-      <main id="main-content" data-shell="sidebar" tabindex="0" class="flex-1 overflow-y-auto">
+      <!-- `scrollbar-gutter-stable` is what makes the content column line up with the
+           header at all. The header is centred in the WINDOW; this region scrolls, so
+           without a reserved gutter its width changes the moment content overflows, the
+           column shifts by half a scrollbar and the alignment drifts per page. -->
+      <main
+        id="main-content"
+        data-shell="sidebar"
+        tabindex="0"
+        class="flex-1 overflow-y-auto [scrollbar-gutter:stable]"
+      >
         <slot />
       </main>
     </div>
