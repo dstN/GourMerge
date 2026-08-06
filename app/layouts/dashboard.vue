@@ -3,6 +3,9 @@
  * Dashboard Layout — Authenticated layout with sidebar and user header
  */
 const { t, locale, setLocale } = useI18n()
+// Explicit, not implicit: see the note in `default.vue`. A link's locale must not depend on
+// whether its target happens to be written as a literal.
+const localePath = useLocalePath()
 const { loggedIn } = useUserSession()
 
 const localeSwitchItems = [
@@ -23,7 +26,7 @@ const localeSwitchItems = [
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16">
           <!-- Logo -->
-          <NuxtLink to="/dashboard" class="flex items-center gap-2.5 group">
+          <NuxtLink :to="localePath('/dashboard')" class="flex items-center gap-2.5 group">
             <CommonBrandLogo class="size-7 text-primary transition-opacity group-hover:opacity-80" />
             <span class="text-xl font-bold tracking-tight"> Gour<span class="text-primary">Merge</span> </span>
           </NuxtLink>

@@ -4,6 +4,14 @@
  */
 
 const { t, locale, setLocale } = useI18n()
+/**
+ * The logo's target is a runtime expression, and that is exactly why it needs this.
+ * i18n localises a NuxtLink whose `to` is a static literal (`to="/explore"` renders as
+ * `/en/explore`), but it cannot rewrite a ternary evaluated at runtime — so the logo kept
+ * navigating to the UNPREFIXED path, which under `prefix_except_default` IS German.
+ * Reported symptom: pick French, browse, click the logo, and the site is German again.
+ */
+const localePath = useLocalePath()
 const { loggedIn } = useUserSession()
 
 const localeSwitchItems = [
@@ -28,7 +36,7 @@ const localeSwitchItems = [
                would bounce them there anyway, but sending them straight there avoids a
                wasted navigation — and makes the link's href honest, so the status bar
                shows where the click actually goes. -->
-          <NuxtLink :to="loggedIn ? '/dashboard' : '/'" class="flex items-center gap-2.5 group">
+          <NuxtLink :to="localePath(loggedIn ? '/dashboard' : '/')" class="flex items-center gap-2.5 group">
             <CommonBrandLogo class="size-7 text-primary transition-opacity group-hover:opacity-80" />
             <span class="text-xl font-bold tracking-tight"> Gour<span class="text-primary">Merge</span> </span>
           </NuxtLink>
