@@ -1,5 +1,10 @@
 @import 'tailwindcss';
 @import '@nuxt/ui';
+/* Skeleton shimmer — the upstream plugin from assistant-ui, not a reimplementation.
+ * Three hand-rolled attempts got the geometry, the direction and the falloff wrong in turn;
+ * this is the reference itself (CSS-only, zero runtime). Applied to skeletons via
+ * `app.config.ts`; the reduced-motion opt-out and the brand colour live further down. */
+@import 'tw-shimmer';
 
 /*
  * ── GourMerge Design Tokens ──────────────────────────────────
@@ -270,135 +275,90 @@
   }
 }
 
-/* ── Skeleton loading: a brand shimmer, not a pulse ────────────
- * Nuxt UI's skeleton is `animate-pulse rounded-md bg-elevated` — the whole block
- * fades in and out together, which reads as "something is broken and blinking"
- * rather than "content is on its way". A highlight travelling left-to-right reads
- * as directional progress, which is why every platform that does this uses one.
+/* ── Skeleton loading: the tw-shimmer plugin, brand-coloured ───
+ * Nuxt UI's skeleton is `animate-pulse rounded-md bg-elevated` — the whole block fades in
+ * and out together, which reads as "something is broken and blinking" rather than "content
+ * is on its way". A highlight travelling left-to-right reads as directional progress.
  *
- * Applied by overriding only the animation half of that base in `app.config.ts`,
- * so the shape and surface colour still come from Nuxt UI's own theme.
+ * The shimmer itself is `tw-shimmer` (imported at the top of this file), not our own
+ * gradient. Three hand-rolled attempts are the reason: the first swept right-to-left, the
+ * second had a three-stop ramp whose derivative kinks read as the band's own edges, and the
+ * third wasted a fifth of every cycle on an empty "rest" and felt sluggish. The upstream
+ * plugin gets all three right and adds things I had explicitly declined to build — speed
+ * expressed in px/sec so a wide card and a small badge shimmer at the same velocity, and
+ * `shimmer-container`, which coordinates one diagonal pass across a whole group of
+ * placeholders instead of animating each independently.
  *
- * The moving band is a background-image on top of `bg-elevated`, so the resting
- * colour is unchanged and only the highlight moves. `background-position` is
- * animated rather than `transform` because the element is the surface itself —
- * there is no inner node to slide without adding one.
+ * Only two things are ours, and both are below: the brand colour, and the reduced-motion
+ * opt-out. The class list itself is applied in `app.config.ts`.
  *
- * The percentages run DOWN, 100% → 0%, and that is not a typo. When the background
- * image is wider than the box — here `background-size: 260%` — a percentage
- * background-position resolves against (box − image) width, which is negative, so the
- * usual meaning inverts: a rising percentage slides the image LEFT. An early version
- * animated -150% → 250% and therefore swept right-to-left, the opposite of what its own
- * comment claimed. Counting down is what makes the highlight travel left-to-right.
- *
- * ── Why the gradient has seventeen stops
- *
- * Two earlier versions were technically animating and still looked wrong, and the reason
- * was always the gradient, never the motion. A three-stop ramp
- * (transparent → colour → transparent) has a discontinuous first derivative at each stop:
- * the eye reads those kinks as the band's edges, so it looks like a rectangle sliding past
- * rather than light moving across. The fix, borrowed from `tw-shimmer`, is to sample a sine
- * falloff instead — alpha 4/17/33/50/67/83/96/100 at closing intervals around the peak.
- * The stop positions bunch up near the centre for the same reason: even spacing puts the
- * steepest part of the curve on the widest span, which is where a seam shows.
- *
- * Verified in the browser, not in the declaration — see /dev/skeletons, which exists
- * precisely because a real skeleton is on screen for a few hundred milliseconds. */
-@keyframes gm-skeleton-shimmer {
-  from {
-    background-position-x: 100%;
-  }
-  to {
-    background-position-x: 0%;
-  }
-}
+ * /dev/skeletons holds a skeleton still so the pass can be scrubbed frame by frame — a real
+ * one is on screen for a few hundred milliseconds. */
 
+/* Brand orange rather than the plugin's default near-black, so loading reads as part of the
+ * product and not as a grey system state.
+ *
+ * `--ui-primary`, NOT `--color-primary-500`: the former is Nuxt UI's mode-aware brand colour,
+ * same rule as the link colour above. Here it is also a hard constraint rather than a
+ * preference — Tailwind v4 tree-shakes `@theme` variables, so `--color-primary-300` and
+ * friends are simply absent from the stylesheet unless some utility references them, and a
+ * `color-mix()` over a missing variable is an invalid declaration, i.e. no shimmer at all.
+ * Found by rendering it and getting a blank bar.
+ *
+ * Set as `--shimmer-color`, the plugin's own input, so its gradient pipeline (17 sine-eased
+ * stops, OKLCH mixing) does the work. 40% light / 60% dark was picked from rendered frames at
+ * 25/40/55/70%: 25% is a colourless blush, 70% is a solid orange bar sliding over the
+ * placeholder. Dark needs more because compositing a translucent mid-orange over dark navy
+ * desaturates it into brown.
+ *
+ * Also worth keeping: `--ui-text-dimmed` at 18% and `--ui-bg-accented` were both effectively
+ * invisible (the latter sits ~4% off `bg-elevated` in light mode). Both computed correctly
+ * and both animated correctly; a loading affordance nobody can see is still not one. */
 .gm-skeleton {
-  /* Brand orange, so loading reads as part of the product rather than as a grey system
-   * state. `--ui-primary` and NOT `--color-primary-500` — the former is Nuxt UI's
-   * mode-aware brand colour, same rule as the link colour above. This one is also a hard
-   * constraint rather than a preference: Tailwind v4 tree-shakes `@theme` variables, so
-   * `--color-primary-300` and friends are simply absent from the stylesheet unless a
-   * utility references them. A `color-mix()` over a missing variable is an invalid
-   * declaration, i.e. no background at all. Found by trying it.
-   *
-   * 40% is the peak, reached only at the exact centre of the band, and it was picked by
-   * looking at rendered frames at 25/40/55/70% rather than by taste: 25% is a colourless
-   * blush, 70% is a solid orange bar sliding over the placeholder. Dark mode needs more
-   * because a translucent mid-orange over a dark navy desaturates into brown — see below.
-   *
-   * History worth keeping: `--ui-text-dimmed` at 18% and `--ui-bg-accented` were both
-   * effectively invisible (the latter is ~4% off `bg-elevated` in light mode). Both
-   * computed correctly and both animated correctly; a loading affordance nobody can see is
-   * still not one. */
-  --gm-shimmer: color-mix(in oklab, var(--ui-primary) 40%, transparent);
+  --shimmer-color: color-mix(in oklab, var(--ui-primary) 40%, transparent);
 
-  /* Geometry, so the numbers are not magic. The image is 2.6× the box, giving 1.6 box-widths
-   * of travel; the band is 0.6 box-widths wide and sits at 38.46–61.54% of the image, which
-   * places its trailing edge exactly on the box's left edge at 100% and its leading edge
-   * exactly on the right edge at 0%. Crossing therefore consumes the entire cycle — no dead
-   * frames at either end, which is what an earlier version got wrong: it reserved ~18% of
-   * every cycle for an empty "rest" and the whole thing read as sluggish even though the band
-   * itself moved at a reasonable speed.
+  /* Restating the plugin's own animation, which looks redundant and is not.
    *
-   * 1.2s is the pass. `tw-shimmer`, which this follows, states its speed in px/sec rather
-   * than in seconds (1000px/s for surfaces) precisely because a fixed duration means a wide
-   * card and a small badge shimmer at different velocities. Matching that properly needs the
-   * element's own width in the duration — `calc(var(--track) / var(--speed) …)` with
-   * `--track: 100cqw` — and cqw only resolves against an ANCESTOR container, so every
-   * skeleton would have to be wrapped. Not worth the markup: 1.2s puts a typical 400–800px
-   * skeleton at roughly 550–1050px/s, i.e. inside the range that plugin aims for anyway.
+   * Nuxt UI's skeleton theme is `animate-pulse rounded-md bg-elevated`, and an
+   * `app.config.ts` override is MERGED with it by tailwind-variants rather than replacing it.
+   * tailwind-merge only drops a class when a later class conflicts within the same group, and
+   * `shimmer` is not in the `animate` group — so `animate-pulse` survives, and because
+   * Tailwind emits it after the plugin's `@utility shimmer` in the same layer, `animation:
+   * pulse 2s …` wins. The measured result before this block: `animation-name: pulse`, a fully
+   * built shimmer gradient underneath it, and no movement. Adding `animate-none` to the base
+   * instead does evict `animate-pulse`, but then `animation: none` wins for the same
+   * cascade reason and nothing animates at all.
    *
-   * 105deg is `90deg + 15deg`, the reference's tilt. Flat vertical edges read as a wipe.
-   * At this angle the gradient line is within 3% of the box width, so the stop percentages
-   * above still map to horizontal fractions and the geometry in the previous paragraph holds.
+   * These rules are unlayered, so they beat everything in Tailwind's layers without
+   * `!important`. Values are copied verbatim from tw-shimmer's `@utility shimmer`.
    *
-   * `linear`, not an ease: an ease makes the band visibly decelerate mid-surface, as though
-   * it were snagging on something.
-   *
-   * `animation` is the shorthand, not `animation-name`, and that matters: Nuxt UI MERGES an
-   * `app.config.ts` slot override with its own base rather than replacing it, so
-   * `animate-pulse` stays in the class list. The shorthand resets duration, timing and
-   * iteration count too, so this fully supersedes the pulse instead of inheriting half. */
-  background-image: linear-gradient(
-    105deg,
-    transparent 38.46%,
-    color-mix(in oklab, var(--gm-shimmer) 4%, transparent) 39.85%,
-    color-mix(in oklab, var(--gm-shimmer) 17%, transparent) 41.46%,
-    color-mix(in oklab, var(--gm-shimmer) 33%, transparent) 42.85%,
-    color-mix(in oklab, var(--gm-shimmer) 50%, transparent) 44.23%,
-    color-mix(in oklab, var(--gm-shimmer) 67%, transparent) 45.62%,
-    color-mix(in oklab, var(--gm-shimmer) 83%, transparent) 47.23%,
-    color-mix(in oklab, var(--gm-shimmer) 96%, transparent) 48.62%,
-    var(--gm-shimmer) 50%,
-    color-mix(in oklab, var(--gm-shimmer) 96%, transparent) 51.38%,
-    color-mix(in oklab, var(--gm-shimmer) 83%, transparent) 52.77%,
-    color-mix(in oklab, var(--gm-shimmer) 67%, transparent) 54.38%,
-    color-mix(in oklab, var(--gm-shimmer) 50%, transparent) 55.77%,
-    color-mix(in oklab, var(--gm-shimmer) 33%, transparent) 57.15%,
-    color-mix(in oklab, var(--gm-shimmer) 17%, transparent) 58.54%,
-    color-mix(in oklab, var(--gm-shimmer) 4%, transparent) 60.15%,
-    transparent 61.54%
-  );
-  background-size: 260% 100%;
-  background-repeat: no-repeat;
-  animation: gm-skeleton-shimmer 1.2s linear infinite;
+   * `--_duration` and `--_repeat-delay` are the plugin's internals — the only way to keep its
+   * width-derived speed, which is the whole reason for using it rather than a fixed duration.
+   * The fallbacks matter: if upstream renames them, `calc()` over a missing variable is
+   * invalid at computed-value time and `animation-duration` would fall back to 0s, i.e. no
+   * shimmer. 750ms + 20ms is what the surface preset computes for a typical skeleton, so a
+   * rename degrades to "slightly wrong speed" instead of "broken". */
+  animation: tw-shimmer 1s linear 0s infinite backwards;
+  animation-duration: calc((var(--_duration, 750) + var(--_repeat-delay, 20)) * 1ms);
 }
 
-/* Dark mode needs a stronger peak for the same apparent brightness. Alpha compositing is
- * why: a translucent mid-orange over the pale `bg-elevated` of light mode lands on orange,
- * but over dark navy the same mix lands on brown. 40% there is muddy; 60% is amber. Only
- * the peak changes — geometry, timing and the falloff ladder are shared. */
 .dark .gm-skeleton {
-  --gm-shimmer: color-mix(in oklab, var(--ui-primary) 60%, transparent);
+  --shimmer-color: color-mix(in oklab, var(--ui-primary) 60%, transparent);
 }
 
-/* An indefinite looping animation is exactly what this setting is for. The
- * skeleton stays visible as a static placeholder, so nothing is lost. */
+/* An indefinite looping animation is exactly what this setting is for, and the plugin does
+ * not handle it — a placeholder stays perfectly usable standing still, so nothing is lost.
+ *
+ * Targets `.shimmer` rather than `.gm-skeleton` so it also covers the text variant if that
+ * ever gets used. `-webkit-text-fill-color` has to be restored for exactly that reason:
+ * `shimmer` (the text form) paints the glyphs from the gradient via `background-clip: text`
+ * and makes the fill transparent, so dropping `background-image` alone would leave invisible
+ * text. Unlayered, so it beats the plugin's `@utility` output without `!important`. */
 @media (prefers-reduced-motion: reduce) {
-  .gm-skeleton {
+  .shimmer {
     animation: none;
     background-image: none;
+    -webkit-text-fill-color: currentColor;
   }
 }
 

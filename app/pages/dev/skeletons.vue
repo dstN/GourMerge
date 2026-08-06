@@ -18,25 +18,35 @@ definePageMeta({ layout: 'default' })
 // Deliberately plain English and not translated: dev-only, never user-facing.
 useSeoMeta({ title: 'Skeleton preview — dev', robots: 'noindex,nofollow' })
 
-/** Slow the shimmer right down so a single pass can be followed by eye. */
 const slow = ref(false)
 const paused = ref(false)
 /** Position within one cycle, 0–100. Only has an effect while frozen. */
 const phase = ref(30)
 
-const duration = computed(() => (slow.value ? 6 : 1.2))
+/** How long a frozen cycle is taken to be, so a phase can be turned into a delay. */
+const FROZEN_CYCLE_S = 2
 
 /**
- * A negative `animation-delay` on a paused animation holds it at an exact offset, which is
- * the only way to judge the band's *shape* — in motion the eye cannot hold an edge still,
- * and at 1.2s a pass is over before it can be studied. Scrubbing 0 → 100 walks the band
- * from the left edge to the right one; there are deliberately no empty frames at either end.
+ * Slow motion goes through `--shimmer-speed` (px/sec) rather than `animation-duration`,
+ * because that is the knob tw-shimmer actually exposes: it derives the duration from
+ * distance ÷ speed, so overriding the duration directly would decouple the two and every
+ * element would then take the same time regardless of width — the exact thing the plugin
+ * exists to avoid. 150px/s is roughly a seventh of the surface default.
+ *
+ * Freezing is different and does need an explicit duration: a negative `animation-delay` on
+ * a paused animation holds it at an exact offset, and computing that offset requires knowing
+ * the cycle length. Judging the band's *shape* is impossible otherwise — in motion the eye
+ * cannot hold an edge still, and a real pass is over in well under a second.
  */
-const style = computed(() => ({
-  animationDuration: `${duration.value}s`,
-  animationPlayState: paused.value ? 'paused' : 'running',
-  animationDelay: paused.value ? `-${((phase.value / 100) * duration.value).toFixed(3)}s` : '0s',
-}))
+const style = computed(() =>
+  paused.value
+    ? {
+        animationDuration: `${FROZEN_CYCLE_S}s`,
+        animationPlayState: 'paused',
+        animationDelay: `-${((phase.value / 100) * FROZEN_CYCLE_S).toFixed(3)}s`,
+      }
+    : { '--shimmer-speed': slow.value ? '150' : null }
+)
 
 const shapes = [
   { label: 'Card block (h-48) — as used on /explore', class: 'h-48 rounded-lg' },
@@ -53,17 +63,17 @@ const shapes = [
     <div class="mb-6">
       <h1 class="text-2xl font-bold">Skeleton preview</h1>
       <p class="mt-1 text-sm text-muted">
-        Dev-only. The shimmer is a moving <code>background-position-x</code> over <code>--ui-primary</code> at a 32%
-        peak, so it stays legible in both themes — use the theme toggle in the header to compare. The highlight must
-        travel <strong>left to right</strong>; because the gradient is wider than the box, percentage positions invert
-        and the keyframes count 100% → 0% to achieve that. Seventeen colour stops approximate a sine falloff: a
-        three-stop ramp has a visible kink at each end and reads as a rectangle sliding past rather than as light.
+        Dev-only. The shimmer is the <code>tw-shimmer</code> plugin (<code>shimmer shimmer-bg</code>), tinted with our
+        brand orange through <code>--shimmer-color</code> — 40% in light, 60% in dark, so use the theme toggle in the
+        header to compare. Its speed is defined in px/sec, not seconds, so every shape below moves at the same velocity
+        regardless of width; that is what &ldquo;Slow motion&rdquo; changes. Freeze plus the phase slider holds one pass
+        still so the band&rsquo;s shape can be judged.
       </p>
     </div>
 
     <div class="mb-6 flex flex-wrap items-center gap-2">
       <UButton
-        :label="slow ? 'Normal speed (1.2s)' : 'Slow motion (6s)'"
+        :label="slow ? 'Normal speed (1000px/s)' : 'Slow motion (150px/s)'"
         :icon="slow ? 'i-lucide-gauge' : 'i-lucide-snail'"
         color="neutral"
         variant="outline"

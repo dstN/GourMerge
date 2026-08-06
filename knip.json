@@ -7,6 +7,7 @@
     "xlsx",
     "vue-tsc",
     "@iconify-json/lucide",
-    "@iconify-json/simple-icons"
+    "@iconify-json/simple-icons",
+    "tw-shimmer"
   ]
 }

@@ -76,13 +76,24 @@ export default defineAppConfig({
       },
     },
 
-    // ── Skeletons — sweep instead of pulse ───────────────────────
-    // Nuxt UI's default base is `animate-pulse rounded-md bg-elevated`. Only the
-    // animation is swapped; the shape and surface stay theirs, so a future Nuxt UI
-    // change to skeleton colour still reaches us. `.gm-skeleton` (main.css) layers a
-    // travelling highlight over `bg-elevated` and honours prefers-reduced-motion.
+    // ── Skeletons — shimmer instead of pulse ─────────────────────
+    // Nuxt UI's default base is `animate-pulse rounded-md bg-elevated`. Only the animation is
+    // swapped; the shape and surface stay theirs, so a future Nuxt UI change to skeleton
+    // colour still reaches us.
+    //
+    // `shimmer shimmer-bg` is the tw-shimmer plugin (imported in main.css). Both classes are
+    // required and neither works alone: `shimmer-bg` only sets variables — surface preset
+    // instead of text preset — while `shimmer` carries the gradient and the animation.
+    //
+    // `bg-elevated` must survive `shimmer`'s `background` SHORTHAND, which resets
+    // background-color to transparent. It does, because Tailwind sorts background-color after
+    // background-image in its utilities layer, and the upstream README relies on the same
+    // thing (`shimmer shimmer-bg … bg-muted`). Verified on a rendered frame, not assumed.
+    //
+    // `gm-skeleton` carries only what is ours: the brand colour via `--shimmer-color`, plus
+    // the reduced-motion opt-out the plugin does not provide. See main.css.
     skeleton: {
-      base: 'gm-skeleton rounded-md bg-elevated',
+      base: 'shimmer shimmer-bg gm-skeleton rounded-md bg-elevated',
     },
   },
 })
