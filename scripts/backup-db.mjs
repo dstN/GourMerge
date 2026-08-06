@@ -64,10 +64,32 @@ if (!process.env.DATABASE_URL) {
 const keepIdx = process.argv.indexOf('--keep')
 const KEEP = keepIdx >= 0 ? Math.max(1, parseInt(process.argv[keepIdx + 1] ?? '14', 10)) : 14
 
-const url = new URL(process.env.DATABASE_URL)
+let url
+try {
+  url = new URL(process.env.DATABASE_URL)
+} catch {
+  // `#` or `/` in an unencoded password makes the whole URL unparseable.
+  console.error('ERROR: DATABASE_URL is not a valid URL.')
+  console.error('A password containing # / : @ or % must be percent-encoded (% itself becomes %25).')
+  process.exit(1)
+}
+
 const db = url.pathname.replace(/^\//, '')
 if (!db) {
   console.error('ERROR: DATABASE_URL has no database name.')
+  process.exit(1)
+}
+
+/**
+ * A raw `%` in the password makes `decodeURIComponent` throw "URI malformed", which
+ * without this reads as a bug in the script rather than an encoding problem in the URL.
+ */
+let password
+try {
+  password = decodeURIComponent(url.password)
+} catch {
+  console.error('ERROR: the password in DATABASE_URL is not valid percent-encoding.')
+  console.error('A literal % must be written as %25.')
   process.exit(1)
 }
 
@@ -131,7 +153,7 @@ console.log(`Using ${BIN}`)
 let child
 try {
   child = spawn(BIN, args, {
-    env: { ...process.env, MYSQL_PWD: decodeURIComponent(url.password) },
+    env: { ...process.env, MYSQL_PWD: password },
     stdio: ['ignore', 'pipe', 'pipe'],
   })
 } catch (err) {
