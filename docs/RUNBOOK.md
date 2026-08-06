@@ -226,22 +226,92 @@ Automate it with Windows Task Scheduler (daily, avoiding 04:30 and 04:45 when th
 maintenance sweeps run). The dump contains personal data, so keep the `backups/` folder on
 an encrypted volume.
 
-### Restore drill — do this once, on purpose
+### Restore drill
 
 An untested backup is not a backup; it is a file you hope is a backup. The failure modes
-are silent: an empty dump, a truncated file, a job that has been failing for weeks.
+are silent: an empty dump, a truncated file, a job that has been failing for weeks. And
+here there is a specific reason to distrust it until proven — the dump is written by a
+**MariaDB** client against a **MySQL** server, and `ingredients` carries two JSON columns.
 
-1. `DATABASE_URL="mysql://…" npm run db:backup` against production.
-2. Create an empty **scratch** database (Plesk → Databases), never restore into production.
-3. `DATABASE_URL="mysql://…/scratch" npm run db:migrate` — this builds the schema.
-4. Load the data: `gunzip < backups/<file>.sql.gz | mysql -h <host> -u <user> -p scratch`
-5. Sanity-check row counts against production: `users`, `recipes`, `recipe_commits`.
-6. Drop the scratch database.
+**Status: passed 2026-08-06** against the 1.05 MB host dump, before any deploy. Counts and
+`CHECKSUM TABLE` matched on all 19 non-ephemeral tables; `JSON_VALID` returned
+`1192/1192/1192`; umlauts came back intact (`Nierstück`, `Käsereibutter`), so utf8mb4
+survived the cross-vendor round trip.
+
+#### The comparison tool (use this in either variant below)
+
+```bash
+CNF=/gourmerge.de/.my.cnf
+DB=<your-database-name>
+
+TABLES=$(mysql --defaults-file=$CNF -N -B -e "
+SELECT table_name FROM information_schema.tables
+WHERE table_schema='$DB' AND table_type='BASE TABLE'
+  AND table_name <> '__drizzle_migrations' ORDER BY table_name")
+
+fingerprint() {
+  for t in $TABLES; do
+    # Excluded from the dump by design, so they would differ for a non-reason.
+    case "$t" in rate_limit_hits|webauthn_challenges) continue ;; esac
+    printf '%-30s %-8s %s\n' "$t" \
+      "$(mysql --defaults-file=$CNF -N -B -e "SELECT COUNT(*) FROM \`$DB\`.\`$t\`")" \
+      "$(mysql --defaults-file=$CNF -N -B -e "CHECKSUM TABLE \`$DB\`.\`$t\`" | cut -f2)"
+  done
+}
+```
+
+`CHECKSUM TABLE` is what makes this a real check rather than a headcount — matching row
+counts prove nothing about content.
+
+#### Before launch: restore in place (what was actually done)
+
+Only valid while every row is reproducible from `migrations + npm run seed:*`. It is the
+better drill, because it exercises the real disaster path rather than a rehearsal of it.
+
+1. `fingerprint > /tmp/before.txt`
+2. Truncate every table **except `__drizzle_migrations`** (wrap in
+   `SET FOREIGN_KEY_CHECKS=0; … =1;`), then confirm `__drizzle_migrations` still has 10 rows
+3. `gunzip -c <dump>.sql.gz | mysql --defaults-file=$CNF "$DB"`
+4. `fingerprint > /tmp/after.txt && diff /tmp/before.txt /tmp/after.txt`
+5. Run the JSON and umlaut checks below
+
+#### After launch: scratch database only
+
+**Never truncate production once real users exist.** Instead:
+
+1. Plesk → Databases → create `scratch`, assigning the existing DB user
+2. `DATABASE_URL="mysql://…/<scratch-db>" npm run db:migrate` — from a workstation;
+   `drizzle-kit` does not exist on the host
+3. `gunzip -c <dump>.sql.gz | mysql --defaults-file=$CNF <scratch-db>`
+4. Compare with `fingerprint` pointed at each database in turn
+5. **Drop the scratch database** — it is a full copy of everyone's personal data
+
+#### The checks that catch a cross-vendor fault
+
+```bash
+# All three numbers must be equal.
+mysql --defaults-file=$CNF -N -B -e "
+SELECT COUNT(*), SUM(JSON_VALID(name_translations)), SUM(JSON_VALID(synonyms))
+FROM \`$DB\`.ingredients"
+
+# Must print real umlauts. 'RÃ¼ebli' means utf8mb4 broke and the dump is worthless.
+mysql --defaults-file=$CNF -N -B -e "
+SELECT name_translations->>'\$.de' FROM \`$DB\`.ingredients
+WHERE name_translations->>'\$.de' REGEXP '[äöüÄÖÜß]' LIMIT 5"
+```
 
 Repeat quarterly, and again before any migration that drops or rewrites a column. This
 matters more here than usual: **migrations are forward-only.** There is no down migration,
 and a code rollback restores old code against the _new_ schema — so for a destructive
 migration, the backup is the only way back.
+
+#### Expected seed baseline
+
+After `db:migrate` + the three seeds, a clean production database holds
+**1192 ingredients** (1191 Swiss BLV + 1 curated `Vanillezucker`), **1191
+ingredient_nutrition**, **12 tags** and **1 user** (`ghost`). A dev database will show more
+ingredients — E2E runs leave behind fixtures like `Butter 1785947886683` — so compare
+against these numbers, not against local.
 
 ---
 

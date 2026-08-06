@@ -63,13 +63,13 @@ TOTP) · Zod · `diff-match-patch-es`.
 Nothing in this section can be closed by a commit. All are documented step by
 step in `docs/RUNBOOK.md`.
 
-| Item                                        | Why it is blocking / not                                                                   |
-| ------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| Let's Encrypt SSL via Netcup panel          | HSTS is baked into the production build; without SSL the app is served over plain HTTP     |
-| Passenger env injection                     | `DATABASE_URL`, `NUXT_SESSION_PASSWORD`, SMTP creds, Sentry DSN. App will not boot without |
-| UptimeRobot monitor on `/api/health`        | The endpoint exists and is CD-smoke-tested; nothing polls it yet                           |
-| Nightly `mysqldump` cron + gzip + retention | The only DB backup. Rollback of a destructive migration depends on it                      |
-| Quarterly restore drill                     | An untested backup is not a backup                                                         |
+| Item                                 | Why it is blocking / not                                                                                                                                                                                                  |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ~~Let's Encrypt SSL~~                | **Done.** Wildcard cert (`*.gourmerge.de` + apex), HSTS active, host 301s http→https                                                                                                                                      |
+| ~~Runtime env injection~~            | **Done.** All 12 variables set as Netcup **Node.js custom environment variables** — not `.htaccess`, which does not exist on this host. `/api/health` reports any that fail to arrive                                     |
+| UptimeRobot monitor on `/api/health` | The endpoint exists, is CD-smoke-tested and now 503s on a broken config; nothing polls it yet                                                                                                                             |
+| Schedule the nightly backup task     | `scripts/server-backup.sh` is installed and verified by hand; the Plesk **"Run a command"** task at 03:15 still needs creating. Plesk's own Backup Manager cannot be used — it demands remote storage and only offers FTP |
+| Quarterly restore drill              | **First one passed 2026-08-06** — counts + `CHECKSUM TABLE` identical, JSON valid, utf8mb4 intact. Next due Nov 2026, and before any destructive migration                                                                |
 
 **Note on exposure:** `<db-host>` (`<server-ip>`) accepts
 connections from arbitrary external IPs on 3306. That is what makes the
