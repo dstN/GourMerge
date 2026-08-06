@@ -7,6 +7,9 @@ const { t } = useI18n()
 const route = useRoute()
 const { loggedIn } = useUserSession()
 
+/** Needed as a value, not a tag name, to hand to `<UCard :as>` — see the template. */
+const NuxtLink = resolveComponent('NuxtLink')
+
 const username = computed(() => route.params.username as string)
 const slug = computed(() => route.params.slug as string)
 const recipeUrl = computed(() => `/${username.value}/${slug.value}`)
@@ -83,11 +86,23 @@ useSeoMeta({
     />
 
     <div v-else class="space-y-3">
+      <!--
+        `:as="NuxtLink"` is load-bearing. This was `<UCard :to="…">`, and UCard declares no
+        `to` prop — it takes `as`, `title`, `description`, `variant`, `class`, `ui`. The
+        attribute fell through to a plain <div>, so nothing navigated, while `cursor-pointer`
+        and the hover border made every row look clickable. A request could be listed and
+        never opened, which meant it could never be merged or closed either.
+
+        Rendering the root AS a link also makes the row a real anchor: keyboard focusable,
+        middle-clickable, openable in a new tab — none of which a click handler on a div
+        would have given us.
+      -->
       <UCard
         v-for="r in requests"
         :key="r.id"
-        class="cursor-pointer transition-colors hover:border-primary-500/50"
+        :as="NuxtLink"
         :to="`${recipeUrl}/gourmerge-requests/${r.id}`"
+        class="block transition-colors hover:border-primary-500/50"
       >
         <div class="flex items-start justify-between gap-4">
           <div class="flex-1 min-w-0">
