@@ -1,4 +1,32 @@
+import { readFileSync } from 'node:fs'
 import { defineConfig, devices } from '@playwright/test'
+
+/**
+ * Pull `DATABASE_URL` out of `.env` for local runs.
+ *
+ * The app under test gets it from Nuxt, which loads `.env` itself; the Playwright process does
+ * not, and `support/api.ts` needs a connection to clear the rate-limit counters between
+ * registrations. In CI the variable is already in the job environment, so this is a no-op
+ * there. Written out rather than pulling in `dotenv` for one variable: the app's own loader is
+ * Nuxt's, so a second dotenv in the tree would just be a second thing that can disagree.
+ *
+ * Only DATABASE_URL, and only if unset — this must not become a general side channel for
+ * pointing tests at surprising configuration.
+ */
+if (!process.env.DATABASE_URL) {
+  try {
+    const line = readFileSync(new URL('.env', import.meta.url), 'utf8')
+      .split(/\r?\n/)
+      .find((l) => /^\s*DATABASE_URL\s*=/.test(l))
+    const value = line
+      ?.slice(line.indexOf('=') + 1)
+      .trim()
+      .replace(/^["']|["']$/g, '')
+    if (value) process.env.DATABASE_URL = value
+  } catch {
+    // No .env (CI, or a checkout that has not been set up) — resetRateLimits() fails open.
+  }
+}
 
 export default defineConfig({
   testDir: './tests/e2e',

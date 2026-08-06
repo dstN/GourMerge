@@ -45,7 +45,20 @@ export async function useRateLimit(key: string, options: RateLimitOptions): Prom
 
 /**
  * Build a rate-limit bucket key from the request IP + a route prefix.
- * Trusts X-Forwarded-For only for the first IP segment (Passenger / Apache proxy).
+ *
+ * ⚠ The first X-Forwarded-For segment is CLIENT-CONTROLLED, so as written every limit here is
+ * bypassable: send a different `X-Forwarded-For` per request and each one lands in its own
+ * bucket. XFF is built left to right — each proxy appends the address it received from — so
+ * the leftmost entry is whatever the original caller chose to put there, not a fact about the
+ * connection.
+ *
+ * Not fixed here, on purpose. The correct entry is at `length - <number of trusted proxies>`,
+ * and getting that number wrong is worse than the current state: if it resolves to the proxy's
+ * own address, every user on the site shares one bucket and registration breaks globally after
+ * three attempts. Our chain is nginx → Apache → Passenger, which should yield
+ * `client, 127.0.0.1` and therefore index `length - 2`, but "should" is doing real work in that
+ * sentence and nothing is deployed yet to check it against. The fix is: log one real request's
+ * XFF on the host, count the hops, then pin the index — see the entry in ROADMAP.
  */
 export function getRateLimitKey(event: H3Event, prefix: string): string {
   const forwarded = getHeader(event, 'x-forwarded-for')

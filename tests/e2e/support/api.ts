@@ -1,4 +1,44 @@
+import mysql from 'mysql2/promise'
 import type { APIRequestContext } from '@playwright/test'
+
+/**
+ * Clear the rate-limit counters.
+ *
+ * `/auth/register` allows 3 requests per minute per IP and `/auth/login` allows 5, which is
+ * the right production setting and unworkable for this suite: every test needs its own user,
+ * ~34 registrations happen inside a couple of minutes, and all of them come from one host, so
+ * they share a single bucket. The first CI run of the E2E workflow failed exactly there —
+ * `register failed: 429` in gourmerge-requests.spec.ts, and both retries failed too because
+ * the window had not reset. Nothing about that is a product bug; the tests are simply not 34
+ * different clients.
+ *
+ * So the counter is cleared rather than the limiter weakened. Deliberately NOT done by
+ * relaxing the limit under a test env flag: that leaves a production instance one
+ * misconfiguration away from having no registration limit at all, and it would mean the
+ * limiter is never exercised in the environment where we run the whole app. And deliberately
+ * not done by varying `X-Forwarded-For` per request, even though `getRateLimitKey` trusts its
+ * first segment and it would work — see the note in that function; the tests should not be
+ * built on top of that.
+ *
+ * Fails open. If `DATABASE_URL` is not in the environment there is nothing to clear, and the
+ * suite should report the real failure rather than an error from its own helper.
+ *
+ * Not exported: `registerUser` is the only caller and the clear is table-wide, so it also
+ * covers the login limit for tests that sign in afterwards. Export it when a spec genuinely
+ * needs its own reset, not before.
+ */
+async function resetRateLimits(): Promise<void> {
+  const url = process.env.DATABASE_URL
+  if (!url) return
+  // A connection per call, not a pool: an open pool keeps the Node process alive after the
+  // last test and Playwright hangs at the end of the run instead of exiting.
+  const conn = await mysql.createConnection(url)
+  try {
+    await conn.query('DELETE FROM rate_limit_hits')
+  } finally {
+    await conn.end()
+  }
+}
 
 export interface TestUser {
   username: string
@@ -18,8 +58,15 @@ export function uniqueUser(prefix = 'e2e'): TestUser {
   }
 }
 
-/** Register a user (auto-logs in: the session cookie lands in `request`'s jar). */
+/**
+ * Register a user (auto-logs in: the session cookie lands in `request`'s jar).
+ *
+ * Clears the rate-limit counters first. Every registering test goes through here, and the
+ * clear is table-wide, so the login limit is covered by the same call for tests that sign in
+ * again afterwards.
+ */
 export async function registerUser(request: APIRequestContext, user: TestUser = uniqueUser()): Promise<TestUser> {
+  await resetRateLimits()
   const res = await request.post('/auth/register', { data: user })
   if (!res.ok()) throw new Error(`register failed: ${res.status()} ${await res.text()}`)
   return user
