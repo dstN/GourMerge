@@ -34,10 +34,10 @@
 > to the webspace only, see _Manual migration_ below and drop the migrate step from
 > `deploy.yml`.
 
-> **Runtime configuration lives in the Netcup panel, not in the repo.** Passenger and
-> every environment variable are configured under **Node.js → Custom environment
-> variables** (see _Environment Variables_), so a deploy never touches them and there is
-> no `.htaccess` to preserve.
+**Runtime configuration lives in the Netcup panel, not in the repo.** Passenger and every
+environment variable are configured under **Node.js → Custom environment variables** (see
+_Environment Variables_), so a deploy never touches them and there is no `.htaccess` to
+preserve.
 
 ### Manual Deploy (emergency)
 
@@ -116,37 +116,66 @@ mysql -u <user> -p <dbname> < /backups/gourmerge-<date>.sql.gz | zcat
 
 ## Database Backups
 
-### Scheduled backup (Plesk Backup Manager)
+### Plesk's Backup Manager cannot be used on this plan
 
-Use the panel, not a `mysqldump` cron: **Websites & Domains → Backup Manager →
-Schedule**. It covers the webspace **and** the databases in one job, handles rotation
-itself, and does not depend on `mysqldump` existing in the chroot.
+It refuses to schedule anything without remote storage — _"Only the remote storages are
+allowed for backups but their settings are not specified"_ — and the only remote type it
+offers is **FTP**, which needs a second webspace. Until storage is added, the panel
+produces no backups at all, scheduled or manual.
 
-| Setting            | Value                                                                     |
-| ------------------ | ------------------------------------------------------------------------- |
-| Run                | Daily, outside the nightly maintenance window (those run 04:30 and 04:45) |
-| Backup type        | Full, **including databases** — a webspace-only backup restores no data   |
-| Retain             | 14 days, or whatever the plan's storage allows                            |
-| **Remote Storage** | Configure it if the plan offers it                                        |
+**Adding remote storage is still the best fix** if a cheap netcup storage product or a
+second FTP target is available: Plesk then handles the schedule, rotation and restore
+itself, and the data stays with a German provider. Check
+**Backup Manager → Remote Storage Settings**.
 
-> **Remote storage matters more than the schedule.** A backup stored on the same
-> webspace dies with the webspace. If remote storage is unavailable, download a copy
-> manually at least before any risky migration.
+### `npm run db:backup` — the working path today
+
+Pulls a compressed, verified dump to a machine you control, over the same external MySQL
+access the CI runner already uses for migrations.
+
+```bash
+npm run db:backup                            # DATABASE_URL from .env (local)
+DATABASE_URL="mysql://…" npm run db:backup   # production
+npm run db:backup -- --keep 30               # retain 30 instead of 14
+```
+
+Writes `backups/gourmerge-<host>-<db>-<timestamp>.sql.gz` (git-ignored) and rotates older
+files. It **refuses to keep a dump under 1 KB**, because the failure that actually bites is
+a backup that exists and is empty — a wrong password and an empty database both produce a
+perfectly valid gzip of nothing.
+
+**Data only, no schema.** `server/database/migrations/` is the schema's source of truth, so
+including `CREATE TABLE` would create a second one that drifts. `__drizzle_migrations`,
+`rate_limit_hits` and `webauthn_challenges` are excluded too — the first would collide on
+restore (the procedure below migrates first), the other two hold state that is meaningless
+minutes later.
+
+> **Do not dump from a GitHub Actions runner**, even though it can reach the production
+> database. A dump is every user's personal data, and §"Weitergabe an Dritte" of our own
+> privacy policy says data goes to no third party except Sentry and _"die Daten verbleiben
+> in der EU"_. Sending dumps to GitHub would make Microsoft a processor and add a US
+> transfer — that needs the policy rewritten and a legal basis first, not a workflow file.
+
+Automate it with Windows Task Scheduler (daily, avoiding 04:30 and 04:45 when the
+maintenance sweeps run). The dump contains personal data, so keep the `backups/` folder on
+an encrypted volume.
 
 ### Restore drill — do this once, on purpose
 
 An untested backup is not a backup; it is a file you hope is a backup. The failure modes
-are silent — an empty dump, a truncated file, a job that has been failing for weeks.
+are silent: an empty dump, a truncated file, a job that has been failing for weeks.
 
-1. Take a backup from Backup Manager.
-2. Restore it into a **scratch database**, not production (Databases → create one).
-3. Confirm the row counts look sane: `users`, `recipes`, `recipe_commits`.
-4. Drop the scratch database.
+1. `DATABASE_URL="mysql://…" npm run db:backup` against production.
+2. Create an empty **scratch** database (Plesk → Databases), never restore into production.
+3. `DATABASE_URL="mysql://…/scratch" npm run db:migrate` — this builds the schema.
+4. Load the data: `gunzip < backups/<file>.sql.gz | mysql -h <host> -u <user> -p scratch`
+5. Sanity-check row counts against production: `users`, `recipes`, `recipe_commits`.
+6. Drop the scratch database.
 
-Repeat quarterly, and once more before any migration that drops or rewrites a column.
-This matters more here than usual: **migrations are forward-only**. There is no down
-migration, and a code rollback restores old code against the _new_ schema — so for a
-destructive migration the backup is the only way back.
+Repeat quarterly, and again before any migration that drops or rewrites a column. This
+matters more here than usual: **migrations are forward-only.** There is no down migration,
+and a code rollback restores old code against the _new_ schema — so for a destructive
+migration, the backup is the only way back.
 
 ---
 

@@ -31,6 +31,7 @@
     "db:seed": "node scripts/seed-ingredients.mjs",
     "db:seed:tags": "node scripts/seed-tags.mjs",
     "db:cleanup": "node scripts/cleanup-retention.mjs",
+    "db:backup": "node scripts/backup-db.mjs",
     "db:inactive": "node scripts/inactive-accounts.mjs",
     "db:setup": "npm run db:migrate && npm run seed:swiss && npm run db:seed && npm run db:seed:tags",
     "seed:swiss": "node scripts/import-swiss-foods.mjs",
