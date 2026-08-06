@@ -33,29 +33,7 @@ const localeSwitchItems = [
             <span class="text-xl font-bold tracking-tight"> Gour<span class="text-primary">Merge</span> </span>
           </NuxtLink>
 
-          <!-- Desktop navigation — DESIGNBOOK §2.
-               Explore is shown to EVERYONE: it is the only public browse surface,
-               and gating the whole nav on `loggedIn` left guests with no way to
-               reach it from the desktop header at all (the mobile menu did offer
-               it, which is how the inconsistency surfaced). -->
-          <nav class="hidden md:flex items-center gap-1">
-            <UButton
-              v-if="loggedIn"
-              :label="t('nav.dashboard')"
-              color="neutral"
-              variant="ghost"
-              icon="i-lucide-layout-dashboard"
-              to="/dashboard"
-            />
-            <UButton :label="t('nav.explore')" color="neutral" variant="ghost" icon="i-lucide-compass" to="/explore" />
-            <UButton
-              v-if="loggedIn"
-              :label="t('nav.newRecipe')"
-              variant="soft"
-              icon="i-lucide-plus"
-              to="/recipes/new"
-            />
-          </nav>
+          <LayoutMainNav />
 
           <!-- Right side -->
           <div class="flex items-center gap-2">

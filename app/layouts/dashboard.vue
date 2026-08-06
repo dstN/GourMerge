@@ -28,26 +28,7 @@ const localeSwitchItems = [
             <span class="text-xl font-bold tracking-tight"> Gour<span class="text-primary">Merge</span> </span>
           </NuxtLink>
 
-          <!-- Center nav — DESIGNBOOK §2: idle nav is neutral/ghost, the
-               emphasised action is primary/soft -->
-          <nav class="hidden md:flex items-center gap-1">
-            <UButton
-              :label="t('nav.dashboard')"
-              color="neutral"
-              variant="ghost"
-              icon="i-lucide-layout-dashboard"
-              to="/dashboard"
-            />
-            <UButton
-              :label="t('nav.myRecipes')"
-              color="neutral"
-              variant="ghost"
-              icon="i-lucide-book-open"
-              to="/recipes"
-            />
-            <UButton :label="t('nav.explore')" color="neutral" variant="ghost" icon="i-lucide-compass" to="/explore" />
-            <UButton :label="t('nav.newRecipe')" variant="soft" icon="i-lucide-plus" to="/recipes/new" />
-          </nav>
+          <LayoutMainNav />
 
           <!-- Right side -->
           <div class="flex items-center gap-2">
