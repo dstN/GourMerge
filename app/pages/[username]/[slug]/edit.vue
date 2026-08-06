@@ -22,6 +22,26 @@ const toast = useAppToast()
 /** The four supported locales, hoisted so the two per-locale `v-for`s below can't
  *  drift apart from each other. */
 const LOCALES = ['de', 'en', 'fr', 'it'] as const
+type Locale = (typeof LOCALES)[number]
+
+/**
+ * Which languages the translation panel offers for a step.
+ *
+ * The step's main editor holds the text in whatever language the author is working in, so
+ * offering that same language as a "translation" was asking them to translate German into
+ * German — and worse, the read path prefers `contentTranslations[locale]` over `content`,
+ * so filling it in would shadow the main field and go stale the moment the main text was
+ * edited.
+ *
+ * The author's current locale is therefore hidden — **unless a value is already stored**
+ * for it. Recipes edited before this change can carry such a value, and it is still
+ * winning over the main text for those readers; hiding it would make an active override
+ * uneditable. So it stays visible, flagged for what it is.
+ */
+function localesFor(...maps: Array<Partial<Record<Locale, string>> | undefined>): Locale[] {
+  const own = locale.value as Locale
+  return LOCALES.filter((l) => l !== own || maps.some((m) => (m?.[l] ?? '').trim() !== ''))
+}
 
 const username = computed(() => route.params.username as string)
 const slug = computed(() => route.params.slug as string)
@@ -473,12 +493,14 @@ useSeoMeta({
         </template>
         <div class="space-y-4">
           <!-- Title -->
-          <UFormField :label="t('recipe.title')" required>
+          <!-- `hint` names the working language, so "add translations" below is
+               unambiguous about what it is translating from. -->
+          <UFormField :label="t('recipe.title')" :hint="String(locale).toUpperCase()" required>
             <UInput v-model="metaTitle" :placeholder="t('recipe.titlePlaceholder')" />
           </UFormField>
 
           <!-- Description -->
-          <UFormField :label="t('recipe.description')">
+          <UFormField :label="t('recipe.description')" :hint="String(locale).toUpperCase()">
             <UTextarea v-model="metaDescription" :placeholder="t('recipe.descriptionPlaceholder')" :rows="2" />
           </UFormField>
 
@@ -500,8 +522,15 @@ useSeoMeta({
 
           <div v-if="metaTranslationsOpen" class="ml-4 border-l-2 border-primary-500/20 pl-3 space-y-4">
             <p class="text-xs text-dimmed">{{ t('recipe.metaTranslationsHint') }}</p>
-            <div v-for="loc in LOCALES" :key="loc" class="space-y-2">
+            <div
+              v-for="loc in localesFor(metaTitleTranslations, metaDescriptionTranslations)"
+              :key="loc"
+              class="space-y-2"
+            >
               <p class="text-xs font-semibold uppercase text-muted">{{ loc }}</p>
+              <p v-if="loc === locale" class="text-xs text-warning">
+                {{ t('recipe.translationOverridesMain', { locale: String(loc).toUpperCase() }) }}
+              </p>
               <UFormField :label="t('recipe.title')">
                 <UInput v-model="metaTitleTranslations[loc]" :placeholder="t('recipe.titlePlaceholder')" />
               </UFormField>
@@ -687,9 +716,12 @@ useSeoMeta({
         <div v-else class="space-y-3">
           <ClientOnly>
             <div v-for="(step, i) in steps" :key="i" class="space-y-1">
+              <!-- `locale-badge` makes the working language explicit; without it there was
+                   no way to tell which language the main text was in. -->
               <StepEditor
                 :model-value="step.content"
                 :index="i"
+                :locale-badge="String(locale)"
                 @update:model-value="updateStepContent(i, $event)"
                 @remove="removeStep(i)"
               />
@@ -711,11 +743,14 @@ useSeoMeta({
 
               <div v-if="step.translationsOpen" class="ml-4 space-y-2 border-l-2 border-primary-500/20 pl-3">
                 <p class="text-xs text-dimmed">{{ t('recipe.translationsHint') }}</p>
-                <div v-for="loc in LOCALES" :key="loc">
-                  <p class="text-xs font-medium uppercase text-muted mb-1">{{ loc }}</p>
+                <div v-for="loc in localesFor(step.contentTranslations)" :key="loc">
+                  <p v-if="loc === locale" class="mb-1 text-xs text-warning">
+                    {{ t('recipe.translationOverridesMain', { locale: String(loc).toUpperCase() }) }}
+                  </p>
                   <StepEditor
                     :model-value="step.contentTranslations[loc]"
                     :index="i"
+                    :locale-badge="loc"
                     :placeholder="t('recipe.translationPlaceholder', { locale: loc })"
                     @update:model-value="updateStepTranslation(i, loc, $event)"
                     @remove="updateStepTranslation(i, loc, '')"

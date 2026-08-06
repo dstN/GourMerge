@@ -173,7 +173,8 @@
     "unitOz": "oz",
     "unitLb": "lb",
     "unitCup": "Tasse",
-    "unitFloz": "fl oz"
+    "unitFloz": "fl oz",
+    "translationOverridesMain": "Überschreibt den Haupttext für {locale}. Leer lassen, um den Haupttext zu verwenden."
   },
   "common": {
     "edit": "Bearbeiten",

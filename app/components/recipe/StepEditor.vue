@@ -18,6 +18,12 @@ const props = defineProps<{
   modelValue: string
   index: number
   placeholder?: string
+  /**
+   * Language this editor holds, shown as a badge in the toolbar. The main step editor had
+   * no language marker at all, so it was never clear which language the text was in —
+   * which in turn made "add translations" ambiguous about what to translate from.
+   */
+  localeBadge?: string
 }>()
 
 const emit = defineEmits<{
@@ -74,7 +80,16 @@ onBeforeUnmount(() => editor.value?.destroy())
   <div class="group overflow-hidden rounded-lg border border-default" :data-tour="`step-editor-${index}`">
     <!-- Toolbar -->
     <div class="flex items-center gap-1 border-b border-default bg-elevated px-2 py-1">
-      <span class="mr-2 text-xs font-medium text-muted">{{ t('diff.stepNumber', { n: index + 1 }) }}</span>
+      <span class="text-xs font-medium text-muted">{{ t('diff.stepNumber', { n: index + 1 }) }}</span>
+      <UBadge
+        v-if="localeBadge"
+        :label="localeBadge"
+        color="neutral"
+        variant="subtle"
+        size="sm"
+        class="mr-1 font-mono uppercase"
+      />
+      <span class="mr-1" />
 
       <UButton
         v-if="editor"
