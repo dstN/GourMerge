@@ -25,22 +25,50 @@ const LOCALES = ['de', 'en', 'fr', 'it'] as const
 type Locale = (typeof LOCALES)[number]
 
 /**
- * Which languages the translation panel offers for a step.
+ * Which languages the translation panel offers.
  *
- * The step's main editor holds the text in whatever language the author is working in, so
- * offering that same language as a "translation" was asking them to translate German into
- * German — and worse, the read path prefers `contentTranslations[locale]` over `content`,
- * so filling it in would shadow the main field and go stale the moment the main text was
- * edited.
+ * The main editor holds the text in whatever language the author is working in, so offering
+ * that same language as a "translation" asks them to translate German into German. Worse,
+ * the read path prefers `contentTranslations[locale]` over `content`, so filling it in
+ * shadows the main field and goes stale the moment the main text is edited.
  *
- * The author's current locale is therefore hidden — **unless a value is already stored**
- * for it. Recipes edited before this change can carry such a value, and it is still
- * winning over the main text for those readers; hiding it would make an active override
- * uneditable. So it stays visible, flagged for what it is.
+ * The author's own locale is therefore hidden unless a stored value would genuinely
+ * **override** the main text — that is, it exists *and differs from it*. An identical copy
+ * (which is what recipes saved before this change actually contain: `content_translations.de`
+ * byte-for-byte equal to `content`) carries no information, so showing it is pure
+ * duplication. A value that really differs still appears, flagged, because it is winning
+ * over the main text for those readers and hiding it would make it uneditable.
+ *
+ * `stripRedundant` below removes the identical copies on the next save, so this heals.
  */
-function localesFor(...maps: Array<Partial<Record<Locale, string>> | undefined>): Locale[] {
+function localesFor(...fields: Array<{ main: string; map: Partial<Record<Locale, string>> }>): Locale[] {
   const own = locale.value as Locale
-  return LOCALES.filter((l) => l !== own || maps.some((m) => (m?.[l] ?? '').trim() !== ''))
+  return LOCALES.filter(
+    (l) =>
+      l !== own ||
+      fields.some(({ main, map }) => {
+        const value = (map[l] ?? '').trim()
+        return value !== '' && value !== (main ?? '').trim()
+      })
+  )
+}
+
+/**
+ * Drop translations that merely repeat the main text.
+ *
+ * Safe for every locale, not just the author's: the read path falls back to `content` when
+ * a translation is absent, so removing a copy that equals `content` renders identically —
+ * it only stops the value from shadowing later edits to the main text.
+ */
+function stripRedundant(main: string, map: Record<Locale, string>): Record<string, string> | null {
+  const base = (main ?? '').trim()
+  const kept = Object.fromEntries(
+    Object.entries(map).filter(([, v]) => {
+      const value = (v ?? '').trim()
+      return value !== '' && value !== base
+    })
+  )
+  return Object.keys(kept).length > 0 ? kept : null
 }
 
 const username = computed(() => route.params.username as string)
@@ -370,12 +398,7 @@ async function commitChanges() {
         steps: steps.value.map((s, i) => ({
           sortOrder: i + 1,
           content: s.content,
-          contentTranslations: (() => {
-            const translations = Object.fromEntries(
-              Object.entries(s.contentTranslations).filter(([, v]) => v.trim() !== '')
-            )
-            return Object.keys(translations).length > 0 ? translations : null
-          })(),
+          contentTranslations: stripRedundant(s.content, s.contentTranslations),
         })),
       },
     })
@@ -393,18 +416,8 @@ async function commitChanges() {
           difficulty: (metaDifficulty.value as 'easy' | 'medium' | 'hard') || undefined,
           visibility: (metaVisibility.value as 'public' | 'private') || undefined,
           dietaryType: selectedDietaryType.value === 'none' ? null : selectedDietaryType.value,
-          titleTranslations: (() => {
-            const tr = Object.fromEntries(
-              Object.entries(metaTitleTranslations.value).filter(([, v]) => v.trim() !== '')
-            )
-            return Object.keys(tr).length > 0 ? tr : null
-          })(),
-          descriptionTranslations: (() => {
-            const tr = Object.fromEntries(
-              Object.entries(metaDescriptionTranslations.value).filter(([, v]) => v.trim() !== '')
-            )
-            return Object.keys(tr).length > 0 ? tr : null
-          })(),
+          titleTranslations: stripRedundant(metaTitle.value, metaTitleTranslations.value),
+          descriptionTranslations: stripRedundant(metaDescription.value, metaDescriptionTranslations.value),
         },
       }),
       $fetch(`/api/recipes/${recipe.value.id}/tags`, {
@@ -523,7 +536,10 @@ useSeoMeta({
           <div v-if="metaTranslationsOpen" class="ml-4 border-l-2 border-primary-500/20 pl-3 space-y-4">
             <p class="text-xs text-dimmed">{{ t('recipe.metaTranslationsHint') }}</p>
             <div
-              v-for="loc in localesFor(metaTitleTranslations, metaDescriptionTranslations)"
+              v-for="loc in localesFor(
+                { main: metaTitle, map: metaTitleTranslations },
+                { main: metaDescription, map: metaDescriptionTranslations }
+              )"
               :key="loc"
               class="space-y-2"
             >
@@ -743,7 +759,7 @@ useSeoMeta({
 
               <div v-if="step.translationsOpen" class="ml-4 space-y-2 border-l-2 border-primary-500/20 pl-3">
                 <p class="text-xs text-dimmed">{{ t('recipe.translationsHint') }}</p>
-                <div v-for="loc in localesFor(step.contentTranslations)" :key="loc">
+                <div v-for="loc in localesFor({ main: step.content, map: step.contentTranslations })" :key="loc">
                   <p v-if="loc === locale" class="mb-1 text-xs text-warning">
                     {{ t('recipe.translationOverridesMain', { locale: String(loc).toUpperCase() }) }}
                   </p>

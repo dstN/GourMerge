@@ -56,10 +56,20 @@ edit to the main text would silently never reach readers of that language — on
 two sources of truth, and the stale one wins.
 
 Instead the main editor carries a locale badge, title and description carry the locale as a
-field hint, and the translation panel lists only the other three languages. One deliberate
-exception: a value already stored for the author's own locale stays visible and is flagged
-as overriding the main text, because recipes edited before this change can carry one and
-hiding it would leave an active override with no way to edit or clear it.
+field hint, and the translation panel lists only the other three languages.
+
+The author's own language reappears in one case only: when a stored value would genuinely
+**override** the main text — it exists _and differs from it_. That distinction matters,
+because every recipe saved before this change stores `content_translations.de`
+byte-for-byte equal to `content`. Treating "a value exists" as the trigger showed those
+recipes the same German text twice, once per step: the exact duplication this was meant to
+remove. A copy carries no information; a difference is an active override that would be
+unreachable if hidden.
+
+Saving now also **drops translations that merely repeat the main text**, in any locale, so
+the existing duplicates disappear on the next commit. Safe by construction: the read path
+falls back to `content` when a translation is absent, so the rendered output is identical —
+it only stops the copy from shadowing later edits.
 
 ### Added — a real dialog for creating an ingredient
 
@@ -104,7 +114,7 @@ anything created from now on.
 
 ### Stack / tests
 
-**46 API endpoints · 552 i18n keys ×4 · 219 unit tests · 32 Playwright specs.**
+**46 API endpoints · 552 i18n keys ×4 · 242 unit tests · 32 Playwright specs.**
 
 ---
 
