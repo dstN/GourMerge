@@ -2,7 +2,7 @@
 #
 # OPTIONAL. A native MySQL 8.4 on :3306 works just as well; this only exists so a
 # fresh machine can get a correctly-versioned database in one command. Pinned to
-# MySQL 8.4 to match production (<db-host> reports 8.4.11) — it
+# MySQL 8.4 to match production (which reports 8.4.11) — it
 # previously ran mariadb:11, which matched no environment we actually use.
 #
 # Published on host port 3307, NOT 3306, so it can run ALONGSIDE a native MySQL

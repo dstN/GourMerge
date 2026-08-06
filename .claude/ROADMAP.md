@@ -20,7 +20,7 @@ These constrain everything below. They are decisions, not plans — they do not
 expire when a phase completes.
 
 1. **Deployment: Netcup Webhosting** (shared) running Node via **Apache + Phusion
-   Passenger**, separate MySQL server (**8.4.11**, `<db-host>`). No
+   Passenger**, separate MySQL server (**8.4.11**, a Netcup MySQL host). No
    Docker in production — `docker-compose.yml` is local-dev MySQL only. No root,
    no Redis, no self-hosted daemons. Consequences that keep mattering: in-memory
    state is not multi-process safe (hence the DB-backed rate limiter), and the
@@ -71,7 +71,7 @@ step in `docs/RUNBOOK.md`.
 | Schedule the nightly backup task     | `scripts/server-backup.sh` is installed and verified by hand; the Plesk **"Run a command"** task at 03:15 still needs creating. Plesk's own Backup Manager cannot be used — it demands remote storage and only offers FTP |
 | Quarterly restore drill              | **First one passed 2026-08-06** — counts + `CHECKSUM TABLE` identical, JSON valid, utf8mb4 intact. Next due Nov 2026, and before any destructive migration                                                                |
 
-**Note on exposure:** `<db-host>` (`<server-ip>`) accepts
+**Note on exposure:** the production MySQL host accepts
 connections from arbitrary external IPs on 3306. That is what makes the
 runner-based migration step work, and it also means the password is the only
 control on the production database. Worth revisiting if Netcup ever offers IP

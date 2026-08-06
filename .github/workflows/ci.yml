@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
 
     services:
-      # MySQL 8.4 to match production (<db-host> reports 8.4.11).
+      # MySQL 8.4 to match production (which reports 8.4.11).
       # This was mariadb:11 while prod and local dev were both MySQL — and the
       # ingredient search runs raw JSON_EXTRACT/JSON_UNQUOTE plus a
       # collation-sensitive LIKE, and explore uses MATCH…AGAINST, all of which

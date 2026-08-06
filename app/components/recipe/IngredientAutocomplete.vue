@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type { CreatedIngredient } from '~/components/recipe/NewIngredientModal.vue'
+
 const { t, locale } = useI18n()
 
 interface IngredientOption {
@@ -89,7 +91,11 @@ function onSelect(option: IngredientOption) {
   isFocused.value = false
 }
 
-function onCreated(created: { id: number; name: string }) {
+// Typed by the modal's own contract rather than an inline shape. The inline version was a
+// structural subset that happened to match, so a change to the emitted payload would not
+// have been caught here — and it left `CreatedIngredient` exported but unimported, which
+// `npm run knip` flagged.
+function onCreated(created: CreatedIngredient) {
   emit('update:modelValue', { id: created.id, name: created.name })
   query.value = created.name
 }

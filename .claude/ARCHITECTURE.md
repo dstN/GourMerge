@@ -38,7 +38,7 @@ In all code, UI labels, database columns, API endpoints, comments, commit messag
 | PWA            | **@vite-pwa/nuxt**                                             |
 
 > **Engine correction (2026-08-04).** This document previously specified MariaDB. In
-> reality every environment is MySQL: production is `<db-host>` reporting
+> reality every environment is MySQL: production is the Netcup MySQL host reporting
 > **8.4.11**, local dev is a native MySQL, and only CI ran `mariadb:11` — so tests were
 > the single MariaDB in the project. CI and `docker-compose.yml` are now pinned to
 > `mysql:8.4`. This matters because the codebase issues engine-specific SQL:

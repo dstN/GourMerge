@@ -52,7 +52,7 @@ exactly and only the deploy job.
 | Secret                | Value / purpose                                                                                                                                                                                                 |
 | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `DEPLOY_HOST`         | `gourmerge.de` — SSH host of the webspace                                                                                                                                                                       |
-| `DEPLOY_USER`         | `<ssh-user>` — Plesk system user (shared across all domains on the subscription)                                                                                                                             |
+| `DEPLOY_USER`         | The Plesk system user, shared across all domains on the subscription. Deliberately not written down here — it is half of an SSH credential pair and this repo is public                                         |
 | `DEPLOY_SSH_PASSWORD` | System user's password. Netcup exposes no key auth, so this is password auth via sshpass                                                                                                                        |
 | `DEPLOY_PATH`         | `/gourmerge.de` — the **application root**, not the webroot. The SSH shell is chrooted with the subscription root as `/`, so this is what `pwd` shows                                                           |
 | `DEPLOY_DOMAIN`       | `gourmerge.de` — host only, for the post-deploy `/api/health` smoke test                                                                                                                                        |
@@ -116,7 +116,7 @@ on a routine cadence for long-lived credentials:
 
    The runner cannot read Plesk's env and the host cannot read GitHub's secrets, hence
    the duplication. One identical URL serves both: the database is a separate machine
-   (`<db-host>`, `<server-ip>`) from the webspace (`<server-ip>`), so
+   (a separate Netcup MySQL host from the webspace), so
    there is no internal shortcut like `localhost` — the app goes over the same public
    hostname the runner uses.
 

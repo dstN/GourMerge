@@ -15,8 +15,8 @@
 #
 #        cat > /gourmerge.de/.my.cnf <<'EOF'
 #        [client]
-#        host=<db-host>
-#        user=<your-database-name>
+#        host=YOUR_DB_HOST
+#        user=YOUR_DB_USER
 #        password=YOUR_DB_PASSWORD
 #        EOF
 #        chmod 600 /gourmerge.de/.my.cnf
@@ -65,7 +65,11 @@
 set -eu
 
 APP_ROOT="/gourmerge.de"
-DB="<your-database-name>"
+# Set this on the host. Left as a placeholder on purpose: this repo is public, and a
+# database name plus the host in `.my.cnf` is the non-secret half of a credential pair for
+# a MySQL that accepts connections from anywhere. The guard below refuses to run until it
+# is filled in, so an unconfigured copy fails loudly instead of dumping nothing.
+DB="CHANGE_ME"
 OUT_DIR="$APP_ROOT/backups"
 CNF="$APP_ROOT/.my.cnf"
 KEEP_DAYS=14
@@ -81,6 +85,12 @@ die() {
 }
 
 [ -f "$CNF" ] || die "missing $CNF — see the install notes at the top of this script"
+# An `if`, not `[ … ] && die`: under `set -e` a failing test as the last command of a
+# top-level AND-list aborts the script, so the configured case would exit 1 and never take
+# a backup. Same trap as the GTID probe below — worth stating twice.
+if [ "$DB" = "CHANGE_ME" ]; then
+  die "set DB= near the top of this script to your database name"
+fi
 command -v mysqldump >/dev/null 2>&1 || die "mysqldump not found on PATH"
 
 mkdir -p "$OUT_DIR"

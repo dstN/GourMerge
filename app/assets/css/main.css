@@ -294,7 +294,7 @@
 
 .gm-skeleton {
   /* `--ui-bg-inverted` flips with the colour scheme — dark in light mode, light in dark
-   * mode — so a single low-alpha mix reads as a visible band in both, without hardcoding
+   * mode — so one mix reads as a visible band in both, without hardcoding
    * a colour per mode. Two earlier attempts were invisible for the same reason and are
    * worth recording: `--ui-text-dimmed` at 18% (far too faint), then `--ui-bg-accented`,
    * which is only ~4% lighter than `bg-elevated` in light mode. Both computed correctly
@@ -308,7 +308,7 @@
   background-image: linear-gradient(
     90deg,
     transparent 0%,
-    color-mix(in oklab, var(--ui-bg-inverted) 9%, transparent) 50%,
+    color-mix(in oklab, var(--ui-bg-inverted) 22%, transparent) 50%,
     transparent 100%
   );
   background-size: 200% 100%;
