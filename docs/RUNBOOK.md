@@ -151,6 +151,20 @@ Before scheduling, confirm the host has what it needs:
 dumps stay uncompressed but valid. If `find` is absent, rotation is skipped with a warning
 instead of failing.
 
+> **The host's `mysqldump` is MariaDB's, against a MySQL 8.4 server** — verified
+> 2026-08-06: `MariaDB dump 10.19 Distrib 10.5.29-MariaDB` / `Server version 8.4.11`. That
+> pairing is safe **only because this dump is data-only.** A schema dump would be the
+> dangerous case: MySQL 8.4 emits collations such as `utf8mb4_0900_ai_ci` that MariaDB's
+> client does not understand, and the result would not reload cleanly. With
+> `--no-create-info` there is no DDL to mistranslate — just `INSERT`s.
+>
+> It also means option support cannot be assumed. `--set-gtid-purged` is MySQL-only and a
+> hard "unknown variable" failure on MariaDB, so the script probes `mysqldump --help` and
+> adds it only if advertised. Every other option it uses exists in both clients.
+
+Because the client and server are different vendors, the restore drill below is not
+optional politeness — it is the only thing that proves these dumps actually reload.
+
 > **Then check the dumps are not downloadable.** They land in `/gourmerge.de/backups`,
 > outside `httpdocs` and outside `.output/public`, so neither nginx nor Nitro serves them.
 > Verify once anyway — `curl -sI https://gourmerge.de/backups/` must return 404, never a
