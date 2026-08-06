@@ -64,7 +64,7 @@ jobs:
       # never sees the SSH password.
       - name: Require the E2E suite to have passed for this commit
         timeout-minutes: 35
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const sha = context.payload.workflow_run.head_sha
