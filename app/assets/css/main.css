@@ -270,7 +270,7 @@
   }
 }
 
-/* ── Skeleton loading: a sweep, not a pulse ────────────────────
+/* ── Skeleton loading: a brand shimmer, not a pulse ────────────
  * Nuxt UI's skeleton is `animate-pulse rounded-md bg-elevated` — the whole block
  * fades in and out together, which reads as "something is broken and blinking"
  * rather than "content is on its way". A highlight travelling left-to-right reads
@@ -284,15 +284,29 @@
  * animated rather than `transform` because the element is the surface itself —
  * there is no inner node to slide without adding one.
  *
- * The percentages run DOWN, 200% → 0%, and that is not a typo. When the background
- * image is wider than the box — here `background-size: 200%` — a percentage
+ * The percentages run DOWN, 100% → 0%, and that is not a typo. When the background
+ * image is wider than the box — here `background-size: 260%` — a percentage
  * background-position resolves against (box − image) width, which is negative, so the
- * usual meaning inverts: a rising percentage slides the image LEFT. The first version of
- * this animated -150% → 250% and therefore swept right-to-left, the opposite of what its
- * own comment claimed. Counting down is what makes the highlight travel left-to-right. */
-@keyframes gm-skeleton-sweep {
+ * usual meaning inverts: a rising percentage slides the image LEFT. An early version
+ * animated -150% → 250% and therefore swept right-to-left, the opposite of what its own
+ * comment claimed. Counting down is what makes the highlight travel left-to-right.
+ *
+ * ── Why the gradient has seventeen stops
+ *
+ * Two earlier versions were technically animating and still looked wrong, and the reason
+ * was always the gradient, never the motion. A three-stop ramp
+ * (transparent → colour → transparent) has a discontinuous first derivative at each stop:
+ * the eye reads those kinks as the band's edges, so it looks like a rectangle sliding past
+ * rather than light moving across. The fix, borrowed from `tw-shimmer`, is to sample a sine
+ * falloff instead — alpha 4/17/33/50/67/83/96/100 at closing intervals around the peak.
+ * The stop positions bunch up near the centre for the same reason: even spacing puts the
+ * steepest part of the curve on the widest span, which is where a seam shows.
+ *
+ * Verified in the browser, not in the declaration — see /dev/skeletons, which exists
+ * precisely because a real skeleton is on screen for a few hundred milliseconds. */
+@keyframes gm-skeleton-shimmer {
   from {
-    background-position-x: 200%;
+    background-position-x: 100%;
   }
   to {
     background-position-x: 0%;
@@ -300,35 +314,83 @@
 }
 
 .gm-skeleton {
-  /* `--ui-bg-inverted` flips with the colour scheme — dark in light mode, light in dark
-   * mode — so one mix reads as a visible band in both, without hardcoding
-   * a colour per mode. Two earlier attempts were invisible for the same reason and are
-   * worth recording: `--ui-text-dimmed` at 18% (far too faint), then `--ui-bg-accented`,
-   * which is only ~4% lighter than `bg-elevated` in light mode. Both computed correctly
-   * and both animated correctly; a loading affordance nobody can see is still not one.
+  /* Brand orange, so loading reads as part of the product rather than as a grey system
+   * state. `--ui-primary` and NOT `--color-primary-500` — the former is Nuxt UI's
+   * mode-aware brand colour, same rule as the link colour above. This one is also a hard
+   * constraint rather than a preference: Tailwind v4 tree-shakes `@theme` variables, so
+   * `--color-primary-300` and friends are simply absent from the stylesheet unless a
+   * utility references them. A `color-mix()` over a missing variable is an invalid
+   * declaration, i.e. no background at all. Found by trying it.
    *
-   * `animation` is the shorthand, not `animation-name`, and that matters: Nuxt UI MERGES
-   * an `app.config.ts` slot override with its own base rather than replacing it, so
-   * `animate-pulse` stays in the class list. The shorthand resets its duration, timing
-   * and iteration count too, so the sweep fully supersedes the pulse instead of
-   * inheriting half of it.
+   * 40% is the peak, reached only at the exact centre of the band, and it was picked by
+   * looking at rendered frames at 25/40/55/70% rather than by taste: 25% is a colourless
+   * blush, 70% is a solid orange bar sliding over the placeholder. Dark mode needs more
+   * because a translucent mid-orange over a dark navy desaturates into brown — see below.
    *
-   * 100deg rather than 90deg tilts the band slightly, and the stops are deliberately
-   * lopsided — a long flat run, then a narrow highlight at 60% easing back out by 70%.
-   * A symmetrical 0/50/100 gradient spends the whole cycle half-lit, which reads as "this
-   * surface is a bit lighter in the middle"; a narrow stripe reads as one thing moving
-   * across. `ease-out` matches: the band enters quickly and settles, the way the platform
-   * skeletons this imitates behave. */
+   * History worth keeping: `--ui-text-dimmed` at 18% and `--ui-bg-accented` were both
+   * effectively invisible (the latter is ~4% off `bg-elevated` in light mode). Both
+   * computed correctly and both animated correctly; a loading affordance nobody can see is
+   * still not one. */
+  --gm-shimmer: color-mix(in oklab, var(--ui-primary) 40%, transparent);
+
+  /* Geometry, so the numbers are not magic. The image is 2.6× the box, giving 1.6 box-widths
+   * of travel; the band is 0.6 box-widths wide and sits at 38.46–61.54% of the image, which
+   * places its trailing edge exactly on the box's left edge at 100% and its leading edge
+   * exactly on the right edge at 0%. Crossing therefore consumes the entire cycle — no dead
+   * frames at either end, which is what an earlier version got wrong: it reserved ~18% of
+   * every cycle for an empty "rest" and the whole thing read as sluggish even though the band
+   * itself moved at a reasonable speed.
+   *
+   * 1.2s is the pass. `tw-shimmer`, which this follows, states its speed in px/sec rather
+   * than in seconds (1000px/s for surfaces) precisely because a fixed duration means a wide
+   * card and a small badge shimmer at different velocities. Matching that properly needs the
+   * element's own width in the duration — `calc(var(--track) / var(--speed) …)` with
+   * `--track: 100cqw` — and cqw only resolves against an ANCESTOR container, so every
+   * skeleton would have to be wrapped. Not worth the markup: 1.2s puts a typical 400–800px
+   * skeleton at roughly 550–1050px/s, i.e. inside the range that plugin aims for anyway.
+   *
+   * 105deg is `90deg + 15deg`, the reference's tilt. Flat vertical edges read as a wipe.
+   * At this angle the gradient line is within 3% of the box width, so the stop percentages
+   * above still map to horizontal fractions and the geometry in the previous paragraph holds.
+   *
+   * `linear`, not an ease: an ease makes the band visibly decelerate mid-surface, as though
+   * it were snagging on something.
+   *
+   * `animation` is the shorthand, not `animation-name`, and that matters: Nuxt UI MERGES an
+   * `app.config.ts` slot override with its own base rather than replacing it, so
+   * `animate-pulse` stays in the class list. The shorthand resets duration, timing and
+   * iteration count too, so this fully supersedes the pulse instead of inheriting half. */
   background-image: linear-gradient(
-    100deg,
-    transparent 0%,
-    transparent 50%,
-    color-mix(in oklab, var(--ui-bg-inverted) 22%, transparent) 60%,
-    transparent 70%
+    105deg,
+    transparent 38.46%,
+    color-mix(in oklab, var(--gm-shimmer) 4%, transparent) 39.85%,
+    color-mix(in oklab, var(--gm-shimmer) 17%, transparent) 41.46%,
+    color-mix(in oklab, var(--gm-shimmer) 33%, transparent) 42.85%,
+    color-mix(in oklab, var(--gm-shimmer) 50%, transparent) 44.23%,
+    color-mix(in oklab, var(--gm-shimmer) 67%, transparent) 45.62%,
+    color-mix(in oklab, var(--gm-shimmer) 83%, transparent) 47.23%,
+    color-mix(in oklab, var(--gm-shimmer) 96%, transparent) 48.62%,
+    var(--gm-shimmer) 50%,
+    color-mix(in oklab, var(--gm-shimmer) 96%, transparent) 51.38%,
+    color-mix(in oklab, var(--gm-shimmer) 83%, transparent) 52.77%,
+    color-mix(in oklab, var(--gm-shimmer) 67%, transparent) 54.38%,
+    color-mix(in oklab, var(--gm-shimmer) 50%, transparent) 55.77%,
+    color-mix(in oklab, var(--gm-shimmer) 33%, transparent) 57.15%,
+    color-mix(in oklab, var(--gm-shimmer) 17%, transparent) 58.54%,
+    color-mix(in oklab, var(--gm-shimmer) 4%, transparent) 60.15%,
+    transparent 61.54%
   );
-  background-size: 200% 100%;
+  background-size: 260% 100%;
   background-repeat: no-repeat;
-  animation: gm-skeleton-sweep 2s ease-out infinite;
+  animation: gm-skeleton-shimmer 1.2s linear infinite;
+}
+
+/* Dark mode needs a stronger peak for the same apparent brightness. Alpha compositing is
+ * why: a translucent mid-orange over the pale `bg-elevated` of light mode lands on orange,
+ * but over dark navy the same mix lands on brown. 40% there is muddy; 60% is amber. Only
+ * the peak changes — geometry, timing and the falloff ladder are shared. */
+.dark .gm-skeleton {
+  --gm-shimmer: color-mix(in oklab, var(--ui-primary) 60%, transparent);
 }
 
 /* An indefinite looping animation is exactly what this setting is for. The

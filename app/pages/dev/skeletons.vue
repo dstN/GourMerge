@@ -18,13 +18,24 @@ definePageMeta({ layout: 'default' })
 // Deliberately plain English and not translated: dev-only, never user-facing.
 useSeoMeta({ title: 'Skeleton preview — dev', robots: 'noindex,nofollow' })
 
-/** Slow the sweep right down so a single pass can be followed by eye. */
+/** Slow the shimmer right down so a single pass can be followed by eye. */
 const slow = ref(false)
 const paused = ref(false)
+/** Position within one cycle, 0–100. Only has an effect while frozen. */
+const phase = ref(30)
 
+const duration = computed(() => (slow.value ? 6 : 1.2))
+
+/**
+ * A negative `animation-delay` on a paused animation holds it at an exact offset, which is
+ * the only way to judge the band's *shape* — in motion the eye cannot hold an edge still,
+ * and at 1.2s a pass is over before it can be studied. Scrubbing 0 → 100 walks the band
+ * from the left edge to the right one; there are deliberately no empty frames at either end.
+ */
 const style = computed(() => ({
-  animationDuration: slow.value ? '6s' : '',
-  animationPlayState: paused.value ? 'paused' : '',
+  animationDuration: `${duration.value}s`,
+  animationPlayState: paused.value ? 'paused' : 'running',
+  animationDelay: paused.value ? `-${((phase.value / 100) * duration.value).toFixed(3)}s` : '0s',
 }))
 
 const shapes = [
@@ -42,16 +53,17 @@ const shapes = [
     <div class="mb-6">
       <h1 class="text-2xl font-bold">Skeleton preview</h1>
       <p class="mt-1 text-sm text-muted">
-        Dev-only. The sweep is a moving <code>background-position-x</code> over <code>--ui-bg-inverted</code> at 22%, so
-        it darkens in light mode and lightens in dark mode. Use the theme toggle in the header to compare. The highlight
-        must travel <strong>left to right</strong>; because the gradient is wider than the box, the keyframes count 200%
-        → 0% to achieve that.
+        Dev-only. The shimmer is a moving <code>background-position-x</code> over <code>--ui-primary</code> at a 32%
+        peak, so it stays legible in both themes — use the theme toggle in the header to compare. The highlight must
+        travel <strong>left to right</strong>; because the gradient is wider than the box, percentage positions invert
+        and the keyframes count 100% → 0% to achieve that. Seventeen colour stops approximate a sine falloff: a
+        three-stop ramp has a visible kink at each end and reads as a rectangle sliding past rather than as light.
       </p>
     </div>
 
     <div class="mb-6 flex flex-wrap items-center gap-2">
       <UButton
-        :label="slow ? 'Normal speed (2s)' : 'Slow motion (6s)'"
+        :label="slow ? 'Normal speed (1.2s)' : 'Slow motion (6s)'"
         :icon="slow ? 'i-lucide-gauge' : 'i-lucide-snail'"
         color="neutral"
         variant="outline"
@@ -66,6 +78,10 @@ const shapes = [
         size="sm"
         @click="paused = !paused"
       />
+      <label class="flex items-center gap-2 text-xs text-muted">
+        <span class="tabular-nums">Phase {{ phase }}%</span>
+        <input v-model.number="phase" type="range" min="0" max="100" class="w-48" @input="paused = true" />
+      </label>
     </div>
 
     <!-- Side by side with a static surface: the sweep is subtle by design, and the only
