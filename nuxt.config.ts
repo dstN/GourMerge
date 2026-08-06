@@ -134,8 +134,25 @@ export default defineNuxtConfig({
       ],
     },
     workbox: {
-      // Cache the app shell and navigation routes for offline use (P5-005).
-      navigateFallback: '/',
+      // NO `navigateFallback`. It was `'/'`, and that threw on every navigation:
+      //
+      //   Uncaught (in promise) non-precached-url: non-precached-url :: [{"url":"/"}]
+      //     at Y.createHandlerBoundToURL (workbox-*.js)
+      //     at /sw.js
+      //
+      // `navigateFallback` names a URL that Workbox will serve from the PRECACHE for any
+      // navigation it cannot fetch, so the URL has to be in the precache manifest.
+      // `globPatterns` builds that manifest from files on disk, and this app is
+      // server-rendered — there is no `index.html` for `/`, so the entry could never exist and
+      // `createHandlerBoundToURL()` rejected. A service worker that throws on navigation is
+      // worse than none: it produced a console error for every visitor while delivering
+      // exactly zero offline capability.
+      //
+      // Removing it costs nothing that worked. Offline navigation was never functioning; asset
+      // and API caching below are unaffected, since they are runtime caching and do not touch
+      // the precache. Doing this properly needs a real precached shell — a prerendered
+      // `/offline` route added via `additionalManifestEntries` and pointed at here — which is
+      // a feature, not a one-line config fix. Recorded in ROADMAP.
       globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
       runtimeCaching: [
         {
