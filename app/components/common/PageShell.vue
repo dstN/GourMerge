@@ -32,9 +32,12 @@ const WIDTHS = {
 </script>
 
 <template>
+  <!-- `page-shell` is a styling hook, not decoration: inside a sidebar shell the cap must
+       align left instead of centring, and that rule lives in main.css (DESIGNBOOK §12,
+       one place per visual decision). See the `[data-shell='sidebar']` rule there. -->
   <div
     :class="[
-      'mx-auto w-full px-4 sm:px-6 lg:px-8',
+      'page-shell mx-auto w-full px-4 sm:px-6 lg:px-8',
       WIDTHS[props.width],
       props.spacing === 'page' ? 'py-8 sm:py-10' : '',
     ]"

@@ -88,7 +88,10 @@ const localeSwitchItems = [
       </aside>
 
       <!-- Main content (the only scrollable region) -->
-      <main id="main-content" tabindex="0" class="flex-1 overflow-y-auto">
+      <!-- `data-shell="sidebar"` tells the page shell to align its cap left instead of
+           centring it. All three layouts use `#main-content`, so that id cannot
+           distinguish them; this attribute can. -->
+      <main id="main-content" data-shell="sidebar" tabindex="0" class="flex-1 overflow-y-auto">
         <slot />
       </main>
     </div>

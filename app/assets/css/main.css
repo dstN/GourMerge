@@ -193,6 +193,24 @@
   text-decoration-color: currentColor;
 }
 
+/* ── One left edge inside the sidebar shell ────────────────────
+ * `<CommonPageShell>` centres its cap with `mx-auto`, which is right when the page
+ * is the whole viewport: a column of text centred in the window. Beside a sidebar it
+ * is wrong, because each page centres a *different* cap and the left edge jumps —
+ * measured at 1600px: dashboard 288px, recipe 480px, settings 592px. Three
+ * starting points for the same nav, and nothing a reader could predict.
+ *
+ * Aligning left keeps the caps (they still limit line length on the right) while
+ * every page in the shell begins at the same place. The public layout is untouched
+ * and stays centred, which is why this is scoped to the shell rather than changed in
+ * PageShell itself.
+ *
+ * Specificity: attribute + class beats Tailwind's single-class `.mx-auto`. */
+[data-shell='sidebar'] .page-shell {
+  margin-inline-start: 0;
+  margin-inline-end: auto;
+}
+
 /* ── Skeleton loading: a sweep, not a pulse ────────────────────
  * Nuxt UI's skeleton is `animate-pulse rounded-md bg-elevated` — the whole block
  * fades in and out together, which reads as "something is broken and blinking"
