@@ -5,6 +5,294 @@ All notable changes to GourMerge are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versioning follows [Semantic Versioning](https://semver.org/).
 
+## [1.5.0] — 2026-08-07
+
+The first release written after the site had real users hitting it, and it shows: most of
+what follows was found in production logs, in Sentry, or by pointing `curl` at the live host
+rather than by reading code. Two entries are outages, one is a feature nobody could reach,
+and several are error handlers that were themselves the error.
+
+### Fixed — every account in production was permanently barred from publishing
+
+Creating a public recipe answered `403`. So did making an existing recipe public, and so did
+opening a GourMerge Request. The cause was a gate with no door: `REQUIRE_EMAIL_VERIFICATION`
+is `true` in production, but `/auth/register` never sent a verification mail — it inserted
+the user and set the session. `email_verified_at` stayed `NULL` forever, because the only
+thing that sets it is `/auth/verify?token=…`, whose token only `/auth/send-verification` can
+issue, and **no screen in the app ever called that endpoint**. Every account was unverifiable
+by construction.
+
+- Token minting and the mail now live in one place, `server/utils/emailVerification.ts`, and
+  registration sends it. Best-effort inside a `try`/`catch`: the user row is already
+  committed at that point, so a dead SMTP host must not answer `500` to a signup that
+  succeeded — the user would retry and hit the `409` for their own brand-new account.
+- An unverified-email banner across the authenticated shell, with a resend button. That is
+  the way out for the accounts that already exist; without it, fixing registration would only
+  have helped people who had not signed up yet.
+- `/auth/verify` refreshes the session when the link is opened in the browser that is already
+  signed in as that user, so the banner disappears on the spot instead of nagging someone who
+  just complied. Guarded on the user id — the link may well be opened on a shared machine.
+- The `403` now says what is wrong. `useApiError` deliberately never echoes the server's
+  `statusMessage`, which meant this one read "you do not have permission to do that" and sent
+  people looking for a permissions problem that did not exist. Endpoints can now attach a
+  stable `data.code`, and only codes in an allow-list resolve to a translated message — the
+  escape hatch that composable's own docblock had been asking for.
+
+The unit test written for that lookup caught a bug in it immediately: `code: 'constructor'`
+resolved off the prototype chain and would have rendered `[Function Object]` on screen.
+`Object.hasOwn` now, own keys only.
+
+### Fixed — a stray space in `LOG_LEVEL` was killing the process on every error
+
+The cause of the production 502s, from a Sentry stack trace:
+
+```
+Error: default level:info  must be included in custom levels
+    at assertDefaultLevelFound (pino/lib/levels.js:194)
+```
+
+Note the double space. The value was `"info "` — a trailing space in the Netcup panel's
+environment-variable field. pino rejects an unknown level by **throwing**, and the logger is
+built lazily on first use, which in a healthy request cycle is frequently `logger.error()`.
+So an error would occur, the app would try to report it, the logger would throw from inside
+the error handler, and the process would die mid-response. Passenger reported "Incomplete
+response received from application"; the browser got a 502.
+
+`resolveLevel()` trims, lowercases, checks against pino's seven levels and falls back with a
+`console.warn`. Ten cases in `tests/unit/loggerLevel.test.ts`, including the exact `"info "`
+that caused it. A logger exists to report failure and must not be capable of causing one.
+
+### Fixed — the deploy's smoke test caused the outage it was meant to catch
+
+The site came back up on its own with nobody touching it, which rules out a broken release
+and convicts the check. Passenger spawns on the first request, and a cold start of a 26 MB
+artifact on shared hosting has to get through Nitro, Sentry and auth-utils before anything
+answers — until then Apache serves the document root, which is why the check saw 403/404 from
+a host that was fine. `6 × 10s` rejected a release that was merely still spawning, and the
+rollback then swapped a **working** build out for an older one.
+
+There is no signal separating "still spawning" from "will never start"; only elapsed time.
+The budget is now `16 × 15s`, and expiry means broken rather than slow. The deploy also names
+who answered the smoke test and verifies that the rollback it performs actually restored a
+serving release.
+
+### Added — sign in with email **or** username
+
+The login form validated its field as an email address, so a user who knew their username was
+told their own name was an "invalid email address" before the request was even sent.
+
+The endpoint matches both columns now, and they can never collide: usernames are validated at
+registration as `[a-zA-Z0-9_-]+` and therefore cannot contain an `@`, while an email address
+must — so a value addresses exactly one of the two unique columns. The field is `type="text"`
+with `autocomplete="username"`, because `type="email"` would have made the browser refuse to
+submit a bare username. The old `email` request field is still accepted, so a browser running
+the previously cached bundle can still sign in during the minutes after a deploy.
+
+### Added — SEO: hreflang, per-locale canonicals, localised metadata, `/llms.txt`
+
+Production shipped no canonical, no hreflang and English metadata on every locale. With
+`prefix_except_default`, `/` `/en` `/fr` `/it` are four URLs carrying the same content, and
+without alternates a crawler has to guess they are translations rather than duplicates — it
+picks one and drops the rest, so three quarters of the translation work never reaches search
+results.
+
+`useLocaleHead({ seo: true })` emits the canonical and stops; the module keeps alternates
+behind `experimental.strictSeo`, which 500s every page here. Enabling it earned its keep once
+anyway — it turned a silent omission into an error revealing that the locale definitions had
+no BCP47 `language` tags at all. Those are added, region-less on purpose (`de-DE` would claim
+we target Germany rather than German speakers). The alternate set is ten hand-rolled lines in
+`app.vue`, including the `x-default` most otherwise-correct implementations forget.
+
+`app/pages/index.vue` had a hardcoded English title and description, which is worse than an
+omission: a page-level `useSeoMeta` overrides the site-wide one, so `/fr` served a French page
+with an English `<title>` and search snippet. Also `/llms.txt`, as a route rather than a
+static file for the same reason `robots.txt` is one — the URLs must be absolute and the host
+is only known at runtime.
+
+### Changed — the document head no longer preloads the entire application
+
+Mobile Lighthouse measured 57 script requests totalling 326 KiB, **all started at t=116 ms at
+priority High**, because Nuxt emits a `<link rel="modulepreload">` for every chunk the entry
+statically imports. On the mobile profile's 1.4 Mbps link that is ~1.8 s of transfer, and the
+render-blocking stylesheet sat in the same queue competing for it. The two numbers that make
+the case: unthrottled FCP is 290 ms and simulated FCP is 2550 ms — the gap is almost entirely
+bandwidth, spent on JavaScript the first paint does not need. The page is server-rendered, so
+the HTML is already complete and the scripts are `type="module"` and deferred by definition.
+
+- A `build:manifest` hook drops `preload` and `prefetch`. The chunks are still fetched; they
+  are merely discovered after the entry parses, once the stylesheet has had the pipe to
+  itself. Verified on a production build: the head went from 20+ preload links to zero, with
+  the stylesheet and entry script untouched and the page still rendering its LCP element.
+- `zod-locale.client.ts` imported Zod **and all four locale packs statically**, putting them
+  in the entry chunk — executed at boot on every page, including a marketing homepage with no
+  form on it. Now loaded on idle or first interaction. Zod, the locale packs and `motion` all
+  left the entry chunk as a result.
+- Sentry's browser tracing is off. It installed PerformanceObservers and navigation
+  instrumentation on the main thread during exactly the window scored as Total Blocking Time,
+  which carries more weight than any other metric. Error capture — the reason Sentry is here
+  — is untouched. This is the one change with a real cost: field performance data from actual
+  visitors, which is better evidence than any lab run. One line to revert.
+
+Deliberately **not** done: inlining the stylesheet. It is 233 KB raw, and parsing that at 4×
+CPU throttling inside the FCP path is likely a net loss, on top of adding 28 KB to every HTML
+response and removing the file's caching entirely. Critical-CSS extraction is the correct
+form of that idea and needs a dedicated extractor.
+
+### Fixed — the service worker threw on every navigation
+
+```
+Uncaught (in promise) non-precached-url: non-precached-url :: [{"url":"/"}]
+```
+
+`navigateFallback: '/'` names a URL Workbox serves **from the precache** when a navigation
+cannot be fetched, so that URL has to be in the precache manifest. The manifest comes from
+`globPatterns` matching files on disk, and this app is server-rendered — there is no
+`index.html` for `/`, so the entry could never exist. Removing it costs nothing that worked:
+it delivered a console error for every visitor and zero offline capability. Runtime caching
+for assets and the recipe API never involved the precache and is untouched.
+
+### Fixed — icons called a third party on every page render
+
+`[Icon] failed to load icon 'lucide:compass'` filled every E2E and a11y log. The browser
+console from production had the chain: the page fetched `api.iconify.design`, our CSP refused
+it, and the retry against `/api/_nuxt_icon/` came back 502.
+
+`clientBundle.scan` is off by default, and the icons the build log reported all came from
+Nuxt UI's own hook — every icon _we_ put in a template was absent, so `loadIcon()` fell
+through to the network loader. Two false starts are recorded in the commit, including listing
+the eleven failing names explicitly, which fixed those eleven and surfaced five more the
+moment another page rendered. `scan: true` is the actual fix, and `fallbackToApi: false`
+closes the other half: fetching icons from someone else's server sends every visitor's IP to
+a third party before any consent, the same problem as the Google Fonts `<link>` that was
+removed earlier. Verified at zero warnings across four pages and zero external requests.
+
+### Changed — the Swiss seed no longer re-imports 1191 rows on every deploy
+
+Fifteen minutes per release, three sequential round trips per food against a MySQL on a
+separate host, all to rewrite rows that already matched. One `COUNT` decides it now: `source`
+already carries the dataset version (`swiss-blv-v7`), so a new BLV release changes the string
+and the check stops matching by itself. Verified against a populated database at 0.9 s. The
+loop is still row-at-a-time, so a genuinely new dataset still costs a quarter of an hour —
+the recurring cost was the part that mattered.
+
+### Fixed — the logo dropped the chosen locale
+
+Pick another language, browse, click the logo, and the site was German again. The logo's
+target is a runtime expression, `loggedIn ? '/dashboard' : '/'`, and that is the whole bug:
+i18n localises a `NuxtLink` whose `to` is a static literal, which is why the rest of the nav
+survived language changes and made this look like a session problem. It cannot rewrite a
+ternary evaluated at runtime, so the logo pointed at the unprefixed path — and under
+`prefix_except_default` the unprefixed path _is_ the default locale. Both layouts use
+`localePath()` now, including the one that already worked, because "this link keeps your
+language" should not depend on how the target happens to be written.
+
+### Fixed — unknown profiles answered `200`
+
+`/[username]` is the widest route in the app, so every unmatched single-segment path landed
+there: `/backups`, `/app.js`, `/.my.cnf` all returned `200` with the profile page rendered
+inside. That made every typo an indexable URL, and it made "is this file exposed?"
+unanswerable from a status code. `setResponseStatus(event, 404)` rather than `createError` —
+the status was wrong, the page was not, so a mistyped username still gets the styled
+"profile not found" state while crawlers and scripts get the honest code.
+
+The deploy now also asserts on every release that `backups/` and `.my.cnf` are not reachable.
+The assertion is on **content**, not on the status code, precisely because of the bug above:
+an app answering with its own page looks identical to a 200 serving a file.
+
+### Fixed — the header navigation differed depending on which layout you were on
+
+Signed in, on a `/legal/*` page, "Meine Rezepte" was missing. `default.vue` and
+`dashboard.vue` each carried their own hand-written copy of the nav and the copies had
+drifted — four items in one, three in the other. A user's navigation gained and lost an item
+as they moved around, with no rule they could infer. There is one copy now, `LayoutMainNav`,
+rendered by both layouts.
+
+### Added — skeleton shimmer, on the third attempt
+
+The first two versions animated correctly; the _gradient_ was wrong. A three-stop ramp has a
+discontinuous first derivative at each stop, and the eye reads those kinks as the band's own
+edges — so it looked like a rectangle sliding past rather than light crossing a surface. The
+upstream `tw-shimmer` plugin samples a sine falloff across seventeen stops bunched toward the
+peak, and after rebuilding it by hand twice the plugin itself is now the dependency.
+
+### Changed — Sentry reported healthy behaviour as issues
+
+`server/plugins/error-handler.ts` has always documented the policy — "4xx are intentional —
+skip" — but that hook only governs the app's own logger. Sentry's Nitro instrumentation
+captures every thrown `H3Error` independently, so the policy applied to the log file and
+nowhere else: every scanner that POSTed to `/api/*` with a foreign `Origin` raised a
+`CSRF: origin not allowed` issue, and 404s from link rot filed themselves next to real
+crashes. Alerts that fire on healthy behaviour get muted, and then the 500 that mattered is
+muted with them. A `beforeSend` filter now drops expected 4xx.
+
+The CSRF rejection itself gained a log line with the offending origin, method, path and user
+agent. It previously threw a bare sentence, which made the two cases that produce it — a
+scanner, and a real visitor whose browser sent an origin we did not anticipate —
+indistinguishable after the fact. The response body still says nothing beyond the status.
+
+### Security — host, database and SSH identifiers redacted from a public repository
+
+Prompted by spotting the Plesk system user, which doubles as the customer number, in
+`docs/SECRETS.md`. Verified rather than assumed: the repository is public, `origin/master`
+contained none of these values, and all three commits that introduced them were unpushed —
+nothing had leaked. No passwords, tokens or keys were present anywhere in tracked files.
+
+### Changed — CI, deploys and dependencies
+
+- **E2E now runs on PRs that touch the dependency manifest.** CI did lint, design-check,
+  typecheck, i18n, unit tests and build; none of those touch a passkey, a fork, a GourMerge
+  Request or a merge. All of that lives in the E2E suite, which only ran on push to master —
+  so a dependency bump could be green on its PR and break the product after merge.
+- **`@simplewebauthn/{browser,server}` 11 → 13.3.0.** Two majors on the packages the passkey
+  flow depends on, against a `^11.0.0` optional peer in `nuxt-auth-utils`. Reading the code
+  inverted the initial rejection: it calls the object form of `startRegistration` /
+  `startAuthentication`, which is v11+, and imports only four types from the server package,
+  all of which still exist in 13 — the peer is a floor that was never raised, not a ceiling.
+  Verified on a fresh production build rather than on the dev server, which had the old
+  module already resident in the process.
+- **Five GitHub Actions majors bumped**, and with them a live bug: since `upload-artifact`
+  v4.4 hidden files are excluded by default, and Nitro puts deduplicated runtime dependencies
+  in `.output/server/node_modules/.nitro/` — a dot directory. The shipped artifact had been
+  missing a package the server requires at runtime.
+- **Dependabot no longer offers TypeScript 7**, which `@nuxt/ui`'s peer range makes
+  unresolvable — the PR failed at `npm ci` before a single check ran. Ignored in
+  `dependabot.yml` rather than by comment, so the rule is visible to anyone reading the repo
+  and deleting three lines is the entire re-enable step.
+- **The E2E suite stopped being its own attacker.** `/auth/register` allows 3 requests per
+  minute per IP, the suite makes ~34 registrations from one host, and the victim was whichever
+  test happened to be registering when the budget ran out. The tests are not 34 different
+  clients, and pretending otherwise is the fix.
+
+### Documentation and tooling
+
+- **`i18n:check` now rejects an unescaped `@`.** vue-i18n reads `@` as linked-message syntax,
+  so a plain email placeholder makes the compiler throw `INVALID_LINKED_FORMAT` — and because
+  production builds strip the message table, it surfaces as **a 500 whose entire body is the
+  string `"10"`**. Nothing in that points at a translation file. It cost a debugging session
+  exactly once, during this release: `du@beispiel.de` in a new placeholder took `/auth/login`
+  down while every other page stayed up. The escape is `{'@'}`, genuine linked messages still
+  pass, and the check is a parser rather than a regex because both forms contain an `@`.
+- **The `/_nuxt/**` cache-header comment in `nuxt.config.ts` now says what is actually true.**
+  It had accumulated two contradictory explanations across as many commits. Measured against
+  the live site: `/api/health` returns its route rule's `no-store`, so route rules work — but
+  an existing `/_nuxt/*.js` comes back with an ETag and _none_ of the `/**` security headers
+  and no `x-request-id`, which nothing served by Nitro does. Those files are served off disk
+  by the web server and the rule never fires for them. The earlier reading — "a non-existent
+  `/_nuxt/*.js` returns Nitro's JSON 404, therefore these requests reach the app" — is true
+  and proves nothing: a miss falls through to Passenger, a hit does not. The rules stay,
+  because they cost nothing and start working on any host without smart static file
+  processing.
+- The UptimeRobot item is closed, with two caveats recorded rather than left to be
+  rediscovered: `status.gourmerge.de` is a **permanent** redirect, so moving to a CNAME-based
+  custom domain later means fighting cached 301s; and the alerting is unproven until a real
+  pause/resume test, because a monitor nobody hears from is a dashboard, not an alarm.
+
+### Stack / tests
+
+**56 API endpoints · 571 i18n keys ×4 · 267 unit tests · 41 Playwright specs.**
+
+---
+
 ## [1.4.0] — 2026-08-06
 
 A pass over the recipe editor after using it on a phone. Most of what follows was
