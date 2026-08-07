@@ -32,6 +32,7 @@ const SHELL_EXEMPT = [
   'app/pages/auth/forgot-password.vue',
   'app/pages/auth/reset-password.vue',
   'app/pages/auth/verified.vue',
+  'app/pages/auth/email-changed.vue',
 ]
 
 /** Raw palette hues that must go through the semantic ramp or a --gm-* token (§1.1). */
