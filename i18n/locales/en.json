@@ -452,7 +452,8 @@
         "title": "Propose Changes",
         "desc": "Open a GourMerge Request to propose your remix's changes back to the original recipe author."
       }
-    }
+    },
+    "endedEarly": "The tour ends here — there was no sample recipe available to show the remaining steps."
   },
   "help": {
     "menu": "Help",

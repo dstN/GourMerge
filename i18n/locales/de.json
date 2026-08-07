@@ -452,7 +452,8 @@
         "title": "Änderungen vorschlagen",
         "desc": "Öffne einen GourMerge Request, um die Änderungen deines Remixes dem Original-Autor vorzuschlagen."
       }
-    }
+    },
+    "endedEarly": "Die Tour endet hier — es gab kein Beispielrezept, um die restlichen Schritte zu zeigen."
   },
   "help": {
     "menu": "Hilfe",

@@ -7,6 +7,8 @@
  */
 const tour = useProductTour()
 const route = useRoute()
+const { t } = useI18n()
+const toast = useAppToast()
 
 const panelRef = ref<HTMLElement | null>(null)
 const panelStyle = ref<Record<string, string>>({ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' })
@@ -67,6 +69,21 @@ function positionPanel(anchor: HTMLElement, placement?: 'top' | 'bottom' | 'left
   panelStyle.value = { top: `${top}px`, left: `${left}px`, transform: 'none' }
 }
 
+/**
+ * Ends the tour via an auto-skip (an anchor, or a whole `@recipe` step, that was never
+ * reachable) rather than via the visible "Fertig" button on the last panel. Both paths call
+ * `tour.finish()`, which has no feedback of its own — fine when the user just clicked
+ * "Fertig" on a panel they were looking at, wrong here: the panel had already been hidden
+ * for up to several seconds (each skipped step still costs one `waitForEl` round on a real
+ * anchor), so the tour would otherwise vanish with no indication of why it stopped, on a
+ * page the user did not choose. The toast is the difference between "the tour ended because
+ * there was nothing left to show you" and "the tour broke".
+ */
+function finishEarly() {
+  tour.finish()
+  toast.info(t('tour.endedEarly'))
+}
+
 async function showStep() {
   const myRun = ++runToken
   const step = tour.currentStep.value
@@ -77,6 +94,28 @@ async function showStep() {
 
   // Navigate to the step's route if needed.
   const target = tour.resolveRoute(step)
+
+  /**
+   * A `@recipe` step with no resolved target is not "the anchor hasn't loaded yet" — it
+   * is known, right now, to be unreachable: `useProductTour.resolveTargetRecipe()` already
+   * tried and found no recipe to demo fork/star/history/GMR on. Four of the six steps are
+   * `@recipe`, so on an install with no public recipes yet (or a fresh account before the
+   * DB has any), the ORIGINAL code still called `waitForEl` on the CURRENT page for an
+   * anchor from a page it never navigated to, waited out the full 2500ms timeout, then
+   * repeated that for every remaining `@recipe` step — up to four rounds, ten seconds, with
+   * the panel hidden (`ready` stays false) and only the dimmed backdrop visible the whole
+   * time. That reads as the tour being stuck, not as it working; it was reported exactly
+   * that way. Recognising the impossible case here skips straight to the next step (or
+   * finishes, with the toast below) instead of manufacturing a wait for an outcome that is
+   * already decided.
+   */
+  if (step.route === '@recipe' && !target) {
+    if (myRun !== runToken) return
+    if (tour.isLast.value) finishEarly()
+    else tour.next()
+    return
+  }
+
   if (target && route.path !== target) {
     await navigateTo(target)
   }
@@ -87,7 +126,7 @@ async function showStep() {
 
   if (!anchor) {
     // Anchor never appeared — skip rather than dead-end.
-    if (tour.isLast.value) tour.finish()
+    if (tour.isLast.value) finishEarly()
     else tour.next()
     return
   }

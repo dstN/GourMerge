@@ -452,7 +452,8 @@
         "title": "Proponi modifiche",
         "desc": "Apri un GourMerge Request per proporre le modifiche del tuo remix all'autore originale."
       }
-    }
+    },
+    "endedEarly": "Il tour termina qui — non era disponibile nessuna ricetta di esempio per mostrare i passaggi restanti."
   },
   "help": {
     "menu": "Aiuto",
