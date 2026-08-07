@@ -55,7 +55,13 @@
     "passwordMismatch": "Passwords do not match.",
     "setNewPassword": "Set New Password",
     "verifiedTitle": "Email Verified!",
-    "verifiedMessage": "Your email address has been verified. You can now log in."
+    "verifiedMessage": "Your email address has been verified. You can now log in.",
+    "unverifiedTitle": "Your email address is not verified",
+    "unverifiedBody": "Verify it to publish public recipes and open GourMerge requests. The confirmation link is in your inbox.",
+    "resendVerification": "Resend email",
+    "resendVerificationError": "The email could not be sent. Please try again in a moment.",
+    "verificationSentTitle": "Verification email sent",
+    "verificationSentBody": "We sent a confirmation link to {email}. It is valid for 24 hours."
   },
   "landing": {
     "badge": "Git for Recipes",
@@ -638,7 +644,8 @@
     "rateLimited": "Too many attempts. Wait a moment and try again.",
     "unavailable": "The service is temporarily unavailable. Please try again later.",
     "server": "Something went wrong on the server. Please try again later.",
-    "unknown": "Something went wrong. Please try again."
+    "unknown": "Something went wrong. Please try again.",
+    "emailNotVerified": "Verify your email address before publishing. The confirmation link is in your inbox."
   },
   "passkey": {
     "title": "Passkeys",

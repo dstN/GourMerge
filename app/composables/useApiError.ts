@@ -21,13 +21,20 @@
  * conflated with bad credentials. Those two are not the same problem and should not
  * read the same.
  *
+ * ## Machine-readable codes
+ *
+ * An endpoint may add `data: { code: '…' }` to a `createError`, and a code listed in
+ * `CODE_MESSAGES` below wins over the status mapping. That is the escape hatch this
+ * docblock used to describe as future work, and it is opt-in per endpoint rather
+ * than a change across all 41 at once.
+ *
+ * Only codes in that table are honoured, so an unmapped or attacker-influenced value
+ * can never reach the screen — a code is a lookup key, never text to display.
+ *
  * ## Known limitation
  *
- * Genuinely specific conflicts ("that branch name is taken") collapse into the
- * generic 409 text. Fixing that properly means the server returning a stable
- * machine-readable code in `data` that the client maps — worth doing, but it is a
- * change across all 41 endpoints. Status-based mapping is strictly better than
- * untranslated English in the meantime.
+ * Genuinely specific conflicts ("that branch name is taken") still collapse into the
+ * generic 409 text until the endpoint opts in to a code.
  *
  * @example
  * try { await $fetch(…) } catch (e) { error.value = apiError(e, 'auth.loginError') }
@@ -36,7 +43,17 @@ interface FetchLikeError {
   statusCode?: number
   status?: number
   response?: { status?: number }
-  data?: { statusCode?: number; statusMessage?: string }
+  data?: { statusCode?: number; statusMessage?: string; code?: string }
+}
+
+/** Server error codes that have a specific translated message. See `data.code`. */
+const CODE_MESSAGES: Record<string, string> = {
+  /**
+   * Thrown by `requireVerifiedUser`. Without this the create/publish form said
+   * "you do not have permission to do that" — which reads as an account-permissions
+   * problem and gives no hint that the fix is a link sitting in the user's inbox.
+   */
+  email_not_verified: 'errors.emailNotVerified',
 }
 
 export function useApiError() {
@@ -50,6 +67,15 @@ export function useApiError() {
   function apiError(err: unknown, fallbackKey?: string): string {
     const e = (err ?? {}) as FetchLikeError
     const status = e.data?.statusCode ?? e.statusCode ?? e.status ?? e.response?.status
+
+    // A recognised code beats the status: it is the only thing the server can say
+    // that is both specific and safe to translate.
+    //
+    // `hasOwn`, not a bare index: `CODE_MESSAGES.constructor` resolves to a function
+    // off the prototype chain, and handing that to `t()` puts "[Function Object]" on
+    // screen. Own keys only.
+    const code = e.data?.code
+    if (code && Object.hasOwn(CODE_MESSAGES, code)) return t(CODE_MESSAGES[code]!)
 
     // No status at all → the request never got an HTTP answer: server down, network
     // dropped, request aborted. Worth saying plainly; "check your credentials" would

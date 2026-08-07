@@ -28,6 +28,10 @@ export default defineVitestConfig({
         // schedule in inactivityEmails.test.ts (which also asserts the Nitro and CLI
         // consumers cannot drift), and the sealing primitive in seal.test.ts.
         'server/utils/completeLogin.ts', // setUserSession + one UPDATE
+        // Token insert + SMTP send. Its one branch-free decision, `isEmailVerificationRequired`,
+        // is a single env read; the part worth protecting is that registration calls it at all,
+        // which only an end-to-end signup can show.
+        'server/utils/emailVerification.ts',
         'server/utils/hardDeleteUser.ts', // FK-ordered deletes — proved by the GDPR API tests
         'server/utils/inactivitySweep.ts', // DB scan + mail send, driven by /tasks/*
         'server/utils/retentionSweep.ts', // DB scan + delete, driven by /tasks/*

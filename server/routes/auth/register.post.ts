@@ -1,12 +1,13 @@
 /**
  * POST /auth/register — Create a new user account
  *
- * Validates input with Zod, hashes password, inserts user,
- * and sets the session cookie (auto-login after registration).
+ * Validates input with Zod, hashes password, inserts user, sends the email
+ * verification mail, and sets the session cookie (auto-login after registration).
  */
 import { z } from 'zod'
 import { eq, or } from 'drizzle-orm'
 import { users } from '~~/server/database/schema'
+import { issueEmailVerification, isEmailVerificationRequired } from '~~/server/utils/emailVerification'
 
 const registerSchema = z.object({
   username: z
@@ -69,6 +70,24 @@ export default defineEventHandler(async (event) => {
 
   if (!inserted) throw createError({ statusCode: 500, statusMessage: 'Insert failed.' })
 
+  /**
+   * ── Verification mail ───────────────────────────────────────
+   * Best-effort on purpose. The account row is already committed, so throwing here
+   * would answer 500 to a signup that in fact succeeded — the user would be told it
+   * failed, retry, and hit the 409 for their own brand-new account. A dead SMTP host
+   * must not do that. The resend button on the unverified banner is the recovery path,
+   * and the failure is loud in the log.
+   *
+   * `preferredLocale` is left to the column default here rather than passed: the row
+   * was just inserted with it, and re-reading only to choose a mail language is not
+   * worth the round trip. Users change it in settings afterwards.
+   */
+  try {
+    await issueEmailVerification({ id: inserted.id, email })
+  } catch (err) {
+    logger.error('registration: verification email could not be sent', { userId: inserted.id, err })
+  }
+
   // ── Session rotation: clear any pre-existing session (prevents fixation) ──
   await clearUserSession(event)
 
@@ -80,8 +99,11 @@ export default defineEventHandler(async (event) => {
       displayName: displayName || username,
       email,
       avatarUrl: null,
+      // A fresh account is unverified by definition — the mail above was only just sent.
+      emailVerified: false,
     },
     loggedInAt: new Date().toISOString(),
+    emailVerificationRequired: isEmailVerificationRequired(),
     secure: {
       userId: inserted.id,
     },

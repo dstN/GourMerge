@@ -56,6 +56,11 @@ const localeSwitchItems = [
       </div>
     </header>
 
+    <!-- Sits outside <main> so it survives page navigation and is not scrolled away:
+         the restriction it describes applies to the whole authenticated shell, not to
+         one page. Renders nothing when the address is verified or the gate is off. -->
+    <LayoutVerifyEmailBanner class="shrink-0" />
+
     <!-- ── Body (fixed sidebar; only main scrolls) ───────────
          Full width so the sidebar sits at the left edge and main's scrollbar
          sits at the viewport's right edge; content is capped + centred INSIDE

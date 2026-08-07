@@ -8,9 +8,10 @@
 import { eq } from 'drizzle-orm'
 import type { H3Event } from 'h3'
 import { users } from '~~/server/database/schema'
+import { isEmailVerificationRequired } from './emailVerification'
 
 export async function requireVerifiedUser(event: H3Event): Promise<void> {
-  if (process.env.REQUIRE_EMAIL_VERIFICATION !== 'true') return
+  if (!isEmailVerificationRequired()) return
 
   const session = await getUserSession(event)
   if (!session?.user?.id) throw createError({ statusCode: 401, statusMessage: 'Unauthorized.' })
@@ -28,6 +29,14 @@ export async function requireVerifiedUser(event: H3Event): Promise<void> {
     throw createError({
       statusCode: 403,
       statusMessage: 'Email not verified. Please verify your email to perform this action.',
+      /**
+       * The client shows a translated message, and `useApiError` deliberately never
+       * echoes `statusMessage`. Without a stable code the only thing it can say about
+       * a 403 is the generic "you do not have permission", which sent users looking
+       * for a permissions problem that does not exist. This is the machine-readable
+       * hook that composable's own docblock asks for.
+       */
+      data: { code: 'email_not_verified' },
     })
   }
 }

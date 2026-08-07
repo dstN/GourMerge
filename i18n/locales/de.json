@@ -55,7 +55,13 @@
     "passwordMismatch": "Passwörter stimmen nicht überein.",
     "setNewPassword": "Neues Passwort setzen",
     "verifiedTitle": "E-Mail bestätigt!",
-    "verifiedMessage": "Deine E-Mail-Adresse wurde bestätigt. Du kannst dich jetzt anmelden."
+    "verifiedMessage": "Deine E-Mail-Adresse wurde bestätigt. Du kannst dich jetzt anmelden.",
+    "unverifiedTitle": "Deine E-Mail-Adresse ist nicht bestätigt",
+    "unverifiedBody": "Bestätige sie, um öffentliche Rezepte zu veröffentlichen und GourMerge-Requests zu stellen. Den Link findest du in deinem Postfach.",
+    "resendVerification": "E-Mail erneut senden",
+    "resendVerificationError": "Die E-Mail konnte nicht gesendet werden. Bitte versuche es gleich noch einmal.",
+    "verificationSentTitle": "Bestätigungs-E-Mail gesendet",
+    "verificationSentBody": "Wir haben einen Bestätigungslink an {email} geschickt. Er ist 24 Stunden gültig."
   },
   "landing": {
     "badge": "Git für Rezepte",
@@ -638,7 +644,8 @@
     "rateLimited": "Zu viele Versuche. Warte einen Moment und versuche es erneut.",
     "unavailable": "Der Dienst ist gerade nicht verfügbar. Bitte versuche es später erneut.",
     "server": "Auf dem Server ist etwas schiefgelaufen. Bitte versuche es später erneut.",
-    "unknown": "Etwas ist schiefgelaufen. Bitte versuche es erneut."
+    "unknown": "Etwas ist schiefgelaufen. Bitte versuche es erneut.",
+    "emailNotVerified": "Bestätige deine E-Mail-Adresse, bevor du veröffentlichst. Den Bestätigungslink findest du in deinem Postfach."
   },
   "passkey": {
     "title": "Passkeys",

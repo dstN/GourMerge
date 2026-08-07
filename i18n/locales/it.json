@@ -55,7 +55,13 @@
     "passwordMismatch": "Le password non corrispondono.",
     "setNewPassword": "Imposta nuova password",
     "verifiedTitle": "E-mail confermata!",
-    "verifiedMessage": "Il tuo indirizzo e-mail è stato confermato. Puoi ora accedere."
+    "verifiedMessage": "Il tuo indirizzo e-mail è stato confermato. Puoi ora accedere.",
+    "unverifiedTitle": "Il tuo indirizzo e-mail non è confermato",
+    "unverifiedBody": "Confermalo per pubblicare ricette pubbliche e aprire GourMerge request. Trovi il link di conferma nella tua casella di posta.",
+    "resendVerification": "Invia di nuovo l’e-mail",
+    "resendVerificationError": "Non è stato possibile inviare l’e-mail. Riprova tra un momento.",
+    "verificationSentTitle": "E-mail di conferma inviata",
+    "verificationSentBody": "Abbiamo inviato un link di conferma a {email}. È valido per 24 ore."
   },
   "landing": {
     "badge": "Git per le ricette",
@@ -638,7 +644,8 @@
     "rateLimited": "Troppi tentativi. Attendi un momento e riprova.",
     "unavailable": "Il servizio non è disponibile al momento. Riprova più tardi.",
     "server": "Si è verificato un errore sul server. Riprova più tardi.",
-    "unknown": "Si è verificato un errore. Riprova."
+    "unknown": "Si è verificato un errore. Riprova.",
+    "emailNotVerified": "Conferma il tuo indirizzo e-mail prima di pubblicare. Trovi il link di conferma nella tua casella di posta."
   },
   "passkey": {
     "title": "Passkey",

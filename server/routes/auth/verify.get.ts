@@ -38,6 +38,22 @@ export default defineEventHandler(async (event) => {
     await tx.update(users).set({ emailVerifiedAt: new Date() }).where(eq(users.id, row.userId))
   })
 
+  /**
+   * If the link was opened in the browser that is already signed in as this user,
+   * refresh the cached flag so the "verify your email" banner goes away immediately.
+   * Without this the DB says verified and the session cookie still says otherwise
+   * until the next login — the banner would keep nagging someone who just complied.
+   *
+   * Guarded on the id: the link may well be opened while signed in as somebody else
+   * (a shared machine), and marking *their* session verified would be a lie.
+   */
+  const session = await getUserSession(event)
+  if (session?.user?.id === row.userId) {
+    // Spread the whole session: `setUserSession` replaces rather than deep-merges, so
+    // passing only `user` would drop `loggedInAt` and the rest of the session shape.
+    await setUserSession(event, { ...session, user: { ...session.user, emailVerified: true } })
+  }
+
   // Redirect to success page.
   return sendRedirect(event, '/auth/verified', 302)
 })

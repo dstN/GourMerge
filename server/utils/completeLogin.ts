@@ -9,6 +9,7 @@
 import type { H3Event } from 'h3'
 import { eq } from 'drizzle-orm'
 import { users } from '~~/server/database/schema'
+import { isEmailVerificationRequired } from './emailVerification'
 
 interface LoginUser {
   id: number
@@ -16,6 +17,7 @@ interface LoginUser {
   displayName: string | null
   email: string
   avatarUrl: string | null
+  emailVerifiedAt: Date | null
 }
 
 export async function completeLogin(event: H3Event, user: LoginUser): Promise<void> {
@@ -26,8 +28,19 @@ export async function completeLogin(event: H3Event, user: LoginUser): Promise<vo
       displayName: user.displayName,
       email: user.email,
       avatarUrl: user.avatarUrl,
+      /**
+       * Carried in the session so the unverified banner needs no extra request on
+       * every authenticated page. The row is already being read here.
+       *
+       * It goes stale in exactly one case — the user verifies in a browser that is
+       * not this one — which `/auth/verify` handles for the common case and a
+       * re-login fixes for the rest. The server never trusts this value: every gate
+       * goes through `requireVerifiedUser`, which re-reads the column.
+       */
+      emailVerified: Boolean(user.emailVerifiedAt),
     },
     loggedInAt: new Date().toISOString(),
+    emailVerificationRequired: isEmailVerificationRequired(),
     secure: {
       userId: user.id,
     },
