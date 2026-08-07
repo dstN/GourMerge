@@ -33,6 +33,30 @@ try {
     tracesSampleRate: 0.1,
 
     sendDefaultPii: false,
+
+    /**
+     * Drop expected 4xx.
+     *
+     * `server/plugins/error-handler.ts` already states the policy — "4xx are
+     * intentional — skip" — but that hook only governs *our* logger. Sentry's Nitro
+     * instrumentation captures every thrown `H3Error` on its own, so the policy was
+     * being applied to the log file and nowhere else. The result: every scanner that
+     * POSTs to `/api/*` with a foreign `Origin` raised a `CSRF: origin not allowed`
+     * issue, and 404s from link rot filed themselves alongside real crashes. Alerts
+     * that fire on healthy behaviour get muted, and then the 500 that mattered is
+     * muted with them.
+     *
+     * A 4xx is the app correctly refusing something. Where one is genuinely worth
+     * knowing about, it is logged at the throw site with the detail that explains it
+     * (see `server/middleware/csrf.ts`) — the log is the right channel for that,
+     * because it carries the offending value and does not page anyone. 5xx, unhandled
+     * rejections and client-side errors are unaffected.
+     */
+    beforeSend(sentryEvent, hint) {
+      const status = (hint?.originalException as { statusCode?: number } | undefined)?.statusCode
+      if (typeof status === 'number' && status >= 400 && status < 500) return null
+      return sentryEvent
+    },
   })
 } finally {
   process.noDeprecation = previousNoDeprecation
