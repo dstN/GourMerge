@@ -64,7 +64,9 @@
     "verificationSentBody": "Nous avons envoyé un lien de confirmation à {email}. Il est valable 24 heures.",
     "identifier": "E-mail ou nom d’utilisateur",
     "identifierPlaceholder": "toi{'@'}exemple.fr ou ton nom d’utilisateur",
-    "identifierRequired": "Saisis ton adresse e-mail ou ton nom d’utilisateur"
+    "identifierRequired": "Saisis ton adresse e-mail ou ton nom d’utilisateur",
+    "emailChangedTitle": "Adresse e-mail confirmée !",
+    "emailChangedMessage": "Ta nouvelle adresse e-mail est maintenant active."
   },
   "landing": {
     "badge": "Git pour les recettes",
@@ -355,7 +357,15 @@
     "metric": "Métrique (g, ml)",
     "imperial": "Impérial (oz, fl oz)",
     "saved": "Paramètres enregistrés.",
-    "saveError": "Impossible d'enregistrer les paramètres."
+    "saveError": "Impossible d'enregistrer les paramètres.",
+    "emailSectionTitle": "Adresse e-mail",
+    "currentEmail": "Adresse e-mail actuelle",
+    "changeEmail": "Changer d’adresse e-mail",
+    "newEmail": "Nouvelle adresse e-mail",
+    "currentPasswordPlaceholder": "Ton mot de passe actuel",
+    "sendConfirmation": "Envoyer le lien de confirmation",
+    "emailChangeSent": "Un lien de confirmation a été envoyé à {email}. Il est valable 2 heures.",
+    "changeEmailError": "L’adresse e-mail n’a pas pu être modifiée."
   },
   "explore": {
     "search": "Rechercher des recettes...",

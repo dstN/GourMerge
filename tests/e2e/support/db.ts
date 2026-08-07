@@ -31,3 +31,19 @@ export async function resetRateLimits(): Promise<void> {
     await conn.end()
   }
 }
+
+/**
+ * One-off query against the app's own database, for assertions no HTTP response exposes —
+ * e.g. that a token row exists, or a column changed. A connection per call, not a pool: an
+ * open pool keeps the Node process alive after the last test, and Playwright hangs at the
+ * end of the run instead of exiting (same reasoning as `resetRateLimits` above).
+ */
+export async function dbQuery<T = unknown>(sql: string, params: unknown[] = []): Promise<T[]> {
+  const conn = await mysql.createConnection(databaseUrl())
+  try {
+    const [rows] = await conn.execute(sql, params)
+    return rows as T[]
+  } finally {
+    await conn.end()
+  }
+}

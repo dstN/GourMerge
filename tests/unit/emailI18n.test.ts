@@ -5,6 +5,8 @@ import {
   buildExportConfirmEmail,
   buildExportReadyEmail,
   buildDeletionConfirmEmail,
+  buildEmailChangeConfirmEmail,
+  buildEmailChangeNoticeEmail,
 } from '../../server/utils/emailI18n'
 import { EMAIL_MESSAGES, type EmailBundle } from '../../server/utils/emailMessages'
 
@@ -84,6 +86,51 @@ describe('GDPR self-service emails', () => {
   })
 })
 
+/**
+ * `buildEmailChangeConfirmEmail` goes to the address being switched TO and carries the
+ * confirm link — same contract as the GDPR builders above. `buildEmailChangeNoticeEmail`
+ * goes to the address being switched AWAY FROM and carries no link at all; its own test
+ * exists precisely to pin that difference, since reusing `build()` for it would have
+ * produced a broken `<a href="">`.
+ */
+describe('email-change emails', () => {
+  test('the confirm email (to the new address) carries the link in html and text', () => {
+    const mail = buildEmailChangeConfirmEmail('de', URL)
+    expect(mail.html).toContain(URL)
+    expect(mail.text).toContain(URL)
+    expect(mail.subject.trim().length).toBeGreaterThan(0)
+  })
+
+  test('the confirm email differs per locale and falls back to German', () => {
+    const subjects = (['de', 'en', 'fr', 'it'] as const).map((l) => buildEmailChangeConfirmEmail(l, URL).subject)
+    expect(new Set(subjects).size).toBe(4)
+    expect(buildEmailChangeConfirmEmail(null, URL).subject).toBe(buildEmailChangeConfirmEmail('de', URL).subject)
+    expect(buildEmailChangeConfirmEmail('xx', URL).subject).toBe(buildEmailChangeConfirmEmail('de', URL).subject)
+  })
+
+  test('the notice email (to the old address) carries no link — there is nothing to click', () => {
+    const mail = buildEmailChangeNoticeEmail('de', 'neu@example.com')
+    expect(mail.html).not.toContain('<a ')
+    expect(mail.text).not.toContain('http')
+  })
+
+  test('the notice email interpolates the new address so the owner can verify it without trusting a link', () => {
+    const mail = buildEmailChangeNoticeEmail('en', 'someone-new@example.com')
+    expect(mail.text).toContain('someone-new@example.com')
+    expect(mail.text).not.toContain('{email}')
+  })
+
+  test('the notice email differs per locale and falls back to German', () => {
+    const subjects = (['de', 'en', 'fr', 'it'] as const).map(
+      (l) => buildEmailChangeNoticeEmail(l, 'x@example.com').subject
+    )
+    expect(new Set(subjects).size).toBe(4)
+    expect(buildEmailChangeNoticeEmail(null, 'x@example.com').subject).toBe(
+      buildEmailChangeNoticeEmail('de', 'x@example.com').subject
+    )
+  })
+})
+
 // Replaces the i18n parity gate for these server-only strings.
 describe('EMAIL_MESSAGES parity', () => {
   const locales = Object.keys(EMAIL_MESSAGES) as Array<keyof typeof EMAIL_MESSAGES>
@@ -102,9 +149,17 @@ describe('EMAIL_MESSAGES parity', () => {
     expect([...locales].sort()).toEqual(['de', 'en', 'fr', 'it'])
   })
 
-  test('covers every bundle, including the GDPR self-service ones', () => {
+  test('covers every bundle, including the GDPR self-service and email-change ones', () => {
     expect(SECTIONS.sort()).toEqual(
-      ['deletionConfirm', 'exportConfirm', 'exportReady', 'passwordReset', 'verification'].sort()
+      [
+        'deletionConfirm',
+        'exportConfirm',
+        'exportReady',
+        'passwordReset',
+        'verification',
+        'emailChangeConfirm',
+        'emailChangeNotice',
+      ].sort()
     )
   })
 

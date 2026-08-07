@@ -64,7 +64,9 @@
     "verificationSentBody": "We sent a confirmation link to {email}. It is valid for 24 hours.",
     "identifier": "Email or username",
     "identifierPlaceholder": "you{'@'}example.com or your username",
-    "identifierRequired": "Enter your email address or username"
+    "identifierRequired": "Enter your email address or username",
+    "emailChangedTitle": "Email address confirmed!",
+    "emailChangedMessage": "Your new email address is now active."
   },
   "landing": {
     "badge": "Git for Recipes",
@@ -355,7 +357,15 @@
     "metric": "Metric (g, ml)",
     "imperial": "Imperial (oz, fl oz)",
     "saved": "Settings saved.",
-    "saveError": "Could not save settings."
+    "saveError": "Could not save settings.",
+    "emailSectionTitle": "Email address",
+    "currentEmail": "Current email address",
+    "changeEmail": "Change email address",
+    "newEmail": "New email address",
+    "currentPasswordPlaceholder": "Your current password",
+    "sendConfirmation": "Send confirmation link",
+    "emailChangeSent": "A confirmation link was sent to {email}. It is valid for 2 hours.",
+    "changeEmailError": "The email address could not be changed."
   },
   "explore": {
     "search": "Search recipes...",

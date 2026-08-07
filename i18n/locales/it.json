@@ -64,7 +64,9 @@
     "verificationSentBody": "Abbiamo inviato un link di conferma a {email}. È valido per 24 ore.",
     "identifier": "E-mail o nome utente",
     "identifierPlaceholder": "tu{'@'}esempio.it o il tuo nome utente",
-    "identifierRequired": "Inserisci il tuo indirizzo e-mail o il tuo nome utente"
+    "identifierRequired": "Inserisci il tuo indirizzo e-mail o il tuo nome utente",
+    "emailChangedTitle": "Indirizzo e-mail confermato!",
+    "emailChangedMessage": "Il tuo nuovo indirizzo e-mail è ora attivo."
   },
   "landing": {
     "badge": "Git per le ricette",
@@ -355,7 +357,15 @@
     "metric": "Metrico (g, ml)",
     "imperial": "Imperiale (oz, fl oz)",
     "saved": "Impostazioni salvate.",
-    "saveError": "Impossibile salvare le impostazioni."
+    "saveError": "Impossibile salvare le impostazioni.",
+    "emailSectionTitle": "Indirizzo e-mail",
+    "currentEmail": "Indirizzo e-mail attuale",
+    "changeEmail": "Cambia indirizzo e-mail",
+    "newEmail": "Nuovo indirizzo e-mail",
+    "currentPasswordPlaceholder": "La tua password attuale",
+    "sendConfirmation": "Invia link di conferma",
+    "emailChangeSent": "Un link di conferma è stato inviato a {email}. È valido per 2 ore.",
+    "changeEmailError": "Non è stato possibile modificare l’indirizzo e-mail."
   },
   "explore": {
     "search": "Cerca ricette...",

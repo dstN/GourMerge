@@ -71,6 +71,13 @@
       "when": 1785971407547,
       "tag": "0009_passkeys",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1786080405481,
+      "tag": "0010_handy_selene",
+      "breakpoints": true
     }
   ]
 }

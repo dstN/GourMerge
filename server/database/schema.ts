@@ -652,6 +652,37 @@ export const emailVerificationTokens = mysqlTable(
 )
 
 // ═══════════════════════════════════════════════════════════════
+// EMAIL CHANGE TOKENS
+// ═══════════════════════════════════════════════════════════════
+// Confirmation lands on the NEW address, not the old one: clicking it is proof of
+// ownership of the address being switched to, which is the same proof `email_verified_at`
+// exists to record — so a successful confirm sets both the email column AND the
+// verification timestamp in one step. See server/routes/auth/confirm-email-change.get.ts.
+
+export const emailChangeTokens = mysqlTable(
+  'email_change_tokens',
+  {
+    id: int('id').primaryKey().autoincrement(),
+    userId: int('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    /**
+     * The address being switched to. Stored in plain text (it is not a secret — it is
+     * the destination of the mail this token was sent to) so the confirm step can act on
+     * it without a second round trip through whatever else may have changed meanwhile.
+     */
+    newEmail: varchar('new_email', { length: 255 }).notNull(),
+    tokenHash: varchar('token_hash', { length: 255 }).notNull().unique(),
+    expiresAt: datetime('expires_at').notNull(),
+    usedAt: datetime('used_at'),
+    createdAt: datetime('created_at')
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [index('idx_email_change_tokens_user').on(table.userId)]
+)
+
+// ═══════════════════════════════════════════════════════════════
 // PASSWORD RESET TOKENS
 // ═══════════════════════════════════════════════════════════════
 

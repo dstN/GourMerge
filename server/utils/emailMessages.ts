@@ -21,6 +21,17 @@ export interface EmailStrings {
   textIntro: string
 }
 
+/**
+ * A plain informational email — no link, no action, nothing to confirm. Distinct from
+ * `EmailStrings` because that shape always assumes a URL to embed; forcing one in here
+ * (an empty `<a href="">`) would produce a broken link where there is deliberately none.
+ * `body` may contain a literal `{email}` placeholder, substituted by the caller.
+ */
+export interface EmailNoticeStrings {
+  subject: string
+  body: string
+}
+
 export interface EmailBundle {
   verification: EmailStrings
   passwordReset: EmailStrings
@@ -30,6 +41,15 @@ export interface EmailBundle {
   exportReady: EmailStrings
   /** GDPR Art. 17 — confirm that the erasure request came from the account owner. */
   deletionConfirm: EmailStrings
+  /** Sent to the NEW address; clicking it both switches the email and verifies it. */
+  emailChangeConfirm: EmailStrings
+  /**
+   * Sent to the OLD address when a change is requested — no link, nothing to click.
+   * The change already cannot complete without the new address confirming, so this is
+   * pure notice: if the recipient did not request it, their account is the one that may
+   * be compromised, not the address someone is trying to switch it to.
+   */
+  emailChangeNotice: EmailNoticeStrings
 }
 
 export const EMAIL_MESSAGES: Record<EmailLocale, EmailBundle> = {
@@ -76,6 +96,19 @@ export const EMAIL_MESSAGES: Record<EmailLocale, EmailBundle> = {
         'Dieser Link läuft in 2 Stunden ab. Solange du ihn nicht bestätigst, passiert nichts. Falls du das nicht angefordert hast, ignoriere diese E-Mail.',
       textIntro: 'Bestätige über den Link die Löschung deines Kontos:',
     },
+    emailChangeConfirm: {
+      subject: 'Bestätige deine neue GourMerge-E-Mail-Adresse',
+      intro:
+        'Für dein GourMerge-Konto wurde eine Änderung der E-Mail-Adresse zu dieser Adresse angefordert. Bestätige über den folgenden Link, dass diese Adresse dir gehört:',
+      linkLabel: 'E-Mail-Adresse bestätigen',
+      expiry:
+        'Dieser Link läuft in 2 Stunden ab. Solange du ihn nicht bestätigst, bleibt deine bisherige E-Mail-Adresse aktiv.',
+      textIntro: 'Bestätige über den Link, dass diese neue E-Mail-Adresse dir gehört:',
+    },
+    emailChangeNotice: {
+      subject: 'Änderung deiner GourMerge-E-Mail-Adresse angefordert',
+      body: 'Für dein GourMerge-Konto wurde eine Änderung der E-Mail-Adresse zu {email} angefordert. Die Änderung wird erst wirksam, wenn diese neue Adresse bestätigt wird. Falls du das nicht warst, ändere umgehend dein Passwort — jemand mit Zugriff auf dein Konto versucht möglicherweise, es zu übernehmen.',
+    },
   },
   en: {
     verification: {
@@ -117,6 +150,18 @@ export const EMAIL_MESSAGES: Record<EmailLocale, EmailBundle> = {
       expiry:
         "This link expires in 2 hours. Nothing happens until you confirm it. If you didn't request this, ignore this email.",
       textIntro: 'Confirm the deletion of your account via the link:',
+    },
+    emailChangeConfirm: {
+      subject: 'Confirm your new GourMerge email address',
+      intro:
+        'A change to this email address was requested for your GourMerge account. Confirm via the link below that this address belongs to you:',
+      linkLabel: 'Confirm email address',
+      expiry: 'This link expires in 2 hours. Until you confirm it, your current email address stays active.',
+      textIntro: 'Confirm via the link that this new email address belongs to you:',
+    },
+    emailChangeNotice: {
+      subject: 'Change to your GourMerge email address requested',
+      body: "A change to your GourMerge account's email address, to {email}, was requested. The change only takes effect once that new address is confirmed. If this wasn't you, change your password right away — someone with access to your account may be trying to take it over.",
     },
   },
   fr: {
@@ -161,6 +206,19 @@ export const EMAIL_MESSAGES: Record<EmailLocale, EmailBundle> = {
         "Ce lien expire dans 2 heures. Rien ne se passe tant que tu ne l'as pas confirmé. Si tu n'es pas à l'origine de cette demande, ignore cet e-mail.",
       textIntro: 'Confirme la suppression de ton compte via le lien :',
     },
+    emailChangeConfirm: {
+      subject: 'Confirme ta nouvelle adresse e-mail GourMerge',
+      intro:
+        'Un changement vers cette adresse e-mail a été demandé pour ton compte GourMerge. Confirme via le lien ci-dessous que cette adresse t’appartient :',
+      linkLabel: 'Confirmer l’adresse e-mail',
+      expiry:
+        'Ce lien expire dans 2 heures. Tant que tu ne l’as pas confirmé, ton adresse e-mail actuelle reste active.',
+      textIntro: 'Confirme via le lien que cette nouvelle adresse e-mail t’appartient :',
+    },
+    emailChangeNotice: {
+      subject: 'Changement de ton adresse e-mail GourMerge demandé',
+      body: 'Un changement de l’adresse e-mail de ton compte GourMerge, vers {email}, a été demandé. Le changement ne prendra effet qu’après confirmation de cette nouvelle adresse. Si ce n’est pas toi, change ton mot de passe immédiatement — quelqu’un ayant accès à ton compte essaie peut-être de le détourner.',
+    },
   },
   it: {
     verification: {
@@ -203,6 +261,18 @@ export const EMAIL_MESSAGES: Record<EmailLocale, EmailBundle> = {
       expiry:
         'Questo link scade tra 2 ore. Finché non lo confermi non succede nulla. Se non hai richiesto tu questa azione, ignora questa e-mail.',
       textIntro: 'Conferma la cancellazione del tuo account tramite il link:',
+    },
+    emailChangeConfirm: {
+      subject: 'Conferma il tuo nuovo indirizzo e-mail GourMerge',
+      intro:
+        'È stata richiesta una modifica a questo indirizzo e-mail per il tuo account GourMerge. Conferma tramite il link qui sotto che questo indirizzo ti appartiene:',
+      linkLabel: 'Conferma indirizzo e-mail',
+      expiry: 'Questo link scade tra 2 ore. Finché non lo confermi, il tuo indirizzo e-mail attuale resta attivo.',
+      textIntro: 'Conferma tramite il link che questo nuovo indirizzo e-mail ti appartiene:',
+    },
+    emailChangeNotice: {
+      subject: 'Richiesta di modifica del tuo indirizzo e-mail GourMerge',
+      body: 'È stata richiesta una modifica dell’indirizzo e-mail del tuo account GourMerge, a {email}. La modifica avrà effetto solo dopo la conferma di questo nuovo indirizzo. Se non sei stato tu, cambia immediatamente la password — qualcuno con accesso al tuo account potrebbe cercare di impossessarsene.',
     },
   },
 }

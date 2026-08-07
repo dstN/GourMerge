@@ -125,11 +125,12 @@ useSeoMeta({ title: `${t('settings.title')} — GourMerge` })
       </template>
     </UCard>
 
-    <!-- Sign-in security. Both opt-in; nothing here prompts for either.
-         Passkeys come first: they replace the password entirely, so they are the
-         stronger and simpler option, and TOTP below is the fallback for people who
-         stay on passwords. -->
+    <!-- Email, then sign-in security. Both security items below are opt-in; nothing here
+         prompts for either. Passkeys come first: they replace the password entirely, so
+         they are the stronger and simpler option, and TOTP below is the fallback for
+         people who stay on passwords. -->
     <div class="mt-6 space-y-6">
+      <CommonChangeEmailCard />
       <CommonPasskeyCard />
       <CommonTwoFactorCard />
     </div>
