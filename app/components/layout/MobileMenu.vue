@@ -16,6 +16,7 @@
 const { t, locale, setLocale } = useI18n()
 const { loggedIn, user, clear } = useUserSession()
 const route = useRoute()
+const localePath = useLocalePath()
 const tour = useProductTour()
 
 const open = ref(false)
@@ -34,24 +35,30 @@ const localeItems = [
   { label: 'Italiano', value: 'it' },
 ]
 
-/** Mirrors the desktop header: Explore is public, the rest needs an account. */
+/**
+ * Mirrors the desktop header: Explore is public, the rest needs an account.
+ *
+ * `localePath()` on every entry, because the template binds `:to="item.to"` and i18n only
+ * rewrites static literals — see `LayoutDashboardSidebar` for the measurement. `linkClass`
+ * compares against `route.path`, so localising `to` fixes the active state at the same time.
+ */
 const navLinks = computed(() =>
   loggedIn.value
     ? [
-        { label: t('nav.dashboard'), icon: 'i-lucide-layout-dashboard', to: '/dashboard' },
-        { label: t('nav.myRecipes'), icon: 'i-lucide-book-open', to: '/recipes' },
-        { label: t('nav.starred'), icon: 'i-lucide-star', to: '/recipes/starred' },
-        { label: t('nav.explore'), icon: 'i-lucide-compass', to: '/explore' },
-        { label: t('nav.newRecipe'), icon: 'i-lucide-plus-circle', to: '/recipes/new' },
+        { label: t('nav.dashboard'), icon: 'i-lucide-layout-dashboard', to: localePath('/dashboard') },
+        { label: t('nav.myRecipes'), icon: 'i-lucide-book-open', to: localePath('/recipes') },
+        { label: t('nav.starred'), icon: 'i-lucide-star', to: localePath('/recipes/starred') },
+        { label: t('nav.explore'), icon: 'i-lucide-compass', to: localePath('/explore') },
+        { label: t('nav.newRecipe'), icon: 'i-lucide-plus-circle', to: localePath('/recipes/new') },
       ]
-    : [{ label: t('nav.explore'), icon: 'i-lucide-compass', to: '/explore' }]
+    : [{ label: t('nav.explore'), icon: 'i-lucide-compass', to: localePath('/explore') }]
 )
 
 async function logout() {
   await $fetch('/auth/logout', { method: 'POST' })
   await clear()
   open.value = false
-  navigateTo('/')
+  await navigateTo(localePath('/'))
 }
 
 function startTour() {

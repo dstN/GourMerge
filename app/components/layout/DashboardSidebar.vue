@@ -1,42 +1,36 @@
 <script setup lang="ts">
 /**
  * DashboardSidebar — Navigation sidebar for the dashboard layout
+ *
+ * ## Why every path goes through `localePath()`
+ *
+ * The template binds `:to="item.to"` — a dynamic binding. `@nuxtjs/i18n` rewrites a
+ * *static literal* `to` (which is why `<UButton to="/explore">` in `LayoutMainNav` renders
+ * `/en/explore`) and cannot touch a value that only exists at runtime. Measured on
+ * `/en/dashboard`, the page carried both sets at once: `/en/recipes` from the header and a
+ * bare `/recipes` from here. Clicking any sidebar item dropped an English visitor back into
+ * German — the logo bug, once per sidebar row.
+ *
+ * `active` has to be compared against the localised path for the same reason: `route.path`
+ * on `/en/dashboard` never equals `/dashboard`, so the current page was highlighted in the
+ * default locale only.
  */
 const { t } = useI18n()
 const route = useRoute()
+const localePath = useLocalePath()
 
-const navItems = computed(() => [
-  {
-    label: t('nav.dashboard'),
-    icon: 'i-lucide-layout-dashboard',
-    to: '/dashboard',
-    active: route.path === '/dashboard',
-  },
-  {
-    label: t('nav.myRecipes'),
-    icon: 'i-lucide-book-open',
-    to: '/recipes',
-    active: route.path === '/recipes',
-  },
-  {
-    label: t('nav.starred'),
-    icon: 'i-lucide-star',
-    to: '/recipes/starred',
-    active: route.path === '/recipes/starred',
-  },
-  {
-    label: t('nav.explore'),
-    icon: 'i-lucide-compass',
-    to: '/explore',
-    active: route.path === '/explore',
-  },
-  {
-    label: t('nav.newRecipe'),
-    icon: 'i-lucide-plus-circle',
-    to: '/recipes/new',
-    active: route.path === '/recipes/new',
-  },
-])
+const navItems = computed(() =>
+  [
+    { label: t('nav.dashboard'), icon: 'i-lucide-layout-dashboard', path: '/dashboard' },
+    { label: t('nav.myRecipes'), icon: 'i-lucide-book-open', path: '/recipes' },
+    { label: t('nav.starred'), icon: 'i-lucide-star', path: '/recipes/starred' },
+    { label: t('nav.explore'), icon: 'i-lucide-compass', path: '/explore' },
+    { label: t('nav.newRecipe'), icon: 'i-lucide-plus-circle', path: '/recipes/new' },
+  ].map(({ label, icon, path }) => {
+    const to = localePath(path)
+    return { label, icon, to, active: route.path === to }
+  })
+)
 </script>
 
 <template>

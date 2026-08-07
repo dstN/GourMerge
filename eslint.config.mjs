@@ -15,6 +15,29 @@ export default withNuxt(
       // Prettier owns element formatting; this rule conflicts with how Prettier
       // self-closes void elements (<input />), so leave it to Prettier.
       'vue/html-self-closing': 'off',
+      /**
+       * `click:` as an object property is the Nuxt UI **v3** menu-item API.
+       *
+       * v4 reads `onSelect`, and an unknown key on an item is not an error — it is simply
+       * never looked at. So the entry renders, looks right, and does nothing when clicked.
+       * That is how signing out became impossible from the desktop header, and how both
+       * entries in the help menu became decorative, for as long as this app has been on v4.
+       *
+       * Nothing else caught it. Typecheck stays quiet because `DropdownMenuItem` extends
+       * `LinkProps`, which pulls in Vue's HTML attribute types — verified by reintroducing
+       * `click:` on an array explicitly annotated as `DropdownMenuItem[][]` and watching
+       * `nuxt typecheck` pass. A lint rule is the only thing here that actually fails.
+       *
+       * `@click` in a template is unaffected: that is a directive, not a property.
+       */
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "Property[key.name='click'][value.type!='Literal']",
+          message:
+            'Nuxt UI v4 menu items use `onSelect`, not `click`. A `click` key is silently ignored, so the item renders and does nothing.',
+        },
+      ],
     },
   },
   // Scripts (maintenance + CI utilities) intentionally use console.log
