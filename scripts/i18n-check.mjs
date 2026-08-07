@@ -5,6 +5,7 @@
  * Fails (exit 1) if:
  * 1. DE / EN / FR / IT locale files have different keys at any depth (parity check)
  * 2. Any key has an empty string value in any locale
+ * 3. Any message contains an unescaped `@` (vue-i18n linked-message syntax)
  *
  * Run: node scripts/i18n-check.mjs
  * Wired into CI via `npm run i18n:check`
@@ -76,6 +77,39 @@ for (const code of LOCALES) {
   for (const [key, value] of Object.entries(flatLocales[code])) {
     if (value === '' || value === null || value === undefined) {
       console.error(`[i18n] EMPTY value in ${code.toUpperCase()}: ${key}`)
+      errors++
+    }
+  }
+}
+
+// ── 3. Unescaped `@` (vue-i18n linked messages) ──────────────────────────────
+/**
+ * `@` opens a *linked message* in vue-i18n's message syntax (`@:other.key`,
+ * `@.lower:other.key`). A bare `@` — the natural way to write an email placeholder —
+ * makes the compiler throw `INVALID_LINKED_FORMAT`, and because production builds
+ * strip the message table, it surfaces as a **500 whose entire body is the string
+ * "10"**. Nothing in that points at a translation file.
+ *
+ * It cost a debugging session exactly once: `du@beispiel.de` in a new placeholder
+ * took `/auth/login` down while every other page stayed up. The existing
+ * `auth.emailPlaceholder` had it right all along (`deine{'@'}email.de`) — the
+ * convention was simply invisible until it broke.
+ *
+ * The escape is `{'@'}`. This check is a parser, not a regex on the raw string:
+ * `{'@'}` must pass while `du@x.de` must fail, and both contain `@`.
+ */
+for (const code of LOCALES) {
+  for (const [key, value] of Object.entries(flatLocales[code])) {
+    if (typeof value !== 'string' || !value.includes('@')) continue
+
+    // Drop every correctly escaped literal, then see if any `@` survives.
+    const withoutEscaped = value.replace(/\{\s*'[^']*'\s*\}/g, '')
+    if (!withoutEscaped.includes('@')) continue
+
+    // A genuine linked message (`@:key` / `@.modifier:key`) is legitimate syntax.
+    const bare = withoutEscaped.replace(/@(?:\.[a-z]+)?:[\w.]+/g, '')
+    if (bare.includes('@')) {
+      console.error(`[i18n] UNESCAPED @ in ${code.toUpperCase()}: ${key} — write it as {'@'} (value: ${value})`)
       errors++
     }
   }

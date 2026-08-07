@@ -61,7 +61,10 @@
     "resendVerification": "E-Mail erneut senden",
     "resendVerificationError": "Die E-Mail konnte nicht gesendet werden. Bitte versuche es gleich noch einmal.",
     "verificationSentTitle": "Bestätigungs-E-Mail gesendet",
-    "verificationSentBody": "Wir haben einen Bestätigungslink an {email} geschickt. Er ist 24 Stunden gültig."
+    "verificationSentBody": "Wir haben einen Bestätigungslink an {email} geschickt. Er ist 24 Stunden gültig.",
+    "identifier": "E-Mail oder Benutzername",
+    "identifierPlaceholder": "du{'@'}beispiel.de oder dein Benutzername",
+    "identifierRequired": "Gib deine E-Mail-Adresse oder deinen Benutzernamen ein"
   },
   "landing": {
     "badge": "Git für Rezepte",

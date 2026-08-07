@@ -61,7 +61,10 @@
     "resendVerification": "Invia di nuovo l’e-mail",
     "resendVerificationError": "Non è stato possibile inviare l’e-mail. Riprova tra un momento.",
     "verificationSentTitle": "E-mail di conferma inviata",
-    "verificationSentBody": "Abbiamo inviato un link di conferma a {email}. È valido per 24 ore."
+    "verificationSentBody": "Abbiamo inviato un link di conferma a {email}. È valido per 24 ore.",
+    "identifier": "E-mail o nome utente",
+    "identifierPlaceholder": "tu{'@'}esempio.it o il tuo nome utente",
+    "identifierRequired": "Inserisci il tuo indirizzo e-mail o il tuo nome utente"
   },
   "landing": {
     "badge": "Git per le ricette",

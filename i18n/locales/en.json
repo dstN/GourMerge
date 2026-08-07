@@ -61,7 +61,10 @@
     "resendVerification": "Resend email",
     "resendVerificationError": "The email could not be sent. Please try again in a moment.",
     "verificationSentTitle": "Verification email sent",
-    "verificationSentBody": "We sent a confirmation link to {email}. It is valid for 24 hours."
+    "verificationSentBody": "We sent a confirmation link to {email}. It is valid for 24 hours.",
+    "identifier": "Email or username",
+    "identifierPlaceholder": "you{'@'}example.com or your username",
+    "identifierRequired": "Enter your email address or username"
   },
   "landing": {
     "badge": "Git for Recipes",

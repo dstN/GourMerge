@@ -61,7 +61,10 @@
     "resendVerification": "Renvoyer l’e-mail",
     "resendVerificationError": "L’e-mail n’a pas pu être envoyé. Réessaie dans un instant.",
     "verificationSentTitle": "E-mail de confirmation envoyé",
-    "verificationSentBody": "Nous avons envoyé un lien de confirmation à {email}. Il est valable 24 heures."
+    "verificationSentBody": "Nous avons envoyé un lien de confirmation à {email}. Il est valable 24 heures.",
+    "identifier": "E-mail ou nom d’utilisateur",
+    "identifierPlaceholder": "toi{'@'}exemple.fr ou ton nom d’utilisateur",
+    "identifierRequired": "Saisis ton adresse e-mail ou ton nom d’utilisateur"
   },
   "landing": {
     "badge": "Git pour les recettes",

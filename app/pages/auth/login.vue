@@ -63,15 +63,23 @@ async function signInWithPasskey() {
   }
 }
 
+/**
+ * Email OR username — deliberately not `.email()`.
+ *
+ * The field used to validate as an email address, which meant a user who knew their
+ * username was told their own name was an "invalid email address" before the request
+ * was even sent. The endpoint matches both columns (see `server/routes/auth/login.post.ts`
+ * for why the two can never collide), so the only client-side rule left is non-empty.
+ */
 const schema = z.object({
-  email: z.string().email(t('auth.emailInvalid')),
+  identifier: z.string().min(1, t('auth.identifierRequired')),
   password: z.string().min(1, t('auth.passwordRequired')),
 })
 
 type Schema = z.output<typeof schema>
 
 const state = reactive<Partial<Schema>>({
-  email: '',
+  identifier: '',
   password: '',
 })
 
@@ -176,8 +184,17 @@ async function submitTotp() {
         :close-button="{ onClick: () => (error = '') }"
       />
 
-      <UFormField :label="t('auth.email')" name="email" required>
-        <UInput v-model="state.email" type="email" :placeholder="t('auth.emailPlaceholder')" icon="i-lucide-mail" />
+      <!-- `type="text"`, not `type="email"`: the browser would otherwise refuse to submit a
+           bare username as malformed. `autocomplete="username"` is what password managers
+           key off for the identifier field, and it is correct for either value. -->
+      <UFormField :label="t('auth.identifier')" name="identifier" required>
+        <UInput
+          v-model="state.identifier"
+          type="text"
+          autocomplete="username"
+          :placeholder="t('auth.identifierPlaceholder')"
+          icon="i-lucide-at-sign"
+        />
       </UFormField>
 
       <UFormField :label="t('auth.password')" name="password" required>
