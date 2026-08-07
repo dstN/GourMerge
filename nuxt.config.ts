@@ -274,6 +274,40 @@ export default defineNuxtConfig({
     },
   },
 
+  /**
+   * ── Stop preloading the whole module graph in the document head.
+   *
+   * Measured on the mobile Lighthouse run: 57 script requests, 326 KiB, **all started at
+   * t=116ms at priority High**, because Nuxt emits a `<link rel="modulepreload">` for every
+   * chunk the entry statically imports. On the mobile profile's 1.4 Mbps link that is ~1.8s
+   * of transfer, and the render-blocking `entry.css` sits in the same queue competing for it.
+   *
+   * The two numbers that make the case: unthrottled FCP is 290ms, simulated FCP is 2550ms.
+   * The gap is almost entirely bandwidth, and it is bandwidth spent on JavaScript the first
+   * paint does not need — the page is server-rendered, so the HTML is already complete, and
+   * the scripts are `type="module"` and therefore deferred by definition. They are needed to
+   * hydrate, not to paint.
+   *
+   * Dropping the hints does NOT drop the requests: those chunks are still statically imported
+   * and still fetched. They are merely discovered after the entry parses — after the
+   * stylesheet has had the pipe to itself. Later discovery costs Time-to-Interactive, which
+   * Lighthouse does not score; earlier paint buys FCP (weight 10), LCP (25) and Speed Index
+   * (10), which it does.
+   *
+   * `prefetch` goes with it. That flag emits `<link rel="prefetch">` for OTHER routes' chunks
+   * during the initial load — bandwidth spent on pages the visitor has not asked for while the
+   * one they did ask for is still painting. `<NuxtLink>` prefetches on hover and on visibility
+   * at runtime independently of this flag, so navigation stays warm.
+   */
+  hooks: {
+    'build:manifest'(manifest) {
+      for (const entry of Object.values(manifest)) {
+        entry.preload = false
+        entry.prefetch = false
+      }
+    },
+  },
+
   // ── Security Headers (P6-001) ───────────────────────────────
   // Static headers applied to all routes. The Content-Security-Policy is set
   // per-request in `server/plugins/csp.ts` instead (it carries a per-request
@@ -294,30 +328,40 @@ export default defineNuxtConfig({
       },
     },
     // Lighthouse: 390KiB of "est. savings" from missing cache headers, all of it hashed build
-    // assets, on desktop and mobile alike. Declaring it explicitly rather than relying on
-    // Nitro's own default, which is not reaching the browser today.
+    // assets, on desktop and mobile alike.
     //
     // Safe by construction: every filename under `/_nuxt/` carries a content hash, so
     // `immutable` can never serve a stale asset — a change produces a new URL. Scoped to the
     // build directory and never `/**`, which would put a one-year cache on the HTML and leave
     // visitors on the old page after a deploy.
     //
-    // ── Do not "fix" this in the web server. It belongs here.
+    // ── This rule does NOT currently reach the browser in production. Read on before
+    //    "fixing" it, and before believing either of the two stories above it in git log.
     //
-    // Production returns these files with an ETag, a Last-Modified and no Cache-Control, and
-    // `Server: nginx` on the response makes it look as though nginx were serving them off disk,
-    // past the app. It is not. A request for a NON-EXISTENT `/_nuxt/*.js` comes back as Nitro's
-    // JSON 404 with our own security headers and `X-Powered-By: Phusion Passenger` — so these
-    // requests do reach the app, and a route rule is exactly the right tool.
+    // Measured against the live site, on the deploy that contains this file:
     //
-    // That distinction cost real time, and the trap is worth naming: `Server: nginx` is on
-    // EVERY response here because nginx is the edge proxy. It says nothing about who produced
-    // the body. Chasing it led first to a Plesk "Additional nginx directives" block (the field
-    // does not exist on this hosting plan) and then to shipping a `public/.htaccess`, which
-    // would have meant switching off Plesk's "Smart static files processing" against the
-    // panel's own advice — all to replace a rule that was simply not deployed yet. The reason
-    // the header is missing in production is that the deploy that carried this rule had not
-    // run at the time Lighthouse was measured.
+    //   GET /api/health          → cache-control: no-store, max-age=0   ← the rule below it
+    //   GET /_nuxt/<hash>.js     → ETag + Last-Modified, and NOTHING else
+    //   GET /_fonts/<hash>.woff2 → ETag, and nothing else
+    //
+    // So route rules work here — `/api/health` proves it. What the asset responses are missing
+    // is not just `cache-control`: they carry none of the `/**` security headers above and no
+    // `x-request-id` either. Nothing that touches Nitro comes back that bare. Those files are
+    // served off disk by the web server (Plesk's "Smart static files processing"), and Nitro
+    // never sees the request.
+    //
+    // The earlier reading — "a non-existent `/_nuxt/*.js` returns Nitro's JSON 404, therefore
+    // these requests reach the app" — is true and proves nothing. A MISS is exactly the case
+    // that falls through to Passenger; a HIT is the case in question, and it does not. Testing
+    // a missing file to learn how existing files are served is the whole error, and it is an
+    // easy one to repeat, which is why it is written down instead of deleted.
+    //
+    // The rules stay: they cost nothing, they are correct, and they start working the moment
+    // the assets are served by the app (any host without smart static processing, `nuxt
+    // preview`, a container). Making them fire on THIS host means turning that Plesk feature
+    // off, which hands every asset to Node — a real cost for a Lighthouse item weighted 0.
+    // Deliberately not done. Note the trap that started it all: `Server: nginx` is on EVERY
+    // response here because nginx is the edge proxy. It says nothing about who produced the body.
     '/_nuxt/**': {
       headers: { 'cache-control': 'public, max-age=31536000, immutable' },
     },

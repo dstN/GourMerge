@@ -1,6 +1,3 @@
-import { z } from 'zod'
-import { de, en, fr, it } from 'zod/locales'
-
 /**
  * Localize Zod's built-in validation messages.
  *
@@ -25,8 +22,33 @@ import { de, en, fr, it } from 'zod/locales'
  * pages display their own translated copy instead (`t('…Error')`), never the raw
  * field errors. If a server message ever does need to reach a user, pass a
  * per-parse error map at that call site rather than touching the global here.
+ *
+ * ## Why the imports are dynamic
+ *
+ * They used to be static, which put Zod plus all four locale packs into the entry
+ * chunk — loaded and executed at boot on EVERY page, including the marketing
+ * homepage, which contains no form at all. That is main-thread work during the
+ * exact window Lighthouse measures as Total Blocking Time, spent on a global that
+ * nothing on the page will read.
+ *
+ * Deferring costs nothing on the pages that do have forms: those route chunks
+ * import Zod themselves, so it arrives with the page either way. This only removes
+ * it from the pages that never needed it.
+ *
+ * ## The race, and why it is acceptable
+ *
+ * `z.config()` is read at PARSE time, not at schema construction, so the map only
+ * has to be in place before the first submit. The trigger below is "whichever comes
+ * first: the browser goes idle, or the user touches the page" — and a form cannot
+ * be submitted without at least one interaction. The residual window is a submit
+ * fired within the same tick as the very first interaction, faster than a dynamic
+ * import resolves. A human cannot do that; a synthetic click can. The cost if it
+ * ever happens is one English validation message, on one submit, and the next
+ * parse is localized. That is a fair trade for taking Zod off every page's boot
+ * path — but it is the reason this is written as a deadline rather than a plain
+ * `requestIdleCallback`.
  */
-const LOCALES = { de, en, fr, it } as const
+type LocaleFactory = () => Parameters<typeof import('zod').z.config>[0]
 
 export default defineNuxtPlugin((nuxtApp) => {
   // `nuxtApp.$i18n`, NOT `useI18n()`: vue-i18n's composable throws
@@ -36,16 +58,31 @@ export default defineNuxtPlugin((nuxtApp) => {
   // its form.
   const i18n = nuxtApp.$i18n as { locale: Ref<string> }
 
-  const apply = (value: string) => {
-    const localeFactory = LOCALES[value as keyof typeof LOCALES] ?? de
-    z.config(localeFactory())
-  }
+  let apply: ((value: string) => void) | null = null
 
-  // Immediate: the first form on the page may be submitted before any change.
-  apply(i18n.locale.value)
+  async function load() {
+    if (apply) return
+    const [{ z }, { de, en, fr, it }] = await Promise.all([import('zod'), import('zod/locales')])
+    const locales: Record<string, LocaleFactory> = { de, en, fr, it }
+    apply = (value: string) => z.config((locales[value] ?? de)())
+    apply(i18n.locale.value)
+  }
 
   // Zod resolves messages at parse time from the global config, not at schema
   // construction time, so re-configuring is enough — schemas already built in a
   // page's `<script setup>` pick up the new language without being recreated.
-  watch(i18n.locale, (value) => apply(value))
+  // Before the first load this is a no-op, and `load()` reads the current locale
+  // itself, so a switch that happens while still deferred is not lost.
+  watch(i18n.locale, (value) => apply?.(value))
+
+  const once = () => {
+    window.removeEventListener('pointerdown', once)
+    window.removeEventListener('keydown', once)
+    void load()
+  }
+  window.addEventListener('pointerdown', once, { once: true, passive: true })
+  window.addEventListener('keydown', once, { once: true })
+
+  if ('requestIdleCallback' in window) window.requestIdleCallback(once, { timeout: 2000 })
+  else setTimeout(once, 1000)
 })
