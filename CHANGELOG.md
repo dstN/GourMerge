@@ -12,6 +12,60 @@ what follows was found in production logs, in Sentry, or by pointing `curl` at t
 rather than by reading code. Two entries are outages, one is a feature nobody could reach,
 and several are error handlers that were themselves the error.
 
+### Fixed — logout did nothing, from the desktop header or the mobile menu
+
+Every menu item's action was wired as `click: handler` — the Nuxt UI **v3** item API. In v4
+a menu item reads `onSelect`; `click` is simply not a property the renderer looks at, so the
+entry renders, looks exactly like every other item, and does nothing when clicked. `git blame`
+dates the lines to before this app moved to v4, so nobody has been able to sign out from the
+desktop header or use the help menu's "Start tour" / "Reset onboarding" since. Nothing caught
+it: the item type extends `LinkProps`, which pulls in Vue's own HTML attribute types, so even
+an explicitly-typed array accepts `click` without complaint. A new ESLint rule is the only
+thing that actually fails on it now.
+
+A second, unrelated bug was hiding behind the same click: the sidebar, the mobile menu and
+the account dropdown all bind a _dynamic_ `:to` on a bare `NuxtLink`, and `@nuxtjs/i18n` only
+rewrites a _static literal_ `to` — the same class of bug already fixed once in the logo. On
+`/en/dashboard` the page carried both `/en/recipes` (from the static header) and a bare
+`/recipes` (from the sidebar) at once. Every sidebar and mobile-menu path now goes through
+`localePath()`; the dropdown didn't need it, once reading `LinkProps` showed Nuxt UI already
+renders those items through `ULink`, which auto-localises on its own.
+
+### Fixed — the onboarding tour looked stuck on step 2, forever
+
+It wasn't stuck; it was silent. Four of the six tour steps anchor on a demo recipe, resolved
+once at tour start. When no recipe is available to demo on — no public recipe from another
+user, and none of the viewer's own — the original code still visited each of those four steps
+in turn, waited out a full 2.5-second anchor timeout on a page that could never have the
+anchor, and only then moved to the next one. Up to four rounds, up to ten seconds, with the
+step panel hidden and nothing but a dimmed backdrop on screen — indistinguishable from
+broken by watching it. It then ended the tour with zero feedback, which on a phone reads as
+the tour having crashed rather than finished.
+
+The overlay now recognises an unreachable step immediately — the outcome is already known,
+so no wait is manufactured for it — and an early end now shows a toast, since the panel has
+already been invisible for a few seconds by the time it fires. Reproduced and pinned with
+Playwright by forcing the "no recipe available" state directly: "next" now reaches the
+end-of-tour toast in a few hundred milliseconds instead of after up to ten seconds, and a
+second test confirms the happy path (a real recipe available) is unchanged.
+
+### Added — change your account's email address
+
+Settings had no field for it, and the API didn't accept one either — there was no path to
+this at all, not a broken one.
+
+Built as a confirm-by-link flow rather than an immediate write, on the same reasoning
+already applied to password reset: a signed-in session is not proof that the person typing
+is the account owner, and a typo here can lock someone out of every recovery path that
+depends on the address being correct. Requesting a change asks for the current password and
+mails a confirmation link to the **new** address — nothing about the account changes yet.
+Only clicking that link switches it, and because clicking it is proof of ownership, it also
+re-verifies the address in the same step, so `REQUIRE_EMAIL_VERIFICATION` can't be
+sidestepped by switching away from the address that was actually verified. The **old**
+address also gets a plain notice with no link: if the change wasn't requested by the account
+owner, that mail is the only signal something is wrong, and it says outright to change the
+password.
+
 ### Fixed — every account in production was permanently barred from publishing
 
 Creating a public recipe answered `403`. So did making an existing recipe public, and so did
