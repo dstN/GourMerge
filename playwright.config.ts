@@ -42,6 +42,11 @@ export default defineConfig({
   use: {
     baseURL: process.env.APP_URL ?? 'http://localhost:3000',
     trace: 'on-first-retry',
+    // Added while diagnosing the CI-only `copy-ingredients` clipboard flake: a screenshot at
+    // the moment of failure is readable directly, no trace-viewer session needed, and it is
+    // the fastest way to see whether the failure is even the state it looks like from the
+    // assertion alone (e.g. an unexpected dialog, an unclicked button, a focus indicator).
+    screenshot: 'only-on-failure',
     navigationTimeout: 90_000,
     actionTimeout: 20_000,
   },
