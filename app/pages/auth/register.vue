@@ -1,7 +1,4 @@
 <script setup lang="ts">
-/**
- * Register Page — Create a new account
- */
 import { z } from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
 
@@ -12,7 +9,7 @@ const { apiError } = useApiError()
 const { fetch: fetchSession } = useUserSession()
 
 useSeoMeta({
-  title: `${t('auth.register')} — GourMerge`,
+  title: `${t('auth.register')}: GourMerge`,
 })
 
 const loading = ref(false)

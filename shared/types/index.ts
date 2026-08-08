@@ -1,13 +1,6 @@
-/**
- * GourMerge — Shared Type Definitions
- *
- * These types are auto-imported by both `app/` and `server/` via the `shared/` directory.
- * They define the canonical data shapes for the entire application.
- *
- * Note: the rich, API-facing recipe/GMR view types live in `./recipe.ts`
- * (RecipeDetail, GourmergeRequestDetail, etc.). This file holds the primitive
- * building blocks shared across layers.
- */
+// Auto-imported by both app/ and server/ via shared/. Primitive building blocks only —
+// the rich, API-facing recipe/GMR view types (RecipeDetail, GourmergeRequestDetail, …)
+// live in ./recipe.ts instead.
 
 // ── Units ─────────────────────────────────────────────────────
 

@@ -69,11 +69,8 @@ watch(query, (q) => {
   }, 250)
 })
 
-// ── New-ingredient dialog ────────────────────────────────────
-// Choosing "create X" used to emit a row with `id: null`, and the edit page then created
-// the master row at commit time from the bare name — no translations, no category, no
-// nutrition, and no chance to supply them. It now opens a dialog and the row receives a
-// real id, so the ingredient is findable in every locale from the moment it exists.
+// Opens a dialog to create the master ingredient row with a real id (translations, category,
+// nutrition) instead of a bare-name id:null row resolved later at commit time.
 const createOpen = ref(false)
 const pendingName = ref('')
 
@@ -91,10 +88,8 @@ function onSelect(option: IngredientOption) {
   isFocused.value = false
 }
 
-// Typed by the modal's own contract rather than an inline shape. The inline version was a
-// structural subset that happened to match, so a change to the emitted payload would not
-// have been caught here — and it left `CreatedIngredient` exported but unimported, which
-// `npm run knip` flagged.
+// Typed by the modal's own CreatedIngredient contract, not an inline structural subset, so a
+// payload change here gets caught by the type checker.
 function onCreated(created: CreatedIngredient) {
   emit('update:modelValue', { id: created.id, name: created.name })
   query.value = created.name

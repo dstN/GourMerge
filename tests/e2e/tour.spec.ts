@@ -1,37 +1,11 @@
 import { test, expect, type Page } from '@playwright/test'
 import { registerUser, createRecipe, uniqueUser } from './support/api'
 
-/**
- * Reported four times over: "stuck on step 2, 'weiter' does nothing" → fixed into "the tour
- * just ends where a sample recipe should be shown, that's not a fix" → fixed into demo-recipe
- * creation → "literally nothing changed, still get the no-recipe message" (the panel's own
- * "Weiter" button still just called `tour.next()` without creating anything) → fixed into
- * `TourOverlay.handleNext()` sending "Weiter" through the real form too → "even after creating
- * the recipe" the same toast, AND "you didn't fix the recipe creation process, still have to
- * go through it without help."
- *
- * That last report was right, and it was a real design gap, not a data-availability one like
- * the toast wording: `suspended` hid the ENTIRE tour overlay — panel included — the moment the
- * visitor reached `/recipes/new`, so they could interact with the real form, but also got zero
- * guidance while doing it. "The tour creates a recipe together with the user" cannot mean
- * "the tour vanishes at the door."
- *
- * The actual fix: `recipe-form-title` is now a real step, anchored on the title field of the
- * REAL `/recipes/new` form, `hideNext: true` (no "Weiter" to skip past it — only "Zurück" and
- * abandoning the tour outright stay available), with the backdrop made click-through
- * (`backdropInteractive`) so the rest of the form is still usable underneath. Two paths lead
- * there — the panel's "Weiter" on `new-recipe-btn` (plain `tour.next()` now; `recipe-form-
- * title`'s own route IS `/recipes/new`) and the highlighted "+ Neues Rezept" link clicked
- * directly, which bypasses `tour.next()` entirely — so a second `route.path` watcher advances
- * the step for the second path too. `recipes/new.vue` reads `tour.active` directly (not a
- * `?tour=1` query, which would only have been present on ONE of those two paths) to default
- * visibility to private. `TourOverlay`'s other `route.path` watcher then picks the tour back
- * up once the visitor actually submits the form, same as before. Only `fork-button`
- * (`route: '@recipe'`, always last) still needs someone ELSE's public recipe — forking your
- * own brand-new recipe makes no sense — and degrades gracefully (a distinct, positive
- * `tour.finishedNoFork` toast, not the generic early-end one) when none exists, which is the
- * production-realistic case right after publishing itself was fixed.
- */
+// `recipe-form-title` anchors on the real /recipes/new form's title field (hideNext, click-through
+// backdrop via backdropInteractive) so the tour guides actual recipe creation instead of vanishing
+// at the door. Reachable via the panel's "Weiter" or the highlighted link directly — both advance
+// the step through route watchers in TourOverlay. `fork-button` (always last) needs someone else's
+// public recipe and shows a distinct "tour complete, nothing to fork yet" toast when none exists.
 
 /** Dismisses the welcome modal and walks through `explore-search` to land on `new-recipe-btn`. */
 async function startTourAtNewRecipeStep(page: Page) {
@@ -123,12 +97,8 @@ test.describe('onboarding tour', () => {
     await page.getByRole('button', { name: /weiter|next/i }).click()
     await expect(page.locator('[data-tour="gourmerge-requests-link"].tour-highlight')).toBeVisible({ timeout: 8000 })
 
-    // fork-button is last and, with `explore` mocked empty, unreachable — but everything
-    // before it just succeeded, so this ends on the positive "tour complete, fork just
-    // needs someone else's recipe" toast, not the generic early-end one. Distinguishing the
-    // two is the point: showing identical wording for "nothing worked" and "everything
-    // worked except the one step that structurally can't demo on your own recipe" is what
-    // made this fix read as having changed nothing when it was first reported back.
+    // fork-button unreachable here (explore mocked empty) is expected — everything before it
+    // succeeded, so this is the positive "tour complete, fork needs another recipe" toast.
     await page.getByRole('button', { name: /weiter|next/i }).click()
     await expect(page.getByText(/tour abgeschlossen|tour complete/i).first()).toBeVisible({ timeout: 3000 })
 

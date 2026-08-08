@@ -1,46 +1,21 @@
 /**
- * POST /auth/passkey-authenticate — sign in with a passkey.
+ * POST /auth/passkey-authenticate — sign in with a passkey. No email, no password, no
+ * TOTP step: unlocking a passkey already needs the device plus biometric/PIN
+ * (possession + inherence), at least as strong as password+TOTP and phishing-resistant
+ * besides (origin-bound assertion). TOTP stays the second factor for password logins;
+ * see login.post.ts.
  *
- * ## A passkey replaces the whole login, not just the password
- *
- * No email, no password, no TOTP step. That is deliberate and worth being explicit
- * about, because it looks like a downgrade next to the two-step password flow and is
- * the opposite:
- *
- * - **The private key never leaves the authenticator.** There is no shared secret to
- *   phish, leak in a dump, or reuse from another site.
- * - **Unlocking it needs the device plus a biometric or PIN** — possession and
- *   inherence/knowledge. A password + TOTP is knowledge + possession. The passkey is
- *   at least as strong, and it is phishing-resistant, which TOTP is not: the origin is
- *   bound into the assertion, so a lookalike domain gets nothing.
- *
- * So demanding a TOTP code *after* a successful passkey assertion would add friction
- * without adding security, and would punish the users on the strongest credential.
- * TOTP remains the second factor for **password** logins; see
- * `server/routes/auth/login.post.ts`.
- *
- * ## Usernameless
- *
- * No `userName` is sent, so no `allowCredentials` is set and the browser offers
- * whichever discoverable passkeys it holds for this domain. The account is identified
- * by the credential id the authenticator returns — which is why
- * `user_passkeys.credential_id` is globally unique.
+ * Usernameless: no `userName` sent means no `allowCredentials`, so the browser offers
+ * whatever discoverable passkeys it holds for this domain — the account is resolved from
+ * the returned credential id, which is why `user_passkeys.credential_id` is globally unique.
  */
 import { eq } from 'drizzle-orm'
 import type { WebAuthnCredential } from '#auth-utils'
 import { userPasskeys, users } from '~~/server/database/schema'
 
-/**
- * Transports are stored as a plain JSON string array, but the credential type wants a
- * union of known values. The values originate from the authenticator and are echoed back
- * untouched, so narrowing here is a type assertion, not a validation gap.
- *
- * The union is read off `WebAuthnCredential` rather than imported from
- * `@simplewebauthn/types`: that package is only a *transitive* dependency here, so
- * depending on it directly would break on any restructuring inside
- * `@simplewebauthn/server`. This also ties the narrowing to exactly the type the
- * consumer requires, so it cannot drift from it.
- */
+// Transports are stored as a plain string array; narrowed to WebAuthnCredential's own union
+// (not @simplewebauthn/types, a transitive-only dependency here) since the values are echoed
+// back from the authenticator untouched — a type assertion, not a validation gap.
 type Transports = NonNullable<WebAuthnCredential['transports']>
 
 function asTransports(value: string[] | null): Transports | undefined {
@@ -51,19 +26,12 @@ export default defineWebAuthnAuthenticateEventHandler({
   storeChallenge: (_event, challenge, attemptId) => storeWebauthnChallenge(challenge, attemptId),
   getChallenge: (_event, attemptId) => consumeWebauthnChallenge(attemptId),
 
-  /**
-   * The second bullet in the header — "unlocking it needs a biometric or PIN" — is the
-   * entire reason this endpoint may skip the TOTP step. `userVerification: 'required'`
-   * is what makes that true rather than aspirational; it must match the value used at
-   * enrolment in `server/api/auth/passkeys/register.post.ts`.
-   */
+  // Must match enrolment's value in passkeys/register.post.ts — this is what makes the
+  // "no TOTP step" skip above actually true rather than aspirational.
   getOptions: () => ({ userVerification: 'required' as const }),
 
-  /**
-   * Look up the credential the authenticator signed with. Throwing here (rather than
-   * returning null) keeps the failure indistinguishable from a bad signature, so the
-   * endpoint cannot be used to test whether a given credential id exists.
-   */
+  // Throws rather than returning null so a bad credential id and a bad signature look
+  // identical — the endpoint can't be used to probe which credential ids exist.
   async getCredential(event, credentialId) {
     await useRateLimit(getRateLimitKey(event, 'passkey-auth'), { max: 10, windowSeconds: 300 })
 
@@ -98,23 +66,14 @@ export default defineWebAuthnAuthenticateEventHandler({
       throw createError({ statusCode: 401, statusMessage: 'Unauthorized' })
     }
 
-    /**
-     * Requested above, enforced here. `nuxt-auth-utils` verifies with a hardcoded
-     * `requireUserVerification: false`, so a presence-only assertion — someone tapping
-     * a key on an unlocked stolen laptop — would otherwise mint a full session and skip
-     * both the password and the TOTP code. This is the check that makes the header's
-     * "at least as strong" claim hold.
-     */
+    // nuxt-auth-utils verifies with a hardcoded requireUserVerification: false, so this check
+    // is what actually stops a presence-only tap (e.g. an unlocked stolen laptop) from minting a session.
     if (!authenticationInfo.userVerified) {
       logger.warn('passkey login refused: assertion without user verification', { userId })
       throw createError({ statusCode: 401, statusMessage: 'Unauthorized' })
     }
 
-    /**
-     * A counter that fails to advance is the spec's clone signal. `isCounterRegression`
-     * deliberately tolerates `0`, because synced passkeys (iCloud, Google) always
-     * report zero — rejecting that would break nearly every real passkey.
-     */
+    // isCounterRegression tolerates 0 — synced passkeys (iCloud, Google) always report zero.
     const received = authenticationInfo.newCounter ?? 0
     const [stored] = await db
       .select({ counter: userPasskeys.counter })

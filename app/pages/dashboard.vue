@@ -1,9 +1,4 @@
 <script setup lang="ts">
-/**
- * Dashboard Page — Authenticated user's home
- *
- * Shows the user's recipes in a grid and quick actions.
- */
 import type { DashboardRecipe } from '~~/shared/types/recipe'
 
 definePageMeta({ layout: 'dashboard', middleware: 'auth' })
@@ -12,7 +7,7 @@ const { t } = useI18n()
 const { user } = useUserSession()
 
 useSeoMeta({
-  title: `${t('nav.dashboard')} — GourMerge`,
+  title: `${t('nav.dashboard')}: GourMerge`,
 })
 
 // Fetch user's recipes

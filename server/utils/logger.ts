@@ -1,12 +1,5 @@
-/**
- * GourMerge — Structured Logger (Pino)
- *
- * Writes structured JSON logs.
- * In production: to a rotating log file (logs/app.log, max 10MB, retain 7 days).
- * In development: pretty-printed to stderr.
- *
- * Redacts sensitive fields so they never appear in log output.
- */
+// Production: rotating JSON log file (logs/app.log, max 10MB, retain 7 days). Dev:
+// pretty-printed to stderr. Sensitive fields are redacted either way.
 import pino from 'pino'
 import PinoPretty from 'pino-pretty'
 import type { Logger } from 'pino'

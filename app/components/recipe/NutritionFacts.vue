@@ -121,15 +121,8 @@ const hasMicros = computed(() => vitamins.value.length > 0 || minerals.value.len
 </script>
 
 <template>
-  <!-- ── Compact bar ────────────────────────────────────────
-       Layout switches at `sm` rather than wrapping. One flex row with
-       `flex-wrap` gave a ragged 3–4 line stack on a phone, with the separator
-       dots stranded at line ends and the macro bar orphaned between them.
-
-       Mobile: energy on its own line, then the full-width macro bar (which is
-       more readable wide than at 80px), then macros as a 2-column grid so the
-       values align in columns instead of reflowing.
-       ≥ sm: the original single row, which fits comfortably. -->
+  <!-- sm+: single row. Below sm: stacked (energy / full-width macro bar / 2-col macros)
+       to avoid the ragged flex-wrap reflow. -->
   <div v-if="compact" class="rounded-lg border border-default bg-elevated px-4 py-3 mb-6">
     <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-4 sm:gap-y-2">
       <!-- Energy -->

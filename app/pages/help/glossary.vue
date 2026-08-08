@@ -2,7 +2,7 @@
 const { t } = useI18n()
 
 useSeoMeta({
-  title: () => `${t('help.glossary')} — GourMerge`,
+  title: () => `${t('help.glossary')}: GourMerge`,
   description: () => t('glossary.seoDescription'),
 })
 

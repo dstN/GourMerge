@@ -35,7 +35,7 @@ if (import.meta.server && event && error.value) {
 
 useSeoMeta({
   title: () =>
-    profile.value ? `${profile.value.user.displayName || profile.value.user.username} — GourMerge` : 'GourMerge',
+    profile.value ? `${profile.value.user.displayName || profile.value.user.username}: GourMerge` : 'GourMerge',
 })
 </script>
 

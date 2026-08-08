@@ -18,11 +18,7 @@ const props = defineProps<{
   modelValue: string
   index: number
   placeholder?: string
-  /**
-   * Language this editor holds, shown as a badge in the toolbar. The main step editor had
-   * no language marker at all, so it was never clear which language the text was in —
-   * which in turn made "add translations" ambiguous about what to translate from.
-   */
+  /** Language this editor holds, shown as a badge so "add translations" has a clear source. */
   localeBadge?: string
 }>()
 

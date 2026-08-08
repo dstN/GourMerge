@@ -149,7 +149,7 @@ async function submitComment() {
 const statusColor = computed(() => GMR_STATUS_COLOR[gmr.value?.status ?? 'open'] ?? 'neutral')
 
 useSeoMeta({
-  title: () => (gmr.value ? `${gmr.value.title} — GourMerge` : 'GourMerge'),
+  title: () => (gmr.value ? `${gmr.value.title}: GourMerge` : 'GourMerge'),
 })
 </script>
 

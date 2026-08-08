@@ -1,12 +1,5 @@
-/**
- * GourMerge — Unit Conversion Utilities (Nitro Server Utility)
- *
- * Handles conversion between the canonical metric units stored in the DB
- * and the display units shown to users.
- *
- * DATABASE RULE: Only g (grams) and ml (milliliters) are stored for mass/volume.
- * Display conversion to imperial or other units happens here.
- */
+// Only g/ml are ever stored for mass/volume — conversion to display units (incl. imperial)
+// happens here, never at write time.
 
 import type { CanonicalUnit, DisplayUnit, MeasurementSystem } from '~~/shared/types'
 

@@ -1,9 +1,5 @@
 <script setup lang="ts">
-/**
- * Recipe Forks Page — lists recipes forked from this one.
- *
- * URL: /:username/:slug/forks  (public, mirrors the recipe detail page)
- */
+// Public, mirrors the recipe detail page's middleware.
 import type { RecipeDetail } from '~~/shared/types/recipe'
 
 definePageMeta({ middleware: ['validate-recipe-route', 'shell'] })
@@ -48,7 +44,7 @@ const { data: forksData } = await useFetch<{ forks: ForkCard[]; total: number }>
 const forks = computed(() => forksData.value?.forks ?? [])
 
 useSeoMeta({
-  title: () => (recipe.value ? `${t('forks.title')} — ${recipe.value.title} · GourMerge` : 'GourMerge'),
+  title: () => (recipe.value ? `${t('forks.title')}: ${recipe.value.title} · GourMerge` : 'GourMerge'),
 })
 </script>
 

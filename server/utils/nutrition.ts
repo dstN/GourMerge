@@ -1,9 +1,6 @@
 /**
- * GourMerge — Per-recipe nutrition totals calculator.
- *
- * Computes aggregated macronutrients for a set of commit ingredients
- * by converting each ingredient's quantity to grams and multiplying
- * by the per-100g values from ingredient_nutrition.
+ * Aggregates macronutrients for a set of commit ingredients: converts each quantity to
+ * grams, then multiplies by the per-100g values from ingredient_nutrition.
  *
  * Returns approximate results when:
  *   - An ingredient has no nutrition data

@@ -1,13 +1,5 @@
-/**
- * GourMerge — Diff Algorithm (Nitro Server Utility)
- *
- * Compares two recipe commit snapshots and produces a structured diff object.
- * This file is auto-imported in the server context.
- *
- * Two diff types:
- * 1. Structured Ingredient Diff — compares ingredient lists by ingredient ID
- * 2. Text Diff — compares Markdown step content using diff-match-patch-es
- */
+// Compares two recipe commit snapshots: ingredients diffed by id, step Markdown diffed via
+// diff-match-patch-es.
 
 import { diffMain, diffCleanupSemantic } from 'diff-match-patch-es'
 import type {

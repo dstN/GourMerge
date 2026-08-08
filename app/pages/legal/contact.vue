@@ -1,7 +1,4 @@
 <script setup lang="ts">
-/**
- * Contact Page — Contact form with rate-limited backend
- */
 import { z } from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
 
@@ -11,7 +8,7 @@ const { t } = useI18n()
 const toast = useAppToast()
 
 useSeoMeta({
-  title: `${t('legal.contactTitle')} — GourMerge`,
+  title: `${t('legal.contactTitle')}: GourMerge`,
 })
 
 const schema = z.object({

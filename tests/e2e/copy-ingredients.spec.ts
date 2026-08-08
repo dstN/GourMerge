@@ -1,31 +1,8 @@
 import { test, expect } from '@playwright/test'
 import { registerUser, uniqueUser, createRecipe, createIngredient, commitSnapshot } from './support/api'
 
-/**
- * Copying the ingredient list to the clipboard.
- *
- * Two independent causes were stacked behind one symptom (`readText()` polling to an empty
- * string): the real Clipboard API additionally requires the document to be focused, which
- * this suite could not reliably arrange in GitHub Actions specifically — granting
- * `clipboard-read`/`clipboard-write`, running the file `serial`, and `page.bringToFront()`
- * right before the click (all three still present in git history) still left `writeText()`
- * failing 3/3 retries across several unrelated commits, while passing locally every time.
- * Asserted here against a STUBBED `navigator.clipboard` instead, which sidesteps that
- * OS-integration layer entirely while still exercising the thing worth catching — a copy
- * button that fires but writes nothing or writes the wrong thing. `copyIngredients()` in
- * `[slug]/index.vue` still calls the genuine `navigator.clipboard.writeText(text)`, just
- * against an implementation this file controls.
- *
- * The stub alone was NOT sufficient, which is how the second cause surfaced: reproduced
- * locally, stub and all, at roughly 1-in-3 — clicking the button as soon as it exists in the
- * SSR-rendered DOM races Vue's hydration, which is what actually attaches the `@click`
- * handler. `waitUntil: 'load'` and the button's own `.waitFor()` both only prove the markup
- * exists, not that hydration has reached it. `__vnode` on `#__nuxt` is this suite's existing
- * signal for "hydration has actually happened" (see tour.spec.ts, journey.spec.ts); this file
- * just wasn't using it. CI's shared, slower runners hit that window far more often than a
- * local machine does, which is why "passes locally every time" and "fails 3/3 in CI" were
- * both true at once.
- */
+// Stubs navigator.clipboard (the real Clipboard API needs document focus, unreliable in CI)
+// and waits for #__nuxt's __vnode (hydration) before clicking — see tour.spec.ts, journey.spec.ts.
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
     let stored = ''
@@ -62,11 +39,6 @@ test('the ingredient list reaches the clipboard as a shopping list', async ({ pa
   })
 
   await page.goto(`/${recipe.owner.username}/${recipe.slug}`, { waitUntil: 'load' })
-  // `waitUntil: 'load'` and even the button's own `waitFor()` below only prove the
-  // SSR-rendered DOM exists — not that Vue has hydrated and wired up its `@click` handler
-  // yet. Clicking before that point is indistinguishable from clicking nothing: the
-  // handler simply isn't attached. `__vnode` on `#__nuxt` is this suite's existing signal
-  // for "hydration has actually happened" (see tour.spec.ts, journey.spec.ts).
   await page
     .waitForFunction(() => !!(document.querySelector('#__nuxt') as unknown as { __vnode?: unknown })?.__vnode, null, {
       timeout: 30_000,

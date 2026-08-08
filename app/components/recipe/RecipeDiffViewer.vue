@@ -1,17 +1,4 @@
 <script setup lang="ts">
-/**
- * RecipeDiffViewer — GitHub-style diff viewer for GourMerge Requests
- *
- * Displays the differences between two recipe commit versions:
- * - Structured ingredient diff (table with add/remove/modify highlighting)
- * - Text diff for Markdown recipe steps (inline additions/deletions)
- *
- * Uses Nuxt UI v4 components and is fully i18n-ready.
- *
- * @example
- * <RecipeDiffViewer :diff="commitDiffData" />
- */
-
 import type { CommitDiff } from '~~/shared/types'
 
 const { t } = useI18n()

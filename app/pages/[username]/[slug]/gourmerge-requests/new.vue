@@ -63,7 +63,7 @@ async function submit() {
   }
 }
 
-useSeoMeta({ title: () => `${t('gourmergeRequest.new')} — GourMerge` })
+useSeoMeta({ title: () => `${t('gourmergeRequest.new')}: GourMerge` })
 </script>
 
 <template>

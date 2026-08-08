@@ -1,29 +1,13 @@
 <script setup lang="ts">
 /**
- * Email address with basic harvester protection.
+ * Registers as <CommonObfuscatedEmail> — Nuxt path-prefixes subdirectory components, so the
+ * bare name would render nothing.
  *
- * Registers as <CommonObfuscatedEmail> — Nuxt path-prefixes components in
- * subdirectories, so the bare name would silently render nothing.
- *
- * Three things had to hold at once, and most obfuscation tricks break one:
- *
- *   1. It must be readable WITHOUT JavaScript. § 5 DDG requires the address to
- *      be available, so a JS-only render would trade a spam problem for a legal
- *      one. Here the visible text is fully server-rendered.
- *   2. It must survive a screen reader. The popular `direction: rtl` reversal
- *      trick fails this outright — assistive tech reads the reversed string —
- *      which would also be a regression against the axe gate.
- *   3. The plain address must not appear as contiguous text, nor in an href,
- *      in the server-rendered HTML.
- *
- * So: a `display:none` decoy is spliced into the text. `textContent` — what a
- * naive scraper reads — yields a broken address, while the decoy is invisible,
- * `aria-hidden` from assistive tech, and excluded from copy-paste selections.
- * The mailto: href is attached only after mount, so it is absent from the SSR
- * payload; without JS the address is still legible, just not clickable.
- *
- * This defeats simple harvesters, not a determined one driving a headless
- * browser. The contact form remains the robust channel.
+ * Must stay readable without JS (§5 DDG) and survive a screen reader (no rtl-reversal trick),
+ * while the plain address never appears as contiguous text or in an href in the SSR'd HTML: a
+ * `display:none`, `aria-hidden` decoy poisons naive `textContent` scraping, and the mailto:
+ * href is attached only after mount. Defeats simple harvesters, not a headless-browser one —
+ * the contact form is the fallback for those.
  */
 const props = withDefaults(
   defineProps<{

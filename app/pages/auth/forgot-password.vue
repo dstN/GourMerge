@@ -8,7 +8,7 @@ const email = ref('')
 const pending = ref(false)
 const sent = ref(false)
 
-useSeoMeta({ title: () => `${t('auth.forgotPassword')} — GourMerge`, robots: 'noindex' })
+useSeoMeta({ title: () => `${t('auth.forgotPassword')}: GourMerge`, robots: 'noindex' })
 
 async function submit() {
   if (!email.value) return

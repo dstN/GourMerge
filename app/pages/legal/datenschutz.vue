@@ -5,7 +5,7 @@ const localePath = useLocalePath()
 definePageMeta({ layout: 'default' })
 
 useSeoMeta({
-  title: `${t('legal.datenschutzTitle')} — GourMerge`,
+  title: `${t('legal.datenschutzTitle')}: GourMerge`,
 })
 
 // Postal addresses are verbatim legal details, identical in every language, so

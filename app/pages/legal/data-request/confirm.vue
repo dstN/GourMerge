@@ -14,7 +14,7 @@ const route = useRoute()
 definePageMeta({ layout: 'default' })
 
 useSeoMeta({
-  title: () => `${t('legal.privacy.confirmTitle')} — GourMerge`,
+  title: () => `${t('legal.privacy.confirmTitle')}: GourMerge`,
   robots: 'noindex',
 })
 

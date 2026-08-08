@@ -1,7 +1,7 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'auth' })
 const { t } = useI18n()
-useSeoMeta({ title: () => `${t('auth.verifiedTitle')} — GourMerge`, robots: 'noindex' })
+useSeoMeta({ title: () => `${t('auth.verifiedTitle')}: GourMerge`, robots: 'noindex' })
 </script>
 
 <template>

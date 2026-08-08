@@ -1,9 +1,6 @@
 /**
- * GourMerge — Nuxt UI theme configuration
- *
- * This file is one of the two places (with `assets/css/main.css`) where a visual
- * decision may be made. See DESIGNBOOK.md — every default set here exists so
- * that no call site has to pass the prop.
+ * One of two places (with assets/css/main.css) where a visual decision may be made — see
+ * DESIGNBOOK.md. Every default set here exists so no call site has to pass the prop.
  *
  * `ui.<component>.defaultVariants.<prop>` wins over the component's own default
  * but loses to an explicitly-passed prop, so an override is always possible where
@@ -35,27 +32,10 @@ export default defineAppConfig({
       neutral: 'slate',
     },
 
-    /*
-     * ── DO NOT set `defaultVariants` for `button`, `badge` or `card` ──────
-     *
-     * `useComponentProps` resolves `appConfig.ui.<component>.defaultVariants`
-     * **before** a component's own declared prop defaults. 44 Nuxt UI components
-     * internally render a `UButton` or `UBadge` and rely on those declared
-     * defaults — Modal's close button, Pagination, Tabs, Toast, SelectMenu,
-     * Carousel arrows, ColorModeButton…
-     *
-     * So a `button: { defaultVariants: { color: 'primary', variant: 'solid' } }`
-     * here does not just set the app's default; it **overrides every one of those
-     * components' intended styling**. It shipped briefly and turned the header's
-     * theme toggle into a solid saffron block: `UColorModeButton` declares
-     * `color: 'neutral', variant: 'ghost'`, and the appConfig entry outranked it.
-     *
-     * Nuxt UI's own button/card defaults already match what we want
-     * (`primary`/`solid`/`md`, and `outline` for cards), so those entries bought
-     * nothing and cost correctness. Badges genuinely differ from our preference
-     * (theirs is `primary`/`solid`), but that preference belongs on our own call
-     * sites, not on every nested badge in the library — see DESIGNBOOK §7.
-     */
+    // DO NOT set defaultVariants on button/badge/card: appConfig defaults are resolved before a
+    // component's own declared defaults, and 44 Nuxt UI components render a nested UButton/UBadge
+    // internally (Modal close button, Toast, ColorModeButton, …) — this overrides their intended
+    // styling too. Badge preference belongs on our own call sites instead — see DESIGNBOOK §7.
 
     // ── Form controls — DESIGNBOOK §3 ────────────────────────────
     // Slot classes are safe to set globally: they are additive (tailwind-merge),
@@ -76,22 +56,13 @@ export default defineAppConfig({
       },
     },
 
-    // ── Skeletons — shimmer instead of pulse ─────────────────────
-    // Nuxt UI's default base is `animate-pulse rounded-md bg-elevated`. Only the animation is
-    // swapped; the shape and surface stay theirs, so a future Nuxt UI change to skeleton
-    // colour still reaches us.
-    //
-    // `shimmer shimmer-bg` is the tw-shimmer plugin (imported in main.css). Both classes are
-    // required and neither works alone: `shimmer-bg` only sets variables — surface preset
-    // instead of text preset — while `shimmer` carries the gradient and the animation.
-    //
-    // `bg-elevated` must survive `shimmer`'s `background` SHORTHAND, which resets
-    // background-color to transparent. It does, because Tailwind sorts background-color after
-    // background-image in its utilities layer, and the upstream README relies on the same
-    // thing (`shimmer shimmer-bg … bg-muted`). Verified on a rendered frame, not assumed.
-    //
-    // `gm-skeleton` carries only what is ours: the brand colour via `--shimmer-color`, plus
-    // the reduced-motion opt-out the plugin does not provide. See main.css.
+    // Shimmer instead of pulse. Only the animation is swapped — shape/surface stay Nuxt UI's
+    // default (`animate-pulse rounded-md bg-elevated`), so future upstream changes still reach us.
+    // `shimmer shimmer-bg` (tw-shimmer plugin, main.css) needs both classes: `shimmer-bg` sets the
+    // surface-preset variables, `shimmer` carries the gradient/animation. `bg-elevated` survives
+    // shimmer's `background` shorthand because Tailwind sorts background-color after
+    // background-image. `gm-skeleton` adds our brand colour (`--shimmer-color`) and the
+    // reduced-motion opt-out the plugin lacks.
     skeleton: {
       base: 'shimmer shimmer-bg gm-skeleton rounded-md bg-elevated',
     },

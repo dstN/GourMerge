@@ -1,26 +1,13 @@
 <script setup lang="ts">
-/**
- * Landing Page — Public-facing page for non-authenticated users
- *
- * Shows brand hero, feature highlights, and CTA to register.
- *
- * The redirect for signed-in visitors is the `guest` middleware, **not** a
- * `navigateTo()` in this setup body. That is what it used to be, and the result was a
- * visible flash of the marketing page: a bare `navigateTo` in setup is fire-and-forget
- * (its promise is never returned), so the component rendered first and only then
- * navigated. Middleware resolves before the page renders — server-side too — so there is
- * nothing to see.
- */
+// Signed-in visitors redirect via the `guest` middleware, not navigateTo() here — middleware
+// resolves before render, so there's no flash of this page first.
 definePageMeta({ middleware: 'guest' })
 
 const { t } = useI18n()
 
 useSeoMeta({
-  // Translated, like everything else user-facing. Both of these were hardcoded English, which
-  // meant a French visitor got a French page with an English <title> and an English description
-  // in Google's results — and `/fr` inherited it rather than the localised default from app.vue,
-  // because a page-level `useSeoMeta` overrides the site-wide one by design.
-  title: () => `GourMerge — ${t('app.slogan')}`,
+  // Page-level useSeoMeta overrides app.vue's site-wide default, so this must be translated too.
+  title: () => `GourMerge: ${t('app.slogan')}`,
   description: () => t('seo.description'),
 })
 
@@ -58,14 +45,8 @@ const steps = computed(() => [
 </script>
 
 <template>
-  <!--
-    The landing page is the ONE documented exception to the type scale
-    (DESIGNBOOK §1.4): it is marketing copy and keeps a display hero. Everything
-    else — button sizes, card treatment, colour tokens — follows the system.
-
-    Sections are full-bleed (they carry background tints), so each one wraps its
-    content in a `spacing="none"` shell and owns its own vertical rhythm.
-  -->
+  <!-- DESIGNBOOK §1.4 exception: display hero for marketing copy. Sections are full-bleed
+       (background tints), each wrapped in a spacing="none" shell. -->
   <div>
     <!-- ── Hero Section ──────────────────────────────────── -->
     <section class="relative overflow-hidden py-20 sm:py-32">

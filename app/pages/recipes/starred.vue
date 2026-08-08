@@ -6,7 +6,7 @@ definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 const { t } = useI18n()
 
 useSeoMeta({
-  title: `${t('nav.starred')} — GourMerge`,
+  title: `${t('nav.starred')}: GourMerge`,
 })
 
 const {

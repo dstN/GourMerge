@@ -49,7 +49,7 @@ function loadMore() {
   refresh()
 }
 
-useSeoMeta({ title: `${t('nav.explore')} — GourMerge` })
+useSeoMeta({ title: `${t('nav.explore')}: GourMerge` })
 </script>
 
 <template>

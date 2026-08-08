@@ -5,7 +5,7 @@ const localePath = useLocalePath()
 definePageMeta({ layout: 'default' })
 
 useSeoMeta({
-  title: `${t('legal.impressumTitle')} — GourMerge`,
+  title: `${t('legal.impressumTitle')}: GourMerge`,
 })
 
 // The postal address is a legally required verbatim detail (§ 5 DDG) and reads

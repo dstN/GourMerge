@@ -1,7 +1,5 @@
 /**
- * GourMerge — Three-Way Snapshot Merge Engine
- *
- * Implements a three-way merge for recipe snapshots (ingredients + steps).
+ * Three-way merge for recipe snapshots (ingredients + steps).
  *
  * Algorithm:
  *   base   = common ancestor snapshot (the fork point or last shared commit)

@@ -12,7 +12,7 @@ const password2 = ref('')
 const pending = ref(false)
 const done = ref(false)
 
-useSeoMeta({ title: () => `${t('auth.resetPassword')} — GourMerge`, robots: 'noindex' })
+useSeoMeta({ title: () => `${t('auth.resetPassword')}: GourMerge`, robots: 'noindex' })
 
 const mismatch = computed(() => password.value && password2.value && password.value !== password2.value)
 

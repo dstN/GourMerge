@@ -1,7 +1,4 @@
 <script setup lang="ts">
-/**
- * Login Page — Authenticate existing users
- */
 import { z } from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
 
@@ -12,7 +9,7 @@ const { apiError } = useApiError()
 const { fetch: fetchSession } = useUserSession()
 
 useSeoMeta({
-  title: `${t('auth.login')} — GourMerge`,
+  title: `${t('auth.login')}: GourMerge`,
 })
 
 const loading = ref(false)

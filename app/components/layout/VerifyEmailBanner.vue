@@ -1,22 +1,6 @@
 <script setup lang="ts">
-/**
- * "Your email is not verified yet" — shown across the authenticated shell.
- *
- * ## Why it exists
- *
- * With `REQUIRE_EMAIL_VERIFICATION=true`, an unverified account is silently barred
- * from publishing a public recipe, making a recipe public, and opening a GourMerge
- * request — each of which answers 403. Nothing in the app said so, and nothing
- * offered a way to fix it, so the only visible symptom was a form that refused to
- * submit. This banner is the missing half of that gate: it names the reason before
- * the user hits it, and carries the resend button.
- *
- * ## Why it is conditional on `emailVerificationRequired`
- *
- * Where the flag is off (dev, CI) an unverified address costs the user nothing, and a
- * permanent banner about a restriction that is not in force is just noise people learn
- * to ignore — including on the day it starts mattering.
- */
+// Names the 403 an unverified account hits on publish/GMR before they get there, with a
+// resend button; only shown when REQUIRE_EMAIL_VERIFICATION is actually enforced.
 const { t } = useI18n()
 const { user, session, fetch: refreshSession } = useUserSession()
 const { apiError } = useApiError()

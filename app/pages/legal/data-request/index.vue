@@ -14,7 +14,7 @@ const { t } = useI18n()
 definePageMeta({ layout: 'default' })
 
 useSeoMeta({
-  title: () => `${t('legal.privacy.title')} — GourMerge`,
+  title: () => `${t('legal.privacy.title')}: GourMerge`,
   robots: 'noindex',
 })
 

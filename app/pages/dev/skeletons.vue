@@ -16,7 +16,7 @@ if (!import.meta.dev) {
 definePageMeta({ layout: 'default' })
 
 // Deliberately plain English and not translated: dev-only, never user-facing.
-useSeoMeta({ title: 'Skeleton preview — dev', robots: 'noindex,nofollow' })
+useSeoMeta({ title: 'Skeleton preview: dev', robots: 'noindex,nofollow' })
 
 const slow = ref(false)
 const paused = ref(false)

@@ -1,9 +1,4 @@
-/**
- * GourMerge — Database Client (Drizzle ORM + mysql2)
- *
- * Initializes the Drizzle ORM client with a mysql2 connection pool.
- * This file is auto-imported in the server context via `server/utils/`.
- */
+// Auto-imported in the server context via server/utils/.
 
 import { drizzle } from 'drizzle-orm/mysql2'
 import type { MySql2Database } from 'drizzle-orm/mysql2'

@@ -1,9 +1,5 @@
-/**
- * GourMerge — Auth Session Type Augmentation
- *
- * Extends nuxt-auth-utils session types with our domain-specific user shape.
- * This allows `useUserSession().user` to be fully typed throughout the app.
- */
+// Extends nuxt-auth-utils session types with our user shape, so useUserSession().user is
+// fully typed throughout the app.
 declare module '#auth-utils' {
   interface User {
     id: number

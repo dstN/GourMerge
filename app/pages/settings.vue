@@ -72,7 +72,7 @@ async function save() {
   }
 }
 
-useSeoMeta({ title: `${t('settings.title')} — GourMerge` })
+useSeoMeta({ title: `${t('settings.title')}: GourMerge` })
 </script>
 
 <template>
