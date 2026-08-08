@@ -9,6 +9,7 @@ definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 
 const { t } = useI18n()
 const { apiError } = useApiError()
+const route = useRoute()
 
 useSeoMeta({
   title: `${t('nav.newRecipe')} — GourMerge`,
@@ -57,7 +58,14 @@ const state = reactive<Partial<Schema>>({
   prepTimeMinutes: undefined,
   cookTimeMinutes: undefined,
   difficulty: 'medium',
-  visibility: 'public',
+  // Arriving via `?tour=1` (the onboarding tour's "new-recipe-btn" step) defaults to
+  // private rather than the usual public: publishing publicly requires a verified email
+  // (`requireVerifiedUser` in `POST /api/recipes`), and a visitor taking the tour right
+  // after registering has not clicked that link yet — the tour would otherwise 403 on
+  // exactly the step it invited them to try. Private also just fits a recipe the tour is
+  // going to delete again once it ends (see `useProductTour.cleanupDemoRecipe`) better
+  // than public does. Only the initial value; the select below still lets them pick public.
+  visibility: route.query.tour === '1' ? 'private' : 'public',
 })
 
 const difficultyOptions = computed(() => [

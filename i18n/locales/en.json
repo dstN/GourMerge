@@ -444,7 +444,7 @@
       },
       "newRecipe": {
         "title": "Create a Recipe",
-        "desc": "Start a new recipe. Add ingredients, write step-by-step instructions, and save your first version."
+        "desc": "Create your first recipe now — the tour continues from there and deletes it again once it ends."
       },
       "fork": {
         "title": "Remix It",
@@ -460,7 +460,7 @@
       },
       "gourmergeRequest": {
         "title": "Propose Changes",
-        "desc": "Open a GourMerge Request to propose your remix's changes back to the original recipe author."
+        "desc": "This is how you propose changes to a recipe — open a GourMerge Request and it can be reviewed and merged."
       }
     },
     "endedEarly": "The tour ends here — there was no sample recipe available to show the remaining steps."

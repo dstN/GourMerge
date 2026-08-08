@@ -2,16 +2,17 @@
  * Product tour driver built on Nuxt UI primitives.
  *
  * A tour step anchors to a `data-tour="<id>"` element that lives on a specific
- * route. The driver resolves a target recipe (preferring a public recipe the
- * viewer can fork) so the recipe-feature steps have somewhere to point. The
- * overlay handles navigation, polling for the anchor, viewport clamping and
+ * route. '@recipe' resolves to another user's public recipe (so the Fork button has
+ * somewhere to point); '@demo' resolves to the recipe the visitor creates through the
+ * real `/recipes/new` form during the tour itself — see `TourOverlay`'s route watcher.
+ * The overlay handles navigation, polling for the anchor, viewport clamping and
  * auto-skipping steps whose anchor never appears — so the tour never dead-ends.
  */
 
 export interface TourStep {
   /** data-tour anchor id */
   id: string
-  /** Route the anchor lives on. '@recipe' resolves to the target recipe URL. */
+  /** Route the anchor lives on. '@recipe' / '@demo' resolve dynamically — see above. */
   route: string
   titleKey: string
   descKey: string
@@ -34,31 +35,35 @@ const DEFAULT_STEPS: TourStep[] = [
     placement: 'bottom',
   },
   {
-    id: 'fork-button',
-    route: '@recipe',
-    titleKey: 'tour.step.fork.title',
-    descKey: 'tour.step.fork.desc',
-    placement: 'bottom',
-  },
-  {
     id: 'star-button',
-    route: '@recipe',
+    route: '@demo',
     titleKey: 'tour.step.star.title',
     descKey: 'tour.step.star.desc',
     placement: 'bottom',
   },
   {
     id: 'history-link',
-    route: '@recipe',
+    route: '@demo',
     titleKey: 'tour.step.history.title',
     descKey: 'tour.step.history.desc',
     placement: 'bottom',
   },
   {
     id: 'gourmerge-requests-link',
-    route: '@recipe',
+    route: '@demo',
     titleKey: 'tour.step.gourmergeRequest.title',
     descKey: 'tour.step.gourmergeRequest.desc',
+    placement: 'bottom',
+  },
+  // Last, deliberately: forking your own brand-new recipe makes no sense, so this is the
+  // one step that still needs SOMEONE ELSE's public recipe. Putting it after the
+  // create-your-own-recipe steps means the tour only ever jumps to a stranger's recipe
+  // once, right at the end, instead of ping-ponging between "yours" and "theirs".
+  {
+    id: 'fork-button',
+    route: '@recipe',
+    titleKey: 'tour.step.fork.title',
+    descKey: 'tour.step.fork.desc',
     placement: 'bottom',
   },
 ]
@@ -66,7 +71,8 @@ const DEFAULT_STEPS: TourStep[] = [
 // Module-level reactive state shared across all callers.
 const active = ref(false)
 const currentIndex = ref(0)
-const targetRecipeUrl = ref<string | null>(null)
+const otherRecipeUrl = ref<string | null>(null)
+const demoRecipe = ref<{ id: number; url: string } | null>(null)
 
 export function useProductTour(steps: TourStep[] = DEFAULT_STEPS) {
   const { dismissTour } = useOnboarding()
@@ -76,36 +82,42 @@ export function useProductTour(steps: TourStep[] = DEFAULT_STEPS) {
   const isFirst = computed(() => currentIndex.value === 0)
   const isLast = computed(() => currentIndex.value === steps.length - 1)
   const progress = computed(() => ({ current: currentIndex.value + 1, total: steps.length }))
+  const demoRecipeUrl = computed(() => demoRecipe.value?.url ?? null)
 
-  /** Resolve the route a step navigates to ('@recipe' → the target recipe). */
+  /** Resolve the route a step navigates to ('@recipe' / '@demo' → the matching target). */
   function resolveRoute(step: TourStep): string | null {
-    return step.route === '@recipe' ? targetRecipeUrl.value : step.route
+    if (step.route === '@recipe') return otherRecipeUrl.value
+    if (step.route === '@demo') return demoRecipeUrl.value
+    return step.route
   }
 
-  /** Find a recipe to demo the fork/star/history/GMR steps on. */
-  async function resolveTargetRecipe(): Promise<string | null> {
+  /** Find a PUBLIC recipe owned by someone else, to demo the Fork button on. */
+  async function resolveOtherRecipe(): Promise<string | null> {
     try {
       const ex = await $fetch<{ recipes: Array<{ ownerUsername: string; slug: string }> }>('/api/recipes/explore', {
         query: { limit: 12 },
       })
-      // Prefer a public recipe the viewer does NOT own (so the Fork button shows).
-      const other = ex.recipes.find((r) => r.ownerUsername !== user.value?.username) ?? ex.recipes[0]
-      if (other) return `/${other.ownerUsername}/${other.slug}`
+      const other = ex.recipes.find((r) => r.ownerUsername !== user.value?.username)
+      return other ? `/${other.ownerUsername}/${other.slug}` : null
     } catch {
-      // ignore
+      return null
     }
-    try {
-      const own = await $fetch<Array<{ owner: { username: string }; slug: string }>>('/api/recipes')
-      if (own?.length && own[0]) return `/${own[0].owner.username}/${own[0].slug}`
-    } catch {
-      // ignore
-    }
-    return null
+  }
+
+  /**
+   * Records the recipe the visitor just created through the real `/recipes/new` form
+   * while the `new-recipe-btn` step was active — see `TourOverlay`'s route watcher, which
+   * is what calls this. Deliberately not a background API call that fabricates one:
+   * onboarding is supposed to teach recipe creation, not fake it.
+   */
+  function setDemoRecipe(recipe: { id: number; url: string }) {
+    demoRecipe.value = recipe
   }
 
   async function start() {
     currentIndex.value = 0
-    targetRecipeUrl.value = await resolveTargetRecipe()
+    demoRecipe.value = null
+    otherRecipeUrl.value = await resolveOtherRecipe()
     active.value = true
   }
 
@@ -118,13 +130,28 @@ export function useProductTour(steps: TourStep[] = DEFAULT_STEPS) {
     if (!isFirst.value) currentIndex.value--
   }
 
+  /**
+   * The demo recipe only exists to carry the tour, so every exit path deletes it —
+   * best-effort, since this is cleanup rather than something the visitor is waiting on.
+   * A tour abandoned outright (closed tab, no "Fertig"/"Überspringen") leaves it behind,
+   * same as any other draft a visitor walks away from; nothing here polls for that.
+   */
+  function cleanupDemoRecipe() {
+    const recipe = demoRecipe.value
+    if (!recipe) return
+    demoRecipe.value = null
+    $fetch(`/api/recipes/${recipe.id}`, { method: 'DELETE' }).catch(() => {})
+  }
+
   function skip() {
     active.value = false
+    cleanupDemoRecipe()
     dismissTour()
   }
 
   function finish() {
     active.value = false
+    cleanupDemoRecipe()
     dismissTour()
   }
 
@@ -135,8 +162,10 @@ export function useProductTour(steps: TourStep[] = DEFAULT_STEPS) {
     isFirst,
     isLast,
     progress,
-    targetRecipeUrl,
+    otherRecipeUrl,
+    demoRecipeUrl,
     resolveRoute,
+    setDemoRecipe,
     start,
     next,
     prev,

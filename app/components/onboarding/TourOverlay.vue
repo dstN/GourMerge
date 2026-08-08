@@ -7,12 +7,40 @@
  */
 const tour = useProductTour()
 const route = useRoute()
+const { user } = useUserSession()
 const { t } = useI18n()
 const toast = useAppToast()
 
 const panelRef = ref<HTMLElement | null>(null)
 const panelStyle = ref<Record<string, string>>({ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' })
 const ready = ref(false)
+
+/**
+ * The `new-recipe-btn` step doesn't drive navigation itself — its anchor is the real
+ * "+ Neues Rezept" button, a plain link to `/recipes/new`. Once the visitor follows it, the
+ * overlay has to get out of the way: the fixed backdrop below captures every click on the
+ * page (that's what makes it dismiss the tour), which would otherwise sit on top of the
+ * create-recipe form and make it unusable. Suspended for exactly the two routes that step
+ * can lead to — not simply "not on /dashboard" — so an ordinary step-to-step navigation
+ * elsewhere never loses its dimmed backdrop by accident.
+ */
+const suspended = computed(() => {
+  if (tour.currentStep.value?.id !== 'new-recipe-btn') return false
+  if (route.path === '/recipes/new') return true
+  const editMatch = route.path.match(/^\/([^/]+)\/[^/]+\/edit$/)
+  return !!editMatch && editMatch[1] === user.value?.username
+})
+
+/**
+ * `new-recipe-btn` is the one step where the visitor needs to click something real on the
+ * page underneath, not just read the panel and press "Weiter" — and `.tour-highlight`'s
+ * `z-index: 200` only wins within its own stacking context, which on this page is lower
+ * than the backdrop's: it never actually rises above `z-[199]` fixed over the whole
+ * viewport. Rather than fight z-index across contexts, the backdrop simply stops capturing
+ * clicks for this one step, so the highlighted "+ Neues Rezept" button underneath is
+ * reachable. Click-to-dismiss is still available via the panel's own "Tour überspringen".
+ */
+const backdropInteractive = computed(() => tour.currentStep.value?.id !== 'new-recipe-btn')
 
 let runToken = 0
 
@@ -96,20 +124,19 @@ async function showStep() {
   const target = tour.resolveRoute(step)
 
   /**
-   * A `@recipe` step with no resolved target is not "the anchor hasn't loaded yet" — it
-   * is known, right now, to be unreachable: `useProductTour.resolveTargetRecipe()` already
-   * tried and found no recipe to demo fork/star/history/GMR on. Four of the six steps are
-   * `@recipe`, so on an install with no public recipes yet (or a fresh account before the
-   * DB has any), the ORIGINAL code still called `waitForEl` on the CURRENT page for an
-   * anchor from a page it never navigated to, waited out the full 2500ms timeout, then
-   * repeated that for every remaining `@recipe` step — up to four rounds, ten seconds, with
-   * the panel hidden (`ready` stays false) and only the dimmed backdrop visible the whole
-   * time. That reads as the tour being stuck, not as it working; it was reported exactly
-   * that way. Recognising the impossible case here skips straight to the next step (or
-   * finishes, with the toast below) instead of manufacturing a wait for an outcome that is
-   * already decided.
+   * A `@recipe`/`@demo` step with no resolved target is not "the anchor hasn't loaded
+   * yet" — it is known, right now, to be unreachable: `@recipe` already tried
+   * `resolveOtherRecipe()` and found nobody else's public recipe to fork, and `@demo` means
+   * the visitor skipped past `new-recipe-btn` without creating one. The ORIGINAL code
+   * called `waitForEl` on the CURRENT page for an anchor from a page it never navigated to,
+   * waited out the full 2500ms timeout, then repeated that for every remaining such step —
+   * with the panel hidden (`ready` stays false) and only the dimmed backdrop visible the
+   * whole time. That reads as the tour being stuck, not as it working; it was reported
+   * exactly that way. Recognising the impossible case here skips straight to the next step
+   * (or finishes, with the toast below) instead of manufacturing a wait for an outcome that
+   * is already decided.
    */
-  if (step.route === '@recipe' && !target) {
+  if ((step.route === '@recipe' || step.route === '@demo') && !target) {
     if (myRun !== runToken) return
     if (tour.isLast.value) finishEarly()
     else tour.next()
@@ -152,6 +179,32 @@ watch(
   { immediate: true }
 )
 
+/**
+ * Watches for the arrival that only a successful save on `/recipes/new` produces
+ * (`recipes/new.vue` redirects to `/<owner>/<slug>/edit`), and hands that recipe to the
+ * tour as the target for the remaining steps. Scoped to the visitor's OWN username so it
+ * can't fire on an unrelated edit page, and to `!tour.demoRecipeUrl.value` so it only ever
+ * fires once per tour run.
+ */
+watch(
+  () => route.path,
+  async (path) => {
+    if (!tour.active.value || tour.currentStep.value?.id !== 'new-recipe-btn') return
+    if (tour.demoRecipeUrl.value) return
+    const match = path.match(/^\/([^/]+)\/([^/]+)\/edit$/)
+    if (!match) return
+    const [, username, slug] = match
+    if (username !== user.value?.username) return
+    try {
+      const recipe = await $fetch<{ id: number }>(`/api/recipes/by-slug/${username}/${slug}`)
+      tour.setDemoRecipe({ id: recipe.id, url: `/${username}/${slug}` })
+      tour.next()
+    } catch {
+      // Lookup failed — leave the step alone; the visitor can still press "Weiter".
+    }
+  }
+)
+
 function onResize() {
   const step = tour.currentStep.value
   if (!tour.active.value || !step) return
@@ -169,9 +222,14 @@ onBeforeUnmount(() => {
 <template>
   <Teleport to="body">
     <Transition name="tour">
-      <div v-if="tour.active.value && tour.currentStep.value">
-        <!-- Dimmed backdrop (click to dismiss) -->
-        <div class="fixed inset-0 z-[199] bg-black/40" aria-hidden="true" @click="tour.skip" />
+      <div v-if="tour.active.value && tour.currentStep.value && !suspended">
+        <!-- Dimmed backdrop (click to dismiss, except while new-recipe-btn needs a real click through to the page) -->
+        <div
+          class="fixed inset-0 z-[199] bg-black/40"
+          :class="backdropInteractive ? '' : 'pointer-events-none'"
+          aria-hidden="true"
+          @click="backdropInteractive && tour.skip()"
+        />
 
         <!-- Floating step panel -->
         <div

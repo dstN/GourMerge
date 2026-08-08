@@ -31,23 +31,35 @@ rewrites a _static literal_ `to` — the same class of bug already fixed once in
 `localePath()`; the dropdown didn't need it, once reading `LinkProps` showed Nuxt UI already
 renders those items through `ULink`, which auto-localises on its own.
 
-### Fixed — the onboarding tour looked stuck on step 2, forever
+### Fixed — the onboarding tour looked stuck on step 2, forever, then just gave up instead
 
-It wasn't stuck; it was silent. Four of the six tour steps anchor on a demo recipe, resolved
-once at tour start. When no recipe is available to demo on — no public recipe from another
-user, and none of the viewer's own — the original code still visited each of those four steps
-in turn, waited out a full 2.5-second anchor timeout on a page that could never have the
-anchor, and only then moved to the next one. Up to four rounds, up to ten seconds, with the
-step panel hidden and nothing but a dimmed backdrop on screen — indistinguishable from
-broken by watching it. It then ended the tour with zero feedback, which on a phone reads as
-the tour having crashed rather than finished.
+It wasn't stuck; it was silent. Four of the six tour steps anchored on a demo recipe,
+resolved once at tour start. When no recipe was available to demo on — no public recipe
+from another user, and none of the viewer's own — the original code still visited each of
+those four steps in turn, waited out a full 2.5-second anchor timeout on a page that could
+never have the anchor, and only then moved to the next one. Up to four rounds, up to ten
+seconds, with the step panel hidden and nothing but a dimmed backdrop on screen —
+indistinguishable from broken by watching it. It then ended the tour with zero feedback,
+which on a phone reads as the tour having crashed rather than finished.
 
-The overlay now recognises an unreachable step immediately — the outcome is already known,
-so no wait is manufactured for it — and an early end now shows a toast, since the panel has
-already been invisible for a few seconds by the time it fires. Reproduced and pinned with
-Playwright by forcing the "no recipe available" state directly: "next" now reaches the
-end-of-tour toast in a few hundred milliseconds instead of after up to ten seconds, and a
-second test confirms the happy path (a real recipe available) is unchanged.
+The first fix only treated the symptom: recognise the unreachable step immediately instead
+of waiting it out, and show a toast on early end instead of vanishing silently. Faster, but
+still a tour that gives up and shows nobody the fork/star/history/GourMerge-Request steps
+whenever the install (or just this viewer's account) has no recipe lying around to demo on
+— which, for a brand-new signup mid-onboarding, is exactly the common case, not an edge one.
+
+The actual fix: the `new-recipe-btn` step now sends the visitor through the **real**
+`/recipes/new` form instead of searching for something pre-existing, and star/history/GMR
+demo on the recipe just created rather than a recipe that may not exist. Onboarding now
+teaches recipe creation itself instead of skipping past it, and always has something to show
+the remaining steps on regardless of what else is in the database. The demo recipe defaults
+to private (a fresh signup has not verified their email yet, and publishing publicly is
+gated on that) and is deleted again the moment the tour ends, one way or another — finished
+or skipped — so onboarding doesn't leave demo debris in anyone's account. Only Fork still
+needs someone else's public recipe (forking your own brand-new one makes no sense) and is
+now the last step for exactly that reason; it still degrades gracefully when none exists.
+Three Playwright tests cover it: no recipe anywhere, someone else's public recipe available,
+and the full create-through-the-real-form-then-delete path.
 
 ### Added — change your account's email address
 

@@ -444,7 +444,7 @@
       },
       "newRecipe": {
         "title": "Créer une recette",
-        "desc": "Commencez une nouvelle recette. Ajoutez des ingrédients, écrivez des instructions et sauvegardez votre première version."
+        "desc": "Créez votre première recette maintenant — la visite continue ensuite et la supprime à la fin."
       },
       "fork": {
         "title": "Remixer",
@@ -460,7 +460,7 @@
       },
       "gourmergeRequest": {
         "title": "Proposer des modifications",
-        "desc": "Ouvrez un GourMerge Request pour proposer les modifications de votre remix à l'auteur original."
+        "desc": "Voici comment proposer des modifications à une recette — ouvrez un GourMerge Request, il peut être examiné puis fusionné."
       }
     },
     "endedEarly": "La visite se termine ici — aucune recette d’exemple n’était disponible pour les étapes restantes."

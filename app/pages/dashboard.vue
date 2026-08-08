@@ -10,6 +10,7 @@ definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 
 const { t } = useI18n()
 const { user } = useUserSession()
+const tour = useProductTour()
 
 useSeoMeta({
   title: `${t('nav.dashboard')} — GourMerge`,
@@ -36,7 +37,7 @@ const {
           :label="t('nav.newRecipe')"
           icon="i-lucide-plus"
           size="lg"
-          to="/recipes/new"
+          :to="tour.active.value ? '/recipes/new?tour=1' : '/recipes/new'"
           data-tour="new-recipe-btn"
         />
       </template>
