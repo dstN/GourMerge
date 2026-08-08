@@ -50,7 +50,7 @@ const { t } = useI18n()
           @click="emit('prev')"
         />
         <UButton
-          :label="progress.current === progress.total ? t('tour.finish') : t('tour.next')"
+          :label="progress.current === progress.total ? t('tour.finish') : t(step.nextLabelKey ?? 'tour.next')"
           :icon="progress.current === progress.total ? 'i-lucide-check' : 'i-lucide-arrow-right'"
           trailing
           size="xs"

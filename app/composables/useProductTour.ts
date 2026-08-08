@@ -17,6 +17,13 @@ export interface TourStep {
   titleKey: string
   descKey: string
   placement?: 'top' | 'bottom' | 'left' | 'right'
+  /**
+   * Overrides the panel's "Weiter" label AND its action — see `TourOverlay.handleNext()`.
+   * Only `new-recipe-btn` sets this: without it, "Weiter" is indistinguishable from every
+   * other step's "just move on", which is exactly what visitors do here out of habit, and
+   * doing so must not silently skip creating the demo recipe the rest of the tour depends on.
+   */
+  nextLabelKey?: string
 }
 
 const DEFAULT_STEPS: TourStep[] = [
@@ -33,6 +40,7 @@ const DEFAULT_STEPS: TourStep[] = [
     titleKey: 'tour.step.newRecipe.title',
     descKey: 'tour.step.newRecipe.desc',
     placement: 'bottom',
+    nextLabelKey: 'recipe.createButton',
   },
   {
     id: 'star-button',

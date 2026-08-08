@@ -205,6 +205,24 @@ watch(
   }
 )
 
+/**
+ * On every other step, "Weiter" just moves on — nothing depends on it. On `new-recipe-btn`
+ * it must NOT be a synonym for "skip creating a recipe": visitors click "Weiter" out of
+ * habit from the five other steps, and `tour.next()` would silently walk them past
+ * star/history/GMR (`@demo`, no target yet) straight to whatever fork resolves to — which,
+ * on an install with nobody else's public recipe yet, is the exact "no recipe available"
+ * ending this whole rework exists to avoid. So this button leads to the same place the
+ * highlighted "+ Neues Rezept" link does; `TourOverlay`'s route watcher picks the tour back
+ * up once the visitor actually saves one.
+ */
+async function handleNext() {
+  if (tour.currentStep.value?.id === 'new-recipe-btn') {
+    await navigateTo('/recipes/new?tour=1')
+    return
+  }
+  tour.next()
+}
+
 function onResize() {
   const step = tour.currentStep.value
   if (!tour.active.value || !step) return
@@ -241,7 +259,7 @@ onBeforeUnmount(() => {
           <OnboardingTourStep
             :step="tour.currentStep.value"
             :progress="tour.progress.value"
-            @next="tour.next"
+            @next="handleNext"
             @prev="tour.prev"
             @skip="tour.skip"
           />

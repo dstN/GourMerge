@@ -31,7 +31,7 @@ rewrites a _static literal_ `to` — the same class of bug already fixed once in
 `localePath()`; the dropdown didn't need it, once reading `LinkProps` showed Nuxt UI already
 renders those items through `ULink`, which auto-localises on its own.
 
-### Fixed — the onboarding tour looked stuck on step 2, forever, then just gave up instead
+### Fixed — the onboarding tour looked stuck on step 2, forever, then just gave up, then still did nothing
 
 It wasn't stuck; it was silent. Four of the six tour steps anchored on a demo recipe,
 resolved once at tour start. When no recipe was available to demo on — no public recipe
@@ -48,18 +48,28 @@ still a tour that gives up and shows nobody the fork/star/history/GourMerge-Requ
 whenever the install (or just this viewer's account) has no recipe lying around to demo on
 — which, for a brand-new signup mid-onboarding, is exactly the common case, not an edge one.
 
-The actual fix: the `new-recipe-btn` step now sends the visitor through the **real**
-`/recipes/new` form instead of searching for something pre-existing, and star/history/GMR
-demo on the recipe just created rather than a recipe that may not exist. Onboarding now
-teaches recipe creation itself instead of skipping past it, and always has something to show
-the remaining steps on regardless of what else is in the database. The demo recipe defaults
-to private (a fresh signup has not verified their email yet, and publishing publicly is
-gated on that) and is deleted again the moment the tour ends, one way or another — finished
-or skipped — so onboarding doesn't leave demo debris in anyone's account. Only Fork still
-needs someone else's public recipe (forking your own brand-new one makes no sense) and is
-now the last step for exactly that reason; it still degrades gracefully when none exists.
-Three Playwright tests cover it: no recipe anywhere, someone else's public recipe available,
-and the full create-through-the-real-form-then-delete path.
+The second fix sent the `new-recipe-btn` step through the **real** `/recipes/new` form
+instead of searching for something pre-existing, with star/history/GMR demoing on the
+recipe just created rather than one that may not exist — reported back immediately as
+having changed literally nothing. It hadn't, for the simplest possible reason: the panel's
+own "Weiter" button — the one every visitor had just clicked five times in a row out of
+habit — still just called `tour.next()`. It never created anything; it advanced the step
+index, found star/history/GMR equally target-less, and silently cascaded straight through
+to the exact same "no recipe available" toast this whole rework exists to avoid. A visitor
+who clicks "Weiter" is not an edge case; it is the interaction the previous five steps
+trained them to make.
+
+The actual fix: `new-recipe-btn` overrides what its OWN "Weiter" button does
+(`TourOverlay.handleNext()`), so it leads to the real create-recipe form exactly like the
+highlighted link does — there is no button on this step that skips creating a recipe short
+of abandoning the tour outright ("Tour überspringen"). The demo recipe defaults to private
+(a fresh signup has not verified their email yet, and publishing publicly is gated on that)
+and is deleted again the moment the tour ends, finished or skipped, so onboarding doesn't
+leave demo debris in anyone's account. Only Fork still needs someone else's public recipe
+(forking your own brand-new one makes no sense) and is now the last step for exactly that
+reason; it still degrades gracefully when none exists. Three Playwright tests cover it:
+"Weiter" leading to the real form rather than past it, the full
+create-through-the-real-form-then-delete path, and fork resolving once a recipe exists.
 
 ### Added — change your account's email address
 
