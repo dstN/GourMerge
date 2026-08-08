@@ -463,7 +463,8 @@
         "desc": "Voici comment proposer des modifications à une recette — ouvrez un GourMerge Request, il peut être examiné puis fusionné."
       }
     },
-    "endedEarly": "La visite se termine ici — aucune recette d’exemple n’était disponible pour les étapes restantes."
+    "endedEarly": "La visite se termine ici — aucune recette d’exemple n’était disponible pour les étapes restantes.",
+    "finishedNoFork": "Visite terminée ! Remixer nécessite la recette publique de quelqu’un d’autre — dès qu’il y en aura une, vous pourrez l’essayer ici."
   },
   "help": {
     "menu": "Aide",

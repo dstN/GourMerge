@@ -463,7 +463,8 @@
         "desc": "So schlägst du Änderungen an einem Rezept vor — dein GourMerge Request wird geprüft und kann übernommen werden."
       }
     },
-    "endedEarly": "Die Tour endet hier — es gab kein Beispielrezept, um die restlichen Schritte zu zeigen."
+    "endedEarly": "Die Tour endet hier — es gab kein Beispielrezept, um die restlichen Schritte zu zeigen.",
+    "finishedNoFork": "Tour abgeschlossen! Zum Forken brauchst du ein öffentliches Rezept einer anderen Person — sobald es welche gibt, kannst du es hier ausprobieren."
   },
   "help": {
     "menu": "Hilfe",

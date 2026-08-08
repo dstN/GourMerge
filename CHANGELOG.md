@@ -31,7 +31,7 @@ rewrites a _static literal_ `to` — the same class of bug already fixed once in
 `localePath()`; the dropdown didn't need it, once reading `LinkProps` showed Nuxt UI already
 renders those items through `ULink`, which auto-localises on its own.
 
-### Fixed — the onboarding tour looked stuck on step 2, forever, then just gave up, then still did nothing
+### Fixed — the onboarding tour looked stuck on step 2, forever, then just gave up, then still did nothing, then still looked like nothing changed
 
 It wasn't stuck; it was silent. Four of the six tour steps anchored on a demo recipe,
 resolved once at tour start. When no recipe was available to demo on — no public recipe
@@ -70,6 +70,18 @@ leave demo debris in anyone's account. Only Fork still needs someone else's publ
 reason; it still degrades gracefully when none exists. Three Playwright tests cover it:
 "Weiter" leading to the real form rather than past it, the full
 create-through-the-real-form-then-delete path, and fork resolving once a recipe exists.
+
+A fourth report landed anyway: still the same toast, still looked unchanged. It was —
+production had (and at the time of writing, still has) zero other public recipes, because
+publishing itself was broken until the fix earlier in this changelog. `fork-button` is
+unreachable for literally every visitor right now regardless of whether create/star/history/
+GMR all worked, and it showed the identical "no recipe available" wording either way — a
+visitor who had just watched the first five steps succeed had no way to tell that apart from
+the original all-or-nothing failure. `finishEarly()` now checks which step it's ending on:
+`fork-button` specifically — which, given the step order above, is the only one `isLast`
+can ever be true for anymore — gets a distinct, positive "tour complete, forking needs
+someone else's public recipe" toast instead of the generic early-end one. The generic wording
+is kept for the (now-defensive-only) case of a visitor abandoning `new-recipe-btn` mid-form.
 
 ### Added — change your account's email address
 

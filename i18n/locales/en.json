@@ -463,7 +463,8 @@
         "desc": "This is how you propose changes to a recipe — open a GourMerge Request and it can be reviewed and merged."
       }
     },
-    "endedEarly": "The tour ends here — there was no sample recipe available to show the remaining steps."
+    "endedEarly": "The tour ends here — there was no sample recipe available to show the remaining steps.",
+    "finishedNoFork": "Tour complete! Forking needs a public recipe from someone else — once one exists, you can try it here."
   },
   "help": {
     "menu": "Help",

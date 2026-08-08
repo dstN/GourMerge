@@ -22,6 +22,16 @@ import { registerUser, createRecipe, uniqueUser } from './support/api'
  * up once the visitor actually saves the form. Only `fork-button` (`route: '@recipe'`, last)
  * still needs someone ELSE's public recipe — forking your own brand-new recipe makes no
  * sense — and still degrades gracefully when none exists.
+ *
+ * That degradation is where the SAME "nothing changed" report landed a fourth time: with
+ * zero other public recipes on the install (true of production at the time — recipe
+ * publishing had only just been fixed), `fork-button` is unreachable for literally every
+ * visitor, every time, regardless of whether create/star/history/GMR all worked. It showed
+ * the identical `tour.endedEarly` toast either way, so a visitor who had just watched the
+ * first five steps work could not tell that apart from the original all-or-nothing failure.
+ * `finishEarly()` now checks WHICH step it's finishing early on: `fork-button` specifically
+ * gets a distinct, positive `tour.finishedNoFork` toast, since reaching it unreachable means
+ * everything before it already succeeded.
  */
 
 /** Dismisses the welcome modal and walks through `explore-search` to land on `new-recipe-btn`. */
@@ -96,11 +106,14 @@ test.describe('onboarding tour', () => {
     await page.getByRole('button', { name: /weiter|next/i }).click()
     await expect(page.locator('[data-tour="gourmerge-requests-link"].tour-highlight')).toBeVisible({ timeout: 8000 })
 
-    // fork-button is last and, with `explore` mocked empty, unreachable — the same early-end
-    // toast the ORIGINAL bug report described, but now only reachable via a real recipe
-    // having carried the three steps before it, not as a stand-in for the whole tour.
+    // fork-button is last and, with `explore` mocked empty, unreachable — but everything
+    // before it just succeeded, so this ends on the positive "tour complete, fork just
+    // needs someone else's recipe" toast, not the generic early-end one. Distinguishing the
+    // two is the point: showing identical wording for "nothing worked" and "everything
+    // worked except the one step that structurally can't demo on your own recipe" is what
+    // made this fix read as having changed nothing when it was first reported back.
     await page.getByRole('button', { name: /weiter|next/i }).click()
-    await expect(page.getByText(/tour endet hier|tour ends here/i).first()).toBeVisible({ timeout: 3000 })
+    await expect(page.getByText(/tour abgeschlossen|tour complete/i).first()).toBeVisible({ timeout: 3000 })
 
     // The recipe carried the last three steps and is gone now — deleted, not just hidden.
     await expect

@@ -463,7 +463,8 @@
         "desc": "Così proponi modifiche a una ricetta — apri un GourMerge Request, che può essere revisionato e integrato."
       }
     },
-    "endedEarly": "Il tour termina qui — non era disponibile nessuna ricetta di esempio per mostrare i passaggi restanti."
+    "endedEarly": "Il tour termina qui — non era disponibile nessuna ricetta di esempio per mostrare i passaggi restanti.",
+    "finishedNoFork": "Tour completato! Per il remix serve la ricetta pubblica di qualcun altro — appena ce ne sarà una, potrai provarlo qui."
   },
   "help": {
     "menu": "Aiuto",

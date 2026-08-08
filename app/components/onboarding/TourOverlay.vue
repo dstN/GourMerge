@@ -5,6 +5,8 @@
  * highlights it and positions a viewport-clamped panel. Steps whose anchor never
  * appears are auto-skipped so the tour can't dead-end.
  */
+import type { TourStep } from '~/composables/useProductTour'
+
 const tour = useProductTour()
 const route = useRoute()
 const { user } = useUserSession()
@@ -98,18 +100,31 @@ function positionPanel(anchor: HTMLElement, placement?: 'top' | 'bottom' | 'left
 }
 
 /**
- * Ends the tour via an auto-skip (an anchor, or a whole `@recipe` step, that was never
- * reachable) rather than via the visible "Fertig" button on the last panel. Both paths call
- * `tour.finish()`, which has no feedback of its own — fine when the user just clicked
- * "Fertig" on a panel they were looking at, wrong here: the panel had already been hidden
- * for up to several seconds (each skipped step still costs one `waitForEl` round on a real
- * anchor), so the tour would otherwise vanish with no indication of why it stopped, on a
- * page the user did not choose. The toast is the difference between "the tour ended because
- * there was nothing left to show you" and "the tour broke".
+ * Ends the tour via an auto-skip (an anchor, or a whole `@recipe`/`@demo` step, that was
+ * never reachable) rather than via the visible "Fertig" button on the last panel. Both paths
+ * call `tour.finish()`, which has no feedback of its own — fine when the user just clicked
+ * "Fertig" on a panel they were looking at, wrong here: the panel had already been hidden for
+ * up to several seconds (each skipped step still costs one `waitForEl` round on a real
+ * anchor), so the tour would otherwise vanish with no indication of why it stopped, on a page
+ * the user did not choose.
+ *
+ * `fork-button` is now always the LAST step (see `useProductTour`'s step order), so reaching
+ * this function unreachable-for-`fork-button` specifically means everything BEFORE it —
+ * creating a recipe, star, history, GourMerge Request — already succeeded, and only Fork
+ * (which needs someone ELSE's public recipe) has nothing to demo. That is not the same event
+ * as the tour failing outright, and showing the identical "nothing to show you" toast either
+ * way is indistinguishable from a fix that changed nothing — which is exactly how it was
+ * reported back. Any OTHER step landing here (defensive: only reachable today if a visitor
+ * abandons `new-recipe-btn` by navigating away without submitting) still gets the generic
+ * early-end wording.
  */
-function finishEarly() {
+function finishEarly(step: TourStep) {
   tour.finish()
-  toast.info(t('tour.endedEarly'))
+  if (step.id === 'fork-button') {
+    toast.success(t('tour.finishedNoFork'))
+  } else {
+    toast.info(t('tour.endedEarly'))
+  }
 }
 
 async function showStep() {
@@ -138,7 +153,7 @@ async function showStep() {
    */
   if ((step.route === '@recipe' || step.route === '@demo') && !target) {
     if (myRun !== runToken) return
-    if (tour.isLast.value) finishEarly()
+    if (tour.isLast.value) finishEarly(step)
     else tour.next()
     return
   }
@@ -153,7 +168,7 @@ async function showStep() {
 
   if (!anchor) {
     // Anchor never appeared — skip rather than dead-end.
-    if (tour.isLast.value) finishEarly()
+    if (tour.isLast.value) finishEarly(step)
     else tour.next()
     return
   }
