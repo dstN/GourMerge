@@ -55,7 +55,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       <h2 class="font-semibold">{{ t('settings.emailSectionTitle') }}</h2>
     </template>
 
-    <div class="flex items-center justify-between gap-4">
+    <div class="flex flex-wrap items-center justify-between gap-4">
       <div>
         <p class="text-sm text-muted">{{ t('settings.currentEmail') }}</p>
         <p class="font-medium">{{ user?.email }}</p>
