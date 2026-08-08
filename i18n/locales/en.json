@@ -1,6 +1,16 @@
 {
   "app": {
-    "slogan": "Fork the recipe, merge the flavor."
+    "slogan": "Fork the recipe, merge the flavor.",
+    "inactiveTitles": [
+      "🔥 still simmering…",
+      "⏳ timer's running…",
+      "🔪 prepping…",
+      "♨️ in the oven…",
+      "🧂 seasoning to taste…",
+      "🍲 bubbling away…",
+      "🥘 resting…",
+      "🍳 pan's hot…"
+    ]
   },
   "nav": {
     "explore": "Explore",
@@ -12,7 +22,8 @@
     "starred": "Starred",
     "menu": "Menu",
     "language": "Language",
-    "appearance": "Appearance"
+    "appearance": "Appearance",
+    "recentRecipes": "Recently edited recipes"
   },
   "auth": {
     "login": "Log In",
@@ -450,21 +461,69 @@
         "title": "Fill In Your Recipe",
         "desc": "Give your recipe a title and click \"Create Recipe\" below — the tour continues automatically from there. It gets deleted again once the tour ends."
       },
-      "fork": {
-        "title": "Remix It",
-        "desc": "Remix any public recipe to make your own copy. Experiment freely — the original stays untouched."
-      },
       "star": {
         "title": "Star Recipes",
         "desc": "Star recipes you love. Find them again on your profile page."
       },
-      "history": {
-        "title": "Version History",
-        "desc": "Every version you save is recorded here. Click any entry to see the full recipe at that point in time."
+      "favorites": {
+        "title": "Your stars land here",
+        "desc": "You'll find every recipe you've starred in the left sidebar under \"Starred\"."
       },
-      "gourmergeRequest": {
-        "title": "Propose Changes",
-        "desc": "This is how you propose changes to a recipe — open a GourMerge Request and it can be reviewed and merged."
+      "pointers": {
+        "title": "There's a lot more to explore!",
+        "desc": "Up here you'll also find version history, variants and GourMerge Requests. Try those out on your own recipes later — we'll explain them in more detail then! Click \"Next\" to tidy up."
+      },
+      "addIngredient": {
+        "title": "Add ingredients",
+        "desc": "Add ingredients from the database and set their quantity and unit."
+      },
+      "addStep": {
+        "title": "Preparation steps",
+        "desc": "Add steps. You can also translate each step directly into multiple languages."
+      },
+      "commit": {
+        "title": "Save changes",
+        "desc": "Like in Git, you save changes with a commit. Briefly describe what you did."
+      },
+      "viewRecipe": {
+        "title": "View recipe",
+        "desc": "Your recipe is now saved! Click here to view it."
+      },
+      "editRecipe": {
+        "title": "Edit recipe",
+        "desc": "To adjust or delete the recipe later, click here to return to edit mode."
+      },
+      "deleteDemo": {
+        "title": "Delete recipe",
+        "desc": "Delete your demo recipe to keep your account clean. Don't worry, it's just a test."
+      },
+      "forkAction": {
+        "title": "Fork recipe",
+        "desc": "Click 'Fork' to create your own editable copy of this recipe."
+      },
+      "deleteFork": {
+        "title": "Delete fork",
+        "desc": "You made it! Now delete the fork to finish the tour."
+      },
+      "historyPage": {
+        "title": "The recipe's history",
+        "desc": "Here you can see every commit to this recipe — every change is tracked, just like in Git."
+      },
+      "gmrPage": {
+        "title": "Suggestions from others",
+        "desc": "This is where GourMerge Requests land — suggestions from people who forked your recipe. You can review them and merge the changes into your recipe!"
+      },
+      "newBranch": {
+        "title": "Create a new variant",
+        "desc": "Here you can manage variants of your recipe. Click \"Next\" and we'll automatically create one for you!"
+      },
+      "branchName": {
+        "title": "Give it a name",
+        "desc": "We'll type \"vegane-version\" for you now and save it."
+      },
+      "branchCreated": {
+        "title": "Variant created!",
+        "desc": "Perfect! You now have a new variant you can work on independently from the original."
       }
     },
     "endedEarly": "The tour ends here — there was no sample recipe available to show the remaining steps.",

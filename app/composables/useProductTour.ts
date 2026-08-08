@@ -19,18 +19,12 @@ export interface TourStep {
   titleKey: string
   descKey: string
   placement?: 'top' | 'bottom' | 'left' | 'right'
-  /**
-   * Hides the panel's "Weiter"/"Fertig" button — only `Zurück` and abandoning the tour
-   * outright stay available. Set on `recipe-form-title`: that step's entire point is
-   * getting the visitor to submit the REAL create-recipe form, and a "Weiter" that just
-   * calls `next()` would be a one-click way to skip past it, leaving `star-button` /
-   * `history-link` / `gourmerge-requests-link` (`route: '@demo'`) with nothing to point at —
-   * the exact dead end this whole rework exists to avoid.
-   */
+  /** Hides "Weiter"/"Fertig" — only `Zurück`/skip stay available. Forces steps like
+   *  `recipe-form-title` to advance via the real form submit, not a one-click skip past it. */
   hideNext?: boolean
 }
 
-const DEFAULT_STEPS: TourStep[] = [
+const BASE_TOUR: TourStep[] = [
   {
     id: 'explore-search',
     route: '/explore',
@@ -45,19 +39,41 @@ const DEFAULT_STEPS: TourStep[] = [
     descKey: 'tour.step.newRecipe.desc',
     placement: 'bottom',
   },
-  // Anchors on the REAL create-recipe form's title field — this is the "with the user"
-  // part: the tour stays put and visible while they actually fill it in, rather than
-  // vanishing at the door and picking back up only once they emerge. No `route: '@demo'`
-  // involved yet because there is no recipe to point at until they submit. `recipes/new.vue`
-  // reads `tour.active` directly (not a `?tour=1` query) to default visibility to private —
-  // reactive and already true by the time ANY path reaches this page, regardless of
-  // whether the visitor clicked "Weiter" or the highlighted link directly.
   {
     id: 'recipe-form-title',
     route: '/recipes/new',
     titleKey: 'tour.step.recipeForm.title',
     descKey: 'tour.step.recipeForm.desc',
     placement: 'top',
+    hideNext: true,
+  },
+  {
+    id: 'add-ingredient',
+    route: '@demo-edit',
+    titleKey: 'tour.step.addIngredient.title',
+    descKey: 'tour.step.addIngredient.desc',
+    placement: 'bottom',
+  },
+  {
+    id: 'add-step',
+    route: '@demo-edit',
+    titleKey: 'tour.step.addStep.title',
+    descKey: 'tour.step.addStep.desc',
+    placement: 'bottom',
+  },
+  {
+    id: 'commit-button',
+    route: '@demo-edit',
+    titleKey: 'tour.step.commit.title',
+    descKey: 'tour.step.commit.desc',
+    placement: 'top',
+  },
+  {
+    id: 'view-recipe-btn',
+    route: '@demo-edit',
+    titleKey: 'tour.step.viewRecipe.title',
+    descKey: 'tour.step.viewRecipe.desc',
+    placement: 'bottom',
     hideNext: true,
   },
   {
@@ -68,63 +84,136 @@ const DEFAULT_STEPS: TourStep[] = [
     placement: 'bottom',
   },
   {
-    id: 'history-link',
+    id: 'favorites-nav',
     route: '@demo',
-    titleKey: 'tour.step.history.title',
-    descKey: 'tour.step.history.desc',
+    titleKey: 'tour.step.favorites.title',
+    descKey: 'tour.step.favorites.desc',
+    placement: 'right',
+  },
+  {
+    id: 'tour-pointers',
+    route: '@demo',
+    titleKey: 'tour.step.pointers.title',
+    descKey: 'tour.step.pointers.desc',
     placement: 'bottom',
   },
   {
-    id: 'gourmerge-requests-link',
+    id: 'edit-recipe-btn',
     route: '@demo',
-    titleKey: 'tour.step.gourmergeRequest.title',
-    descKey: 'tour.step.gourmergeRequest.desc',
+    titleKey: 'tour.step.editRecipe.title',
+    descKey: 'tour.step.editRecipe.desc',
+    placement: 'bottom',
+    hideNext: true,
+  },
+  {
+    id: 'delete-demo',
+    route: '@demo-edit',
+    titleKey: 'tour.step.deleteDemo.title',
+    descKey: 'tour.step.deleteDemo.desc',
+    placement: 'bottom',
+    hideNext: true,
+  },
+]
+
+const BRANCHES_TOUR: TourStep[] = [
+  {
+    id: 'new-branch-btn',
+    route: '@demo-branches',
+    titleKey: 'tour.step.newBranch.title',
+    descKey: 'tour.step.newBranch.desc',
     placement: 'bottom',
   },
-  // Last, deliberately: forking your own brand-new recipe makes no sense, so this is the
-  // one step that still needs SOMEONE ELSE's public recipe. Putting it after the
-  // create-your-own-recipe steps means the tour only ever jumps to a stranger's recipe
-  // once, right at the end, instead of ping-ponging between "yours" and "theirs".
+  {
+    id: 'branch-name-input',
+    route: '@demo-branches',
+    titleKey: 'tour.step.branchName.title',
+    descKey: 'tour.step.branchName.desc',
+    placement: 'right',
+    hideNext: true,
+  },
+  {
+    id: 'branch-created',
+    route: '@demo-branches',
+    titleKey: 'tour.step.branchCreated.title',
+    descKey: 'tour.step.branchCreated.desc',
+    placement: 'bottom',
+  },
+]
+
+const HISTORY_TOUR: TourStep[] = [
+  {
+    id: 'history-page',
+    route: '@demo-history',
+    titleKey: 'tour.step.historyPage.title',
+    descKey: 'tour.step.historyPage.desc',
+    placement: 'bottom',
+  },
+]
+
+const GMR_TOUR: TourStep[] = [
+  {
+    id: 'gmr-page',
+    route: '@demo-gmr',
+    titleKey: 'tour.step.gmrPage.title',
+    descKey: 'tour.step.gmrPage.desc',
+    placement: 'bottom',
+  },
+]
+
+const FORK_TOUR: TourStep[] = [
   {
     id: 'fork-button',
-    route: '@recipe',
-    titleKey: 'tour.step.fork.title',
-    descKey: 'tour.step.fork.desc',
+    route: '@system',
+    titleKey: 'tour.step.forkAction.title',
+    descKey: 'tour.step.forkAction.desc',
     placement: 'bottom',
+    hideNext: true,
+  },
+  {
+    id: 'delete-fork',
+    route: '@fork-edit',
+    titleKey: 'tour.step.deleteFork.title',
+    descKey: 'tour.step.deleteFork.desc',
+    placement: 'bottom',
+    hideNext: true,
   },
 ]
 
 // Module-level reactive state shared across all callers.
 const active = ref(false)
+const activeTourName = ref<string>('base')
+const currentSteps = ref<TourStep[]>([])
 const currentIndex = ref(0)
-const otherRecipeUrl = ref<string | null>(null)
 const demoRecipe = ref<{ id: number; url: string } | null>(null)
+const systemRecipeUrl = ref<string | null>(null)
+const forkedRecipeUrl = ref<string | null>(null)
 
-export function useProductTour(steps: TourStep[] = DEFAULT_STEPS) {
-  const { dismissTour } = useOnboarding()
-  const { user } = useUserSession()
+export function useProductTour() {
+  const { dismissTour, finishTour, markTourCompleted } = useOnboarding()
 
-  const currentStep = computed(() => steps[currentIndex.value] ?? null)
+  const currentStep = computed(() => currentSteps.value[currentIndex.value] ?? null)
   const isFirst = computed(() => currentIndex.value === 0)
-  const isLast = computed(() => currentIndex.value === steps.length - 1)
-  const progress = computed(() => ({ current: currentIndex.value + 1, total: steps.length }))
+  const isLast = computed(() => currentIndex.value >= currentSteps.value.length - 1)
+  const progress = computed(() => ({ current: currentIndex.value + 1, total: currentSteps.value.length }))
   const demoRecipeUrl = computed(() => demoRecipe.value?.url ?? null)
 
-  /** Resolve the route a step navigates to ('@recipe' / '@demo' → the matching target). */
+  /** Resolve the route a step navigates to ('@system' / '@demo' / '@fork' → the matching target). */
   function resolveRoute(step: TourStep): string | null {
-    if (step.route === '@recipe') return otherRecipeUrl.value
-    if (step.route === '@demo') return demoRecipeUrl.value
+    if (step.route === '@demo') return demoRecipe.value ? demoRecipe.value.url : null
+    if (step.route === '@demo-edit') return demoRecipe.value ? `${demoRecipe.value.url}/edit` : null
+    if (step.route === '@demo-history') return demoRecipe.value ? `${demoRecipe.value.url}/history` : null
+    if (step.route === '@demo-gmr') return demoRecipe.value ? `${demoRecipe.value.url}/gourmerge-requests` : null
+    if (step.route === '@demo-branches') return demoRecipe.value ? `${demoRecipe.value.url}/branches` : null
+    if (step.route === '@system') return systemRecipeUrl.value ? systemRecipeUrl.value : null
+    if (step.route === '@fork-edit') return forkedRecipeUrl.value ? `${forkedRecipeUrl.value}/edit` : null
     return step.route
   }
 
-  /** Find a PUBLIC recipe owned by someone else, to demo the Fork button on. */
-  async function resolveOtherRecipe(): Promise<string | null> {
+  /** Find the system tour recipe. */
+  async function resolveSystemRecipe(): Promise<string | null> {
     try {
-      const ex = await $fetch<{ recipes: Array<{ ownerUsername: string; slug: string }> }>('/api/recipes/explore', {
-        query: { limit: 12 },
-      })
-      const other = ex.recipes.find((r) => r.ownerUsername !== user.value?.username)
-      return other ? `/${other.ownerUsername}/${other.slug}` : null
+      const res = await $fetch<{ url: string }>('/api/recipes/tour-recipe')
+      return res.url
     } catch {
       return null
     }
@@ -140,10 +229,40 @@ export function useProductTour(steps: TourStep[] = DEFAULT_STEPS) {
     demoRecipe.value = recipe
   }
 
-  async function start() {
+  function setForkedRecipe(recipe: { id: number; url: string }) {
+    forkedRecipeUrl.value = recipe.url
+  }
+
+  async function start(tourName: 'base' | 'branches' | 'history' | 'gmr' | 'fork' = 'base', recipeUrlContext?: string) {
+    // Not gated on isDone/tourDismissed/hasFinishedTour: every caller already gates itself
+    // (ConceptIntro only calls this when isDone is false; the help menu's restart actions are
+    // meant to relaunch a finished tour; sub-tours gate on !hasCompletedTour(name)).
+    if (recipeUrlContext) {
+      if (tourName === 'fork') systemRecipeUrl.value = recipeUrlContext
+      else demoRecipe.value = { id: 0, url: recipeUrlContext }
+    } else if (tourName === 'base' || tourName === 'fork') {
+      systemRecipeUrl.value = await resolveSystemRecipe()
+    }
+
+    activeTourName.value = tourName
+    switch (tourName) {
+      case 'base':
+        currentSteps.value = BASE_TOUR
+        break
+      case 'branches':
+        currentSteps.value = BRANCHES_TOUR
+        break
+      case 'history':
+        currentSteps.value = HISTORY_TOUR
+        break
+      case 'gmr':
+        currentSteps.value = GMR_TOUR
+        break
+      case 'fork':
+        currentSteps.value = FORK_TOUR
+        break
+    }
     currentIndex.value = 0
-    demoRecipe.value = null
-    otherRecipeUrl.value = await resolveOtherRecipe()
     active.value = true
   }
 
@@ -169,16 +288,33 @@ export function useProductTour(steps: TourStep[] = DEFAULT_STEPS) {
     $fetch(`/api/recipes/${recipe.id}`, { method: 'DELETE' }).catch(() => {})
   }
 
+  // Sub-tours point demoRecipe at a real recipe (id: 0 placeholder), not a throwaway one to
+  // delete, and must not trip the base tour's global dismissTour() — just mark that sub-tour done.
   function skip() {
     active.value = false
-    cleanupDemoRecipe()
-    dismissTour()
+    if (activeTourName.value === 'base') {
+      cleanupDemoRecipe()
+      dismissTour()
+    } else if (activeTourName.value) {
+      markTourCompleted(activeTourName.value)
+    }
+    demoRecipe.value = null
+    systemRecipeUrl.value = null
+    forkedRecipeUrl.value = null
   }
 
   function finish() {
     active.value = false
-    cleanupDemoRecipe()
-    dismissTour()
+
+    if (activeTourName.value === 'base') {
+      finishTour()
+    } else if (activeTourName.value) {
+      markTourCompleted(activeTourName.value)
+    }
+
+    demoRecipe.value = null
+    systemRecipeUrl.value = null
+    forkedRecipeUrl.value = null
   }
 
   return {
@@ -188,10 +324,12 @@ export function useProductTour(steps: TourStep[] = DEFAULT_STEPS) {
     isFirst,
     isLast,
     progress,
-    otherRecipeUrl,
+    systemRecipeUrl,
     demoRecipeUrl,
+    forkedRecipeUrl,
     resolveRoute,
     setDemoRecipe,
+    setForkedRecipe,
     start,
     next,
     prev,

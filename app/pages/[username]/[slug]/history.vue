@@ -1,9 +1,4 @@
 <script setup lang="ts">
-/**
- * Recipe Commit History Page — GitHub-style URL
- *
- * URL: /:username/:slug/history
- */
 import type { RecipeDetail } from '~~/shared/types/recipe'
 import type { CommitDiff } from '~~/shared/types'
 
@@ -28,7 +23,7 @@ const recipeUrl = computed(() => `/${username.value}/${slug.value}`)
 const { data: recipe } = await useFetch<RecipeDetail>(() => `/api/recipes/by-slug/${username.value}/${slug.value}`)
 
 useSeoMeta({
-  title: () => (recipe.value ? `${recipe.value.title} — GourMerge` : 'GourMerge'),
+  title: () => (recipe.value ? `${recipe.value.title}: GourMerge` : 'GourMerge'),
 })
 
 if (!recipe.value) {
@@ -88,6 +83,15 @@ function formatDate(dateStr: string) {
     minute: '2-digit',
   })
 }
+// ── Tour Automation ───────────────────────────────────────────
+const tour = useProductTour()
+const onboarding = useOnboarding()
+
+onMounted(() => {
+  if (onboarding.isDone.value && !onboarding.hasCompletedTour('history')) {
+    tour.start('history', recipeUrl.value)
+  }
+})
 </script>
 
 <template>
@@ -118,7 +122,7 @@ function formatDate(dateStr: string) {
     </CommonPageHeader>
 
     <!-- Commit Timeline -->
-    <div v-if="commits?.length" class="relative">
+    <div v-if="commits?.length" class="relative" data-tour="history-page">
       <!-- Vertical line -->
       <div class="absolute left-6 top-0 bottom-0 w-px bg-accented" />
 

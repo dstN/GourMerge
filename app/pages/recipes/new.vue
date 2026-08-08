@@ -1,7 +1,4 @@
 <script setup lang="ts">
-/**
- * New Recipe Page — Create a new recipe (repository)
- */
 import { z } from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
 
@@ -12,7 +9,7 @@ const { apiError } = useApiError()
 const tour = useProductTour()
 
 useSeoMeta({
-  title: `${t('nav.newRecipe')} — GourMerge`,
+  title: `${t('nav.newRecipe')}: GourMerge`,
 })
 
 const loading = ref(false)
@@ -58,17 +55,9 @@ const state = reactive<Partial<Schema>>({
   prepTimeMinutes: undefined,
   cookTimeMinutes: undefined,
   difficulty: 'medium',
-  // `tour.active`, not a `?tour=1` query: it's a shared reactive singleton that is
-  // already `true` by the time this page mounts, however the visitor got here (the
-  // panel's "Weiter" or the highlighted link directly — see `TourOverlay`'s route
-  // watchers), unlike a query param which would only be present on ONE of those paths.
-  // Defaults to private rather than the usual public: publishing publicly requires a
-  // verified email (`requireVerifiedUser` in `POST /api/recipes`), and a visitor taking
-  // the tour right after registering has not clicked that link yet — the tour would
-  // otherwise 403 on exactly the step it invited them to try. Private also just fits a
-  // recipe the tour is going to delete again once it ends (`useProductTour.
-  // cleanupDemoRecipe`) better than public does. Only the initial value; the select
-  // below still lets them pick public.
+  // tour.active (shared singleton), not a ?tour=1 query — true regardless of which entry
+  // path got them here. Defaults private during the tour: publishing needs a verified
+  // email the tour hasn't required yet; select below still allows public.
   visibility: tour.active.value ? 'private' : 'public',
 })
 

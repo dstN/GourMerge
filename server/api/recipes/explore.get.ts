@@ -33,6 +33,27 @@ export default defineEventHandler(async (event) => {
 
   const conditions = [eq(recipes.visibility, 'public')]
 
+  // ── Hide system tour recipe ─────────────────────────────────────
+  // The system user's recipe exists solely as a fork target during onboarding.
+  // Guests never see it (they can't take the tour). Logged-in users who have
+  // finished the tour don't see it either. Only users mid-tour see it.
+  const session = await getUserSession(event)
+  const viewerUserId = session?.user?.id as number | undefined
+  let showSystemRecipe = false
+  if (viewerUserId) {
+    const [viewer] = await db
+      .select({ hasFinishedTour: users.hasFinishedTour })
+      .from(users)
+      .where(eq(users.id, viewerUserId))
+      .limit(1)
+    showSystemRecipe = viewer ? !viewer.hasFinishedTour : false
+  }
+  if (!showSystemRecipe) {
+    // Exclude recipes owned by the `system` user.
+    // Sub-select: find the system user's id once.
+    conditions.push(sql`${recipes.ownerId} NOT IN (SELECT id FROM users WHERE username = 'system')`)
+  }
+
   if (q) {
     // FULLTEXT (ft_recipes_title_description, migration 0006) for real words;
     // fall back to LIKE for short terms below InnoDB's min token size (default 3).

@@ -1,6 +1,16 @@
 {
   "app": {
-    "slogan": "Wo bester Geschmack verschmilzt."
+    "slogan": "Wo bester Geschmack verschmilzt.",
+    "inactiveTitles": [
+      "🔥 köchelt weiter…",
+      "⏳ Timer läuft…",
+      "🔪 wird geprepped…",
+      "♨️ im Ofen…",
+      "🧂 wird abgeschmeckt…",
+      "🍲 brutzelt vor sich hin…",
+      "🥘 zieht noch…",
+      "🍳 die Pfanne ist heiß…"
+    ]
   },
   "nav": {
     "explore": "Entdecken",
@@ -12,7 +22,8 @@
     "starred": "Favoriten",
     "menu": "Menü",
     "language": "Sprache",
-    "appearance": "Erscheinungsbild"
+    "appearance": "Erscheinungsbild",
+    "recentRecipes": "Zuletzt bearbeitete Rezepte"
   },
   "auth": {
     "login": "Anmelden",
@@ -450,25 +461,73 @@
         "title": "Rezept ausfüllen",
         "desc": "Gib deinem Rezept einen Titel und klicke unten auf „Rezept erstellen“ — die Tour macht danach automatisch weiter. Es wird am Ende wieder gelöscht."
       },
-      "fork": {
-        "title": "Remix starten",
-        "desc": "Remixe ein öffentliches Rezept, um deine eigene Kopie zu erstellen. Das Original bleibt unberührt."
-      },
       "star": {
-        "title": "Rezepte markieren",
-        "desc": "Markiere Rezepte, die du liebst. Du findest sie auf deiner Profilseite wieder."
+        "title": "Star & Favoriten",
+        "desc": "Mit dem Stern kannst du dir Rezepte für später merken. Probier es aus und klicke auf den Stern!"
       },
-      "history": {
-        "title": "Versionsverlauf",
-        "desc": "Jede gespeicherte Version wird hier festgehalten. Klicke auf eine Version, um das Rezept zu diesem Zeitpunkt zu sehen."
+      "favorites": {
+        "title": "Hier landen deine Sterne",
+        "desc": "Alle gestarrten Rezepte findest du ganz leicht in der linken Seitenleiste unter 'Favoriten' wieder."
       },
-      "gourmergeRequest": {
-        "title": "Änderungen vorschlagen",
-        "desc": "So schlägst du Änderungen an einem Rezept vor — dein GourMerge Request wird geprüft und kann übernommen werden."
+      "pointers": {
+        "title": "Es gibt noch viel mehr zu entdecken!",
+        "desc": "Hier oben findest du übrigens auch den Versionsverlauf, Varianten und GourMerge Requests. Probier das bei deinen eigenen Rezepten später einfach mal aus – wir erklären dir das dann genauer! Klicke auf 'Weiter', um aufzuräumen."
+      },
+      "historyPage": {
+        "title": "Die Geschichte des Rezepts",
+        "desc": "Hier siehst du alle Commits zu diesem Rezept – jede Änderung wird protokolliert, ähnlich wie bei Git."
+      },
+      "gmrPage": {
+        "title": "Vorschläge von anderen",
+        "desc": "Hier landen GourMerge Requests – Vorschläge von Leuten, die dein Rezept geremixt haben. Du kannst sie prüfen und in dein Rezept übernehmen!"
+      },
+      "newBranch": {
+        "title": "Neue Variante erstellen",
+        "desc": "Hier kannst du Varianten deines Rezepts verwalten. Klicke auf 'Weiter' und wir erstellen automatisch eine Variante für dich!"
+      },
+      "branchName": {
+        "title": "Namen vergeben",
+        "desc": "Wir tippen jetzt 'vegane-version' für dich ein und speichern das ab."
+      },
+      "branchCreated": {
+        "title": "Variante erstellt!",
+        "desc": "Perfekt! Du hast eine neue Variante, in der du unabhängig vom Original arbeiten kannst."
+      },
+      "addIngredient": {
+        "title": "Zutaten hinzufügen",
+        "desc": "Füge Zutaten aus der Datenbank hinzu und bestimme Menge sowie Einheit."
+      },
+      "addStep": {
+        "title": "Zubereitungsschritte",
+        "desc": "Füge Schritte hinzu. Du kannst jeden Schritt auch direkt in mehreren Sprachen übersetzen."
+      },
+      "commit": {
+        "title": "Änderungen speichern",
+        "desc": "Wie bei Git speicherst du Änderungen mit einem Commit. Beschreibe kurz, was du gemacht hast."
+      },
+      "viewRecipe": {
+        "title": "Rezept ansehen",
+        "desc": "Dein Rezept ist nun gespeichert! Klicke hier, um zur Rezept-Ansicht zu gelangen."
+      },
+      "editRecipe": {
+        "title": "Rezept bearbeiten",
+        "desc": "Um das Rezept anzupassen oder zu löschen, geht es hier zurück in den Bearbeitungsmodus."
+      },
+      "deleteDemo": {
+        "title": "Rezept löschen",
+        "desc": "Lösche dein Demo-Rezept wieder, damit dein Account sauber bleibt. Keine Sorge, es ist nur ein Test."
+      },
+      "forkAction": {
+        "title": "Rezept remixen",
+        "desc": "Klicke auf 'Remixen', um dir eine eigene, bearbeitbare Kopie dieses Rezepts anzulegen."
+      },
+      "deleteFork": {
+        "title": "Remix löschen",
+        "desc": "Du hast es geschafft! Lösche nun auch den Remix, um die Tour abzuschliessen."
       }
     },
     "endedEarly": "Die Tour endet hier — es gab kein Beispielrezept, um die restlichen Schritte zu zeigen.",
-    "finishedNoFork": "Tour abgeschlossen! Zum Forken brauchst du ein öffentliches Rezept einer anderen Person — sobald es welche gibt, kannst du es hier ausprobieren."
+    "finishedNoFork": "Tour abgeschlossen! Zum Remixen brauchst du ein öffentliches Rezept einer anderen Person — sobald es welche gibt, kannst du es hier ausprobieren."
   },
   "help": {
     "menu": "Hilfe",

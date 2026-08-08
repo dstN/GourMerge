@@ -78,6 +78,20 @@
       "when": 1786080405481,
       "tag": "0010_handy_selene",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "5",
+      "when": 1786187285117,
+      "tag": "0011_tour-completion",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "5",
+      "when": 1786211945029,
+      "tag": "0012_small_loa",
+      "breakpoints": true
     }
   ]
 }

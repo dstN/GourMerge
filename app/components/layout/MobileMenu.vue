@@ -1,18 +1,6 @@
 <script setup lang="ts">
-/**
- * MobileMenu — hamburger + offcanvas panel for small screens (md:hidden).
- *
- * Structure is deliberately ordered by what the visitor came for:
- *   1. Account CTA (guests) — signing up is the primary action; it used to sit at
- *      the very bottom under two blocks of preference chrome.
- *   2. Navigation.
- *   3. Help.
- *   4. Account actions (signed in).
- *   5. Preferences, last, as a compact single row — they were previously two
- *      full-width rows with uppercase micro-headings, which for a guest meant more
- *      chrome than content: the whole panel was "Sprache", "Darstellung" and one
- *      nav link.
- */
+// Hamburger + offcanvas panel for small screens (md:hidden). Order: account CTA (guests),
+// nav, help, account actions, then preferences last as a compact single row.
 const { t, locale, setLocale } = useI18n()
 const { loggedIn, user, clear } = useUserSession()
 const route = useRoute()
@@ -35,13 +23,8 @@ const localeItems = [
   { label: 'Italiano', value: 'it' },
 ]
 
-/**
- * Mirrors the desktop header: Explore is public, the rest needs an account.
- *
- * `localePath()` on every entry, because the template binds `:to="item.to"` and i18n only
- * rewrites static literals — see `LayoutDashboardSidebar` for the measurement. `linkClass`
- * compares against `route.path`, so localising `to` fixes the active state at the same time.
- */
+// Mirrors the desktop header: Explore is public, the rest needs an account. localePath() on
+// every entry because :to is a dynamic binding i18n won't rewrite — see DashboardSidebar.vue.
 const navLinks = computed(() =>
   loggedIn.value
     ? [

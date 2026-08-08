@@ -53,6 +53,8 @@ function formatQuantity(value: string): string {
 const route = useRoute()
 const { user, loggedIn } = useUserSession()
 const toast = useAppToast()
+const tour = useProductTour()
+const onboarding = useOnboarding()
 
 const username = computed(() => route.params.username as string)
 const slug = computed(() => route.params.slug as string)
@@ -175,6 +177,12 @@ watch(
 
 async function toggleStar() {
   if (!loggedIn.value || !recipe.value) return
+
+  // Advance the tour automatically if they click the star button during the tour
+  if (tour.active.value && tour.currentStep.value?.id === 'star-button') {
+    tour.next()
+  }
+
   starPending.value = true
   try {
     const res = await $fetch<{ starred: boolean }>(`/api/recipes/${recipe.value.id}/star`, { method: 'POST' })
@@ -192,13 +200,38 @@ const forkPending = ref(false)
 
 async function forkRecipe() {
   if (!loggedIn.value || !recipe.value) return
+
+  // Already on the fork tour's OWN fork-button step (tour.start('fork') below already
+  // navigated here, to the system recipe) — this click is the real action and must fall
+  // through, not restart the tour it's already in.
+  const inForkTourStep = tour.active.value && tour.currentStep.value?.id === 'fork-button'
+
+  // First-ever "Remix" click, on ANY recipe, launches the guided fork tour instead of
+  // forking THIS one — it walks the visitor through remixing the safe practice recipe
+  // (the system one) rather than their first-ever fork being a real, permanent copy of
+  // someone else's actual work, and shows them how to delete it again afterward.
+  // markTourCompleted('fork') at the end of that tour is what stops this firing again.
+  if (!inForkTourStep && !onboarding.hasCompletedTour('fork')) {
+    await tour.start('fork')
+    return
+  }
+
   forkPending.value = true
   try {
-    const res = await $fetch<{ slug: string; owner: { username: string } }>(`/api/recipes/${recipe.value.id}/fork`, {
-      method: 'POST',
-    })
+    const res = await $fetch<{ id: number; slug: string; owner: { username: string } }>(
+      `/api/recipes/${recipe.value.id}/fork`,
+      { method: 'POST' }
+    )
     toast.success(t('recipe.forkSuccess'))
-    await navigateTo(`/${res.owner.username}/${res.slug}`)
+    if (inForkTourStep) {
+      // The tour's own route watcher takes it from here — straight to the fork's EDIT
+      // page (@fork-edit), where the delete-fork anchor lives, not the view page a
+      // normal fork lands on.
+      tour.setForkedRecipe({ id: res.id, url: `/${res.owner.username}/${res.slug}` })
+      tour.next()
+    } else {
+      await navigateTo(`/${res.owner.username}/${res.slug}`)
+    }
   } catch (e: unknown) {
     toast.error(apiError(e, 'recipe.forkError'))
   } finally {
@@ -211,7 +244,7 @@ const appUrl = useRuntimeConfig().public.appUrl as string
 useSeoMeta({
   title: () =>
     recipe.value
-      ? `${resolveTranslation(recipe.value.titleTranslations, recipe.value.title)} — GourMerge`
+      ? `${resolveTranslation(recipe.value.titleTranslations, recipe.value.title)}: GourMerge`
       : 'GourMerge',
   description: () =>
     recipe.value
@@ -220,7 +253,7 @@ useSeoMeta({
       : t('recipe.seoDescriptionFallback'),
   ogTitle: () =>
     recipe.value
-      ? `${resolveTranslation(recipe.value.titleTranslations, recipe.value.title)} — GourMerge`
+      ? `${resolveTranslation(recipe.value.titleTranslations, recipe.value.title)}: GourMerge`
       : 'GourMerge',
   ogDescription: () =>
     recipe.value
@@ -231,7 +264,7 @@ useSeoMeta({
   ogType: 'website',
   ogSiteName: 'GourMerge',
   twitterCard: 'summary',
-  twitterTitle: () => (recipe.value ? `${recipe.value.title} — GourMerge` : 'GourMerge'),
+  twitterTitle: () => (recipe.value ? `${recipe.value.title}: GourMerge` : 'GourMerge'),
   twitterDescription: () => recipe.value?.description || t('recipe.seoDescriptionFallback'),
   robots: () => (recipe.value?.visibility === 'private' ? 'noindex,nofollow' : 'index,follow'),
 })
@@ -313,7 +346,7 @@ useHead(() => {
             <span class="font-semibold text-default truncate">{{ recipe.slug }}</span>
           </div>
 
-          <div class="flex items-center gap-2 shrink-0 flex-wrap">
+          <div class="flex items-center gap-2 shrink-0 flex-wrap" data-tour="tour-pointers">
             <UBadge
               v-if="recipe.visibility === 'private'"
               color="neutral"
@@ -357,7 +390,6 @@ useHead(() => {
               color="neutral"
               variant="outline"
               :to="`${recipeUrl}/gourmerge-requests`"
-              data-tour="gourmerge-requests-link"
             >
               <template v-if="openGmrCount > 0" #trailing>
                 <UBadge :label="String(openGmrCount)" color="primary" variant="subtle" size="sm" />
@@ -374,7 +406,6 @@ useHead(() => {
               color="neutral"
               variant="outline"
               :to="`${recipeUrl}/history`"
-              data-tour="history-link"
             />
             <UButton
               v-if="isOwner"
@@ -383,6 +414,7 @@ useHead(() => {
               size="sm"
               variant="soft"
               :to="`${recipeUrl}/edit`"
+              data-tour="edit-recipe-btn"
             />
           </div>
         </div>

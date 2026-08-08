@@ -1,6 +1,16 @@
 {
   "app": {
-    "slogan": "Dove i migliori sapori si fondono."
+    "slogan": "Dove i migliori sapori si fondono.",
+    "inactiveTitles": [
+      "🔥 sta ancora sobbollendo…",
+      "⏳ timer in corso…",
+      "🔪 in preparazione…",
+      "♨️ in forno…",
+      "🧂 si aggiusta di sapore…",
+      "🍲 sta bollendo…",
+      "🥘 a riposo…",
+      "🍳 la padella è calda…"
+    ]
   },
   "nav": {
     "explore": "Esplora",
@@ -12,7 +22,8 @@
     "starred": "Preferiti",
     "menu": "Menu",
     "language": "Lingua",
-    "appearance": "Aspetto"
+    "appearance": "Aspetto",
+    "recentRecipes": "Ricette modificate di recente"
   },
   "auth": {
     "login": "Accedi",
@@ -450,21 +461,69 @@
         "title": "Compila la tua ricetta",
         "desc": "Dai un titolo alla tua ricetta e clicca su «Crea ricetta» qui sotto — il tour continuerà automaticamente da lì. Verrà eliminata di nuovo alla fine del tour."
       },
-      "fork": {
-        "title": "Remixa",
-        "desc": "Remixa qualsiasi ricetta pubblica per creare la tua copia. L'originale rimane intatto."
-      },
       "star": {
         "title": "Aggiungi ai preferiti",
         "desc": "Aggiungi ai preferiti le ricette che ami. Ritrovala sulla tua pagina del profilo."
       },
-      "history": {
-        "title": "Cronologia versioni",
-        "desc": "Ogni versione salvata è registrata qui. Clicca su qualsiasi voce per vedere la ricetta completa in quel momento."
+      "favorites": {
+        "title": "I tuoi preferiti finiscono qui",
+        "desc": "Trovi tutte le ricette che hai aggiunto ai preferiti nella barra laterale sinistra, sotto \"Preferiti\"."
       },
-      "gourmergeRequest": {
-        "title": "Proponi modifiche",
-        "desc": "Così proponi modifiche a una ricetta — apri un GourMerge Request, che può essere revisionato e integrato."
+      "pointers": {
+        "title": "C'è ancora molto da scoprire!",
+        "desc": "Qui sopra trovi anche la cronologia delle versioni, le varianti e le GourMerge Request. Provale più avanti sulle tue ricette — te le spiegheremo meglio allora! Clicca su \"Avanti\" per continuare."
+      },
+      "addIngredient": {
+        "title": "Aggiungi ingredienti",
+        "desc": "Aggiungi ingredienti dal database e imposta la quantità e l'unità."
+      },
+      "addStep": {
+        "title": "Passaggi di preparazione",
+        "desc": "Aggiungi passaggi. Puoi anche tradurre ogni passaggio direttamente in più lingue."
+      },
+      "commit": {
+        "title": "Salva le modifiche",
+        "desc": "Come in Git, salvi le modifiche con un commit. Descrivi brevemente cosa hai fatto."
+      },
+      "viewRecipe": {
+        "title": "Vedi ricetta",
+        "desc": "La tua ricetta è ora salvata! Clicca qui per vederla."
+      },
+      "editRecipe": {
+        "title": "Modifica ricetta",
+        "desc": "Per modificare o eliminare la ricetta in seguito, clicca qui per tornare alla modalità di modifica."
+      },
+      "deleteDemo": {
+        "title": "Elimina ricetta",
+        "desc": "Elimina la tua ricetta demo per mantenere pulito il tuo account. Non preoccuparti, è solo un test."
+      },
+      "forkAction": {
+        "title": "Forka la ricetta",
+        "desc": "Clicca su 'Forka' per creare la tua copia modificabile di questa ricetta."
+      },
+      "deleteFork": {
+        "title": "Elimina il fork",
+        "desc": "Ce l'hai fatta! Ora elimina il fork per terminare il tour."
+      },
+      "historyPage": {
+        "title": "La storia della ricetta",
+        "desc": "Qui vedi tutti i commit di questa ricetta — ogni modifica viene registrata, proprio come con Git."
+      },
+      "gmrPage": {
+        "title": "Suggerimenti da altri",
+        "desc": "Qui arrivano le GourMerge Request — suggerimenti di persone che hanno remixato la tua ricetta. Puoi esaminarle e unirle alla tua ricetta!"
+      },
+      "newBranch": {
+        "title": "Crea una nuova variante",
+        "desc": "Qui puoi gestire le varianti della tua ricetta. Clicca su \"Avanti\" e ne creeremo una automaticamente per te!"
+      },
+      "branchName": {
+        "title": "Dai un nome",
+        "desc": "Ora digitiamo \"vegane-version\" per te e la salviamo."
+      },
+      "branchCreated": {
+        "title": "Variante creata!",
+        "desc": "Perfetto! Ora hai una nuova variante su cui lavorare indipendentemente dall'originale."
       }
     },
     "endedEarly": "Il tour termina qui — non era disponibile nessuna ricetta di esempio per mostrare i passaggi restanti.",

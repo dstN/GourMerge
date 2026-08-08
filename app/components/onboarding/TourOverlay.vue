@@ -17,36 +17,39 @@ const panelRef = ref<HTMLElement | null>(null)
 const panelStyle = ref<Record<string, string>>({ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' })
 const ready = ref(false)
 
-/**
- * `recipe-form-title` anchors on the real create-recipe form and stays visible WHILE the
- * visitor fills it in — that is the point, versus vanishing at the door and reappearing
- * only once they emerge. The one gap that still needs covering is the transition moment:
- * once they submit, `recipes/new.vue` redirects to `/<owner>/<slug>/edit`, and the panel
- * would otherwise flash there too — still anchored to a submit button that page doesn't
- * have — for the brief window before the route watcher below advances the step. Suspended
- * for exactly that one transitional route, not "not on /recipes/new", so the guided form
- * step itself stays visible.
- */
+// `recipe-form-title`/`fork-button` stay visible through the post-submit redirect to
+// `/<owner>/<slug>/edit` (which has no matching anchor yet) until the route watcher below
+// advances the step — suspended for exactly that one transitional route.
 const suspended = computed(() => {
-  if (tour.currentStep.value?.id !== 'recipe-form-title') return false
-  const editMatch = route.path.match(/^\/([^/]+)\/[^/]+\/edit$/)
-  return !!editMatch && editMatch[1] === user.value?.username
+  if (!tour.currentStep.value) return false
+  const id = tour.currentStep.value.id
+  if (id === 'recipe-form-title' || id === 'fork-button') {
+    const editMatch = route.path.match(/^\/([^/]+)\/[^/]+\/edit$/)
+    return !!editMatch && editMatch[1] === user.value?.username
+  }
+  return false
 })
 
-/**
- * Two steps need real clicks to reach the page underneath, not just "read the panel and
- * press Weiter": `new-recipe-btn`'s highlighted "+ Neues Rezept" link (clicking it directly
- * is the whole point of the parity watcher below) and `recipe-form-title`, where the visitor
- * fills in several real fields (title, description, servings…) and — since that step is
- * `hideNext: true` — MUST use the real submit button to proceed. The fixed backdrop below
- * normally captures every click (that's what makes it dismiss the tour on click), which
- * would otherwise sit on top of either page and make it unusable. `.tour-highlight`'s
- * `z-index: 200` alone doesn't rescue this: it only wins within its own stacking context,
- * which on these pages is lower than the backdrop's `z-[199]` fixed over the whole
- * viewport. Click-to-dismiss is still available via the panel's own "Tour überspringen".
- */
+// Steps where the visitor must click through to the real page (the highlighted "+ Neues
+// Rezept" link, or the real form fields under `hideNext: true`) — the backdrop otherwise
+// captures every click, and `.tour-highlight`'s z-index alone can't win against it across
+// stacking contexts. "Tour überspringen" on the panel is still available either way.
 const backdropInteractive = computed(
-  () => !['new-recipe-btn', 'recipe-form-title'].includes(tour.currentStep.value?.id ?? '')
+  () =>
+    ![
+      'new-recipe-btn',
+      'recipe-form-title',
+      'add-ingredient',
+      'add-step',
+      'commit-button',
+      'view-recipe-btn',
+      'edit-recipe-btn',
+      'delete-demo',
+      'fork-button',
+      'delete-fork',
+      'star-button',
+      'new-branch-btn',
+    ].includes(tour.currentStep.value?.id ?? '')
 )
 
 let runToken = 0
@@ -104,25 +107,11 @@ function positionPanel(anchor: HTMLElement, placement?: 'top' | 'bottom' | 'left
   panelStyle.value = { top: `${top}px`, left: `${left}px`, transform: 'none' }
 }
 
-/**
- * Ends the tour via an auto-skip (an anchor, or a whole `@recipe`/`@demo` step, that was
- * never reachable) rather than via the visible "Fertig" button on the last panel. Both paths
- * call `tour.finish()`, which has no feedback of its own — fine when the user just clicked
- * "Fertig" on a panel they were looking at, wrong here: the panel had already been hidden for
- * up to several seconds (each skipped step still costs one `waitForEl` round on a real
- * anchor), so the tour would otherwise vanish with no indication of why it stopped, on a page
- * the user did not choose.
- *
- * `fork-button` is now always the LAST step (see `useProductTour`'s step order), so reaching
- * this function unreachable-for-`fork-button` specifically means everything BEFORE it —
- * creating a recipe, star, history, GourMerge Request — already succeeded, and only Fork
- * (which needs someone ELSE's public recipe) has nothing to demo. That is not the same event
- * as the tour failing outright, and showing the identical "nothing to show you" toast either
- * way is indistinguishable from a fix that changed nothing — which is exactly how it was
- * reported back. Any OTHER step landing here (defensive: only reachable today if a visitor
- * abandons `recipe-form-title` by navigating away without submitting it) still gets the
- * generic early-end wording.
- */
+// tour.finish() has no feedback of its own, so an auto-skip ending (anchor/route never
+// reachable) needs its own toast — the panel's been hidden silently for a few seconds already.
+// fork-button is always the last step, so landing here for it means everything before it
+// (recipe, star, history, GMR) already succeeded and only forking someone else's recipe has
+// nothing to demo — a different message than the generic "tour ended early" case.
 function finishEarly(step: TourStep) {
   tour.finish()
   if (step.id === 'fork-button') {
@@ -143,20 +132,10 @@ async function showStep() {
   // Navigate to the step's route if needed.
   const target = tour.resolveRoute(step)
 
-  /**
-   * A `@recipe`/`@demo` step with no resolved target is not "the anchor hasn't loaded
-   * yet" — it is known, right now, to be unreachable: `@recipe` already tried
-   * `resolveOtherRecipe()` and found nobody else's public recipe to fork, and `@demo` means
-   * the visitor abandoned `recipe-form-title` without submitting it. The ORIGINAL code
-   * called `waitForEl` on the CURRENT page for an anchor from a page it never navigated to,
-   * waited out the full 2500ms timeout, then repeated that for every remaining such step —
-   * with the panel hidden (`ready` stays false) and only the dimmed backdrop visible the
-   * whole time. That reads as the tour being stuck, not as it working; it was reported
-   * exactly that way. Recognising the impossible case here skips straight to the next step
-   * (or finishes, with the toast below) instead of manufacturing a wait for an outcome that
-   * is already decided.
-   */
-  if ((step.route === '@recipe' || step.route === '@demo') && !target) {
+  // A `@`-prefixed step (`@demo`, `@system`, `@fork-edit`, …) with no resolved target is known
+  // unreachable right now (e.g. the demo recipe was never created, or the fork hasn't happened
+  // yet) — skip straight to the next step instead of waiting out waitForEl's timeout for it.
+  if (step.route.startsWith('@') && !target) {
     if (myRun !== runToken) return
     if (tour.isLast.value) finishEarly(step)
     else tour.next()
@@ -199,17 +178,8 @@ watch(
   { immediate: true }
 )
 
-/**
- * `new-recipe-btn`'s anchor is a plain link, not something `showStep()` drives — the
- * visitor can reach `/recipes/new` either via the panel's "Weiter" (which already calls
- * `tour.next()` normally, since `recipe-form-title`'s own route IS `/recipes/new`) OR by
- * clicking the highlighted "+ Neues Rezept" button directly, bypassing `tour.next()`
- * entirely. Without this, the second path leaves `currentIndex` on `new-recipe-btn` while
- * the visitor is actually looking at the form: `suspended`/`backdropInteractive` (both
- * keyed on `recipe-form-title`) wouldn't recognise the state, so the backdrop would keep
- * blocking clicks on a form the visitor is trying to fill in. Advancing the step here
- * unifies both paths onto the same state.
- */
+// Clicking the highlighted "+ Neues Rezept" link directly bypasses tour.next() — this catches
+// that path too, so currentIndex advances to recipe-form-title regardless of how the visitor got here.
 watch(
   () => route.path,
   (path) => {
@@ -217,28 +187,65 @@ watch(
   }
 )
 
-/**
- * Watches for the arrival that only a successful save on `/recipes/new` produces
- * (`recipes/new.vue` redirects to `/<owner>/<slug>/edit`), and hands that recipe to the
- * tour as the target for the remaining steps. Scoped to the visitor's OWN username so it
- * can't fire on an unrelated edit page, and to `!tour.demoRecipeUrl.value` so it only ever
- * fires once per tour run.
- */
 watch(
   () => route.path,
   async (path) => {
-    if (!tour.active.value || tour.currentStep.value?.id !== 'recipe-form-title') return
-    if (tour.demoRecipeUrl.value) return
-    const match = path.match(/^\/([^/]+)\/([^/]+)\/edit$/)
-    if (!match) return
-    const [, username, slug] = match
-    if (username !== user.value?.username) return
-    try {
-      const recipe = await $fetch<{ id: number }>(`/api/recipes/by-slug/${username}/${slug}`)
-      tour.setDemoRecipe({ id: recipe.id, url: `/${username}/${slug}` })
+    if (!tour.active.value || !tour.currentStep.value) return
+    const stepId = tour.currentStep.value.id
+
+    // Demo recipe creation transition
+    if (stepId === 'recipe-form-title' && !tour.demoRecipeUrl.value) {
+      const match = path.match(/^\/([^/]+)\/([^/]+)\/edit$/)
+      if (match && match[1] === user.value?.username) {
+        try {
+          const recipe = await $fetch<{ id: number }>(`/api/recipes/by-slug/${match[1]}/${match[2]}`)
+          tour.setDemoRecipe({ id: recipe.id, url: `/${match[1]}/${match[2]}` })
+
+          // Seed the new recipe with simulated history and GMR in the background
+          // so it's ready by the time the tour reaches those steps.
+          $fetch(`/api/recipes/${recipe.id}/simulate-activity`, { method: 'POST' }).catch(() => {})
+
+          tour.next()
+        } catch {
+          // ignore lookup errors
+        }
+      }
+      return
+    }
+
+    // Fork recipe creation transition
+    if (stepId === 'fork-button' && !tour.forkedRecipeUrl.value) {
+      const match = path.match(/^\/([^/]+)\/([^/]+)$/)
+      if (match && match[1] === user.value?.username) {
+        try {
+          const recipe = await $fetch<{ id: number }>(`/api/recipes/by-slug/${match[1]}/${match[2]}`)
+          tour.setForkedRecipe({ id: recipe.id, url: `/${match[1]}/${match[2]}` })
+          tour.next()
+        } catch {
+          // ignore lookup errors
+        }
+      }
+      return
+    }
+
+    // View / Edit manual navigation transitions
+    if (stepId === 'view-recipe-btn' && path === tour.demoRecipeUrl.value) {
       tour.next()
-    } catch {
-      // Lookup failed — leave the step alone; the visitor is still looking at the form.
+      return
+    }
+    if (stepId === 'edit-recipe-btn' && path === `${tour.demoRecipeUrl.value}/edit`) {
+      tour.next()
+      return
+    }
+
+    // Delete transitions (redirects to /recipes)
+    if (stepId === 'delete-demo' && path === '/recipes') {
+      tour.next()
+      return
+    }
+    if (stepId === 'delete-fork' && path === '/recipes') {
+      tour.next() // Calls finish() since it's the last step
+      return
     }
   }
 )
@@ -266,7 +273,6 @@ onBeforeUnmount(() => {
           class="fixed inset-0 z-[199] bg-black/40"
           :class="backdropInteractive ? '' : 'pointer-events-none'"
           aria-hidden="true"
-          @click="backdropInteractive && tour.skip()"
         />
 
         <!-- Floating step panel -->

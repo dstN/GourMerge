@@ -1,10 +1,5 @@
 <script setup lang="ts">
-/**
- * Recipe Editor — /:username/:slug/edit
- *
- * Allows owners to edit ingredients (via autocomplete) and preparation steps
- * (via TipTap WYSIWYG) and commit a snapshot to any branch.
- */
+// Ingredients via autocomplete, steps via TipTap WYSIWYG, committed as a snapshot to any branch.
 import IngredientRow from '~/components/recipe/IngredientRow.vue'
 import type { IngredientRowData } from '~/components/recipe/IngredientRow.vue'
 import StepEditor from '~/components/recipe/StepEditor.vue'
@@ -18,6 +13,7 @@ const { apiError } = useApiError()
 const route = useRoute()
 const router = useRouter()
 const toast = useAppToast()
+const tour = useProductTour()
 
 /** The four supported locales, hoisted so the two per-locale `v-for`s below can't
  *  drift apart from each other. */
@@ -296,8 +292,21 @@ async function deleteRecipe() {
   deleting.value = true
   try {
     await $fetch(`/api/recipes/${recipe.value.id}`, { method: 'DELETE' })
+    clearNuxtData(`recipe-${route.params.username}-${route.params.slug}`)
     toast.success(t('recipe.deleteSuccess'))
     allowLeave.value = true
+
+    // delete-demo (base tour) and delete-fork (fork tour) are both `hideNext: true` and
+    // both LAST in their tour — nothing else ever calls tour.next() for them. Without
+    // this, deleting the recipe the tour was pointed at leaves it `active` forever,
+    // anchored to a button on a page it's about to navigate away from: hasFinishedTour
+    // (set by finish() below, base tour only) could never actually become true, which
+    // is also what silently blocked every sub-tour for anyone who reached this point.
+    const stepId = tour.currentStep.value?.id
+    if (tour.active.value && (stepId === 'delete-demo' || stepId === 'delete-fork')) {
+      tour.next()
+    }
+
     await navigateTo('/recipes')
   } catch {
     toast.error(t('recipe.deleteError'))
@@ -438,8 +447,46 @@ async function commitChanges() {
 }
 
 useSeoMeta({
-  title: () => (recipe.value ? `${t('common.edit')}: ${recipe.value.title} — GourMerge` : 'GourMerge'),
+  title: () => (recipe.value ? `${t('common.edit')}: ${recipe.value.title}: GourMerge` : 'GourMerge'),
 })
+
+// ── Tour Automation ───────────────────────────────────────────
+watch(
+  () => tour.currentStep.value?.id,
+  async (stepId) => {
+    if (stepId === 'add-ingredient') {
+      while (pending.value || snapshotLoading.value) {
+        await new Promise((r) => setTimeout(r, 50))
+      }
+      if (ingredients.value.length === 0) {
+        addIngredient()
+        const row = ingredients.value[0]
+        const text = 'Apfel'
+        for (let i = 0; i < text.length; i++) {
+          await new Promise((r) => setTimeout(r, 100))
+          if (row) row.name += text[i]
+        }
+        await new Promise((r) => setTimeout(r, 200))
+        if (row) row.quantity = '1'
+        await new Promise((r) => setTimeout(r, 200))
+        if (row) row.unit = 'piece'
+      }
+    } else if (stepId === 'add-step') {
+      while (pending.value || snapshotLoading.value) {
+        await new Promise((r) => setTimeout(r, 50))
+      }
+      if (steps.value.length === 0) {
+        addStep()
+        const step = steps.value[0]
+        const text = 'Den Apfel in kleine Stücke schneiden.'
+        for (let i = 0; i < text.length; i++) {
+          await new Promise((r) => setTimeout(r, 50))
+          if (step) step.content += text[i]
+        }
+      }
+    }
+  }
+)
 </script>
 
 <template>
@@ -480,6 +527,7 @@ useSeoMeta({
             color="neutral"
             variant="outline"
             :to="`/${username}/${slug}`"
+            data-tour="view-recipe-btn"
           />
           <UButton
             :label="t('recipe.deleteTitle')"
@@ -487,6 +535,7 @@ useSeoMeta({
             size="sm"
             color="error"
             variant="outline"
+            :data-tour="tour.currentStep.value?.id === 'delete-fork' ? 'delete-fork' : 'delete-demo'"
             @click="
               () => {
                 showDeleteModal = true

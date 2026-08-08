@@ -1,9 +1,4 @@
 <script setup lang="ts">
-/**
- * Recipe Branches Page — GitHub-style URL
- *
- * URL: /:username/:slug/branches
- */
 import type { RecipeDetail } from '~~/shared/types/recipe'
 
 definePageMeta({ layout: 'dashboard', middleware: ['validate-recipe-route', 'auth'] })
@@ -21,7 +16,7 @@ const recipeUrl = computed(() => `/${username.value}/${slug.value}`)
 const { data: recipe } = await useFetch<RecipeDetail>(() => `/api/recipes/by-slug/${username.value}/${slug.value}`)
 
 useSeoMeta({
-  title: () => (recipe.value ? `${recipe.value.title} — GourMerge` : 'GourMerge'),
+  title: () => (recipe.value ? `${recipe.value.title}: GourMerge` : 'GourMerge'),
   robots: 'noindex',
 })
 if (!recipe.value) {
@@ -38,18 +33,24 @@ const showCreateModal = ref(false)
 const newBranchName = ref('')
 const sourceBranchId = ref<number | undefined>(undefined)
 const creating = ref(false)
+/** The tour's `branch-created` step anchors on this specific row — see the template. */
+const lastCreatedBranchId = ref<number | null>(null)
 
 async function createBranch() {
   if (!newBranchName.value.trim()) return
   creating.value = true
   try {
-    await $fetch(`/api/recipes/${recipeId.value}/branches`, {
-      method: 'POST',
-      body: {
-        name: newBranchName.value.trim(),
-        fromBranchId: sourceBranchId.value,
-      },
-    })
+    const created = await $fetch<{ id: number; name: string; headCommitId: number | null }>(
+      `/api/recipes/${recipeId.value}/branches`,
+      {
+        method: 'POST',
+        body: {
+          name: newBranchName.value.trim(),
+          fromBranchId: sourceBranchId.value,
+        },
+      }
+    )
+    lastCreatedBranchId.value = created.id
     toast.success(t('branches.created'))
     newBranchName.value = ''
     showCreateModal.value = false
@@ -86,6 +87,32 @@ const branchSourceOptions = computed(
       value: b.id,
     })) || []
 )
+
+// ── Tour Automation ───────────────────────────────────────────
+const tour = useProductTour()
+const onboarding = useOnboarding()
+
+onMounted(() => {
+  if (onboarding.isDone.value && !onboarding.hasCompletedTour('branches')) {
+    tour.start('branches', recipeUrl.value)
+  }
+})
+
+watch(
+  () => tour.currentStep.value?.id,
+  async (stepId) => {
+    if (stepId === 'branch-name-input') {
+      const text = 'vegane-version'
+      for (let i = 0; i < text.length; i++) {
+        await new Promise((r) => setTimeout(r, 50))
+        newBranchName.value += text[i]
+      }
+      await new Promise((r) => setTimeout(r, 300))
+      await createBranch()
+      tour.next()
+    }
+  }
+)
 </script>
 
 <template>
@@ -101,6 +128,7 @@ const branchSourceOptions = computed(
           :label="t('branches.create')"
           icon="i-lucide-plus"
           size="lg"
+          data-tour="new-branch-btn"
           @click="
             () => {
               showCreateModal = true
@@ -112,7 +140,11 @@ const branchSourceOptions = computed(
 
     <!-- Branches list -->
     <div class="space-y-3">
-      <UCard v-for="branch in branches" :key="branch.id">
+      <UCard
+        v-for="branch in branches"
+        :key="branch.id"
+        :data-tour="branch.id === lastCreatedBranchId ? 'branch-created' : undefined"
+      >
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div class="flex items-center gap-3 min-w-0">
             <UIcon
@@ -180,8 +212,14 @@ const branchSourceOptions = computed(
     <UModal v-model:open="showCreateModal" :title="t('branches.createTitle')">
       <template #body>
         <div class="space-y-4">
-          <UFormField :label="t('branches.name')" required>
-            <UInput v-model="newBranchName" :placeholder="t('branches.namePlaceholder')" icon="i-lucide-git-branch" />
+          <UFormField :label="t('branches.name')" name="name" required class="mb-4">
+            <UInput
+              v-model="newBranchName"
+              :placeholder="t('branches.namePlaceholder')"
+              icon="i-lucide-git-branch"
+              autofocus
+              data-tour="branch-name-input"
+            />
           </UFormField>
 
           <UFormField :label="t('branches.from')">

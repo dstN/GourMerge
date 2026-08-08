@@ -32,7 +32,17 @@ const { data: requests, pending } = useFetch<GourmergeRequestListItem[]>(
 )
 
 useSeoMeta({
-  title: () => (recipe.value ? `${t('gourmergeRequest.titlePlural')} — ${recipe.value.title}` : 'GourMerge'),
+  title: () => (recipe.value ? `${t('gourmergeRequest.titlePlural')}: ${recipe.value.title}` : 'GourMerge'),
+})
+
+// ── Tour Automation ───────────────────────────────────────────
+const tour = useProductTour()
+const onboarding = useOnboarding()
+
+onMounted(() => {
+  if (onboarding.isDone.value && !onboarding.hasCompletedTour('gmr')) {
+    tour.start('gmr', recipeUrl.value)
+  }
 })
 </script>
 
@@ -57,8 +67,9 @@ useSeoMeta({
 
     <!-- Status filter — a toggle row (DESIGNBOOK §2). Colour comes from the
          shared GMR_STATUS_COLOR map so it matches the badge on each row and on
-         the detail page. -->
-    <div class="flex flex-wrap gap-2 mb-4">
+         the detail page. Also the gmr-page tour anchor: always present, unlike
+         the request list below it, which is empty on a brand-new recipe. -->
+    <div class="flex flex-wrap gap-2 mb-4" data-tour="gmr-page">
       <UButton
         v-for="s in ['open', 'closed', 'merged']"
         :key="s"

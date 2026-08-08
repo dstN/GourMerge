@@ -1,15 +1,9 @@
 /**
- * GourMerge — Drizzle ORM Database Schema (MySQL 8.4)
+ * Git-like versioning model: recipes are repositories, branches are pointers to head
+ * commits, commits are ingredient/step snapshots, forks reference their original, and
+ * GourMerge Requests propose merging changes between branches.
  *
- * This schema implements the Git-like versioning model for recipes:
- * - Recipes = Repositories
- * - Branches = Lightweight pointers to head commits
- * - Commits = Snapshots of recipe state (ingredients + steps)
- * - Forks = Recipe copies with a reference to the original
- * - GourMerge Requests = Proposals to merge changes between branches
- *
- * ⚠️ WORDING RULE: The term "Pull Request" is FORBIDDEN.
- *    Use "GourMerge Request" / "gourmerge_request" exclusively.
+ * Naming rule: never "Pull Request" — always "GourMerge Request" / "gourmerge_request".
  */
 
 import {
@@ -60,6 +54,15 @@ export const users = mysqlTable('users', {
   onboardingCompletedAt: datetime('onboarding_completed_at'),
   /** True if the user clicked "Don't show again" on the tour offer. */
   tourDismissed: boolean('tour_dismissed').notNull().default(false),
+  /**
+   * Set when the user finishes the full interactive tour (all steps including
+   * fork + delete). Only resettable by the user clicking "Onboarding neu
+   * starten" in the help menu. Controls visibility of the system tour recipe:
+   * users who have finished the tour no longer see it in explore.
+   */
+  hasFinishedTour: boolean('has_finished_tour').notNull().default(false),
+  /** JSON array of sub-tour names the user has completed (e.g. ['branches', 'gmr']) */
+  completedTours: json('completed_tours').$type<string[]>(),
   /**
    * Set when the account was erased under Art. 17. The row deliberately
    * SURVIVES: four FKs into `users` are NOT NULL and RESTRICT

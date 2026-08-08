@@ -8,6 +8,8 @@ declare module '#auth-utils' {
   interface User {
     onboardingCompletedAt?: string | null
     tourDismissed?: boolean
+    hasFinishedTour?: boolean
+    completedTours?: string[] | null
   }
 }
 
@@ -24,6 +26,12 @@ export function useOnboarding() {
       return !!user.value.onboardingCompletedAt || !!user.value.tourDismissed
     }
     return !!cookie.value
+  })
+
+  /** True if the user finished the full interactive tour (all steps including fork + delete). */
+  const hasFinishedTour = computed(() => {
+    if (loggedIn.value && user.value) return !!user.value.hasFinishedTour
+    return false
   })
 
   const tourDismissed = computed(() => (loggedIn.value ? !!user.value?.tourDismissed : !!cookie.value))
@@ -48,15 +56,63 @@ export function useOnboarding() {
     }
   }
 
+  /** Mark the tour as fully completed — controls system recipe visibility. */
+  async function finishTour() {
+    cookie.value = true
+    if (loggedIn.value) {
+      await $fetch('/api/users/me', {
+        method: 'PATCH',
+        body: { tourDismissed: true, hasFinishedTour: true },
+      }).catch(() => {})
+    }
+  }
+
   async function resetOnboarding() {
     cookie.value = false
     if (loggedIn.value) {
       await $fetch('/api/users/me', {
         method: 'PATCH',
-        body: { onboardingCompletedAt: null, tourDismissed: false },
+        body: { onboardingCompletedAt: null, tourDismissed: false, hasFinishedTour: false },
       }).catch(() => {})
     }
   }
 
-  return { isDone, tourDismissed, completeOnboarding, dismissTour, resetOnboarding }
+  const completedTours = computed(() => {
+    if (loggedIn.value && user.value && user.value.completedTours) {
+      return user.value.completedTours
+    }
+    // Fallback to local storage for guests? For now, guests don't see sub-tours.
+    return []
+  })
+
+  function hasCompletedTour(tourName: string): boolean {
+    return completedTours.value.includes(tourName)
+  }
+
+  async function markTourCompleted(tourName: string) {
+    if (!loggedIn.value || hasCompletedTour(tourName)) return
+
+    // Optimistically update the session
+    if (user.value) {
+      user.value.completedTours = [...(user.value.completedTours || []), tourName]
+    }
+
+    await $fetch('/api/users/me', {
+      method: 'PATCH',
+      body: { completedTours: user.value?.completedTours || [tourName] },
+    }).catch(() => {})
+  }
+
+  return {
+    isDone,
+    hasFinishedTour,
+    tourDismissed,
+    completedTours,
+    completeOnboarding,
+    dismissTour,
+    finishTour,
+    resetOnboarding,
+    hasCompletedTour,
+    markTourCompleted,
+  }
 }

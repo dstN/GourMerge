@@ -41,6 +41,18 @@ export default defineEventHandler(async (event) => {
   const db = useDrizzle()
   if (!db) throw createError({ statusCode: 503, statusMessage: 'Database unavailable.' })
 
+  // ── Block reserved slugs ────────────────────────────────────────
+  // `system` owns the tour recipe; `ghost` inherits attribution from deleted
+  // accounts. Neither is loginable, but the username is also the URL slug
+  // (`/system/…`), so claiming it would let someone impersonate the platform.
+  const RESERVED_USERNAMES = ['system', 'ghost']
+  if (RESERVED_USERNAMES.includes(username.toLowerCase())) {
+    throw createError({
+      statusCode: 409,
+      statusMessage: 'A user with this email or username already exists',
+    })
+  }
+
   // ── Check for existing user ─────────────────────────────────
   const existing = await db
     .select({ id: users.id })
@@ -70,18 +82,8 @@ export default defineEventHandler(async (event) => {
 
   if (!inserted) throw createError({ statusCode: 500, statusMessage: 'Insert failed.' })
 
-  /**
-   * ── Verification mail ───────────────────────────────────────
-   * Best-effort on purpose. The account row is already committed, so throwing here
-   * would answer 500 to a signup that in fact succeeded — the user would be told it
-   * failed, retry, and hit the 409 for their own brand-new account. A dead SMTP host
-   * must not do that. The resend button on the unverified banner is the recovery path,
-   * and the failure is loud in the log.
-   *
-   * `preferredLocale` is left to the column default here rather than passed: the row
-   * was just inserted with it, and re-reading only to choose a mail language is not
-   * worth the round trip. Users change it in settings afterwards.
-   */
+  // ── Verification mail: best-effort — the account is already committed, so a dead
+  // SMTP host must not 500 a signup that in fact succeeded; resend via the unverified banner.
   try {
     await issueEmailVerification({ id: inserted.id, email })
   } catch (err) {
