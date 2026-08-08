@@ -1,11 +1,6 @@
-/**
- * The final step of every successful login, in one place.
- *
- * Two callers reach it: the password-only path (`/auth/login`) and the second-factor
- * path (`/auth/login-2fa`). Keeping it here means the session shape and — critically
- * — the `last_login_at` write cannot drift between them. Forgetting the timestamp on
- * one path would let an active 2FA user drift toward inactivity deletion.
- */
+// Shared by both login paths (password-only and 2FA) so the session shape and the
+// last_login_at write can't drift between them — missing it on one path would let an
+// active 2FA user drift toward inactivity deletion.
 import type { H3Event } from 'h3'
 import { eq } from 'drizzle-orm'
 import { users } from '~~/server/database/schema'
@@ -21,6 +16,23 @@ interface LoginUser {
 }
 
 export async function completeLogin(event: H3Event, user: LoginUser): Promise<void> {
+  const db = useDrizzle()
+
+  // Onboarding state lives in the session (useOnboarding/useProductTour read it client-side),
+  // so login — the one place every session starts fresh — must read it from the DB here.
+  const [onboarding] = db
+    ? await db
+        .select({
+          onboardingCompletedAt: users.onboardingCompletedAt,
+          tourDismissed: users.tourDismissed,
+          hasFinishedTour: users.hasFinishedTour,
+          completedTours: users.completedTours,
+        })
+        .from(users)
+        .where(eq(users.id, user.id))
+        .limit(1)
+    : []
+
   await setUserSession(event, {
     user: {
       id: user.id,
@@ -28,16 +40,13 @@ export async function completeLogin(event: H3Event, user: LoginUser): Promise<vo
       displayName: user.displayName,
       email: user.email,
       avatarUrl: user.avatarUrl,
-      /**
-       * Carried in the session so the unverified banner needs no extra request on
-       * every authenticated page. The row is already being read here.
-       *
-       * It goes stale in exactly one case — the user verifies in a browser that is
-       * not this one — which `/auth/verify` handles for the common case and a
-       * re-login fixes for the rest. The server never trusts this value: every gate
-       * goes through `requireVerifiedUser`, which re-reads the column.
-       */
+      // Session copy avoids an extra request per page for the unverified banner; never trusted
+      // server-side — every gate re-reads the column via requireVerifiedUser.
       emailVerified: Boolean(user.emailVerifiedAt),
+      onboardingCompletedAt: onboarding?.onboardingCompletedAt?.toISOString() ?? null,
+      tourDismissed: onboarding?.tourDismissed ?? false,
+      hasFinishedTour: onboarding?.hasFinishedTour ?? false,
+      completedTours: onboarding?.completedTours ?? null,
     },
     loggedInAt: new Date().toISOString(),
     emailVerificationRequired: isEmailVerificationRequired(),
@@ -46,18 +55,10 @@ export async function completeLogin(event: H3Event, user: LoginUser): Promise<vo
     },
   })
 
-  const db = useDrizzle()
   if (!db) return
 
-  /**
-   * Stamp the inactivity clock and clear any pending warnings.
-   *
-   * A login is the ONLY thing that resets this — a warning email deliberately does
-   * not, or the notice would keep extending the very retention period it is warning
-   * about. Clearing the three notice columns means a user who returns after the
-   * 6-month warning starts a clean 3-year cycle and will be warned again from
-   * scratch if they go quiet once more.
-   */
+  // Only a login resets the inactivity clock — a warning email must not, or it would keep
+  // extending the retention period it's warning about.
   await db
     .update(users)
     .set({

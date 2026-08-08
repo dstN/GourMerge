@@ -13,6 +13,8 @@ const updateSchema = z.object({
   preferredMeasurementSystem: z.enum(['metric', 'imperial']).optional(),
   onboardingCompletedAt: z.string().datetime().optional().nullable(),
   tourDismissed: z.boolean().optional(),
+  hasFinishedTour: z.boolean().optional(),
+  completedTours: z.array(z.string()).optional(),
 })
 
 export default defineEventHandler(async (event) => {
@@ -44,12 +46,32 @@ export default defineEventHandler(async (event) => {
       : undefined
   }
   if (result.data.tourDismissed !== undefined) updates.tourDismissed = result.data.tourDismissed
+  if (result.data.hasFinishedTour !== undefined) updates.hasFinishedTour = result.data.hasFinishedTour
+  if (result.data.completedTours !== undefined) updates.completedTours = result.data.completedTours
 
   if (Object.keys(updates).length === 0) {
     return { success: true }
   }
 
   await db.update(users).set(updates).where(eq(users.id, session.user.id))
+
+  // useUserSession() reads the session cookie, not the DB row — must update it here too, or
+  // these fields stay stale until re-login. Spreads `session` (not just `user`): setUserSession
+  // replaces rather than deep-merges, so passing only `user` would drop `loggedInAt`.
+  await setUserSession(event, {
+    ...session,
+    user: {
+      ...session.user,
+      ...(result.data.displayName !== undefined && { displayName: result.data.displayName }),
+      ...(result.data.onboardingCompletedAt !== undefined && {
+        onboardingCompletedAt: result.data.onboardingCompletedAt,
+      }),
+      ...(result.data.tourDismissed !== undefined && { tourDismissed: result.data.tourDismissed }),
+      ...(result.data.hasFinishedTour !== undefined && { hasFinishedTour: result.data.hasFinishedTour }),
+      ...(result.data.completedTours !== undefined && { completedTours: result.data.completedTours }),
+      ...(result.data.avatarUrl !== undefined && { avatarUrl: result.data.avatarUrl }),
+    },
+  })
 
   return { success: true }
 })
