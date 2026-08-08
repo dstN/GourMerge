@@ -157,7 +157,14 @@ export default defineNuxtConfig({
       ],
     },
     workbox: {
-      // NO `navigateFallback`. It was `'/'`, and that threw on every navigation:
+      // `navigateFallback: null`, and it has to be the literal key, not just an absent one.
+      // Omitting the key was the first attempt and it did NOT work: `@vite-pwa/nuxt` fills in
+      // its OWN default — `nuxt.options.app.baseURL ?? '/'` — for any workbox config that
+      // doesn't already have a `navigateFallback` property (see
+      // `@vite-pwa/nuxt/dist/shared/nuxt.*.mjs`, `configurePWAOptions`:
+      // `if (!('navigateFallback' in options.workbox)) options.workbox.navigateFallback = ... ?? '/'`).
+      // So the key coming back out of the merge was `'/'` again regardless, and the generated
+      // sw.js kept registering:
       //
       //   Uncaught (in promise) non-precached-url: non-precached-url :: [{"url":"/"}]
       //     at Y.createHandlerBoundToURL (workbox-*.js)
@@ -171,11 +178,21 @@ export default defineNuxtConfig({
       // worse than none: it produced a console error for every visitor while delivering
       // exactly zero offline capability.
       //
-      // Removing it costs nothing that worked. Offline navigation was never functioning; asset
-      // and API caching below are unaffected, since they are runtime caching and do not touch
-      // the precache. Doing this properly needs a real precached shell — a prerendered
-      // `/offline` route added via `additionalManifestEntries` and pointed at here — which is
-      // a feature, not a one-line config fix. Recorded in ROADMAP.
+      // `null`, not `false`: `workbox-build`'s schema validates `navigateFallback` as
+      // `null | string` and rejects a boolean outright (`WorkboxConfigError:
+      // [GenerateSW.navigateFallback] 'navigateFallback' property type must be null,string.`).
+      // `null` both satisfies that schema and is falsy, so `workbox-build`'s sw-template still
+      // skips the `NavigationRoute`/`createHandlerBoundToURL` block (`<% if (navigateFallback)
+      // %>`), and the explicit key satisfies the module's `'navigateFallback' in
+      // options.workbox` check, so its own default-injection never fires either. Verified
+      // against the built `.output/public/sw.js` — no `NavigationRoute` call in the output.
+      //
+      // Costs nothing that worked: offline navigation was never functioning; asset and API
+      // caching below are unaffected, since they are runtime caching and do not touch the
+      // precache. Doing this properly needs a real precached shell — a prerendered `/offline`
+      // route added via `additionalManifestEntries` and pointed at here — which is a feature,
+      // not a one-line config fix. Recorded in ROADMAP.
+      navigateFallback: null,
       globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
       runtimeCaching: [
         {

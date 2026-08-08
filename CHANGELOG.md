@@ -192,7 +192,7 @@ CPU throttling inside the FCP path is likely a net loss, on top of adding 28 KB 
 response and removing the file's caching entirely. Critical-CSS extraction is the correct
 form of that idea and needs a dedicated extractor.
 
-### Fixed — the service worker threw on every navigation
+### Fixed — the service worker threw on every navigation, twice
 
 ```
 Uncaught (in promise) non-precached-url: non-precached-url :: [{"url":"/"}]
@@ -201,9 +201,13 @@ Uncaught (in promise) non-precached-url: non-precached-url :: [{"url":"/"}]
 `navigateFallback: '/'` names a URL Workbox serves **from the precache** when a navigation
 cannot be fetched, so that URL has to be in the precache manifest. The manifest comes from
 `globPatterns` matching files on disk, and this app is server-rendered — there is no
-`index.html` for `/`, so the entry could never exist. Removing it costs nothing that worked:
-it delivered a console error for every visitor and zero offline capability. Runtime caching
-for assets and the recipe API never involved the precache and is untouched.
+`index.html` for `/`, so the entry could never exist. The first attempt removed the config
+key entirely, which turned out not to remove anything: `@vite-pwa/nuxt` fills in its own
+`navigateFallback` default — `'/'`, again — for any workbox config that doesn't already have
+the key, so the built `sw.js` kept the exact same broken registration. The actual fix is
+`navigateFallback: null`, which the module's own "is this key present" check accepts as
+present, and which Workbox's template treats as falsy and skips entirely. Runtime caching for
+assets and the recipe API never involved the precache and is untouched either way.
 
 ### Fixed — icons called a third party on every page render
 
