@@ -4,9 +4,11 @@
  * A tour step anchors to a `data-tour="<id>"` element that lives on a specific
  * route. '@recipe' resolves to another user's public recipe (so the Fork button has
  * somewhere to point); '@demo' resolves to the recipe the visitor creates through the
- * real `/recipes/new` form during the tour itself — see `TourOverlay`'s route watcher.
- * The overlay handles navigation, polling for the anchor, viewport clamping and
- * auto-skipping steps whose anchor never appears — so the tour never dead-ends.
+ * real `/recipes/new` form during the `recipe-form-title` step — the tour stays visible
+ * and anchored to that form (not hidden) while they fill it in, and `TourOverlay`'s
+ * route watcher picks the tour back up once they submit it. The overlay handles
+ * navigation, polling for the anchor, viewport clamping and auto-skipping steps whose
+ * anchor never appears — so the tour never dead-ends.
  */
 
 export interface TourStep {
@@ -18,12 +20,14 @@ export interface TourStep {
   descKey: string
   placement?: 'top' | 'bottom' | 'left' | 'right'
   /**
-   * Overrides the panel's "Weiter" label AND its action — see `TourOverlay.handleNext()`.
-   * Only `new-recipe-btn` sets this: without it, "Weiter" is indistinguishable from every
-   * other step's "just move on", which is exactly what visitors do here out of habit, and
-   * doing so must not silently skip creating the demo recipe the rest of the tour depends on.
+   * Hides the panel's "Weiter"/"Fertig" button — only `Zurück` and abandoning the tour
+   * outright stay available. Set on `recipe-form-title`: that step's entire point is
+   * getting the visitor to submit the REAL create-recipe form, and a "Weiter" that just
+   * calls `next()` would be a one-click way to skip past it, leaving `star-button` /
+   * `history-link` / `gourmerge-requests-link` (`route: '@demo'`) with nothing to point at —
+   * the exact dead end this whole rework exists to avoid.
    */
-  nextLabelKey?: string
+  hideNext?: boolean
 }
 
 const DEFAULT_STEPS: TourStep[] = [
@@ -40,7 +44,21 @@ const DEFAULT_STEPS: TourStep[] = [
     titleKey: 'tour.step.newRecipe.title',
     descKey: 'tour.step.newRecipe.desc',
     placement: 'bottom',
-    nextLabelKey: 'recipe.createButton',
+  },
+  // Anchors on the REAL create-recipe form's title field — this is the "with the user"
+  // part: the tour stays put and visible while they actually fill it in, rather than
+  // vanishing at the door and picking back up only once they emerge. No `route: '@demo'`
+  // involved yet because there is no recipe to point at until they submit. `recipes/new.vue`
+  // reads `tour.active` directly (not a `?tour=1` query) to default visibility to private —
+  // reactive and already true by the time ANY path reaches this page, regardless of
+  // whether the visitor clicked "Weiter" or the highlighted link directly.
+  {
+    id: 'recipe-form-title',
+    route: '/recipes/new',
+    titleKey: 'tour.step.recipeForm.title',
+    descKey: 'tour.step.recipeForm.desc',
+    placement: 'top',
+    hideNext: true,
   },
   {
     id: 'star-button',
@@ -114,8 +132,8 @@ export function useProductTour(steps: TourStep[] = DEFAULT_STEPS) {
 
   /**
    * Records the recipe the visitor just created through the real `/recipes/new` form
-   * while the `new-recipe-btn` step was active — see `TourOverlay`'s route watcher, which
-   * is what calls this. Deliberately not a background API call that fabricates one:
+   * while the `recipe-form-title` step was active — see `TourOverlay`'s route watcher,
+   * which is what calls this. Deliberately not a background API call that fabricates one:
    * onboarding is supposed to teach recipe creation, not fake it.
    */
   function setDemoRecipe(recipe: { id: number; url: string }) {

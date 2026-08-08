@@ -18,31 +18,36 @@ const panelStyle = ref<Record<string, string>>({ top: '50%', left: '50%', transf
 const ready = ref(false)
 
 /**
- * The `new-recipe-btn` step doesn't drive navigation itself — its anchor is the real
- * "+ Neues Rezept" button, a plain link to `/recipes/new`. Once the visitor follows it, the
- * overlay has to get out of the way: the fixed backdrop below captures every click on the
- * page (that's what makes it dismiss the tour), which would otherwise sit on top of the
- * create-recipe form and make it unusable. Suspended for exactly the two routes that step
- * can lead to — not simply "not on /dashboard" — so an ordinary step-to-step navigation
- * elsewhere never loses its dimmed backdrop by accident.
+ * `recipe-form-title` anchors on the real create-recipe form and stays visible WHILE the
+ * visitor fills it in — that is the point, versus vanishing at the door and reappearing
+ * only once they emerge. The one gap that still needs covering is the transition moment:
+ * once they submit, `recipes/new.vue` redirects to `/<owner>/<slug>/edit`, and the panel
+ * would otherwise flash there too — still anchored to a submit button that page doesn't
+ * have — for the brief window before the route watcher below advances the step. Suspended
+ * for exactly that one transitional route, not "not on /recipes/new", so the guided form
+ * step itself stays visible.
  */
 const suspended = computed(() => {
-  if (tour.currentStep.value?.id !== 'new-recipe-btn') return false
-  if (route.path === '/recipes/new') return true
+  if (tour.currentStep.value?.id !== 'recipe-form-title') return false
   const editMatch = route.path.match(/^\/([^/]+)\/[^/]+\/edit$/)
   return !!editMatch && editMatch[1] === user.value?.username
 })
 
 /**
- * `new-recipe-btn` is the one step where the visitor needs to click something real on the
- * page underneath, not just read the panel and press "Weiter" — and `.tour-highlight`'s
- * `z-index: 200` only wins within its own stacking context, which on this page is lower
- * than the backdrop's: it never actually rises above `z-[199]` fixed over the whole
- * viewport. Rather than fight z-index across contexts, the backdrop simply stops capturing
- * clicks for this one step, so the highlighted "+ Neues Rezept" button underneath is
- * reachable. Click-to-dismiss is still available via the panel's own "Tour überspringen".
+ * Two steps need real clicks to reach the page underneath, not just "read the panel and
+ * press Weiter": `new-recipe-btn`'s highlighted "+ Neues Rezept" link (clicking it directly
+ * is the whole point of the parity watcher below) and `recipe-form-title`, where the visitor
+ * fills in several real fields (title, description, servings…) and — since that step is
+ * `hideNext: true` — MUST use the real submit button to proceed. The fixed backdrop below
+ * normally captures every click (that's what makes it dismiss the tour on click), which
+ * would otherwise sit on top of either page and make it unusable. `.tour-highlight`'s
+ * `z-index: 200` alone doesn't rescue this: it only wins within its own stacking context,
+ * which on these pages is lower than the backdrop's `z-[199]` fixed over the whole
+ * viewport. Click-to-dismiss is still available via the panel's own "Tour überspringen".
  */
-const backdropInteractive = computed(() => tour.currentStep.value?.id !== 'new-recipe-btn')
+const backdropInteractive = computed(
+  () => !['new-recipe-btn', 'recipe-form-title'].includes(tour.currentStep.value?.id ?? '')
+)
 
 let runToken = 0
 
@@ -115,8 +120,8 @@ function positionPanel(anchor: HTMLElement, placement?: 'top' | 'bottom' | 'left
  * as the tour failing outright, and showing the identical "nothing to show you" toast either
  * way is indistinguishable from a fix that changed nothing — which is exactly how it was
  * reported back. Any OTHER step landing here (defensive: only reachable today if a visitor
- * abandons `new-recipe-btn` by navigating away without submitting) still gets the generic
- * early-end wording.
+ * abandons `recipe-form-title` by navigating away without submitting it) still gets the
+ * generic early-end wording.
  */
 function finishEarly(step: TourStep) {
   tour.finish()
@@ -142,7 +147,7 @@ async function showStep() {
    * A `@recipe`/`@demo` step with no resolved target is not "the anchor hasn't loaded
    * yet" — it is known, right now, to be unreachable: `@recipe` already tried
    * `resolveOtherRecipe()` and found nobody else's public recipe to fork, and `@demo` means
-   * the visitor skipped past `new-recipe-btn` without creating one. The ORIGINAL code
+   * the visitor abandoned `recipe-form-title` without submitting it. The ORIGINAL code
    * called `waitForEl` on the CURRENT page for an anchor from a page it never navigated to,
    * waited out the full 2500ms timeout, then repeated that for every remaining such step —
    * with the panel hidden (`ready` stays false) and only the dimmed backdrop visible the
@@ -195,6 +200,24 @@ watch(
 )
 
 /**
+ * `new-recipe-btn`'s anchor is a plain link, not something `showStep()` drives — the
+ * visitor can reach `/recipes/new` either via the panel's "Weiter" (which already calls
+ * `tour.next()` normally, since `recipe-form-title`'s own route IS `/recipes/new`) OR by
+ * clicking the highlighted "+ Neues Rezept" button directly, bypassing `tour.next()`
+ * entirely. Without this, the second path leaves `currentIndex` on `new-recipe-btn` while
+ * the visitor is actually looking at the form: `suspended`/`backdropInteractive` (both
+ * keyed on `recipe-form-title`) wouldn't recognise the state, so the backdrop would keep
+ * blocking clicks on a form the visitor is trying to fill in. Advancing the step here
+ * unifies both paths onto the same state.
+ */
+watch(
+  () => route.path,
+  (path) => {
+    if (tour.currentStep.value?.id === 'new-recipe-btn' && path === '/recipes/new') tour.next()
+  }
+)
+
+/**
  * Watches for the arrival that only a successful save on `/recipes/new` produces
  * (`recipes/new.vue` redirects to `/<owner>/<slug>/edit`), and hands that recipe to the
  * tour as the target for the remaining steps. Scoped to the visitor's OWN username so it
@@ -204,7 +227,7 @@ watch(
 watch(
   () => route.path,
   async (path) => {
-    if (!tour.active.value || tour.currentStep.value?.id !== 'new-recipe-btn') return
+    if (!tour.active.value || tour.currentStep.value?.id !== 'recipe-form-title') return
     if (tour.demoRecipeUrl.value) return
     const match = path.match(/^\/([^/]+)\/([^/]+)\/edit$/)
     if (!match) return
@@ -215,28 +238,10 @@ watch(
       tour.setDemoRecipe({ id: recipe.id, url: `/${username}/${slug}` })
       tour.next()
     } catch {
-      // Lookup failed — leave the step alone; the visitor can still press "Weiter".
+      // Lookup failed — leave the step alone; the visitor is still looking at the form.
     }
   }
 )
-
-/**
- * On every other step, "Weiter" just moves on — nothing depends on it. On `new-recipe-btn`
- * it must NOT be a synonym for "skip creating a recipe": visitors click "Weiter" out of
- * habit from the five other steps, and `tour.next()` would silently walk them past
- * star/history/GMR (`@demo`, no target yet) straight to whatever fork resolves to — which,
- * on an install with nobody else's public recipe yet, is the exact "no recipe available"
- * ending this whole rework exists to avoid. So this button leads to the same place the
- * highlighted "+ Neues Rezept" link does; `TourOverlay`'s route watcher picks the tour back
- * up once the visitor actually saves one.
- */
-async function handleNext() {
-  if (tour.currentStep.value?.id === 'new-recipe-btn') {
-    await navigateTo('/recipes/new?tour=1')
-    return
-  }
-  tour.next()
-}
 
 function onResize() {
   const step = tour.currentStep.value
@@ -256,7 +261,7 @@ onBeforeUnmount(() => {
   <Teleport to="body">
     <Transition name="tour">
       <div v-if="tour.active.value && tour.currentStep.value && !suspended">
-        <!-- Dimmed backdrop (click to dismiss, except while new-recipe-btn needs a real click through to the page) -->
+        <!-- Dimmed backdrop (click to dismiss, except while recipe-form-title needs real clicks through to the form) -->
         <div
           class="fixed inset-0 z-[199] bg-black/40"
           :class="backdropInteractive ? '' : 'pointer-events-none'"
@@ -274,7 +279,7 @@ onBeforeUnmount(() => {
           <OnboardingTourStep
             :step="tour.currentStep.value"
             :progress="tour.progress.value"
-            @next="handleNext"
+            @next="tour.next"
             @prev="tour.prev"
             @skip="tour.skip"
           />

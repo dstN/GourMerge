@@ -9,7 +9,7 @@ definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 
 const { t } = useI18n()
 const { apiError } = useApiError()
-const route = useRoute()
+const tour = useProductTour()
 
 useSeoMeta({
   title: `${t('nav.newRecipe')} — GourMerge`,
@@ -58,14 +58,18 @@ const state = reactive<Partial<Schema>>({
   prepTimeMinutes: undefined,
   cookTimeMinutes: undefined,
   difficulty: 'medium',
-  // Arriving via `?tour=1` (the onboarding tour's "new-recipe-btn" step) defaults to
-  // private rather than the usual public: publishing publicly requires a verified email
-  // (`requireVerifiedUser` in `POST /api/recipes`), and a visitor taking the tour right
-  // after registering has not clicked that link yet — the tour would otherwise 403 on
-  // exactly the step it invited them to try. Private also just fits a recipe the tour is
-  // going to delete again once it ends (see `useProductTour.cleanupDemoRecipe`) better
-  // than public does. Only the initial value; the select below still lets them pick public.
-  visibility: route.query.tour === '1' ? 'private' : 'public',
+  // `tour.active`, not a `?tour=1` query: it's a shared reactive singleton that is
+  // already `true` by the time this page mounts, however the visitor got here (the
+  // panel's "Weiter" or the highlighted link directly — see `TourOverlay`'s route
+  // watchers), unlike a query param which would only be present on ONE of those paths.
+  // Defaults to private rather than the usual public: publishing publicly requires a
+  // verified email (`requireVerifiedUser` in `POST /api/recipes`), and a visitor taking
+  // the tour right after registering has not clicked that link yet — the tour would
+  // otherwise 403 on exactly the step it invited them to try. Private also just fits a
+  // recipe the tour is going to delete again once it ends (`useProductTour.
+  // cleanupDemoRecipe`) better than public does. Only the initial value; the select
+  // below still lets them pick public.
+  visibility: tour.active.value ? 'private' : 'public',
 })
 
 const difficultyOptions = computed(() => [
@@ -106,7 +110,12 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         <UAlert v-if="error" color="error" icon="i-lucide-alert-circle" :title="error" />
 
         <UFormField :label="t('recipe.title')" name="title" required>
-          <UInput v-model="state.title" :placeholder="t('recipe.titlePlaceholder')" icon="i-lucide-chef-hat" />
+          <UInput
+            v-model="state.title"
+            :placeholder="t('recipe.titlePlaceholder')"
+            icon="i-lucide-chef-hat"
+            data-tour="recipe-form-title"
+          />
         </UFormField>
 
         <UFormField :label="t('recipe.description')" name="description">
@@ -156,6 +165,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           size="lg"
           block
           :loading="loading"
+          data-tour="recipe-form-submit"
         />
       </UForm>
     </UCard>

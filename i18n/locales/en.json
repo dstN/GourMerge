@@ -444,7 +444,11 @@
       },
       "newRecipe": {
         "title": "Create a Recipe",
-        "desc": "Create your first recipe now — the tour continues from there and deletes it again once it ends."
+        "desc": "Click \"+ New Recipe\" to create your first recipe."
+      },
+      "recipeForm": {
+        "title": "Fill In Your Recipe",
+        "desc": "Give your recipe a title and click \"Create Recipe\" below — the tour continues automatically from there. It gets deleted again once the tour ends."
       },
       "fork": {
         "title": "Remix It",

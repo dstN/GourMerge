@@ -444,7 +444,11 @@
       },
       "newRecipe": {
         "title": "Crea una ricetta",
-        "desc": "Crea ora la tua prima ricetta — il tour continua da lì e la elimina di nuovo alla fine."
+        "desc": "Clicca su «+ Nuova ricetta» per creare la tua prima ricetta."
+      },
+      "recipeForm": {
+        "title": "Compila la tua ricetta",
+        "desc": "Dai un titolo alla tua ricetta e clicca su «Crea ricetta» qui sotto — il tour continuerà automaticamente da lì. Verrà eliminata di nuovo alla fine del tour."
       },
       "fork": {
         "title": "Remixa",

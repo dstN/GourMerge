@@ -444,7 +444,11 @@
       },
       "newRecipe": {
         "title": "Rezept erstellen",
-        "desc": "Lege jetzt dein erstes Rezept an — die Tour macht danach direkt damit weiter und löscht es am Ende wieder."
+        "desc": "Klicke auf „+ Neues Rezept“, um dein erstes Rezept anzulegen."
+      },
+      "recipeForm": {
+        "title": "Rezept ausfüllen",
+        "desc": "Gib deinem Rezept einen Titel und klicke unten auf „Rezept erstellen“ — die Tour macht danach automatisch weiter. Es wird am Ende wieder gelöscht."
       },
       "fork": {
         "title": "Remix starten",

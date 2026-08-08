@@ -2,36 +2,35 @@ import { test, expect, type Page } from '@playwright/test'
 import { registerUser, createRecipe, uniqueUser } from './support/api'
 
 /**
- * Reported three times over: "stuck on step 2, 'weiter' does nothing" → fixed into
- * "the tour just ends where a sample recipe should be shown, that's not a fix" → fixed into
- * demo-recipe creation, and STILL "literally nothing changed, still get the no-recipe
- * message." The third report was right, and the bug was almost embarrassingly simple: the
- * `new-recipe-btn` step's "Weiter" button — the one button every visitor had just clicked
- * through five other times — still only called `tour.next()`. It never created anything; it
- * just advanced the index, and since `star-button`/`history-link`/`gourmerge-requests-link`
- * (`route: '@demo'`) had no target either, that one click cascaded silently all the way to
- * `fork-button`, landing on the exact same "no recipe available" toast as before ANY of this
- * rework — indistinguishable from it having done nothing at all, because for a visitor who
- * clicks "Weiter" out of habit (which is everyone), it hadn't.
+ * Reported four times over: "stuck on step 2, 'weiter' does nothing" → fixed into "the tour
+ * just ends where a sample recipe should be shown, that's not a fix" → fixed into demo-recipe
+ * creation → "literally nothing changed, still get the no-recipe message" (the panel's own
+ * "Weiter" button still just called `tour.next()` without creating anything) → fixed into
+ * `TourOverlay.handleNext()` sending "Weiter" through the real form too → "even after creating
+ * the recipe" the same toast, AND "you didn't fix the recipe creation process, still have to
+ * go through it without help."
  *
- * The fix: `new-recipe-btn` overrides the panel's next action (`TourOverlay.handleNext()`)
- * to navigate to the real `/recipes/new` form instead of advancing the tour index — so
- * "Weiter" and the highlighted "+ Neues Rezept" link now lead to the same place, and there
- * is no button on this step that skips creating a recipe short of abandoning the tour
- * entirely ("Tour überspringen"). `TourOverlay`'s `route.path` watcher picks the tour back
- * up once the visitor actually saves the form. Only `fork-button` (`route: '@recipe'`, last)
- * still needs someone ELSE's public recipe — forking your own brand-new recipe makes no
- * sense — and still degrades gracefully when none exists.
+ * That last report was right, and it was a real design gap, not a data-availability one like
+ * the toast wording: `suspended` hid the ENTIRE tour overlay — panel included — the moment the
+ * visitor reached `/recipes/new`, so they could interact with the real form, but also got zero
+ * guidance while doing it. "The tour creates a recipe together with the user" cannot mean
+ * "the tour vanishes at the door."
  *
- * That degradation is where the SAME "nothing changed" report landed a fourth time: with
- * zero other public recipes on the install (true of production at the time — recipe
- * publishing had only just been fixed), `fork-button` is unreachable for literally every
- * visitor, every time, regardless of whether create/star/history/GMR all worked. It showed
- * the identical `tour.endedEarly` toast either way, so a visitor who had just watched the
- * first five steps work could not tell that apart from the original all-or-nothing failure.
- * `finishEarly()` now checks WHICH step it's finishing early on: `fork-button` specifically
- * gets a distinct, positive `tour.finishedNoFork` toast, since reaching it unreachable means
- * everything before it already succeeded.
+ * The actual fix: `recipe-form-title` is now a real step, anchored on the title field of the
+ * REAL `/recipes/new` form, `hideNext: true` (no "Weiter" to skip past it — only "Zurück" and
+ * abandoning the tour outright stay available), with the backdrop made click-through
+ * (`backdropInteractive`) so the rest of the form is still usable underneath. Two paths lead
+ * there — the panel's "Weiter" on `new-recipe-btn` (plain `tour.next()` now; `recipe-form-
+ * title`'s own route IS `/recipes/new`) and the highlighted "+ Neues Rezept" link clicked
+ * directly, which bypasses `tour.next()` entirely — so a second `route.path` watcher advances
+ * the step for the second path too. `recipes/new.vue` reads `tour.active` directly (not a
+ * `?tour=1` query, which would only have been present on ONE of those two paths) to default
+ * visibility to private. `TourOverlay`'s other `route.path` watcher then picks the tour back
+ * up once the visitor actually submits the form, same as before. Only `fork-button`
+ * (`route: '@recipe'`, always last) still needs someone ELSE's public recipe — forking your
+ * own brand-new recipe makes no sense — and degrades gracefully (a distinct, positive
+ * `tour.finishedNoFork` toast, not the generic early-end one) when none exists, which is the
+ * production-realistic case right after publishing itself was fixed.
  */
 
 /** Dismisses the welcome modal and walks through `explore-search` to land on `new-recipe-btn`. */
@@ -53,21 +52,51 @@ async function startTourAtNewRecipeStep(page: Page) {
   await page.waitForURL(/\/dashboard/, { timeout: 8000 })
 }
 
+/** Walks through `recipe-form-title`, filling and submitting the real form. */
+async function createDemoRecipe(page: Page, title: string) {
+  await page.getByLabel(/titel|title/i).waitFor({ timeout: 8000 })
+  await expect(page.locator('[data-tour="recipe-form-title"].tour-highlight')).toBeVisible({ timeout: 8000 })
+  // hideNext: true — there is no "Weiter" to accidentally click past this step with.
+  await expect(page.getByRole('button', { name: /weiter|next/i })).toHaveCount(0)
+
+  await page.getByLabel(/titel|title/i).fill(title)
+  await page.locator('[data-tour="recipe-form-submit"]').click()
+  await page.waitForURL(/\/[^/]+\/[^/]+\/edit$/, { timeout: 8000 })
+  return new URL(page.url()).pathname.split('/').slice(1, 3)
+}
+
 test.describe('onboarding tour', () => {
-  test('"Weiter" on new-recipe-btn leads to the real form, not past it', async ({ page }) => {
+  test('"Weiter" on new-recipe-btn leads to a GUIDED form, not a silent one', async ({ page }) => {
     const request = page.context().request
     await registerUser(request)
     await startTourAtNewRecipeStep(page)
 
-    // The regression itself: this button used to just call tour.next(). Its label changes
-    // on this one step (`nextLabelKey`) precisely because its ACTION changes too.
-    await page.getByRole('button', { name: /rezept erstellen|create recipe/i }).click()
-    await expect(page).toHaveURL(/\/recipes\/new\?tour=1/, { timeout: 8000 })
+    await page.getByRole('button', { name: /weiter|next/i }).click()
+    await expect(page).toHaveURL(/\/recipes\/new$/, { timeout: 8000 })
 
-    // Not a dead end either: the tour overlay gets out of the way (`suspended`) so the real
-    // form underneath is actually usable, not buried under the dimmed backdrop.
-    await expect(page.locator('.fixed.inset-0.bg-black\\/40')).toHaveCount(0)
-    await expect(page.getByLabel(/titel|title/i)).toBeVisible()
+    // Not a dead end, and not silent either: the backdrop lets clicks through to the real
+    // form (`backdropInteractive`), but the panel itself stays up, anchored to the title
+    // field, actually guiding the visitor rather than vanishing at the door.
+    await expect(page.locator('[data-tour="recipe-form-title"].tour-highlight')).toBeVisible({ timeout: 8000 })
+    await expect(page.getByRole('button', { name: /weiter|next/i })).toHaveCount(0)
+    await page.getByLabel(/titel|title/i).fill('should be typeable')
+    await expect(page.getByLabel(/titel|title/i)).toHaveValue('should be typeable')
+  })
+
+  test('clicking the highlighted link directly reaches the same guided step', async ({ page }) => {
+    // The regression: this path bypasses tour.next() entirely (it's a plain link click),
+    // so without TourOverlay's second route watcher the tour's step index would stay on
+    // new-recipe-btn while the visitor is already looking at the form.
+    const request = page.context().request
+    await registerUser(request)
+    await startTourAtNewRecipeStep(page)
+
+    await page.locator('[data-tour="new-recipe-btn"]').click()
+    await expect(page).toHaveURL(/\/recipes\/new$/, { timeout: 8000 })
+    await expect(page.locator('[data-tour="recipe-form-title"].tour-highlight')).toBeVisible({ timeout: 8000 })
+    // The backdrop must not still be blocking the form underneath.
+    await page.getByLabel(/titel|title/i).fill('reachable')
+    await expect(page.getByLabel(/titel|title/i)).toHaveValue('reachable')
   })
 
   test('creates a recipe together with the visitor, then deletes it once the tour ends', async ({ page }) => {
@@ -80,20 +109,8 @@ test.describe('onboarding tour', () => {
     await page.route('**/api/recipes/explore*', (route) => route.fulfill({ json: { recipes: [] } }))
     await startTourAtNewRecipeStep(page)
 
-    await page.getByRole('button', { name: /rezept erstellen|create recipe/i }).click()
-    await page.waitForURL(/\/recipes\/new\?tour=1/, { timeout: 8000 })
-    // The panel/backdrop sit in a `<Transition>` with a 200ms CSS fade, so `suspended`
-    // flipping true doesn't remove them from the DOM instantly — waiting this out (rather
-    // than proceeding immediately) is what keeps the next line's "Rezept erstellen" query
-    // from matching both the fading-out panel button and the form's real submit button.
-    await expect(page.locator('.fixed.inset-0.bg-black\\/40')).toHaveCount(0)
-
-    await page.getByLabel(/titel|title/i).fill('Tour Onboarding Recipe')
-    await page.getByRole('button', { name: /rezept erstellen|create recipe/i }).click()
-
-    // The form's own success redirect is what `TourOverlay`'s watcher is waiting for.
-    await page.waitForURL(/\/[^/]+\/[^/]+\/edit$/, { timeout: 8000 })
-    const [demoUsername, demoSlug] = new URL(page.url()).pathname.split('/').slice(1, 3)
+    await page.getByRole('button', { name: /weiter|next/i }).click()
+    const [demoUsername, demoSlug] = await createDemoRecipe(page, 'Tour Onboarding Recipe')
 
     // Resumes on its own — no extra click — on the recipe just created, view page (not
     // edit), with star-button highlighted.
@@ -138,14 +155,8 @@ test.describe('onboarding tour', () => {
     await registerUser(page.context().request) // the viewer — different account, so Fork shows
     await startTourAtNewRecipeStep(page)
 
-    await page.getByRole('button', { name: /rezept erstellen|create recipe/i }).click()
-    await page.waitForURL(/\/recipes\/new\?tour=1/, { timeout: 8000 })
-    // See the note in the previous test — waits out the panel's leave-transition before
-    // the form is touched, so the submit click below can't race it.
-    await expect(page.locator('.fixed.inset-0.bg-black\\/40')).toHaveCount(0)
-    await page.getByLabel(/titel|title/i).fill('Tour Fork Path Recipe')
-    await page.getByRole('button', { name: /rezept erstellen|create recipe/i }).click()
-    await page.waitForURL(/\/[^/]+\/[^/]+\/edit$/, { timeout: 8000 })
+    await page.getByRole('button', { name: /weiter|next/i }).click()
+    await createDemoRecipe(page, 'Tour Fork Path Recipe')
 
     await expect(page.locator('[data-tour="star-button"].tour-highlight')).toBeVisible({ timeout: 8000 })
     await page.getByRole('button', { name: /weiter|next/i }).click() // history-link

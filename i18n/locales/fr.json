@@ -444,7 +444,11 @@
       },
       "newRecipe": {
         "title": "Créer une recette",
-        "desc": "Créez votre première recette maintenant — la visite continue ensuite et la supprime à la fin."
+        "desc": "Cliquez sur « + Nouvelle recette » pour créer votre première recette."
+      },
+      "recipeForm": {
+        "title": "Remplissez votre recette",
+        "desc": "Donnez un titre à votre recette et cliquez sur « Créer la recette » ci-dessous — la visite continue ensuite automatiquement. Elle sera supprimée à la fin de la visite."
       },
       "fork": {
         "title": "Remixer",

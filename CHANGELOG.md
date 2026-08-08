@@ -31,7 +31,7 @@ rewrites a _static literal_ `to` — the same class of bug already fixed once in
 `localePath()`; the dropdown didn't need it, once reading `LinkProps` showed Nuxt UI already
 renders those items through `ULink`, which auto-localises on its own.
 
-### Fixed — the onboarding tour looked stuck on step 2, forever, then just gave up, then still did nothing, then still looked like nothing changed
+### Fixed — the onboarding tour looked stuck on step 2, forever, then just gave up, then still did nothing, then still looked like nothing changed, then left visitors to fill in the form alone
 
 It wasn't stuck; it was silent. Four of the six tour steps anchored on a demo recipe,
 resolved once at tour start. When no recipe was available to demo on — no public recipe
@@ -81,7 +81,29 @@ the original all-or-nothing failure. `finishEarly()` now checks which step it's 
 `fork-button` specifically — which, given the step order above, is the only one `isLast`
 can ever be true for anymore — gets a distinct, positive "tour complete, forking needs
 someone else's public recipe" toast instead of the generic early-end one. The generic wording
-is kept for the (now-defensive-only) case of a visitor abandoning `new-recipe-btn` mid-form.
+is kept for the (now-defensive-only) case of a visitor abandoning the create-recipe form
+mid-fill.
+
+Still not the end of it: "you didn't fix the recipe creation process, still have to go
+through it without help." That one was a real design gap, not a data-availability story
+like the toast wording — `suspended` hid the ENTIRE tour overlay, panel included, the
+instant the visitor reached `/recipes/new`, so the real form was usable but the tour gave
+zero guidance while they filled it in. "The tour creates a recipe together with the user"
+cannot mean "the tour vanishes at the door."
+
+The form itself is now a real step (`recipe-form-title`), anchored on the title field,
+staying visible and guiding the visitor while they fill the form in — `hideNext: true`
+removes the "Weiter" button entirely for this one step, so there is no click that skips
+past it short of abandoning the tour outright. Reaching it turned out to have two paths:
+the panel's "Weiter" on the preceding step (a normal `tour.next()` now — no override
+needed, since the next step's own route IS the form) and the highlighted "+ Neues Rezept"
+link clicked directly, which bypasses `tour.next()` entirely. Only the first path was
+covered before; a second `route.path` watcher now advances the step for the direct-click
+path too. The create-recipe form reads the tour's own reactive `active` flag directly to
+default visibility to private, rather than a `?tour=1` query that only the "Weiter" path
+would have carried consistently — which also let the dashboard button go back to a plain
+static `to`, since a dynamic one would not have been auto-localised by `@nuxtjs/i18n` (the
+same class of bug already fixed once elsewhere in this codebase).
 
 ### Added — change your account's email address
 
