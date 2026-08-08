@@ -4,18 +4,43 @@ import { registerUser, uniqueUser, createRecipe, createIngredient, commitSnapsho
 /**
  * Copying the ingredient list to the clipboard.
  *
- * Asserted by reading the clipboard back, not by checking that a toast appeared: a button
- * that shows "copied" while writing nothing is the failure mode worth catching, and it is
- * exactly what a toast-only assertion would miss.
+ * Two independent causes were stacked behind one symptom (`readText()` polling to an empty
+ * string): the real Clipboard API additionally requires the document to be focused, which
+ * this suite could not reliably arrange in GitHub Actions specifically — granting
+ * `clipboard-read`/`clipboard-write`, running the file `serial`, and `page.bringToFront()`
+ * right before the click (all three still present in git history) still left `writeText()`
+ * failing 3/3 retries across several unrelated commits, while passing locally every time.
+ * Asserted here against a STUBBED `navigator.clipboard` instead, which sidesteps that
+ * OS-integration layer entirely while still exercising the thing worth catching — a copy
+ * button that fires but writes nothing or writes the wrong thing. `copyIngredients()` in
+ * `[slug]/index.vue` still calls the genuine `navigator.clipboard.writeText(text)`, just
+ * against an implementation this file controls.
+ *
+ * The stub alone was NOT sufficient, which is how the second cause surfaced: reproduced
+ * locally, stub and all, at roughly 1-in-3 — clicking the button as soon as it exists in the
+ * SSR-rendered DOM races Vue's hydration, which is what actually attaches the `@click`
+ * handler. `waitUntil: 'load'` and the button's own `.waitFor()` both only prove the markup
+ * exists, not that hydration has reached it. `__vnode` on `#__nuxt` is this suite's existing
+ * signal for "hydration has actually happened" (see tour.spec.ts, journey.spec.ts); this file
+ * just wasn't using it. CI's shared, slower runners hit that window far more often than a
+ * local machine does, which is why "passes locally every time" and "fails 3/3 in CI" were
+ * both true at once.
  */
-test.use({ permissions: ['clipboard-read', 'clipboard-write'] })
-
-/**
- * Serial, and not by preference: `clipboard.writeText` only resolves for a focused
- * document, and pages in parallel workers contend for focus. Run in parallel these tests
- * fail with an empty clipboard — a property of the harness, not of the feature.
- */
-test.describe.configure({ mode: 'serial' })
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => {
+    let stored = ''
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: {
+        writeText: (text: string) => {
+          stored = text
+          return Promise.resolve()
+        },
+        readText: () => Promise.resolve(stored),
+      },
+    })
+  })
+})
 
 test('the ingredient list reaches the clipboard as a shopping list', async ({ page, request }) => {
   const user = uniqueUser('copy')
@@ -37,10 +62,17 @@ test('the ingredient list reaches the clipboard as a shopping list', async ({ pa
   })
 
   await page.goto(`/${recipe.owner.username}/${recipe.slug}`, { waitUntil: 'load' })
+  // `waitUntil: 'load'` and even the button's own `waitFor()` below only prove the
+  // SSR-rendered DOM exists — not that Vue has hydrated and wired up its `@click` handler
+  // yet. Clicking before that point is indistinguishable from clicking nothing: the
+  // handler simply isn't attached. `__vnode` on `#__nuxt` is this suite's existing signal
+  // for "hydration has actually happened" (see tour.spec.ts, journey.spec.ts).
+  await page
+    .waitForFunction(() => !!(document.querySelector('#__nuxt') as unknown as { __vnode?: unknown })?.__vnode, null, {
+      timeout: 30_000,
+    })
+    .catch(() => {})
   await page.locator('[data-test="copy-ingredients"]').waitFor({ timeout: 20_000 })
-  // `clipboard.writeText` requires the document to be focused, and a page in a parallel
-  // worker may not be — which fails the write, not the feature.
-  await page.bringToFront()
   await page.locator('[data-test="copy-ingredients"]').click()
 
   // Poll the clipboard rather than the button label or a fixed delay: the write is async,
@@ -49,8 +81,9 @@ test('the ingredient list reaches the clipboard as a shopping list', async ({ pa
     .poll(async () => (await page.evaluate(() => navigator.clipboard.readText())).length, { timeout: 15_000 })
     .toBeGreaterThan(0)
 
-  // Chromium normalises line endings to CRLF on Windows, so split tolerantly instead of
-  // asserting against a platform-specific separator.
+  // Tolerant split rather than asserting a specific separator — the stub above stores
+  // exactly what `buildShoppingList()` produces, but there is no reason to couple this test
+  // to that function's internal line-ending choice.
   const raw = await page.evaluate(() => navigator.clipboard.readText())
   const text = raw.split(/\r\n|\r|\n/).join('\n')
   console.log(
