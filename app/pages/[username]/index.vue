@@ -5,6 +5,7 @@ definePageMeta({ middleware: ['validate-recipe-route', 'shell'] })
 
 const { t } = useI18n()
 const route = useRoute()
+const { loggedIn } = useUserSession()
 
 const username = computed(() => route.params.username as string)
 
@@ -85,6 +86,16 @@ useSeoMeta({
           size="sm"
           to="/settings"
         />
+        <CommonReportButton v-else-if="loggedIn" v-slot="{ open }" target-kind="user" :target-id="profile.user.id">
+          <UButton
+            :label="t('report.user')"
+            icon="i-lucide-flag"
+            color="neutral"
+            variant="ghost"
+            size="sm"
+            @click="open"
+          />
+        </CommonReportButton>
       </div>
 
       <UTabs

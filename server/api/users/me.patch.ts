@@ -35,6 +35,8 @@ export default defineEventHandler(async (event) => {
     })
   }
 
+  await useRateLimit(`user:update:${session.user.id}`, { max: 60, windowSeconds: 600 })
+
   const db = useDrizzle()
   if (!db) throw createError({ statusCode: 503, statusMessage: 'Database unavailable.' })
   const updates: Partial<typeof users.$inferInsert> = {}

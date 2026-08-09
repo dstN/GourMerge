@@ -6,7 +6,7 @@
  * recipe. Replies go with the thread via `ON DELETE CASCADE`.
  */
 import { and, eq } from 'drizzle-orm'
-import { recipeDiscussions } from '~~/server/database/schema'
+import { recipeDiscussionComments, recipeDiscussions } from '~~/server/database/schema'
 
 export default defineEventHandler(async (event) => {
   const session = await requireUserSession(event)
@@ -33,6 +33,20 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 403, statusMessage: 'Not allowed' })
   }
 
+  await useRateLimit(`discussion:delete:${session.user.id}`, { max: 20, windowSeconds: 600 })
+
+  // Gathered before the delete below cascades them away — reports address a comment by
+  // its own id, so there is nothing left to find them by afterwards.
+  const commentIds = (
+    await db
+      .select({ id: recipeDiscussionComments.id })
+      .from(recipeDiscussionComments)
+      .where(eq(recipeDiscussionComments.discussionId, thread.id))
+  ).map((c) => c.id)
+
   await db.delete(recipeDiscussions).where(eq(recipeDiscussions.id, thread.id))
+
+  await Promise.all(commentIds.map((commentId) => closeReportsForTarget(db, 'discussion_comment', commentId)))
+
   return { success: true }
 })

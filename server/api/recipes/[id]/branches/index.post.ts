@@ -46,6 +46,8 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 403, statusMessage: 'Forbidden' })
   }
 
+  await useRateLimit(`recipe:branch:${session.user.id}`, { max: 20, windowSeconds: 600 })
+
   // ── Check branch name doesn't already exist ────────────────
   const [existingBranch] = await db
     .select({ id: recipeBranches.id })

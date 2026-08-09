@@ -19,6 +19,8 @@ import { userAvatars, users } from '~~/server/database/schema'
 export default defineEventHandler(async (event) => {
   const session = await requireUserSession(event)
 
+  await useRateLimit(`user:avatar-delete:${session.user.id}`, { max: 10, windowSeconds: 600 })
+
   const db = useDrizzle()
   if (!db) throw createError({ statusCode: 503, statusMessage: 'Database unavailable.' })
 

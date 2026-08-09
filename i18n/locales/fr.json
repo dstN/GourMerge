@@ -108,6 +108,8 @@
   "dashboard": {
     "welcome": "Bienvenue, {name} !",
     "subtitle": "Voici un aperçu de vos recettes.",
+    "recentlyEdited": "Modifiées récemment",
+    "reportsTitle": "{n} de vos contenus ont été signalés",
     "emptyTitle": "Aucune recette",
     "emptyDescription": "Créez votre première recette et commencez votre aventure culinaire.",
     "createFirst": "Créer une première recette",
@@ -207,6 +209,8 @@
     "nutritionOptionalHint": "Sans valeur énergétique, cet ingrédient ne compte pas dans les totaux de la recette — il est signalé comme manquant.",
     "nutritionSourceUser": "Source : saisie personnelle",
     "ingredientCreated": "Ingrédient créé.",
+    "editIngredientTitle": "Modifier l’ingrédient",
+    "ingredientUpdated": "Ingrédient mis à jour.",
     "copyIngredients": "Copier les ingrédients",
     "shareIngredients": "Partager les ingrédients",
     "ingredientsCopied": "Liste de courses copiée.",
@@ -237,7 +241,45 @@
     "help": "Aide",
     "or": "ou",
     "create": "Créer",
-    "view": "Voir"
+    "view": "Voir",
+    "optional": "facultatif"
+  },
+  "report": {
+    "title": "Signaler",
+    "reasonLabel": "Motif",
+    "reason": {
+      "spam": "Spam",
+      "inappropriate": "Contenu inapproprié",
+      "copyright": "Violation de droits d’auteur",
+      "harassment": "Harcèlement",
+      "incorrect_data": "Données incorrectes",
+      "other": "Autre"
+    },
+    "noteLabel": "Détails supplémentaires",
+    "notePlaceholder": "Tout ce qui peut nous aider à comprendre le problème",
+    "submit": "Envoyer le signalement",
+    "success": "Merci — ceci a été signalé.",
+    "alreadyReported": "Vous avez déjà signalé ceci.",
+    "error": "Impossible d’envoyer le signalement.",
+    "recipe": "Signaler la recette",
+    "image": "Signaler la photo",
+    "user": "Signaler l’utilisateur",
+    "comment": "Signaler le commentaire"
+  },
+  "admin": {
+    "reports": {
+      "title": "Signalements",
+      "statusOpen": "Ouverts",
+      "statusActioned": "Traités",
+      "statusDismissed": "Rejetés",
+      "emptyTitle": "Rien ici.",
+      "forbiddenTitle": "Accès administrateur requis",
+      "forbiddenDescription": "Cette page n’est visible que par les administrateurs.",
+      "reportedBy": "Signalé par {username}",
+      "dismiss": "Rejeter",
+      "markActioned": "Marquer comme traité",
+      "updated": "Signalement mis à jour."
+    }
   },
   "diff": {
     "title": "Modifications",

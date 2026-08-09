@@ -12,43 +12,23 @@ import { z } from 'zod'
 import { sql } from 'drizzle-orm'
 import { ingredients, ingredientNutrition } from '~~/server/database/schema'
 
-/**
- * Exactly the six fields `server/utils/nutrition.ts` consumes — no more. Offering the
- * other twenty columns would be asking users to hand-type data nothing reads.
- *
- * Accepted as strings because the column type is DECIMAL: going through a JS float would
- * quietly round values on the way in.
- */
-const decimal = z
-  .union([z.string(), z.number()])
-  .transform((v) => String(v).replace(',', '.'))
-  .refine((v) => v === '' || (!Number.isNaN(Number(v)) && Number(v) >= 0 && Number(v) <= 100000), {
-    message: 'must be a non-negative number',
-  })
-  .transform((v) => (v === '' ? null : v))
-  .nullable()
-  .optional()
-
-const nutritionSchema = z.object({
-  energyKcal100g: decimal,
-  protein100g: decimal,
-  carbs100g: decimal,
-  fat100g: decimal,
-  fiber100g: decimal,
-  saturatedFat100g: decimal,
-})
-
 const createIngredientSchema = z.object({
   name: z.string().min(1).max(200).trim(),
   /** Optional initial translations, e.g. { de: "Mehl", en: "Flour" } */
   nameTranslations: z.record(z.string(), z.string()).optional(),
   category: z.string().max(100).optional(),
   /** Optional per-100 g values, stored with `source: 'user'`. */
-  nutrition: nutritionSchema.optional(),
+  nutrition: ingredientNutritionSchema.optional(),
 })
 
 export default defineEventHandler(async (event) => {
-  await requireUserSession(event)
+  const session = await requireUserSession(event)
+
+  // Every write here lands in the GLOBAL catalog every other user's autocomplete then
+  // reads — unlike a recipe or a comment, this is not the caller's own content to spam.
+  // Generous enough for genuine recipe authoring (a handful of new ingredients per
+  // recipe), tight enough that a script cannot flood the catalog.
+  await useRateLimit(`ingredient:create:${session.user.id}`, { max: 20, windowSeconds: 600 })
 
   const body = await readBody(event)
   const result = createIngredientSchema.safeParse(body)
@@ -81,13 +61,16 @@ export default defineEventHandler(async (event) => {
     return { ...existing, created: false }
   }
 
-  // Create new ingredient
+  // Create new ingredient. `createdBy` is what makes it editable/reportable later
+  // (see the `ingredients.created_by` comment in schema.ts) — the Swiss BLV import
+  // never sets it, so this is the one clean "did a user make this row" signal.
   const [created] = await db
     .insert(ingredients)
     .values({
       name: name.trim(),
       nameTranslations: nameTranslations ?? {},
       category: category ?? null,
+      createdBy: session.user.id,
     })
     .$returningId()
 

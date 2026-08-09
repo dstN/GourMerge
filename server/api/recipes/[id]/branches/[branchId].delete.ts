@@ -40,6 +40,8 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Cannot delete the default branch' })
   }
 
+  await useRateLimit(`recipe:branch-delete:${session.user.id}`, { max: 20, windowSeconds: 600 })
+
   // ── Delete (cascades to commits, ingredients, steps) ───────
   await db.delete(recipeBranches).where(eq(recipeBranches.id, branchId))
 

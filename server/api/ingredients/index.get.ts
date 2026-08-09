@@ -31,6 +31,10 @@ export default defineEventHandler(async (event) => {
   const db = useDrizzle()
   if (!db) throw createError({ statusCode: 503, statusMessage: 'Database unavailable.' })
 
+  // Escaped once, used everywhere below — a `%`/`_` in `q` should match itself, not act as
+  // a wildcard the caller never asked for (see likeEscape.ts).
+  const qLike = `${escapeLikePattern(q)}%`
+
   const rows = await db
     .select({
       id: ingredients.id,
@@ -49,15 +53,15 @@ export default defineEventHandler(async (event) => {
     .leftJoin(ingredientNutrition, sql`${ingredientNutrition.ingredientId} = ${ingredients.id}`)
     .where(
       or(
-        like(ingredients.name, `${q}%`),
+        like(ingredients.name, qLike),
         // Match any locale name in nameTranslations JSON
-        sql`JSON_UNQUOTE(JSON_EXTRACT(${ingredients.nameTranslations}, ${`$.${locale}`})) LIKE ${`${q}%`}`,
-        sql`JSON_UNQUOTE(JSON_EXTRACT(${ingredients.nameTranslations}, '$.de')) LIKE ${`${q}%`}`,
-        sql`JSON_UNQUOTE(JSON_EXTRACT(${ingredients.nameTranslations}, '$.en')) LIKE ${`${q}%`}`,
-        sql`JSON_UNQUOTE(JSON_EXTRACT(${ingredients.nameTranslations}, '$.fr')) LIKE ${`${q}%`}`,
-        sql`JSON_UNQUOTE(JSON_EXTRACT(${ingredients.nameTranslations}, '$.it')) LIKE ${`${q}%`}`,
+        sql`JSON_UNQUOTE(JSON_EXTRACT(${ingredients.nameTranslations}, ${`$.${locale}`})) LIKE ${qLike}`,
+        sql`JSON_UNQUOTE(JSON_EXTRACT(${ingredients.nameTranslations}, '$.de')) LIKE ${qLike}`,
+        sql`JSON_UNQUOTE(JSON_EXTRACT(${ingredients.nameTranslations}, '$.en')) LIKE ${qLike}`,
+        sql`JSON_UNQUOTE(JSON_EXTRACT(${ingredients.nameTranslations}, '$.fr')) LIKE ${qLike}`,
+        sql`JSON_UNQUOTE(JSON_EXTRACT(${ingredients.nameTranslations}, '$.it')) LIKE ${qLike}`,
         // Match synonyms for the current locale
-        sql`JSON_SEARCH(${ingredients.synonyms}, 'one', ${`${q}%`}, NULL, ${`$.${locale}[*]`}) IS NOT NULL`
+        sql`JSON_SEARCH(${ingredients.synonyms}, 'one', ${qLike}, NULL, ${`$.${locale}[*]`}) IS NOT NULL`
       )
     )
     .limit(limit)

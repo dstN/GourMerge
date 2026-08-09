@@ -53,6 +53,8 @@ export default defineEventHandler(async (event) => {
   const isOwner = recipe.ownerId === session.user.id
   if (!isAuthor && !isOwner) throw createError({ statusCode: 403, statusMessage: 'Forbidden' })
 
+  await useRateLimit(`gmr:update:${session.user.id}`, { max: 20, windowSeconds: 600 })
+
   const updates: Record<string, unknown> = {}
 
   if (result.data.status !== undefined) {

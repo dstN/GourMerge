@@ -69,6 +69,8 @@ export default defineEventHandler(async (event) => {
 
   if (!sourceBranch) throw createError({ statusCode: 404, statusMessage: 'Source branch not found' })
 
+  await useRateLimit(`gmr:create:${session.user.id}`, { max: 20, windowSeconds: 600 })
+
   // Cannot open a GourMerge Request from a branch to itself
   if (sourceBranchId === targetBranchId && sourceOwnerRecipeId === targetRecipeId) {
     throw createError({ statusCode: 422, statusMessage: 'Source and target branch cannot be the same' })

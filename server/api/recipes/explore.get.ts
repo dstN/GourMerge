@@ -60,7 +60,9 @@ export default defineEventHandler(async (event) => {
     if (q.length >= 3) {
       conditions.push(sql`MATCH(${recipes.title}, ${recipes.description}) AGAINST (${q} IN NATURAL LANGUAGE MODE)`)
     } else {
-      conditions.push(or(like(recipes.title, `%${q}%`), like(recipes.description, `%${q}%`))!)
+      // Escaped: a `%`/`_` in a 1-2 character query should not turn into a wildcard scan.
+      const qLike = `%${escapeLikePattern(q)}%`
+      conditions.push(or(like(recipes.title, qLike), like(recipes.description, qLike))!)
     }
   }
 
@@ -74,7 +76,14 @@ export default defineEventHandler(async (event) => {
 
   // Tag filter: join recipe_tags + tags
   if (tagFilter) {
-    const [tag] = await db.select({ id: tags.id }).from(tags).where(like(tags.name, tagFilter)).limit(1)
+    // No wildcards are meant to be in play here — `like()` only for case-insensitive
+    // matching via collation — so an unescaped `%`/`_` in the tag name would turn an
+    // exact-ish lookup into "any tag" or "any 5-character tag".
+    const [tag] = await db
+      .select({ id: tags.id })
+      .from(tags)
+      .where(like(tags.name, escapeLikePattern(tagFilter)))
+      .limit(1)
 
     if (!tag) {
       return { recipes: [], total: 0, page, limit }

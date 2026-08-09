@@ -44,6 +44,8 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 422, statusMessage: 'Cannot comment on a closed or merged GourMerge Request' })
   }
 
+  await useRateLimit(`gmr:comment:${session.user.id}`, { max: 30, windowSeconds: 600 })
+
   const [inserted] = await db
     .insert(gourmergeRequestComments)
     .values({

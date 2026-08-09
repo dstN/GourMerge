@@ -24,8 +24,8 @@ A git-like recipe platform. Recipes are repositories — they have branches, com
 | Runtime    | Node 26                                          |
 | Deployment | Netcup Webhosting + Phusion Passenger (Apache)   |
 
-At a glance: **27 pages · 46 API endpoints · 22 tables · 560 i18n keys × 4
-locales · 251 unit tests · 39 Playwright specs · zero axe
+At a glance: **29 pages · 68 API endpoints · 28 tables · 704 i18n keys × 4
+locales · 304 unit tests · 79 Playwright specs · zero axe
 violations · `npm audit` at zero.**
 
 Fonts and icons are self-hosted — no Google Fonts, no Iconify API at runtime, so
@@ -82,7 +82,7 @@ and you cannot author a recipe, which is the core loop.
 
 | Step           | Provides                                                                         |
 | -------------- | -------------------------------------------------------------------------------- |
-| `db:migrate`   | Schema — 10 versioned migrations                                                 |
+| `db:migrate`   | Schema — 16 versioned migrations                                                 |
 | `seed:swiss`   | 1191 foods + per-100g nutrition, DE/EN/FR/IT names, from the committed seed file |
 | `db:seed`      | Curated ingredients absent from the Swiss dataset (e.g. Vanillezucker)           |
 | `db:seed:tags` | Base culinary tags                                                               |
@@ -230,17 +230,20 @@ no support ticket in the loop:
 | Right                   | Flow                                                                                                |
 | ----------------------- | --------------------------------------------------------------------------------------------------- |
 | **Access** (Art. 15/20) | username + email → confirmation email → download link, valid 24 h, also emailed                     |
-| **Erasure** (Art. 17)   | username + email → confirmation email → choose whether recipes are deleted too → account anonymised |
+| **Erasure** (Art. 17)   | username + email → confirmation email → choose whether recipes are deleted too → account hard-deleted |
 
 Two design points worth knowing before touching this code:
 
 - **Ownership is proven by the inbox, not by a session.** Someone locked out of
   their account still holds both rights, so neither flow requires a login.
-- **Erasure anonymises the user row in place; it does not delete it.** Four
+- **Erasure is a real `DELETE` of the user row, not an anonymise-in-place.** Four
   foreign keys into `users` are `NOT NULL` and `RESTRICT`, and a fork copies
-  commits keeping the original `author_id` — so a hard delete would either fail
-  on the constraint or destroy another user's recipe history. This is GitHub's
-  `ghost` behaviour, applied per user.
+  commits keeping the original `author_id` — so a bare delete would either fail
+  on the constraint or destroy another user's recipe history. A shared tombstone
+  `ghost` account inherits that orphaned attribution first, GitHub's pattern
+  applied per user; the departing user's own content is deleted outright, only
+  their fingerprints inside other people's forks and threads survive, reading as
+  the anonymous ghost.
 
 Exports are built per request and streamed; nothing is written to disk.
 

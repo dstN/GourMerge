@@ -108,6 +108,8 @@
   "dashboard": {
     "welcome": "Welcome, {name}!",
     "subtitle": "Here's an overview of your recipes.",
+    "recentlyEdited": "Recently edited",
+    "reportsTitle": "{n} of your things have been reported",
     "emptyTitle": "No Recipes Yet",
     "emptyDescription": "Create your first recipe and start your culinary journey.",
     "createFirst": "Create First Recipe",
@@ -207,6 +209,8 @@
     "nutritionOptionalHint": "Without an energy value this ingredient does not count toward the recipe totals — it is reported as missing instead.",
     "nutritionSourceUser": "Source: self-reported",
     "ingredientCreated": "Ingredient created.",
+    "editIngredientTitle": "Edit ingredient",
+    "ingredientUpdated": "Ingredient updated.",
     "copyIngredients": "Copy ingredients",
     "shareIngredients": "Share ingredients",
     "ingredientsCopied": "Shopping list copied.",
@@ -237,7 +241,45 @@
     "help": "Help",
     "or": "or",
     "create": "Create",
-    "view": "View"
+    "view": "View",
+    "optional": "optional"
+  },
+  "report": {
+    "title": "Report",
+    "reasonLabel": "Reason",
+    "reason": {
+      "spam": "Spam",
+      "inappropriate": "Inappropriate content",
+      "copyright": "Copyright violation",
+      "harassment": "Harassment",
+      "incorrect_data": "Incorrect data",
+      "other": "Other"
+    },
+    "noteLabel": "Additional details",
+    "notePlaceholder": "Anything that helps us understand the issue",
+    "submit": "Submit report",
+    "success": "Thanks — this has been reported.",
+    "alreadyReported": "You already reported this.",
+    "error": "Could not submit the report.",
+    "recipe": "Report recipe",
+    "image": "Report photo",
+    "user": "Report user",
+    "comment": "Report comment"
+  },
+  "admin": {
+    "reports": {
+      "title": "Reports",
+      "statusOpen": "Open",
+      "statusActioned": "Actioned",
+      "statusDismissed": "Dismissed",
+      "emptyTitle": "Nothing here.",
+      "forbiddenTitle": "Admin access required",
+      "forbiddenDescription": "This page is only visible to admins.",
+      "reportedBy": "Reported by {username}",
+      "dismiss": "Dismiss",
+      "markActioned": "Mark actioned",
+      "updated": "Report updated."
+    }
   },
   "diff": {
     "title": "Changes",

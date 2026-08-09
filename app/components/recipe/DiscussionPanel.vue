@@ -351,6 +351,24 @@ function formatDate(value: string): string {
                   :aria-label="t('discussion.deleteReply')"
                   @click="deleteReply(thread.id, reply.id)"
                 />
+                <!-- Reporting is for someone who can't already moderate it directly — the
+                     author and the recipe owner have the stronger delete action above instead. -->
+                <CommonReportButton
+                  v-else-if="loggedIn"
+                  v-slot="{ open }"
+                  target-kind="discussion_comment"
+                  :target-id="reply.id"
+                >
+                  <UButton
+                    icon="i-lucide-flag"
+                    size="xs"
+                    color="neutral"
+                    variant="ghost"
+                    :aria-label="t('report.comment')"
+                    :title="t('report.comment')"
+                    @click="open"
+                  />
+                </CommonReportButton>
               </li>
             </ul>
 

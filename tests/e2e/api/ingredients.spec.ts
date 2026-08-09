@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 import { resetRateLimits } from '../support/db'
-import { registerUser } from '../support/api'
+import { registerUser, uniqueUser } from '../support/api'
 
 /**
  * The master-ingredient API, as the new-ingredient dialog uses it.
@@ -16,12 +16,17 @@ test.beforeEach(async () => {
 
 test('creating an ingredient stores translations, category and nutrition', async ({ request }) => {
   await registerUser(request)
-  const name = `Spec Zutat ${Date.now()}`
+  const suffix = Date.now()
+  const name = `Spec Zutat ${suffix}`
+  // Unique per run, not just `name`: the search endpoint has no ORDER BY and a default
+  // `limit=10`, so a fixed English translation reused across many local test runs
+  // accumulates rows and can push the one just created off the first page.
+  const enName = `Spec ingredient ${suffix}`
 
   const res = await request.post('/api/ingredients', {
     data: {
       name,
-      nameTranslations: { de: name, en: 'Spec ingredient', fr: 'Ingrédient spec', it: 'Ingrediente spec' },
+      nameTranslations: { de: name, en: enName, fr: 'Ingrédient spec', it: 'Ingrediente spec' },
       category: 'baking',
       // `0,5` on purpose: a German decimal comma must not silently become NaN or 5.
       nutrition: { energyKcal100g: '387', fat100g: '0,5', carbs100g: '99.8', protein100g: '0', fiber100g: '0' },
@@ -34,11 +39,11 @@ test('creating an ingredient stores translations, category and nutrition', async
 
   // Findable by its ENGLISH name although the canonical name is German — the entire
   // reason for collecting translations at creation time rather than never.
-  const found = await (await request.get('/api/ingredients?q=Spec%20ingredient&locale=en')).json()
+  const found = await (await request.get(`/api/ingredients?q=${encodeURIComponent(enName)}&locale=en`)).json()
   expect(found.length).toBeGreaterThan(0)
   const hit = found.find((r: { id: number }) => r.id === body.id)
   expect(hit, 'the new ingredient must be searchable by translation').toBeTruthy()
-  expect(hit.localeName).toBe('Spec ingredient')
+  expect(hit.localeName).toBe(enName)
   expect(hit.hasNutrition).toBe(true)
   expect(hit.nutrition.kcal).toBe(387)
   expect(hit.nutrition.fat, 'decimal comma must parse').toBeCloseTo(0.5, 2)
@@ -97,4 +102,84 @@ test('the categories endpoint feeds the picker with existing values', async ({ r
 test('creating an ingredient requires a session', async ({ request }) => {
   const res = await request.post('/api/ingredients', { data: { name: 'Spec anonymous' } })
   expect(res.status()).toBe(401)
+})
+
+/**
+ * Editing: only the creator, never the Swiss BLV rows. `created_by` is the one signal for
+ * this — `ingredient_nutrition.source` almost works but a user ingredient with no nutrition
+ * supplied has no nutrition row to check at all.
+ */
+test.describe('editing', () => {
+  test('the creator can edit name, category and nutrition; GET reflects canEdit', async ({ request }) => {
+    const creator = await registerUser(request)
+    const created = await (
+      await request.post('/api/ingredients', { data: { name: `Spec Edit ${Date.now()}` } })
+    ).json()
+
+    const ownDetail = await (await request.get(`/api/ingredients/${created.id}`)).json()
+    expect(ownDetail.canEdit).toBe(true)
+
+    const patched = await request.patch(`/api/ingredients/${created.id}`, {
+      data: {
+        name: 'Spec Edited Name',
+        nameTranslations: { en: 'Edited' },
+        category: 'condiment',
+        nutrition: { energyKcal100g: '120', protein100g: '3' },
+      },
+    })
+    expect(patched.status()).toBe(200)
+
+    const updated = await (await request.get(`/api/ingredients/${created.id}`)).json()
+    expect(updated.name).toBe('Spec Edited Name')
+    expect(updated.category).toBe('condiment')
+    expect(updated.energyKcal100g).toBe('120.00')
+    expect(creator.username).toBeTruthy()
+  })
+
+  test('clearing the energy value removes the nutrition row rather than zeroing it', async ({ request }) => {
+    await registerUser(request)
+    const created = await (
+      await request.post('/api/ingredients', {
+        data: { name: `Spec Clear ${Date.now()}`, nutrition: { energyKcal100g: '50' } },
+      })
+    ).json()
+    expect(created.hasNutrition).toBe(true)
+
+    await request.patch(`/api/ingredients/${created.id}`, { data: { nutrition: { energyKcal100g: '' } } })
+
+    const after = await (await request.get(`/api/ingredients/${created.id}`)).json()
+    expect(after.energyKcal100g).toBeNull()
+  })
+
+  test('a stranger cannot edit someone else’s ingredient — 404, not 403', async ({ request }) => {
+    await registerUser(request, uniqueUser('ingowner'))
+    const created = await (
+      await request.post('/api/ingredients', { data: { name: `Spec Owned ${Date.now()}` } })
+    ).json()
+
+    await registerUser(request, uniqueUser('ingstranger'))
+    const res = await request.patch(`/api/ingredients/${created.id}`, { data: { name: 'Hijacked' } })
+    expect(res.status()).toBe(404)
+
+    const detail = await (await request.get(`/api/ingredients/${created.id}`)).json()
+    expect(detail.canEdit).toBe(false)
+    expect(detail.name, 'the stranger’s attempt must not have applied').not.toBe('Hijacked')
+  })
+
+  test('a Swiss BLV ingredient (no creator) cannot be edited by anyone', async ({ request }) => {
+    await registerUser(request)
+    // Seeded rows exist without ever going through POST /api/ingredients — found via the
+    // autocomplete rather than assumed to sit at a specific id.
+    const found = await (await request.get('/api/ingredients?q=Karotte&locale=de')).json()
+    const seeded = found[0]
+    expect(seeded, 'the Swiss BLV seed must contain at least one match').toBeTruthy()
+
+    const res = await request.patch(`/api/ingredients/${seeded.id}`, { data: { name: 'Hijacked' } })
+    expect(res.status()).toBe(404)
+  })
+
+  test('editing requires a session', async ({ request }) => {
+    const res = await request.patch('/api/ingredients/1', { data: { name: 'x' } })
+    expect(res.status()).toBe(401)
+  })
 })

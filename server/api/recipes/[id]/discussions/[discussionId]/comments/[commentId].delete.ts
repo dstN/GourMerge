@@ -41,6 +41,9 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 403, statusMessage: 'Not allowed' })
   }
 
+  await useRateLimit(`discussion:comment-delete:${session.user.id}`, { max: 30, windowSeconds: 600 })
+
   await db.delete(recipeDiscussionComments).where(eq(recipeDiscussionComments.id, comment.id))
+  await closeReportsForTarget(db, 'discussion_comment', comment.id)
   return { success: true }
 })

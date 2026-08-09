@@ -127,6 +127,8 @@ export default defineEventHandler(async (event) => {
   if (gmr.status !== 'open')
     throw createError({ statusCode: 422, statusMessage: `Cannot merge a ${gmr.status} GourMerge Request` })
 
+  await useRateLimit(`gmr:merge:${session.user.id}`, { max: 20, windowSeconds: 600 })
+
   // Resolve branches
   const [sourceBranch, targetBranch] = await Promise.all([
     db.select().from(recipeBranches).where(eq(recipeBranches.id, gmr.sourceBranchId)).limit(1),

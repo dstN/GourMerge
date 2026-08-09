@@ -15,7 +15,7 @@ export default defineEventHandler(async (event) => {
     ? await db
         .select({ id: tags.id, name: tags.name, nameTranslations: tags.nameTranslations })
         .from(tags)
-        .where(like(tags.name, `%${String(q).toLowerCase()}%`))
+        .where(like(tags.name, `%${escapeLikePattern(String(q).toLowerCase())}%`))
         .orderBy(asc(tags.name))
         .limit(20)
     : await db

@@ -108,6 +108,14 @@ export const users = mysqlTable('users', {
   isGhost: boolean('is_ghost').notNull().default(false),
 
   /**
+   * Grants access to `/admin/reports` and the report-status endpoints. There is no UI to
+   * set this — it is a direct `UPDATE users SET is_admin = 1` by whoever operates the
+   * database, the same trust boundary as everything else that only an owner with DB access
+   * can do (there is no self-service admin promotion path to leave open).
+   */
+  isAdmin: boolean('is_admin').notNull().default(false),
+
+  /**
    * Last successful login. **This is the clock for inactivity deletion** — not
    * `updated_at`, which is a `timestamp … ON UPDATE CURRENT_TIMESTAMP` and so moves
    * on any write to the row (a locale change, a counter touch), which would make an
@@ -322,6 +330,18 @@ export const ingredients = mysqlTable(
     category: varchar('category', { length: 100 }),
     /** Per-locale synonyms from the Swiss BLV DB Synonyme field: { "de": ["Rüebli", "Möhre"] } */
     synonyms: json('synonyms').notNull().default({}),
+    /**
+     * NULL for every row the Swiss BLV import (or another admin script) seeded; set for a
+     * row created through `POST /api/ingredients`. This is the one clean signal for "may
+     * this row be edited or reported" — `ingredient_nutrition.source` almost works, but a
+     * user-created ingredient with no nutrition supplied has no nutrition row at all, so
+     * there is nothing to check. `SET NULL` on delete rather than the ghost-reassignment
+     * RESTRICT pattern used for recipe/comment authorship: an ingredient is shared
+     * reference data used across other people's recipes, not the deleted account's own
+     * content, so losing the attribution on account deletion is correct, not a gap to
+     * patch — it simply reverts to behaving like the seeded rows do.
+     */
+    createdBy: int('created_by').references(() => users.id, { onDelete: 'set null' }),
     createdAt: datetime('created_at')
       .notNull()
       .default(sql`CURRENT_TIMESTAMP`),
@@ -985,6 +1005,59 @@ export const dataRequests = mysqlTable(
 )
 
 // ═══════════════════════════════════════════════════════════════
+// REPORTS (moderation flags — recipes, users, discussion comments, images, ingredients)
+// ═══════════════════════════════════════════════════════════════
+// Polymorphic on purpose: one row shape covers every reportable kind rather than five
+// near-identical tables. `targetId` is NOT a foreign key — it means a different column in a
+// different table depending on `targetKind` — so every write and read goes through
+// `server/utils/reports.ts`, the one place that knows how to resolve a target and check it
+// is visible to the reporter, rather than five endpoints each re-deriving that logic.
+//
+// v1 moderation per ROADMAP.md: reports are visible to the owner of the reported artefact
+// and to an admin; nothing is auto-hidden. The response is the delete tools that already
+// exist (recipe, discussion, comment, image) — actioning a report is "someone deleted the
+// thing", not a separate workflow, and those handlers close the matching open reports
+// themselves when that happens.
+export const reports = mysqlTable(
+  'reports',
+  {
+    id: int('id').primaryKey().autoincrement(),
+    targetKind: mysqlEnum('target_kind', ['recipe', 'user', 'discussion_comment', 'image', 'ingredient']).notNull(),
+    targetId: int('target_id').notNull(),
+    /**
+     * `CASCADE`, deliberately not the RESTRICT + ghost-reassignment pattern the other
+     * authorship columns use: a report's value is "this was flagged", not "who flagged
+     * it", and ghost-reassigning would risk colliding with the unique constraint below the
+     * moment two now-departed accounts had reported the same target — a real scenario over
+     * a long enough timeline, and not one worth building around for metadata this
+     * disposable. The flagged content itself is untouched; it can always be re-reported.
+     */
+    reporterId: int('reporter_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    reason: mysqlEnum('reason', [
+      'spam',
+      'inappropriate',
+      'copyright',
+      'harassment',
+      'incorrect_data',
+      'other',
+    ]).notNull(),
+    note: text('note'),
+    status: mysqlEnum('status', ['open', 'actioned', 'dismissed']).notNull().default('open'),
+    createdAt: datetime('created_at')
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    // One report per (reporter, target) — resubmitting does not inflate a count.
+    uniqueIndex('uq_reports_reporter_target').on(table.reporterId, table.targetKind, table.targetId),
+    index('idx_reports_target').on(table.targetKind, table.targetId),
+    index('idx_reports_status').on(table.status),
+  ]
+)
+
+// ═══════════════════════════════════════════════════════════════
 // DRIZZLE RELATIONS
 // ═══════════════════════════════════════════════════════════════
 
@@ -998,6 +1071,7 @@ export const usersRelations = relations(users, ({ many }) => ({
 export const ingredientsRelations = relations(ingredients, ({ one, many }) => ({
   nutrition: one(ingredientNutrition, { fields: [ingredients.id], references: [ingredientNutrition.ingredientId] }),
   commitIngredients: many(recipeCommitIngredients),
+  creator: one(users, { fields: [ingredients.createdBy], references: [users.id] }),
 }))
 
 export const ingredientNutritionRelations = relations(ingredientNutrition, ({ one }) => ({
@@ -1088,4 +1162,8 @@ export const recipeTagsRelations = relations(recipeTags, ({ one }) => ({
 export const recipeStarsRelations = relations(recipeStars, ({ one }) => ({
   recipe: one(recipes, { fields: [recipeStars.recipeId], references: [recipes.id] }),
   user: one(users, { fields: [recipeStars.userId], references: [users.id] }),
+}))
+
+export const reportsRelations = relations(reports, ({ one }) => ({
+  reporter: one(users, { fields: [reports.reporterId], references: [users.id] }),
 }))

@@ -62,6 +62,11 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 422, statusMessage: 'Cannot fork your own recipe' })
   }
 
+  // A single call can replay up to MAX_FORK_HISTORY commits plus every ingredient and step
+  // row in them — by far the most expensive write in the app per request, and it had no
+  // limiter at all.
+  await useRateLimit(`recipe:fork:${session.user.id}`, { max: 10, windowSeconds: 3600 })
+
   // ── Resolve fork owner username for response ─────────────────
   const [owner] = await db
     .select({ username: users.username })

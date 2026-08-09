@@ -31,6 +31,8 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: 'Recipe not found' })
   }
 
+  await useRateLimit(`recipe:star:${session.user.id}`, { max: 60, windowSeconds: 600 })
+
   // Check current star state
   const [existing] = await db
     .select({ id: recipeStars.id })

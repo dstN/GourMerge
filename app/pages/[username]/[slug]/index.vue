@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { RecipeDetail, StepTranslations } from '~~/shared/types/recipe'
+import type { DropdownMenuItem } from '@nuxt/ui'
 
 definePageMeta({ middleware: ['validate-recipe-route', 'shell'] })
 
@@ -63,6 +64,7 @@ const {
   data: recipe,
   pending,
   error,
+  refresh,
 } = useFetch<RecipeDetail>(() => `/api/recipes/by-slug/${username.value}/${slug.value}`, {
   headers: useRequestHeaders(['cookie']),
   // `branch` is reactive and part of the key, so switching variant refetches and
@@ -75,6 +77,22 @@ const isOwner = computed(() => recipe.value?.owner?.id === user.value?.id)
 const recipeUrl = computed(() => (recipe.value ? `/${recipe.value.owner.username}/${recipe.value.slug}` : ''))
 
 const openGmrCount = computed(() => recipe.value?.openGmrCount ?? 0)
+
+// ── Ingredient edit (hover affordance in the ingredient list, owner only) ──
+const editingIngredientId = ref<number | null>(null)
+
+// ── Report (overflow menu — see DESIGNBOOK §2.4: not a 7th icon in the row) ──
+const reportRecipeButton = useTemplateRef('reportRecipeButton')
+const reportImageButton = useTemplateRef('reportImageButton')
+const reportMenuItems = computed<DropdownMenuItem[]>(() => {
+  const items: DropdownMenuItem[] = [
+    { label: t('report.recipe'), icon: 'i-lucide-flag', onSelect: () => reportRecipeButton.value?.open() },
+  ]
+  if (recipe.value?.image) {
+    items.push({ label: t('report.image'), icon: 'i-lucide-flag', onSelect: () => reportImageButton.value?.open() })
+  }
+  return items
+})
 
 // ── Ingredients → clipboard / share sheet ────────────────────
 /**
@@ -490,6 +508,33 @@ useHead(() => {
               :to="`${recipeUrl}/edit`"
               data-tour="edit-recipe-btn"
             />
+
+            <!-- Moderation goes in an overflow menu, not a 7th icon in this row —
+                 DESIGNBOOK §2.4 is about not mixing icon-only with labelled siblings, but a
+                 row that already collapses together is still a row a "report" button would
+                 crowd for no benefit to the common case. -->
+            <UDropdownMenu v-if="loggedIn" :items="reportMenuItems">
+              <UButton
+                icon="i-lucide-ellipsis-vertical"
+                size="sm"
+                color="neutral"
+                variant="outline"
+                :aria-label="t('report.title')"
+                :title="t('report.title')"
+              />
+            </UDropdownMenu>
+            <CommonReportButton
+              v-if="recipe"
+              ref="reportRecipeButton"
+              target-kind="recipe"
+              :target-id="recipe.id"
+            />
+            <CommonReportButton
+              v-if="recipe?.image"
+              ref="reportImageButton"
+              target-kind="image"
+              :target-id="recipe.id"
+            />
           </div>
         </div>
 
@@ -650,9 +695,41 @@ useHead(() => {
           <div
             v-for="ing in recipe.currentIngredients"
             :key="ing.id"
-            class="flex flex-col gap-0.5 py-3 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4"
+            class="group flex flex-col gap-0.5 py-3 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4"
           >
-            <span class="font-medium">{{ ing.ingredientName }}</span>
+            <span class="flex items-center gap-1.5 font-medium">
+              {{ ing.ingredientName }}
+              <!-- Revealed on hover, not shown by default: this is moderation, not a
+                   primary action for what is otherwise a plain read-only list. -->
+              <span class="flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
+                <UButton
+                  v-if="ing.canEdit"
+                  icon="i-lucide-pencil"
+                  size="xs"
+                  color="neutral"
+                  variant="ghost"
+                  :aria-label="t('common.edit')"
+                  :title="t('common.edit')"
+                  @click="editingIngredientId = ing.ingredientId"
+                />
+                <CommonReportButton
+                  v-else-if="loggedIn"
+                  v-slot="{ open }"
+                  target-kind="ingredient"
+                  :target-id="ing.ingredientId"
+                >
+                  <UButton
+                    icon="i-lucide-flag"
+                    size="xs"
+                    color="neutral"
+                    variant="ghost"
+                    :aria-label="t('report.title')"
+                    :title="t('report.title')"
+                    @click="open"
+                  />
+                </CommonReportButton>
+              </span>
+            </span>
             <span class="font-mono text-sm text-muted sm:shrink-0 sm:text-right">
               {{ formatQuantity(ing.displayQuantity) }} {{ translateUnit(ing.displayUnit) }}
               <span v-if="ing.notes" class="text-dimmed italic">({{ ing.notes }})</span>
@@ -660,6 +737,14 @@ useHead(() => {
           </div>
         </div>
       </UCard>
+
+      <RecipeEditIngredientModal
+        v-if="editingIngredientId !== null"
+        :open="editingIngredientId !== null"
+        :ingredient-id="editingIngredientId"
+        @update:open="(v) => { if (!v) editingIngredientId = null }"
+        @saved="refresh"
+      />
 
       <!-- Serving suggestion — deliberately between the ingredients and the steps.
            That is the seam where the reader stops asking "what do I need" and starts

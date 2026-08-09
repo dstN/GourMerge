@@ -108,6 +108,8 @@
   "dashboard": {
     "welcome": "Willkommen, {name}!",
     "subtitle": "Hier sind deine Rezepte auf einen Blick.",
+    "recentlyEdited": "Zuletzt bearbeitet",
+    "reportsTitle": "{n} deiner Inhalte wurden gemeldet",
     "emptyTitle": "Noch keine Rezepte",
     "emptyDescription": "Erstelle dein erstes Rezept und starte deine kulinarische Reise.",
     "createFirst": "Erstes Rezept erstellen",
@@ -207,6 +209,8 @@
     "nutritionOptionalHint": "Ohne Energiewert zählt diese Zutat nicht in die Nährwertsumme des Rezepts — sie wird als „fehlend“ gezählt.",
     "nutritionSourceUser": "Quelle: selbst erfasst",
     "ingredientCreated": "Zutat angelegt.",
+    "editIngredientTitle": "Zutat bearbeiten",
+    "ingredientUpdated": "Zutat aktualisiert.",
     "copyIngredients": "Zutaten kopieren",
     "shareIngredients": "Zutaten teilen",
     "ingredientsCopied": "Einkaufsliste kopiert.",
@@ -237,7 +241,45 @@
     "help": "Hilfe",
     "or": "oder",
     "create": "Anlegen",
-    "view": "Ansehen"
+    "view": "Ansehen",
+    "optional": "optional"
+  },
+  "report": {
+    "title": "Melden",
+    "reasonLabel": "Grund",
+    "reason": {
+      "spam": "Spam",
+      "inappropriate": "Unangemessener Inhalt",
+      "copyright": "Urheberrechtsverletzung",
+      "harassment": "Belästigung",
+      "incorrect_data": "Falsche Angaben",
+      "other": "Sonstiges"
+    },
+    "noteLabel": "Weitere Details",
+    "notePlaceholder": "Alles, was uns hilft, das Problem zu verstehen",
+    "submit": "Meldung absenden",
+    "success": "Danke — das wurde gemeldet.",
+    "alreadyReported": "Du hast das bereits gemeldet.",
+    "error": "Meldung konnte nicht gesendet werden.",
+    "recipe": "Rezept melden",
+    "image": "Foto melden",
+    "user": "Nutzer melden",
+    "comment": "Kommentar melden"
+  },
+  "admin": {
+    "reports": {
+      "title": "Meldungen",
+      "statusOpen": "Offen",
+      "statusActioned": "Bearbeitet",
+      "statusDismissed": "Abgelehnt",
+      "emptyTitle": "Hier gibt es nichts.",
+      "forbiddenTitle": "Admin-Zugang erforderlich",
+      "forbiddenDescription": "Diese Seite ist nur für Admins sichtbar.",
+      "reportedBy": "Gemeldet von {username}",
+      "dismiss": "Ablehnen",
+      "markActioned": "Als bearbeitet markieren",
+      "updated": "Meldung aktualisiert."
+    }
   },
   "diff": {
     "title": "Änderungen",

@@ -85,6 +85,9 @@ export interface RecipeDetail {
     displayUnit: DisplayUnit
     notes: string | null
     sortOrder: number
+    /** True only for the viewer who created this ingredient (`ingredients.created_by`) —
+     *  the Swiss BLV catalog is never editable, regardless of who is looking. */
+    canEdit: boolean
   }>
   currentSteps: Array<{
     id: number
@@ -217,5 +220,6 @@ export interface DashboardRecipe {
   starCount: number
   forkCount: number
   createdAt: string
+  updatedAt: string
   owner: { id: number; username: string; displayName: string | null; avatarUrl: string | null }
 }

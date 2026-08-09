@@ -108,6 +108,8 @@
   "dashboard": {
     "welcome": "Benvenuto, {name}!",
     "subtitle": "Ecco una panoramica delle tue ricette.",
+    "recentlyEdited": "Modificate di recente",
+    "reportsTitle": "{n} dei tuoi contenuti sono stati segnalati",
     "emptyTitle": "Nessuna ricetta",
     "emptyDescription": "Crea la tua prima ricetta e inizia il tuo viaggio culinario.",
     "createFirst": "Crea la prima ricetta",
@@ -207,6 +209,8 @@
     "nutritionOptionalHint": "Senza un valore energetico questo ingrediente non conta nei totali della ricetta — viene segnalato come mancante.",
     "nutritionSourceUser": "Fonte: inserita da te",
     "ingredientCreated": "Ingrediente creato.",
+    "editIngredientTitle": "Modifica ingrediente",
+    "ingredientUpdated": "Ingrediente aggiornato.",
     "copyIngredients": "Copia ingredienti",
     "shareIngredients": "Condividi ingredienti",
     "ingredientsCopied": "Lista della spesa copiata.",
@@ -237,7 +241,45 @@
     "help": "Aiuto",
     "or": "oppure",
     "create": "Crea",
-    "view": "Visualizza"
+    "view": "Visualizza",
+    "optional": "facoltativo"
+  },
+  "report": {
+    "title": "Segnala",
+    "reasonLabel": "Motivo",
+    "reason": {
+      "spam": "Spam",
+      "inappropriate": "Contenuto inappropriato",
+      "copyright": "Violazione del copyright",
+      "harassment": "Molestie",
+      "incorrect_data": "Dati errati",
+      "other": "Altro"
+    },
+    "noteLabel": "Dettagli aggiuntivi",
+    "notePlaceholder": "Qualsiasi cosa che ci aiuti a capire il problema",
+    "submit": "Invia segnalazione",
+    "success": "Grazie — è stato segnalato.",
+    "alreadyReported": "Hai già segnalato questo elemento.",
+    "error": "Impossibile inviare la segnalazione.",
+    "recipe": "Segnala ricetta",
+    "image": "Segnala foto",
+    "user": "Segnala utente",
+    "comment": "Segnala commento"
+  },
+  "admin": {
+    "reports": {
+      "title": "Segnalazioni",
+      "statusOpen": "Aperte",
+      "statusActioned": "Gestite",
+      "statusDismissed": "Respinte",
+      "emptyTitle": "Non c’è nulla qui.",
+      "forbiddenTitle": "Accesso amministratore richiesto",
+      "forbiddenDescription": "Questa pagina è visibile solo agli amministratori.",
+      "reportedBy": "Segnalato da {username}",
+      "dismiss": "Respingi",
+      "markActioned": "Segna come gestita",
+      "updated": "Segnalazione aggiornata."
+    }
   },
   "diff": {
     "title": "Modifiche",

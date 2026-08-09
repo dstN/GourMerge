@@ -71,6 +71,9 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 403, statusMessage: 'Forbidden' })
   }
 
+  // Generous: this is the save action, fired on every deliberate edit while drafting.
+  await useRateLimit(`recipe:commit:${session.user.id}`, { max: 60, windowSeconds: 600 })
+
   // ── Verify branch belongs to recipe ─────────────────────────
   const [branch] = await db
     .select()

@@ -140,6 +140,9 @@ export default defineEventHandler(async (event) => {
           unit: recipeCommitIngredients.unit,
           notes: recipeCommitIngredients.notes,
           sortOrder: recipeCommitIngredients.sortOrder,
+          // Never sent to the client as-is — only `createdBy === viewer` matters, resolved
+          // below into the boolean `canEdit`. The Swiss BLV import never sets this column.
+          createdBy: ingredients.createdBy,
         })
         .from(recipeCommitIngredients)
         .innerJoin(ingredients, eq(recipeCommitIngredients.ingredientId, ingredients.id))
@@ -162,11 +165,16 @@ export default defineEventHandler(async (event) => {
    */
   const measurementSystem: MeasurementSystem = viewerMeasurementSystem
   const displayIngredients = currentIngredients.map((ing) => {
-    const raw = Number(ing.quantity)
-    if (!Number.isFinite(raw)) return { ...ing, displayQuantity: ing.quantity, displayUnit: ing.unit }
-    const best = getBestDisplayUnit(raw, ing.unit as CanonicalUnit, measurementSystem)
+    // `createdBy` never leaves this endpoint as-is — only whether it matches the viewer
+    // does, which is the one bit the ingredient-editing feature actually needs.
+    const { createdBy, ...rest } = ing
+    const canEdit = !!session?.user && createdBy === session.user.id
+    const raw = Number(rest.quantity)
+    if (!Number.isFinite(raw)) return { ...rest, canEdit, displayQuantity: rest.quantity, displayUnit: rest.unit }
+    const best = getBestDisplayUnit(raw, rest.unit as CanonicalUnit, measurementSystem)
     return {
-      ...ing,
+      ...rest,
+      canEdit,
       // Canonical `quantity`/`unit` are preserved above: the editor, the diff
       // engine and the nutrition maths all depend on them.
       displayQuantity: String(best.quantity),

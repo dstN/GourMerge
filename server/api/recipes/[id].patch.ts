@@ -58,6 +58,8 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 403, statusMessage: 'Forbidden' })
   }
 
+  await useRateLimit(`recipe:update:${session.user.id}`, { max: 60, windowSeconds: 600 })
+
   // Switching a recipe to public is "publishing" — gate on a verified email
   // (no-op unless REQUIRE_EMAIL_VERIFICATION=true). See ROADMAP P2-007.
   if (result.data.visibility === 'public') await requireVerifiedUser(event)

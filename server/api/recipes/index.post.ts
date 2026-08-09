@@ -40,6 +40,7 @@ export default defineEventHandler(async (event) => {
   // Publishing a public recipe is gated on a verified email (no-op unless
   // REQUIRE_EMAIL_VERIFICATION=true). Private recipes are always allowed.
   if (data.visibility === 'public') await requireVerifiedUser(event)
+  await useRateLimit(`recipe:create:${session.user.id}`, { max: 20, windowSeconds: 3600 })
   const db = useDrizzle()
   if (!db) throw createError({ statusCode: 503, statusMessage: 'Database unavailable.' })
 

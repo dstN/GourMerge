@@ -19,7 +19,6 @@
  * re-encode actually produced — mirrors `recipes/[id]/image.put.ts`; see that file for why
  * each of those exists.
  */
-import { z } from 'zod'
 import { createHash } from 'node:crypto'
 import { eq } from 'drizzle-orm'
 import { userAvatars, users } from '~~/server/database/schema'

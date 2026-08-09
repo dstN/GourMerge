@@ -52,29 +52,38 @@ GourMerge/
 ├── app/                        # All frontend source (Nuxt 4 convention)
 │   ├── assets/css/main.css     # Tailwind v4 @theme + design tokens (see DESIGNBOOK.md)
 │   ├── components/             # Auto-imported Vue components
-│   │   ├── common/             # BrandLogo, GlossaryTerm, HelpHint, ObfuscatedEmail,
-│   │   │                       # PageShell, PageHeader, EmptyState  (design system)
-│   │   ├── layout/             # DashboardSidebar, UserDropdown, MobileMenu, FooterLinks
+│   │   ├── common/             # BrandLogo, PageShell, PageHeader, EmptyState, UserAvatar,
+│   │   │                       # ReportButton, AvatarUpload/AvatarCropper, TwoFactorCard,
+│   │   │                       # PasskeyCard, ChangeEmailCard, GlossaryTerm, HelpHint,
+│   │   │                       # ObfuscatedEmail  (design system)
+│   │   ├── layout/             # MainNav, UserDropdown, MobileMenu, FooterLinks,
+│   │   │                       # VerifyEmailBanner  (no dashboard sidebar — see §12)
 │   │   ├── onboarding/         # ConceptIntro, HelpMenu, TourOverlay, TourStep
-│   │   └── recipe/             # IngredientAutocomplete, IngredientRow, StepEditor,
-│   │                           # RecipeCard, RecipeDiffViewer, DietaryBadge, NutritionFacts,
-│   │                           # TagList, DifficultyBadge
+│   │   └── recipe/             # IngredientAutocomplete, IngredientRow, NewIngredientModal,
+│   │                           # EditIngredientModal, StepEditor, RecipeCard,
+│   │                           # RecipeDiffViewer, DietaryBadge, DifficultyBadge,
+│   │                           # NutritionFacts, TagList, CoverImage, ImageUpload,
+│   │                           # DiscussionPanel
 │   ├── layouts/                # default.vue, dashboard.vue, auth.vue
-│   ├── middleware/             # validate-recipe-route.ts, auth.ts, guest.ts
-│   ├── pages/                  # 27 pages (see §5)
-│   ├── utils/                  # markdown.ts (sanitizer), ui.ts (shared UI maps)
+│   ├── middleware/             # validate-recipe-route.ts, auth.ts, guest.ts, shell.ts
+│   ├── pages/                  # 29 pages + 1 dev-only (see §5)
+│   ├── utils/                  # markdown.ts (sanitizer), ui.ts (shared UI maps),
+│   │                           # imageResize.ts
 │   ├── app.vue                 # <UApp><NuxtLayout><NuxtPage />
 │   └── app.config.ts           # Nuxt UI theme + central component defaults
 ├── server/
-│   ├── api/                    # 49 REST endpoints (see §6)
+│   ├── api/                    # 68 REST endpoints (see §6)
 │   ├── database/
-│   │   ├── schema.ts           # Drizzle ORM schema (23 tables)
-│   │   └── migrations/         # 14 versioned SQL migrations (0000–0013)
+│   │   ├── schema.ts           # Drizzle ORM schema (28 tables)
+│   │   └── migrations/         # 16 versioned SQL migrations (0000–0015)
 │   ├── middleware/             # Nitro middleware
-│   ├── plugins/                # Nitro plugins (db, logger, sentry)
-│   └── utils/                  # drizzle.ts, diff.ts, merge.ts, units.ts, slug.ts
+│   ├── plugins/                # Nitro plugins (db, logger, sentry, error-handler)
+│   └── utils/                  # drizzle.ts, diff.ts, merge.ts, units.ts, slug.ts,
+│                                # reports.ts, requireAdmin.ts, recipeAccess.ts,
+│                                # likeEscape.ts, ingredientValidation.ts, imageProbe.ts,
+│                                # imageEncode.ts, hardDeleteUser.ts
 ├── shared/types/               # TypeScript types shared app ↔ server
-├── i18n/locales/               # de.json, en.json, fr.json, it.json (516 keys, 4-way parity)
+├── i18n/locales/               # de.json, en.json, fr.json, it.json (704 keys, 4-way parity)
 ├── scripts/                    # Maintenance + setup scripts (see §8)
 ├── public/                     # PWA icons, favicon, apple-touch-icon
 ├── docs/RUNBOOK.md             # Production operations playbook
@@ -88,15 +97,16 @@ GourMerge/
 
 ---
 
-## 4. Database Schema (23 tables)
+## 4. Database Schema (28 tables)
 
 All migrations versioned in `server/database/migrations/`. **Never use `db:push` against production.**
 
 | Table                        | Purpose                                      | Key Relations                        |
-| ---------------------------- | -------------------------------------------- | ------------------------------------ |
-| `users`                      | Auth + profile                               | —                                    |
-| `ingredients`                | Global master catalog (Swiss BLV)            | 1:1 → `ingredient_nutrition`         |
-| `ingredient_nutrition`       | Per-100g nutritional data (Swiss BLV V7.0)   | —                                    |
+| ----------------------------- | --------------------------------------------- | ------------------------------------ |
+| `users`                      | Auth + profile (`is_admin` gates `/admin/*`) | —                                    |
+| `user_avatars`               | Profile picture, `MEDIUMBLOB` (WebP)         | CASCADE on user delete               |
+| `ingredients`                | Global master catalog (Swiss BLV + user-created); `created_by` null for the BLV import | 1:1 → `ingredient_nutrition`; creator → `users` (SET NULL) |
+| `ingredient_nutrition`       | Per-100g nutritional data (Swiss BLV V7.0 or user-supplied) | —                                    |
 | `recipes`                    | Repository equivalent                        | owner → `users`; forkedFrom → self   |
 | `recipe_tags`                | Recipe ↔ tag M:M                             | CASCADE on recipe delete             |
 | `tags`                       | Tag master list                              | —                                    |
@@ -108,6 +118,7 @@ All migrations versioned in `server/database/migrations/`. **Never use `db:push`
 | `gourmerge_requests`         | GMR (cross-branch/fork proposals)            | CASCADE on recipe delete (recipe_id) |
 | `gm_request_comments`        | Comments on GMRs                             | CASCADE on GMR delete                |
 | `email_verification_tokens`  | CSPRNG tokens (bcrypt-hashed)                | CASCADE on user delete               |
+| `email_change_tokens`        | CSPRNG tokens for changing a verified email  | CASCADE on user delete               |
 | `password_reset_tokens`      | CSPRNG tokens (bcrypt-hashed)                | CASCADE on user delete               |
 | `rate_limit_hits`            | DB-backed rate limiter (multi-process safe)  | —                                    |
 | `contact_messages`           | Contact form submissions                     | —                                    |
@@ -117,6 +128,9 @@ All migrations versioned in `server/database/migrations/`. **Never use `db:push`
 | `recipe_images`              | The one serving-suggestion photo per recipe  | CASCADE on recipe delete             |
 | `recipe_discussions`         | Discussion threads (recipe- or commit-level) | CASCADE on recipe / commit delete    |
 | `recipe_discussion_comments` | Replies within a thread                      | CASCADE on thread delete             |
+| `user_passkeys`              | WebAuthn credentials (`credential_id` uniq)  | CASCADE on user delete               |
+| `webauthn_challenges`        | Single-use ceremony challenges, 5-min TTL    | —                                    |
+| `reports`                    | Polymorphic moderation flag (`target_kind` + `target_id`, no real FK on the target) — recipe/user/discussion_comment/image/ingredient | reporter → `users` (CASCADE); unique on (reporter, target_kind, target_id) |
 | `user_passkeys`              | WebAuthn credentials (`credential_id` uniq)  | CASCADE on user delete               |
 | `webauthn_challenges`        | Single-use ceremony challenges, 5-min TTL    | —                                    |
 
@@ -148,7 +162,7 @@ One implementation, `server/utils/hardDeleteUser.ts`, serves both callers — th
 
 ---
 
-## 5. Pages (27)
+## 5. Pages (29, + 1 dev-only)
 
 | Route                                           | Page                                  | Auth        | Layout    |
 | ----------------------------------------------- | ------------------------------------- | ----------- | --------- |
@@ -170,6 +184,7 @@ One implementation, `server/utils/hardDeleteUser.ts`, serves both callers — th
 | `/auth/login`                                   | Login                                 | No          | auth      |
 | `/auth/register`                                | Register                              | No          | auth      |
 | `/auth/verified`                                | Email verification confirmation       | No          | auth      |
+| `/auth/email-changed`                           | Email-change confirmation landing     | No          | auth      |
 | `/auth/forgot-password`                         | Password reset request                | No          | auth      |
 | `/auth/reset-password`                          | Password reset confirm                | No          | auth      |
 | `/settings`                                     | Profile + locale + measurement prefs  | Yes         | dashboard |
@@ -179,77 +194,103 @@ One implementation, `server/utils/hardDeleteUser.ts`, serves both callers — th
 | `/legal/datenschutz`                            | Privacy policy                        | No          | default   |
 | `/legal/data-request`                           | GDPR self-service request form        | No\*        | default   |
 | `/legal/data-request/confirm`                   | Token landing: download or erase      | No\*        | default   |
+| `/admin/reports`                                | Moderation queue (`isAdmin` required) | Yes (admin) | dashboard |
+
+Plus `/dev/skeletons`, a debugging surface that 404s outside `import.meta.dev` — never built or linked in production.
 
 \* `/explore` uses a **dynamic layout** (`definePageMeta({ layout: false })` + `<NuxtLayout :name="loggedIn ? 'dashboard' : 'default'">`): logged-in users get the dashboard shell with sidebar; guests get the public layout.
 
 ---
 
-## 6. API Routes (49 endpoints)
+## 6. API Routes (68 endpoints)
 
 All routes: Zod-validated body/query, `requireUserSession()` where auth required, `createError()` for errors.
 
 ### Auth / Users
 
-| Method | Route                   | Auth | Purpose            |
-| ------ | ----------------------- | ---- | ------------------ |
-| GET    | `/api/users/[username]` | No   | Public profile     |
-| PATCH  | `/api/users/me`         | Yes  | Update own profile |
+| Method | Route                                | Auth        | Purpose                                              |
+| ------ | ------------------------------------- | ----------- | ------------------------------------------------------ |
+| GET    | `/api/users/[username]`              | No          | Public profile                                         |
+| PATCH  | `/api/users/me`                      | Yes         | Update own profile                                      |
+| POST   | `/api/users/me/email`                | Yes (pw)    | Request an email change (mails a confirm link + a plain notice to the old address) |
+| PUT    | `/api/users/me/avatar`               | Yes         | Upload/replace avatar (multipart, forced square, re-encoded WebP) |
+| DELETE | `/api/users/me/avatar`               | Yes         | Remove avatar, full session replace so the header updates immediately |
+| GET    | `/api/users/[username]/avatar`       | No          | Generated identicon-QR badge (no upload on file). `?variant=mark` small |
+| GET    | `/api/users/[username]/avatar-image` | No          | Serve an uploaded avatar's bytes. 404 if none — never a placeholder |
+
+### Auth — 2FA / Passkeys
+
+| Method | Route                       | Auth     | Purpose                                                |
+| ------ | ---------------------------- | -------- | --------------------------------------------------------- |
+| GET    | `/api/auth/totp`            | Yes      | Enrollment status                                          |
+| POST   | `/api/auth/totp/setup`      | Yes      | Begin enrollment — returns the secret + QR enrolment URI  |
+| POST   | `/api/auth/totp/confirm`    | Yes      | Confirm the first code, activate 2FA, issue recovery codes |
+| POST   | `/api/auth/totp/disable`    | Yes (pw) | Disable 2FA — password required, not a code               |
+| GET    | `/api/auth/passkeys`        | Yes      | List enrolled passkeys                                     |
+| POST   | `/api/auth/passkeys/register` | Yes    | WebAuthn registration ceremony (options + verify)          |
+| PATCH  | `/api/auth/passkeys/[id]`   | Yes      | Rename a passkey                                            |
+| DELETE | `/api/auth/passkeys/[id]`   | Yes      | Remove a passkey                                            |
 
 ### Ingredients
 
-| Method | Route              | Auth | Purpose                                 |
-| ------ | ------------------ | ---- | --------------------------------------- |
-| GET    | `/api/ingredients` | Yes  | Search (q + locale) — Swiss BLV catalog |
-| POST   | `/api/ingredients` | Yes  | Create ingredient on-the-fly (deduped)  |
+| Method | Route                       | Auth | Purpose                                                        |
+| ------ | ----------------------------- | ---- | ------------------------------------------------------------------ |
+| GET    | `/api/ingredients`            | No   | Search (q + locale) — Swiss BLV catalog + user-created ingredients |
+| POST   | `/api/ingredients`            | Yes  | Create ingredient on-the-fly (deduped, rate-limited, sets `createdBy`) |
+| GET    | `/api/ingredients/categories` | No   | Distinct category list for the picker                              |
+| GET    | `/api/ingredients/[id]`       | No   | Detail (incl. `canEdit` for the viewer's session, never raw `createdBy`) |
+| PATCH  | `/api/ingredients/[id]`       | Yes  | Edit name/translations/category/nutrition — creator only, 404 (not 403) otherwise, no admin override |
 
 ### Recipes
 
 | Method | Route                                    | Auth        | Purpose                                             |
-| ------ | ---------------------------------------- | ----------- | --------------------------------------------------- |
+| ------ | ------------------------------------------ | ----------- | ------------------------------------------------------ |
 | GET    | `/api/recipes`                           | Yes         | Own recipes list                                    |
 | GET    | `/api/recipes/starred`                   | Yes         | Recipes the viewer has starred (card shape)         |
+| GET    | `/api/recipes/tour-recipe`                | Yes         | The `system` account's demo recipe, for the guided-tour fork step — invisible once the tour is finished |
 | POST   | `/api/recipes`                           | Yes         | Create recipe (transactional: recipe+branch+commit) |
 | GET    | `/api/recipes/explore`                   | No          | Public browse (search/filter/sort/paginate)         |
-| GET    | `/api/recipes/by-slug/[username]/[slug]` | No          | Fetch by URL slug (incl. resolved `forkedFrom`)     |
+| GET    | `/api/recipes/by-slug/[username]/[slug]` | No          | Fetch by URL slug (incl. resolved `forkedFrom`, per-viewer `canEdit` on ingredients) |
 | GET    | `/api/recipes/[id]`                      | No          | Fetch by internal ID                                |
-| PATCH  | `/api/recipes/[id]`                      | Yes (owner) | Update metadata                                     |
-| DELETE | `/api/recipes/[id]`                      | Yes (owner) | Delete + cascade cleanup                            |
-| POST   | `/api/recipes/[id]/fork`                 | Yes         | Deep-copy fork **incl. full commit history**        |
+| PATCH  | `/api/recipes/[id]`                      | Yes (owner) | Update metadata (rate-limited)                      |
+| DELETE | `/api/recipes/[id]`                      | Yes (owner) | Delete + cascade cleanup; closes any open reports on the recipe, its photo and its comments |
+| POST   | `/api/recipes/[id]/fork`                 | Yes         | Deep-copy fork **incl. full commit history** (rate-limited) |
 | GET    | `/api/recipes/[id]/forks`                | No          | List recipes forked from this one                   |
-| POST   | `/api/recipes/[id]/star`                 | Yes         | Toggle star                                         |
-| POST   | `/api/recipes/[id]/tags`                 | Yes (owner) | Set tags                                            |
+| POST   | `/api/recipes/[id]/star`                 | Yes         | Toggle star (rate-limited)                          |
+| POST   | `/api/recipes/[id]/tags`                 | Yes (owner) | Set tags (rate-limited)                             |
+| POST   | `/api/recipes/[id]/simulate-activity`    | Yes (owner) | Tour-only: seed a demo commit + GMR. Gated on the recipe having **exactly one commit**, not a client flag — see the file's docblock |
 
 ### Branches / Commits
 
 | Method | Route                                            | Auth        | Purpose                    |
-| ------ | ------------------------------------------------ | ----------- | -------------------------- |
+| ------ | -------------------------------------------------- | ----------- | ------------------------------ |
 | GET    | `/api/recipes/[id]/branches`                     | No          | List branches              |
-| POST   | `/api/recipes/[id]/branches`                     | Yes (owner) | Create branch              |
-| DELETE | `/api/recipes/[id]/branches/[branchId]`          | Yes (owner) | Delete branch              |
+| POST   | `/api/recipes/[id]/branches`                     | Yes (owner) | Create branch (rate-limited) |
+| DELETE | `/api/recipes/[id]/branches/[branchId]`          | Yes (owner) | Delete branch (rate-limited) |
 | GET    | `/api/recipes/[id]/branches/[branchId]/snapshot` | No          | Current snapshot on branch |
 | GET    | `/api/recipes/[id]/branches/compare`             | No          | Compare two branch heads   |
 | GET    | `/api/recipes/[id]/commits`                      | No          | Commit history             |
-| POST   | `/api/recipes/[id]/commits`                      | Yes (owner) | Create snapshot commit     |
+| POST   | `/api/recipes/[id]/commits`                      | Yes (owner) | Create snapshot commit (rate-limited) |
 | GET    | `/api/recipes/[id]/diff`                         | No          | Diff between two commits   |
 
 ### GourMerge Requests
 
 | Method | Route                                                   | Auth        | Purpose                 |
-| ------ | ------------------------------------------------------- | ----------- | ----------------------- |
+| ------ | ---------------------------------------------------------- | ----------- | ---------------------------- |
 | GET    | `/api/recipes/[id]/gourmerge-requests`                  | No          | List GMRs               |
-| POST   | `/api/recipes/[id]/gourmerge-requests`                  | Yes         | Create GMR              |
+| POST   | `/api/recipes/[id]/gourmerge-requests`                  | Yes         | Create GMR (rate-limited) |
 | GET    | `/api/recipes/[id]/gourmerge-requests/[gmrId]`          | No          | GMR detail with diff    |
-| PATCH  | `/api/recipes/[id]/gourmerge-requests/[gmrId]`          | Yes         | Status transitions      |
-| POST   | `/api/recipes/[id]/gourmerge-requests/[gmrId]/comments` | Yes         | Add comment             |
-| POST   | `/api/recipes/[id]/gourmerge-requests/[gmrId]/merge`    | Yes (owner) | Execute three-way merge |
+| PATCH  | `/api/recipes/[id]/gourmerge-requests/[gmrId]`          | Yes         | Status transitions (rate-limited) |
+| POST   | `/api/recipes/[id]/gourmerge-requests/[gmrId]/comments` | Yes         | Add comment (rate-limited) |
+| POST   | `/api/recipes/[id]/gourmerge-requests/[gmrId]/merge`    | Yes (owner) | Execute three-way merge (rate-limited) |
 
 ### Recipe photo (one per recipe)
 
 | Method | Route                     | Auth        | Purpose                                             |
-| ------ | ------------------------- | ----------- | --------------------------------------------------- |
+| ------ | --------------------------- | ----------- | -------------------------------------------------------- |
 | GET    | `/api/recipes/[id]/image` | No\*        | Serve the bytes. ETag + `?v=<sha256>` + `immutable` |
 | PUT    | `/api/recipes/[id]/image` | Yes (owner) | Upsert (multipart). Type sniffed from magic bytes   |
-| DELETE | `/api/recipes/[id]/image` | Yes (owner) | Remove                                              |
+| DELETE | `/api/recipes/[id]/image` | Yes (owner) | Remove (rate-limited); closes any open report on the photo |
 
 \* Same 404-not-403 visibility rule as the recipe itself; a private recipe's photo
 is `Cache-Control: private`.
@@ -257,22 +298,35 @@ is `Cache-Control: private`.
 ### Discussions
 
 | Method | Route                                                         | Auth | Purpose                                          |
-| ------ | ------------------------------------------------------------- | ---- | ------------------------------------------------ |
+| ------ | ------------------------------------------------------------------ | ---- | ------------------------------------------------------ |
 | GET    | `/api/recipes/[id]/discussions`                               | No   | Threads. `?commitId=<id>` or `all` selects scope |
 | POST   | `/api/recipes/[id]/discussions`                               | Yes  | Open a thread (verified + rate-limited)          |
-| PATCH  | `/api/recipes/[id]/discussions/[discussionId]`                | Yes  | Edit (author) / resolve (author or owner)        |
-| DELETE | `/api/recipes/[id]/discussions/[discussionId]`                | Yes  | Author or recipe owner                           |
-| POST   | `/api/recipes/[id]/discussions/[discussionId]/comments`       | Yes  | Reply (refused on a resolved thread)             |
-| DELETE | `/api/recipes/[id]/discussions/[discussionId]/comments/[cId]` | Yes  | Author or recipe owner                           |
+| PATCH  | `/api/recipes/[id]/discussions/[discussionId]`                | Yes  | Edit (author) / resolve (author or owner), rate-limited |
+| DELETE | `/api/recipes/[id]/discussions/[discussionId]`                | Yes  | Author or recipe owner (rate-limited); closes reports on the thread's comments |
+| POST   | `/api/recipes/[id]/discussions/[discussionId]/comments`       | Yes  | Reply (refused on a resolved thread, rate-limited) |
+| DELETE | `/api/recipes/[id]/discussions/[discussionId]/comments/[cId]` | Yes  | Author or recipe owner (rate-limited); closes reports on the comment |
+
+### Reports (moderation)
+
+| Method | Route                    | Auth        | Purpose                                                        |
+| ------ | -------------------------- | ----------- | ------------------------------------------------------------------- |
+| POST   | `/api/reports`           | Yes         | Flag a recipe/user/comment/image/ingredient. Idempotent per (reporter, target); 404 (not 403) on a target the reporter cannot see; cannot report yourself |
+| GET    | `/api/reports/mine`      | Yes         | Open reports against content the viewer owns — never for `targetKind: 'user'`, so a reported person is never told |
+| GET    | `/api/admin/reports`     | Yes (admin) | `?status=open\|actioned\|dismissed` moderation queue                |
+| PATCH  | `/api/admin/reports/[id]` | Yes (admin) | Set status to `actioned` or `dismissed`                             |
+
+Deleting the reported content is the moderation response — there is no separate
+resolve workflow. `closeReportsForTarget()` marks matching open reports `actioned`
+whenever the recipe, its photo, or a discussion comment is deleted (see the
+Recipes/Discussions rows above).
 
 ### Misc
 
-| Method | Route                          | Auth | Purpose                                             |
-| ------ | ------------------------------ | ---- | --------------------------------------------------- |
-| GET    | `/api/users/[username]/avatar` | No   | Generated identicon-QR badge. `?variant=mark` small |
-| GET    | `/api/tags`                    | No   | All tags                                            |
-| POST   | `/api/contact`                 | No   | Contact form submission                             |
-| GET    | `/api/health`                  | No   | Health check (`{ status, db }`)                     |
+| Method | Route          | Auth | Purpose                          |
+| ------ | ---------------- | ---- | ------------------------------------- |
+| GET    | `/api/tags`    | No   | All tags                              |
+| POST   | `/api/contact` | No   | Contact form submission               |
+| GET    | `/api/health`  | No   | Health check (`{ status, db }`)       |
 
 ### Privacy / GDPR self-service
 
@@ -280,7 +334,7 @@ Deliberately **session-less**: ownership is proven by the emailed confirmation
 link, because a user locked out of their account still holds both rights.
 
 | Method | Route                  | Auth | Purpose                                                        |
-| ------ | ---------------------- | ---- | -------------------------------------------------------------- |
+| ------ | ------------------------ | ---- | ------------------------------------------------------------------- |
 | POST   | `/api/privacy/request` | No   | Start export/erasure. Always `{ sent: true }` (no enumeration) |
 | POST   | `/api/privacy/confirm` | No   | Consume the emailed token; extends the export window to 24h    |
 | GET    | `/api/privacy/export`  | No   | Stream the JSON export (token in query, `no-store`)            |
@@ -292,7 +346,7 @@ link, because a user locked out of their account still holds both rights.
 
 - **4 locales**: `de` (default), `en`, `fr`, `it`
 - **Strategy**: `prefix_except_default` — German has no prefix; `/en/`, `/fr/`, `/it/` prefixed
-- **Key count**: 516 keys, 4-way parity (verified by `npm run i18n:check`)
+- **Key count**: 704 keys, 4-way parity (verified by `npm run i18n:check`)
 - **Locale files**: `i18n/locales/{de,en,fr,it}.json`
 - **CI gate**: `scripts/i18n-check.mjs` — fails if any locale has a missing key or empty value
 - **Translated**: all UI labels, navigation, errors, toasts, onboarding, glossary, legal pages, auth flows
@@ -377,6 +431,47 @@ The `ingredients` master table is populated from the **Swiss BLV Food Compositio
 
 ### ✓ Complete
 
+- **Reporting / moderation (2026-08-09)**: flag a recipe, a user, a discussion comment, a recipe photo, or an
+  ingredient. `reports` is one polymorphic table (`targetKind` + `targetId`, no real FK on the target) rather than five
+  near-identical ones. Idempotent per (reporter, target) — resubmitting returns the existing row, guarded by a unique
+  index against the SELECT-then-INSERT race, not just app logic. 404, not 403, on a target the reporter cannot see —
+  the same rule `requireVisibleRecipe` already used, now generalised in `resolveReportTarget()`. Visible to the owner
+  of the reported content via `/api/reports/mine` (recipe owner, comment author, ingredient creator) — **deliberately
+  not** for `targetKind: 'user'`, so a reported person is never told, which standard moderation practice treats as a
+  retaliation risk. `users.is_admin` (checked fresh from the DB on every request via `requireAdmin()`, never trusted
+  from the session — same posture as `requireVerifiedUser`) gates `/admin/reports` and its two endpoints. There is no
+  separate resolve workflow: deleting the flagged content is the moderation response, and `closeReportsForTarget()`
+  auto-closes matching open reports whenever a recipe, its photo, or a discussion comment is deleted
+- **Ingredient editing (2026-08-09)**: a user-created ingredient (`ingredients.created_by`, null for the Swiss BLV
+  import) can now be corrected by its creator — name, translations, category, nutrition — instead of living with a
+  typo or a missing macro forever. 404, not 403, for anyone else, **including an admin**: there is no override, because
+  silently rewriting someone else's data would leave no trace of who actually wrote what. Clearing the energy value
+  deletes the nutrition row rather than zeroing it, matching creation's own rule that a zeroed row would claim coverage
+  the data doesn't have
+- **Rate limiting swept across 21 previously-open mutating endpoints (2026-08-09)**: an audit of every `POST`/`PATCH`/
+  `DELETE` under `/api/` found roughly a third with no `useRateLimit()` call at all — fork, star, tag, branch/commit
+  create, GMR create/comment/merge/status, discussion create/edit/delete/comment, recipe photo delete, avatar delete,
+  profile update, and ingredient create. All now carry the same DB-backed limiter every other mutating route already
+  used, keyed per-user and sized to the action (a recipe delete at 10/10min, a GMR comment at 30/10min, and so on) — an
+  Explore-agent audit of every existing E2E test confirmed none of them call a newly-limited endpoint enough times in
+  one run to trip its new limit
+- **`recipes/[id]/simulate-activity` gated structurally, not by a client flag (2026-08-09)**: the tour-demo endpoint
+  that seeds a fake commit + GMR onto a fresh recipe had no limiter and no ownership check beyond the recipe's own
+  visibility rule — reachable, repeatedly, against any recipe by anyone signed in. Now rate-limited (5/hour) **and**
+  refuses unless the target branch has exactly one commit, which only a just-created recipe satisfies; a `?tour=1`-style
+  flag would only move the trust decision to the caller being bounded
+- **LIKE-wildcard escaping in ingredient/tag/explore search (2026-08-09)**: `%`/`_` in a search query were passed
+  straight into `LIKE`, so a search for `%` matched everything and `_` matched any single character — not exploitable
+  beyond an odd result set (no data disclosure), but a real correctness bug in every text search in the app.
+  `escapeLikePattern()` is now the one place that decision lives
+- **Dashboard "recently edited" restored, and a clock-skew bug found while doing it (2026-08-09)**: the one thing in
+  the dashboard sidebar that had no duplicate anywhere else — a slice of the user's own most-recently-updated recipes —
+  was dropped when the sidebar was removed (see below) and never rebuilt. Restored on the dashboard page itself, with
+  an `Intl.RelativeTimeFormat` label. Building it surfaced a real, still-open issue: on this local dev box a
+  freshly-created recipe's `updated_at`, read back immediately, could be measurably ahead of the reading Node process's
+  own clock — not chased to a root cause (the ROADMAP entry explains why guessing at a timezone fix is worse than the
+  bug), but the label is defensively clamped so it can never display a future time regardless of which way a real skew
+  runs
 - **Discussions (2026-08-09)**: threads on a recipe, and on any single commit, with Markdown bodies, replies, four
   categories (idea/question/issue/praise) and an open→resolved state. One table pair serves both scopes — a note about a
   snapshot has the same shape as a note about the dish, and only where it is listed differs. The panel sits **under** the
@@ -440,7 +535,7 @@ The `ingredients` master table is populated from the **Swiss BLV Food Compositio
 
 ### ✓ Complete (test + delivery pipeline)
 
-- **Tests**: **unit** — 251 cases (`tests/unit/`: diff, merge incl. resolution, units incl. the display read path, slug, uuid, nutrition, markdown-XSS, emailI18n, i18n-gate, totp, webauthn, seal/pendingTotp, dataRequest, inactivityEmails, ui), **93% line coverage** against a 75/75/70 gate in CI. **E2E/API/a11y** — 39 Playwright specs across 12 files (`tests/e2e/`): auth lifecycle + authz matrix, recipe CRUD/fork/star, merge conflict-detect → interactive resolve → verify → immutable, SSR render, register UI journey, passkey ceremonies over CDP, and axe scans (critical-gated). Run via `npm run test:e2e` + the `E2E` workflow on master
+- **Tests**: **unit** — 304 cases across 24 files (`tests/unit/`: diff, merge incl. resolution, units incl. the display read path, slug, uuid, nutrition, markdown-XSS, emailI18n, i18n-gate, totp, webauthn, seal/pendingTotp, dataRequest, inactivityEmails, ui, likeEscape, imageProbe, identiconAvatar), **86.9% line coverage** against a 75/75/70 gate in CI. **E2E/API/a11y** — 79 Playwright specs across 23 files (`tests/e2e/`): auth lifecycle + authz matrix, recipe CRUD/fork/star, merge conflict-detect → interactive resolve → verify → immutable, discussions, recipe photo + avatar upload, reporting + admin moderation, ingredient create/edit, branch viewing, private-recipe visibility, SSR render, register UI journey, passkey ceremonies over CDP, the guided tour, and axe scans (critical-gated). Run via `npm run test:e2e` + the `E2E` workflow on master
   - `passkey.spec.ts` drives Chrome's **WebAuthn virtual authenticator** over CDP, because nothing weaker proves anything: the browser will not sign without an authenticator and a stubbed `navigator.credentials` would only test the stub — it is what caught both passkey bugs. Two constraints to know before touching it: navigating while an authenticator is attached crashes the renderer, so every ceremony runs on **one page load** via in-page fetches; and it needs `CI=1` (built artifact) like the rest of the suite
 - **CI** (`ci.yml`): lint → **design:check** → format:check → knip → typecheck → i18n → `npm audit` (critical) → migrate → test **with coverage gate** → build → upload artifact. Build stamps `NUXT_SENTRY_RELEASE` = commit SHA
 - **CD** (`deploy.yml`): preflight secrets → E2E gate → `production` environment gate → checkout of the CI-built SHA → migrate from the runner (fail-fast) → **tar-over-ssh** into `.output.new` → atomic rename swap (previous kept as `.output.prev`) → restart → polling smoke test → **auto-rollback on smoke-test failure**. Password auth via `sshpass` over plain `ssh` (Netcup offers no key auth; `rsync` and `gzip` do not exist in the chroot)

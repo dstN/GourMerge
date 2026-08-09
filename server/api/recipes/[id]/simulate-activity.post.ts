@@ -5,8 +5,21 @@
  * can demonstrate the History and GourMerge Requests features with actual data.
  * - Creates a dummy commit changing an ingredient quantity.
  * - Creates a dummy GourMerge Request proposing an addition.
+ *
+ * ## Why "the recipe has exactly one commit" is the gate, not a client-supplied flag
+ *
+ * There is no server-side notion of "the visitor is currently in the tour" — `useProductTour`
+ * is client-only, in-memory state. A flag on the request (`?tour=1`) would just move the
+ * decision to whoever sends the request, which is the caller we are trying to bound. The
+ * tour only ever calls this in the instant right after `POST /api/recipes` creates the demo
+ * recipe, before anything else has touched it — and that instant has one structural
+ * fingerprint that isn't self-reported: exactly the one commit recipe creation itself made.
+ * Once a second commit exists, the window this endpoint exists for has closed, on any
+ * recipe, tour-created or not, so it refuses rather than fabricating more history on top of
+ * real edits. The per-user rate limit below is defence in depth for the one call that
+ * remains legitimate, not the primary control.
  */
-import { eq, and, sql } from 'drizzle-orm'
+import { eq, and, sql, count } from 'drizzle-orm'
 import {
   recipes,
   recipeBranches,
@@ -39,6 +52,8 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: 'Recipe not found or not owned by user' })
   }
 
+  await useRateLimit(`recipe:simulate-activity:${session.user.id}`, { max: 5, windowSeconds: 3600 })
+
   // Find system user
   const [systemUser] = await db.select({ id: users.id }).from(users).where(eq(users.username, 'system')).limit(1)
 
@@ -53,6 +68,17 @@ export default defineEventHandler(async (event) => {
 
   if (!mainBranch || !mainBranch.headCommitId) {
     throw createError({ statusCode: 400, statusMessage: 'Main branch or head commit missing' })
+  }
+
+  // The structural gate described above: only the single commit recipe creation itself
+  // made may exist yet. See the module docblock for why this is the check rather than a
+  // self-reported "I am in the tour" flag.
+  const [commitCountRow] = await db
+    .select({ commitCount: count() })
+    .from(recipeCommits)
+    .where(eq(recipeCommits.branchId, mainBranch.id))
+  if (commitCountRow?.commitCount !== 1) {
+    throw createError({ statusCode: 409, statusMessage: 'This recipe already has history of its own' })
   }
 
   const headCommitId = mainBranch.headCommitId

@@ -5,6 +5,126 @@ All notable changes to GourMerge are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versioning follows [Semantic Versioning](https://semver.org/).
 
+## [1.7.0] — 2026-08-09
+
+A moderation system the product had no answer for at all, a correctness sweep through
+security's other unglamorous half — rate limiting — and a bug found by accident while
+restoring something the navigation pass had quietly dropped.
+
+### Added — reports, and the admin role that reads them
+
+Every piece of content a stranger could put in front of another user — a recipe, a
+profile, a discussion comment, a photo, an ingredient — had no way to flag it. The only
+lever was contacting support by email and hoping someone read it.
+
+**One polymorphic table, not five.** `reports` carries `targetKind` + `targetId` with no
+real foreign key on the target — a recipe, a user, a comment, an image and an ingredient
+are different enough that five separate tables would each need their own visibility
+check and their own admin query, for a shape that is otherwise identical. `resolveReportTarget()`
+is the one place that generalises `requireVisibleRecipe`'s rule to all five: 404, not 403,
+on a target the reporter cannot see, because reporting must not become a second way to
+confirm a private recipe exists.
+
+Idempotent per `(reporter, target)` — resubmitting the same report returns the existing
+row instead of erroring or inflating a count, guarded by a unique index against the
+SELECT-then-INSERT race rather than trusted to application logic alone.
+
+**A reported person is never told.** `/api/reports/mine` shows the recipe owner, the
+comment author, or the ingredient's creator that something of theirs was flagged — every
+kind except `targetKind: 'user'`. That carve-out isn't in checking off a spec line, it's
+standard moderation practice: telling someone they were reported is a retaliation risk
+against whoever reported them, and the product has no reason to take it.
+
+**There is no separate resolve workflow, on purpose.** Deleting the flagged content —
+already a capability every owner has — *is* the moderation response. `closeReportsForTarget()`
+marks matching open reports `actioned` the moment a recipe, its photo, or a discussion
+comment is deleted, so a report never sits open against something that no longer exists.
+
+**`users.is_admin`, checked fresh from the database on every request.** `requireAdmin()`
+never trusts the session, the same posture `requireVerifiedUser()` already stated for
+email verification: a flag that only matters for display is not a security boundary, and
+one that gates a moderation queue is exactly the kind of thing a stale session should
+never grant. `/admin/reports` is unlinked from any nav — the real gate is server-side,
+the page is convenience for whoever already knows it exists.
+
+### Added — a user-created ingredient can be corrected by whoever created it
+
+Typing "Karotten" instead of "Karotte", or forgetting the energy value, used to be
+permanent — the ingredient dialog has no edit mode, and the master catalog has always
+been add-only. `ingredients.created_by` (null for every row from the Swiss BLV import)
+is the one signal that already distinguishes a user's own contribution from reference
+data, so it's also what makes editing safe: `PATCH /api/ingredients/:id` 404s — not
+403s — for anyone but the creator, **including an admin**. There is no override. Silently
+rewriting someone else's data in place would leave no trace of who actually wrote what,
+which is a worse outcome than leaving a bad row as something to flag instead.
+
+Clearing the energy value deletes the nutrition row rather than zeroing it, the same rule
+creation already followed: `computeNutrition` treats a present row with a null energy
+value as *covered*, so a row of zeros would claim coverage the data doesn't have and drag
+every recipe's total toward zero.
+
+### Security — 21 mutating endpoints had no rate limit at all
+
+A full pass over every `POST`/`PATCH`/`DELETE` under `/api/` — prompted by building the
+report endpoint's own limiter and asking "wait, which of these already have one?" — found
+that roughly a third didn't: fork, star, tag-setting, branch and commit creation, every
+GMR mutation (create, comment, merge, status change), every discussion mutation (create,
+edit, delete, comment, comment-delete), recipe-photo delete, avatar delete, profile
+update, and ingredient creation. Each now carries the same DB-backed `useRateLimit()`
+every other mutating route already used — keyed per user, sized to the action (a recipe
+delete at 10/10 min, a GMR comment at 30/10 min) rather than one number applied uniformly.
+
+Before landing any of it, an audit of the entire E2E suite confirmed no existing test
+calls a newly-limited endpoint enough times in a single run to trip its new limit — the
+point was closing a real gap, not breaking coverage to do it.
+
+### Fixed — a `%` in a search box matched everything
+
+`escapeLikePattern()` closes a correctness bug that had been live in every text search in
+the app: the ingredient autocomplete, the tags list, and Explore's short-query fallback
+all built a `LIKE` pattern straight from user input, so a literal `%` or `_` in a search
+term acted as a wildcard nobody asked for instead of matching itself. Not a disclosure —
+nothing came back that the searcher couldn't already see — but a real, reachable
+correctness defect through the most-used input in the app.
+
+### Fixed — the tour's own demo endpoint had no gate beyond "is this your recipe"
+
+`POST /api/recipes/:id/simulate-activity` seeds a fake commit and a fake GourMerge
+Request onto a recipe so the guided tour can demonstrate History and GMRs with real
+data. It had no rate limit, and nothing stopped it from being called repeatedly against
+any of the caller's own recipes, tour or not. It's now rate-limited (5/hour) **and**
+refused unless the target branch has exactly one commit — a state only a just-created
+recipe is in. A client-supplied `?tour=1` flag was considered and rejected: that only
+relocates the trust decision to the caller the endpoint exists to bound.
+
+### Added — the dashboard's "recently edited" list, restored
+
+The navigation pass earlier in this release removed the dashboard `<aside>` for
+duplicating the header nav and the account menu — correctly — but it also held the one
+thing in that sidebar with no duplicate anywhere else: a short list of the user's own
+most-recently-updated recipes. It's back, on the dashboard page itself, with an
+`Intl.RelativeTimeFormat` "2 hours ago" label rather than a raw date.
+
+**Building it surfaced a bug that is staying open on purpose.** On the local dev box this
+was built against, a freshly-created recipe's `updated_at`, read back through the API the
+instant after creation, measured ahead of the reading Node process's own clock by
+something in the shape of a full timezone offset. `SELECT @@global.time_zone,
+@@session.time_zone` both answered `SYSTEM`, and `NOW()` vs `UTC_TIMESTAMP()` disagreed
+with each other in the same process in a way that points at the mysql2 driver's
+timezone-conversion assumptions — but that's inference, not proof, and it wasn't chased
+further: guessing at a timezone fix is worse than the bug it would "fix", because a wrong
+guess quietly shifts every `createdAt`/`updatedAt`, every rate-limit window, and every
+token expiry in the app at once. The label itself is defensively clamped so it can never
+*display* a future time regardless of which direction a real skew runs. The actual cause
+is `.claude/ROADMAP.md`'s problem now, to be checked against the pinned `docker-compose.yml`
+MySQL and against production before anyone touches a timezone setting.
+
+### Fixed — a leftover unused import had been failing lint on `master`
+
+`server/api/users/me/avatar.put.ts` imported `z` from `zod` without using it — dead weight
+left over from an earlier draft of the [1.6.0] avatar work, caught only while running the
+full gate for this release rather than by anything specific to it. Removed.
+
 ## [1.6.0] — 2026-08-09
 
 Two features the collaboration loop was missing, one that was ruled out by an old decision

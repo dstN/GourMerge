@@ -131,10 +131,23 @@ itself the disclosure).
 
 | Item                                                              | Detail                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **`npm run knip` fails today, so CI is red**                      | `scripts/seed-tour-recipe.mjs` imports `dotenv/config`; `dotenv` is installed transitively but absent from `package.json`. One devDependency line plus a lockfile update. Not done here because it touches `package-lock.json`, which deserves its own commit.                                                                                                                                                                                                                              |
-| **`tests/e2e/tour.spec.ts` asserts anchors that no longer exist** | It expects `data-tour="history-link"` and `"gourmerge-requests-link"`; neither is anywhere in `app/`. It also assumes `recipe-form-title` → `star-button` are adjacent, but `BASE_TOUR` now has four steps between them (`add-ingredient`, `add-step`, `commit-button`, `view-recipe-btn`). Two of its four tests fail, and the tail of the tour has had **no** coverage since those steps were added. Rewrite against the current step list.                                               |
-| **Local dev runs MySQL 8.0.45, not 8.4**                          | `docker-compose.yml`, CI and E2E are pinned to `mysql:8.4` and production is 8.4.11, but the developer machine this audit ran on answers `8.0.45`. That is exactly the split the engine correction in `ARCHITECTURE.md` §2 was written to end — and `tests/e2e/api/ingredients.spec.ts` ("the new ingredient must be searchable by translation") fails locally while passing in CI, which is the signature of a `JSON_EXTRACT` + collation difference. Point local dev at the compose file. |
-| **The dashboard sidebar's "recently edited" list was dropped**    | It was the one thing in the removed `<aside>` that had no duplicate elsewhere. If it is missed, it belongs on the dashboard page, not in the chrome.                                                                                                                                                                                                                                                                                                                                        |
+| **Local dev runs MySQL 8.0.45, not 8.4**                          | `docker-compose.yml`, CI and E2E are pinned to `mysql:8.4` and production is 8.4.11, but the developer machine this audit ran on answers `8.0.45`. That is exactly the split the engine correction in `ARCHITECTURE.md` §2 was written to end. It is not, on closer look, why `tests/e2e/api/ingredients.spec.ts` ("the new ingredient must be searchable by translation") flakes locally: a single fresh row was findable by its translation via a direct manual request, and `information_schema` showed 18 rows already sitting in the local `ingredients` table with the literal English translation the test always searched for (`nameTranslations.en: 'Spec ingredient'`, never suffixed unlike `name`) — `GET /api/ingredients` has no `ORDER BY` and a default `limit=10`, so the newest match can fall off the page once enough same-text rows accumulate from repeat local runs. Fixed the test to suffix the translation too, matching `name`. Point local dev at the compose file anyway — the version split itself is real even though it wasn't this bug's cause. Owner action — nothing here can fix a developer's own MySQL install. |
+| **The dashboard sidebar's "recently edited" list was dropped**    | It was the one thing in the removed `<aside>` that had no duplicate elsewhere. Restored on the dashboard page itself — see the CHANGELOG.                                                                                                                                                                                                                                                                                                                                                    |
+| **A MySQL-vs-Node clock skew, found while building the item above** | Building a relative-time display ("2 hours ago") surfaced `recipes.updated_at` reading ahead of `Date.now()` by what looked like a full timezone offset on this local dev box — a fresh recipe's own `CURRENT_TIMESTAMP` read as 2 hours in the future the instant it was created. `SELECT @@global.time_zone, @@session.time_zone` both answered `SYSTEM`, and in the same process `NOW()` vs `UTC_TIMESTAMP()` disagreed with each other in a way that points at the mysql2 driver's local-timezone assumption compounding with however this MySQL install's `SYSTEM` zone resolves — but that is inference, not proof, and it was not chased further: fixing a timezone conversion on a guess is worse than the bug. The dashboard label is clamped so it can never *display* a future time regardless of which direction a real skew runs, which is safe unconditionally. What is still open is the actual cause — check whether it reproduces against the `docker-compose.yml` MySQL (the row above already flags local dev as unpinned) and against production before touching any timezone setting: a wrong fix here would quietly shift every `createdAt`/`updatedAt`, rate-limit window and token expiry in the app. |
+| **`npm run knip` cannot complete on this dev machine**            | Crashes every time with `RangeError: Array buffer allocation failed` inside `oxc-parser`'s raw AST transfer (`knip/dist/plugins/_vue/auto-import.js` scanning `.vue` files for Nuxt auto-imports). Not project-size-dependent: `node_modules/oxc-parser/src-js/generated/constants.js` fixes `BLOCK_SIZE` at ~2 GiB and `BLOCK_ALIGN` at 4 GiB, so every raw-transfer parse call reserves a ~6 GiB `ArrayBuffer` regardless of what it's parsing. This machine reports ~7.7 GiB free out of 31 GiB total, which should be enough in principle but was not in practice — three consecutive attempts, back to back, all failed the same way. Almost certainly a Windows-specific virtual-memory/overcommit difference against the Linux CI runner, where this gate is documented as passing (see the "Fixed" note below, from an earlier, unrelated failure of the same command). Not chased further: it does not reproduce in the environment that actually gates merges, and nothing about it is specific to this session's changes — the buffer size is fixed independent of which files exist. Owner action if it recurs: re-check on a machine/VM with more contiguous free memory, or pin an `oxc-parser` version predating the raw-transfer default if this migrates to CI. |
+
+~~`npm run knip` fails today, so CI is red~~ — **Fixed.** `scripts/seed-tour-recipe.mjs`'s
+`dotenv/config` import was the cause; removed in favor of Node's built-in
+`--env-file-if-exists`, which every sibling script already relied on through the caller's
+environment anyway.
+
+~~`tests/e2e/tour.spec.ts` asserts anchors that no longer exist~~ — **Fixed.** Rewritten
+against the current `BASE_TOUR` step list (`add-ingredient` → `add-step` → `commit-button` →
+`view-recipe-btn`; history/GMR/fork are sub-tours triggered on arrival, not chained "Weiter"
+clicks). Fixing it surfaced a real bug it had been masking: the tour's own demo
+ingredient/step made the edit page's `isDirty` true from the moment it typed them in, so
+clicking "View recipe" — the button the tour highlights next — raised an unrelated
+unsaved-changes prompt. See the CHANGELOG.
 
 ### Lighthouse (mobile, `lighthouse.json`, 2026-08-08)
 
@@ -276,31 +289,18 @@ not have to rediscover them. Nothing below is implemented yet.
 > [1.6.0] entry, "Changed — uploads are re-encoded to WebP…" and "Added — a profile
 > picture, cropped in the browser…". The QR-in-avatar-center idea mentioned in the original
 > avatar spec was cut before being built and stays cut.
-
-### Reporting, for recipes / users / discussion comments / images
-
-One `reports` table with a target kind and id, a reason, an optional note, and a status
-(`open` / `actioned` / `dismissed`). Rate-limited per user, unique per (reporter, target) so
-one person cannot inflate a count.
-
-Two things this needs that do not exist yet and are the actual work:
-
-- **Somewhere for reports to go.** A queue nobody reads is theatre. There is no admin role
-  and no moderation surface in the app today — `users` has no `is_admin`.
-- **A defined consequence.** Auto-hide at a threshold invites brigading; hide-nothing makes
-  reporting pointless. Recommend: reports are visible to the owner of the reported artefact
-  _and_ to an admin, nothing is auto-hidden at v1, and the shipped moderation tools
-  (thread/comment delete, image delete) are the response.
-
-### Ingredients: report, and edit the ones we did not ship
-
-Only ingredients created by users — `ingredient_nutrition.source = 'curated'` / not
-`swiss-blv-v7` — are editable or reportable. The Swiss BLV rows are reference data and must
-stay immutable, or the nutrition figures stop meaning anything.
-
-This needs a `created_by` column on `ingredients`, which does not exist today, and it pairs
-with the rate-limit gap already listed above: `POST /api/ingredients` currently lets any
-signed-in user write to the global catalogue unthrottled.
+>
+> Both items that used to live below — reporting, and ingredient editing — have also
+> shipped. See the CHANGELOG's [1.7.0] entry, "Added — reports, and the admin role that
+> reads them" and "Added — a user-created ingredient can be corrected by whoever created
+> it". Built mostly as specified, with two differences worth recording: ingredient
+> editability is gated on the new `ingredients.created_by` column rather than
+> `ingredient_nutrition.source`, because a user ingredient with no nutrition supplied has
+> no nutrition row to check `source` on at all; and a reported **person** (`targetKind:
+> 'user'`) is deliberately excluded from `/api/reports/mine` — the spec said "visible to
+> the owner of the reported artefact," which does not obviously extend to a person, and
+> telling someone they were reported is a retaliation risk the product has no reason to
+> take.
 
 ## Post-v1 backlog
 

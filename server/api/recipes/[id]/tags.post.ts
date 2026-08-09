@@ -38,6 +38,8 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 403, statusMessage: 'Forbidden' })
   }
 
+  await useRateLimit(`recipe:tags:${session.user.id}`, { max: 60, windowSeconds: 600 })
+
   const tagNames = result.data.tags.map((t) => t.toLowerCase().trim()).filter(Boolean)
 
   // Upsert each tag and collect IDs

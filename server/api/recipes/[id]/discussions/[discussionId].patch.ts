@@ -66,6 +66,8 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 403, statusMessage: 'Only the author or the recipe owner can change the status' })
   }
 
+  await useRateLimit(`discussion:update:${session.user.id}`, { max: 30, windowSeconds: 600 })
+
   await db
     .update(recipeDiscussions)
     .set({
