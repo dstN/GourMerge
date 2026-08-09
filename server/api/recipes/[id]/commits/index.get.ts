@@ -28,10 +28,17 @@ const MAX_HISTORY_DEPTH = 500
 
 export default defineEventHandler(async (event) => {
   const recipeId = Number(getRouterParam(event, 'id'))
+  /**
+   * The branch was already scoped to the recipe below, but the *recipe* was not scoped to
+   * the caller — so a private recipe's whole history (commit messages, author names,
+   * timestamps) answered to anyone walking the sequential ids. Commit messages are prose
+   * the author wrote assuming nobody outside could read them.
+   */
+  const recipe = await requireVisibleRecipe(event, recipeId)
   const query = getQuery(event)
   const branchId = Number(query.branchId)
 
-  if (isNaN(recipeId) || isNaN(branchId)) {
+  if (isNaN(branchId)) {
     throw createError({ statusCode: 400, statusMessage: 'Invalid parameters' })
   }
 
@@ -41,7 +48,7 @@ export default defineEventHandler(async (event) => {
   const [branch] = await db
     .select({ headCommitId: recipeBranches.headCommitId })
     .from(recipeBranches)
-    .where(and(eq(recipeBranches.id, branchId), eq(recipeBranches.recipeId, recipeId)))
+    .where(and(eq(recipeBranches.id, branchId), eq(recipeBranches.recipeId, recipe.id)))
     .limit(1)
 
   if (!branch) {
@@ -51,7 +58,7 @@ export default defineEventHandler(async (event) => {
   // Ancestry can cross branch boundaries, so the candidate set is every commit
   // on ANY of the recipe's branches, not just the requested one.
   const recipeBranchIds = (
-    await db.select({ id: recipeBranches.id }).from(recipeBranches).where(eq(recipeBranches.recipeId, recipeId))
+    await db.select({ id: recipeBranches.id }).from(recipeBranches).where(eq(recipeBranches.recipeId, recipe.id))
   ).map((b) => b.id)
 
   const allCommits = recipeBranchIds.length

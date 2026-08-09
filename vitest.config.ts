@@ -38,6 +38,16 @@ export default defineVitestConfig({
         'server/utils/maintenanceConfig.json', // data, not code — v8 counts it as two lines
         // seal.ts and pendingTotp.ts are deliberately NOT excluded: a forgeable seal or
         // a TTL that does not expire would silently defeat the second factor.
+
+        // Session + one SELECT, and the rule it enforces (404 for a private recipe, never
+        // 403) is only observable end to end — the authz matrix in the E2E API specs is
+        // where it is proved.
+        'server/utils/recipeAccess.ts',
+        // `createImageBitmap` + `<canvas>`, neither of which happy-dom implements. Mocking
+        // them would test the mock; the real path is exercised by the upload journey.
+        'app/utils/imageResize.ts',
+        // imageProbe.ts is deliberately NOT excluded: it decides what an uploaded file *is*,
+        // and a wrong answer there is stored XSS. tests/unit/imageProbe.test.ts covers it.
       ],
       thresholds: {
         lines: 75,
