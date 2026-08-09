@@ -243,18 +243,14 @@ const appUrl = useRuntimeConfig().public.appUrl as string
 
 useSeoMeta({
   title: () =>
-    recipe.value
-      ? `${resolveTranslation(recipe.value.titleTranslations, recipe.value.title)}: GourMerge`
-      : 'GourMerge',
+    recipe.value ? `${resolveTranslation(recipe.value.titleTranslations, recipe.value.title)}: GourMerge` : 'GourMerge',
   description: () =>
     recipe.value
       ? resolveTranslation(recipe.value.descriptionTranslations, recipe.value.description ?? '') ||
         t('recipe.seoDescriptionFallback')
       : t('recipe.seoDescriptionFallback'),
   ogTitle: () =>
-    recipe.value
-      ? `${resolveTranslation(recipe.value.titleTranslations, recipe.value.title)}: GourMerge`
-      : 'GourMerge',
+    recipe.value ? `${resolveTranslation(recipe.value.titleTranslations, recipe.value.title)}: GourMerge` : 'GourMerge',
   ogDescription: () =>
     recipe.value
       ? resolveTranslation(recipe.value.descriptionTranslations, recipe.value.description ?? '') ||
@@ -398,6 +394,23 @@ useHead(() => {
             <!-- No "Varianten" button here: the branch picker below carries the count and
                  links to the same page, and two routes to one destination in one row is
                  noise. -->
+
+            <!-- An in-page anchor, not a route: the discussion lives at the bottom of this
+                 page, so this is a jump. The badge counts every thread rather than only the
+                 open ones — unlike the GourMerge Request badge above, where "open" means
+                 "needs your attention". A resolved discussion is still worth reading. -->
+            <UButton
+              :label="t('discussion.title')"
+              icon="i-lucide-messages-square"
+              size="sm"
+              color="neutral"
+              variant="outline"
+              to="#discussion"
+            >
+              <template v-if="recipe.discussionCount > 0" #trailing>
+                <UBadge :label="String(recipe.discussionCount)" color="neutral" variant="subtle" size="sm" />
+              </template>
+            </UButton>
 
             <UButton
               :label="t('history.title')"
@@ -587,6 +600,12 @@ useHead(() => {
         </div>
       </UCard>
 
+      <!-- Serving suggestion — deliberately between the ingredients and the steps.
+           That is the seam where the reader stops asking "what do I need" and starts
+           asking "how do I make it", and it is the moment a picture of the finished dish
+           is worth something. See RecipeCoverImage for why the dimensions travel with it. -->
+      <RecipeCoverImage v-if="recipe.image" :recipe-id="recipe.id" :image="recipe.image" />
+
       <!-- Nutrition bar (compact) -->
       <RecipeNutritionFacts
         v-if="recipe.nutritionTotal && recipe.nutritionPerServing && recipe.nutritionTotal.coveredCount > 0"
@@ -622,6 +641,12 @@ useHead(() => {
           </div>
         </div>
       </UCard>
+
+      <!-- Discussion — last, under the recipe. See RecipeDiscussionPanel for why under
+           and not beside. -->
+      <div id="discussion" class="mt-6 scroll-mt-6">
+        <RecipeDiscussionPanel :recipe-id="recipe.id" :is-recipe-owner="isOwner" />
+      </div>
     </div>
   </CommonPageShell>
 </template>

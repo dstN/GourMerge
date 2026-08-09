@@ -2,29 +2,57 @@ import { test, expect } from '@playwright/test'
 import { registerUser, uniqueUser, createRecipe, createIngredient, commitSnapshot } from './support/api'
 
 /**
- * The content column inside the sidebar shell.
+ * The logo and the page content must share one left edge.
  *
- * Each page declares its own cap (`wide` 7xl, `content` 4xl, `form` 2xl) and centres it,
- * which is right in the full-viewport public layout and wrong beside a sidebar: it gave
- * three different left edges — measured at 1600px, dashboard 288, recipe 480, settings 592
- * — so content jumped sideways under a nav that did not move.
+ * ## What this used to test, and why it changed
  *
- * What the shell does now: one column for every page, a visible gap after the sidebar, and
- * a trailing edge that lands on the header's working area so content and chrome finish
- * together.
+ * The signed-in shell carried a 256px `<aside>`. The header was centred in the *window*
+ * while the content column began after the sidebar, so the two frames could never agree:
+ * measured at 1600px, the content's left edge landed at 288px on the dashboard, 480px on a
+ * recipe and 592px in settings, under a nav that did not move. The previous version of this
+ * file pinned a `main.css` block of magic numbers (`--gm-shell-lead`, `--gm-shell-trail`)
+ * that corrected for it from `lg` up.
  *
- * **What it deliberately does NOT do** is align the leading edge with the top nav's first
- * item, which was the original request. That target moves: the header is `justify-between`
- * with three groups, so the centre group sits wherever the side groups leave it, and the
- * user menu carries the username. Measured at a fixed 1600px viewport, the first nav item
- * sits at 461px for a 5-character username and 389px for a 28-character one. There is
- * nothing stable to align to, so the leading edge is a fixed gap instead.
+ * The sidebar is gone. Header and content are the same `max-w-7xl` container centred in the
+ * same viewport, so alignment is structural, holds at every width, and needs no CSS. This
+ * spec now asserts that directly — the logo's left edge against the content's — which is
+ * both a stronger claim and the one a person actually looks at.
  *
  * Assertions are relative, never absolute pixels, so a cap or breakpoint change fails
  * loudly instead of drifting.
  */
-test.describe('sidebar shell layout', () => {
-  test('one column, consistent gap, trailing edge on the header', async ({ page, request }) => {
+
+/**
+ * Logo, content column and the header's trailing control, in viewport coordinates.
+ *
+ * The shell's **padding box** is measured, not its border box: `<CommonPageShell>` and the
+ * header's container carry the same `px-4 sm:px-6 lg:px-8` gutters, so their border boxes
+ * coincide while the things a person actually sees — the logo glyph and the first word of
+ * the content — sit one gutter inside. Comparing border boxes to the logo is off by exactly
+ * that gutter (32px at `lg`) and would fail against a layout that is correct.
+ */
+const probe = (page: import('@playwright/test').Page) =>
+  page.evaluate(() => {
+    const header = document.querySelector('header')!
+    const main = document.querySelector('#main-content')!
+    const shell = main.querySelector('.page-shell') as HTMLElement
+    const logo = header.querySelector('a') as HTMLElement
+    const controls = ([...header.querySelectorAll('button, a')] as HTMLElement[]).filter(
+      (el) => el.getBoundingClientRect().width > 0
+    )
+    const last = controls[controls.length - 1]!
+    const s = shell.getBoundingClientRect()
+    const cs = getComputedStyle(shell)
+    return {
+      contentLeft: Math.round(s.left + parseFloat(cs.paddingLeft)),
+      contentRight: Math.round(s.right - parseFloat(cs.paddingRight)),
+      logoLeft: Math.round(logo.getBoundingClientRect().left),
+      headerTrailing: Math.round(last.getBoundingClientRect().right),
+    }
+  })
+
+test.describe('logo / content alignment', () => {
+  test('signed in: the logo sits directly above the content, on every page', async ({ page, request }) => {
     const user = uniqueUser('align')
     await registerUser(request, user)
     const recipe = await createRecipe(request, { title: 'Align Check' })
@@ -44,88 +72,111 @@ test.describe('sidebar shell layout', () => {
       })
     }, user)
 
-    /** Content column vs the sidebar and vs the header's trailing control. */
-    const probe = () =>
-      page.evaluate(() => {
-        const header = document.querySelector('header')!
-        const main = document.querySelector('#main-content')!
-        const shell = main.firstElementChild as HTMLElement
-        // Last *visible* control in the header — the user menu.
-        const controls = ([...header.querySelectorAll('button, a')] as HTMLElement[]).filter(
-          (el) => el.getBoundingClientRect().width > 0
-        )
-        const last = controls[controls.length - 1]!
-        const s = shell.getBoundingClientRect()
-        const m = main.getBoundingClientRect()
-        return {
-          left: Math.round(s.left),
-          right: Math.round(s.right),
-          gapToSidebar: Math.round(s.left - m.left),
-          headerTrailing: Math.round(last.getBoundingClientRect().right),
-        }
-      })
-
-    // ── One column across pages, at a representative desktop width ──
     await page.setViewportSize({ width: 1600, height: 900 })
-    const rows: Array<{ name: string; left: number; right: number; gap: number }> = []
 
+    /**
+     * `wide` pages only. A `content` (4xl) or `form` (2xl) page is *deliberately* narrower
+     * and centred — that is the design, not a misalignment — so only the pages that share
+     * the header's own `max-w-7xl` cap can be asserted flush against the logo.
+     */
     for (const [name, path] of [
       ['dashboard', '/dashboard'],
       ['recipes', '/recipes'],
       ['explore', '/explore'],
-      ['recipe', `/${recipe.owner.username}/${recipe.slug}`],
-      ['gmr list', `/${recipe.owner.username}/${recipe.slug}/gourmerge-requests`],
-      ['branches', `/${recipe.owner.username}/${recipe.slug}/branches`],
-      ['settings', '/settings'],
+      ['starred', '/recipes/starred'],
+      ['profile', `/${recipe.owner.username}`],
     ] as const) {
       await page.goto(path, { waitUntil: 'load' })
-      await page.waitForTimeout(1000)
-      const m = await probe()
-      console.log(`  ${name.padEnd(10)} left=${m.left} right=${m.right} gapToSidebar=${m.gapToSidebar}`)
-      rows.push({ name, left: m.left, right: m.right, gap: m.gapToSidebar })
+      await page.waitForTimeout(900)
+      const m = await probe(page)
+      // eslint-disable-next-line no-console -- the measured numbers are the point of the run
+      console.log(`  ${name.padEnd(10)} logo=${m.logoLeft} content=${m.contentLeft} right=${m.contentRight}`)
+      expect(
+        Math.abs(m.contentLeft - m.logoLeft),
+        `${name}: the content column does not start where the logo does`
+      ).toBeLessThanOrEqual(2)
+      expect(
+        Math.abs(m.contentRight - m.headerTrailing),
+        `${name}: the content column does not finish with the header controls`
+      ).toBeLessThanOrEqual(2)
     }
 
-    expect([...new Set(rows.map((r) => r.left))], `differing left edges: ${JSON.stringify(rows)}`).toHaveLength(1)
-    expect([...new Set(rows.map((r) => r.right))], `differing right edges: ${JSON.stringify(rows)}`).toHaveLength(1)
-
-    // A visible gap after the sidebar. Butting up against it is the other way to get a
-    // consistent edge, and it reads as a bug rather than a decision.
-    for (const r of rows) expect(r.gap, `${r.name} sits too close to the sidebar`).toBeGreaterThan(60)
-
-    // ── The trailing edge tracks the header at every width ──
-    for (const width of [1280, 1600, 1920, 2560]) {
+    // The alignment is structural, so it must hold at every width — including the ones the
+    // old magic-number media query did not cover (below `lg`).
+    for (const width of [768, 1024, 1280, 1920, 2560]) {
       await page.setViewportSize({ width, height: 900 })
       await page.goto('/dashboard', { waitUntil: 'load' })
-      await page.waitForTimeout(900)
-      const m = await probe()
-      console.log(`  ${String(width).padStart(4)}px  content.right=${m.right}  header.trailing=${m.headerTrailing}`)
-      expect(
-        Math.abs(m.right - m.headerTrailing),
-        `at ${width}px the content column does not finish with the header controls — if the ` +
-          `header's container or padding changed, --gm-shell-trail in main.css needs updating`
-      ).toBeLessThanOrEqual(2)
+      await page.waitForTimeout(700)
+      const m = await probe(page)
+      // eslint-disable-next-line no-console -- the measured numbers are the point of the run
+      console.log(`  ${String(width).padStart(4)}px  logo=${m.logoLeft}  content=${m.contentLeft}`)
+      expect(Math.abs(m.contentLeft - m.logoLeft), `misaligned at ${width}px`).toBeLessThanOrEqual(2)
     }
   })
 
-  test('the public layout still centres, untouched by the shell rule', async ({ page }) => {
+  /**
+   * The header must never be wider than the window.
+   *
+   * The layout root is `h-dvh overflow-hidden`, so an over-wide header does **not** produce
+   * a scrollbar — it is silently clipped, and the clipped end is the right-hand cluster
+   * holding the account menu. Measured before the desktop breakpoint moved to `lg`: at a
+   * 768px viewport the header's content wanted **949px**, so the avatar and the theme toggle
+   * were simply not on screen between `md` and ~1000px, with nothing to indicate it.
+   *
+   * Nothing else in the suite would catch that: alignment still passes, axe sees elements
+   * that are in the DOM and technically visible, and the page does not scroll. Hence an
+   * explicit assertion, checked at the widths either side of the breakpoint.
+   */
+  test('the header never overflows the window at any width', async ({ page, request }) => {
+    const user = uniqueUser('hdrfit')
+    await registerUser(request, user)
+    await page.goto('/auth/login', { waitUntil: 'load' })
+    await page.evaluate(async (u) => {
+      await fetch('/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: u.email, password: u.password }),
+      })
+    }, user)
+
+    for (const width of [390, 768, 900, 1023, 1024, 1280, 1920]) {
+      await page.setViewportSize({ width, height: 900 })
+      await page.goto('/dashboard', { waitUntil: 'load' })
+      await page.waitForTimeout(500)
+      const m = await page.evaluate(() => {
+        const header = document.querySelector('header')!
+        return {
+          headerScroll: header.scrollWidth,
+          win: window.innerWidth,
+          navWidth: Math.round(document.querySelector('header nav')?.getBoundingClientRect().width ?? 0),
+        }
+      })
+      // eslint-disable-next-line no-console -- the measured numbers are the point of the run
+      console.log(`  ${String(width).padStart(4)}px  header=${m.headerScroll} win=${m.win} nav=${m.navWidth}`)
+      expect(
+        m.headerScroll,
+        `at ${width}px the header wants ${m.headerScroll}px and would be clipped — ` +
+          'a nav item was probably added; move the breakpoint or drop a label (see MainNav.vue)'
+      ).toBeLessThanOrEqual(m.win)
+      // And the two halves of the switch must agree: the desktop nav is present exactly
+      // where the offcanvas is not.
+      expect(m.navWidth > 0, `nav visibility is wrong at ${width}px`).toBe(width >= 1024)
+    }
+  })
+
+  test('signed out: /explore is the reference, and still matches', async ({ page }) => {
     await page.setViewportSize({ width: 1600, height: 900 })
     await page.goto('/explore', { waitUntil: 'load' })
-    await page.waitForTimeout(1000)
+    await page.waitForTimeout(900)
 
-    const m = await page.evaluate(() => {
-      const main = document.querySelector('#main-content')
-      const shell = main?.firstElementChild as HTMLElement | null
-      const b = shell!.getBoundingClientRect()
-      return {
-        shellAttr: main?.getAttribute('data-shell'),
-        left: Math.round(b.left),
-        right: Math.round(window.innerWidth - b.right),
-      }
-    })
+    const m = await probe(page)
+    // eslint-disable-next-line no-console -- the measured numbers are the point of the run
     console.log('  anonymous /explore:', JSON.stringify(m))
 
-    // No sidebar → no shell attribute → the override must not apply at all.
-    expect(m.shellAttr).toBeNull()
-    expect(Math.abs(m.left - m.right), 'public content must stay centred').toBeLessThan(8)
+    // This state was already correct before the sidebar was removed, and it is what the
+    // signed-in shell was changed to match. If it ever drifts, the target moved.
+    expect(Math.abs(m.contentLeft - m.logoLeft)).toBeLessThanOrEqual(2)
+
+    expect(await page.locator('#main-content').getAttribute('data-shell')).toBe('public')
   })
 })

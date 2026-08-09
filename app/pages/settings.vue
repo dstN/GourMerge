@@ -89,8 +89,25 @@ useSeoMeta({ title: `${t('settings.title')}: GourMerge` })
           <UTextarea v-model="form.bio" :placeholder="t('settings.bioPlaceholder')" :rows="3" />
         </UFormField>
 
-        <UFormField :label="t('settings.avatarUrl')">
-          <UInput v-model="form.avatarUrl" :placeholder="t('settings.avatarUrlPlaceholder')" icon="i-lucide-image" />
+        <!-- The preview sits beside the field so the effect of clearing it is visible
+             rather than described: empty → the generated QR avatar appears immediately. -->
+        <UFormField :label="t('settings.avatarUrl')" :hint="t('settings.avatarQrHint')">
+          <div class="flex items-start gap-3">
+            <CommonUserAvatar
+              :username="user?.username ?? ''"
+              :display-name="user?.displayName"
+              :avatar-url="form.avatarUrl || null"
+              size="lg"
+            />
+            <div class="min-w-0 flex-1">
+              <UInput
+                v-model="form.avatarUrl"
+                :placeholder="t('settings.avatarUrlPlaceholder')"
+                icon="i-lucide-image"
+              />
+              <p class="mt-1 text-xs text-dimmed">{{ t('settings.avatarQrExplain') }}</p>
+            </div>
+          </div>
         </UFormField>
 
         <UFormField :label="t('settings.language')">

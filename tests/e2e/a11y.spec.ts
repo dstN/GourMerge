@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
+import { registerUser, uniqueUser, createRecipe, createIngredient, commitSnapshot } from './support/api'
 
 /**
  * Accessibility scans (axe-core, WCAG 2 A/AA) on public pages.
@@ -48,4 +49,33 @@ test('a11y (dark): landing + explore', async ({ page }) => {
   await page.emulateMedia({ colorScheme: 'dark' })
   await audit(page, '/')
   await audit(page, '/explore')
+})
+
+/**
+ * The recipe page, in both schemes, with a discussion thread on it.
+ *
+ * The static list above covers marketing, auth and legal pages — none of which carry
+ * user-generated content. The recipe page is the one visitors actually read, and it is
+ * where the newest surfaces live: the serving-suggestion `<figure>`, the QR avatars in the
+ * discussion list, and the thread markup itself. It needs data, which is why it is a
+ * separate test rather than another entry in `PUBLIC_PAGES`.
+ */
+test('a11y: a public recipe with a discussion, light and dark', async ({ page, request }) => {
+  const author = await registerUser(request, uniqueUser('a11y'))
+  const recipe = await createRecipe(request, { title: 'Accessible Apple Cake', visibility: 'public' })
+  const flour = await createIngredient(request, 'Mehl, Weizen, hell')
+  await commitSnapshot(request, recipe.id, recipe.branchId, {
+    message: 'base',
+    ingredients: [{ ingredientId: flour, quantity: '250', unit: 'g', notes: 'gesiebt', sortOrder: 0 }],
+    steps: [{ sortOrder: 1, content: 'Alles verrühren und backen.', contentTranslations: {} }],
+  })
+  await request.post(`/api/recipes/${recipe.id}/discussions`, {
+    data: { title: 'Mit Dinkelmehl probiert', body: 'Wird etwas kerniger, hält aber gut zusammen.', category: 'idea' },
+  })
+
+  const url = `/${author.username}/${recipe.slug}`
+  for (const scheme of ['light', 'dark'] as const) {
+    await page.emulateMedia({ colorScheme: scheme })
+    await audit(page, url)
+  }
 })

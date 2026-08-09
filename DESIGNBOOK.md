@@ -105,6 +105,42 @@ Everything derives from `--ui-radius` (`0.25rem`). Do not hardcode radii.
 A skeleton must carry the radius of the thing it replaces. `rounded-xl` on a
 skeleton in front of a `rounded-lg` card is a visible pop on load.
 
+#### Avatars: the generated fallback, and the one square exception
+
+A user with no uploaded picture gets a mark generated from their username
+(`<CommonUserAvatar>` → `/api/users/:username/avatar`), in one of two renderings
+chosen by size:
+
+| Size          | Rendering | Shape          | What it is                                                    |
+| ------------- | --------- | -------------- | ------------------------------------------------------------- |
+| `xs`–`md`     | `mark`    | `rounded-full` | A coarse 5×5 mirrored identicon. An identity mark.            |
+| `lg`–`2xl`    | `badge`   | `rounded-md`   | The identicon as a bezel around a scannable QR of the profile |
+| any, uploaded | photo     | `rounded-full` | The user's own picture                                        |
+
+**The badge is the only square avatar in the app**, and the reason is functional:
+a circular mask cuts off the three finder patterns a decoder uses to locate the
+symbol, so `rounded-full` would leave a code that no longer scans — and a QR that
+does not scan is just a noisy placeholder. Shape therefore signals state: round =
+a picture of a person (real or generated), square = a code you can point a phone
+at.
+
+**The QR is dropped below `lg`, not shrunk.** At 32px its modules fall under a
+pixel: it is neither scannable nor recognisable, and reads as grey noise. The
+identicon alone does the small-size job — "tell two users apart at a glance" —
+far better. Both renderings share the seed and the ramp, so one person's mark and
+their badge read as the same identity.
+
+**Colour comes from the two brand ramps only** — never a per-user hue. A random
+hue per account (GitHub's approach) would turn a comment thread into a bag of
+sweets beside a saffron-and-slate product. Individuality comes from geometry, plus
+which of the two ramps the seed picks. `server/utils/identiconAvatar.ts` mirrors
+the `@theme` token values as sRGB hex and must be kept in step with `main.css`.
+
+`size="2xl"` (192px) is the smallest rendering at which every module rasterises
+correctly, so it is the only one that makes the "scan me" promise true — which is
+why the profile page uses it. Measured in
+`tests/unit/identiconAvatar.test.ts`.
+
 ### 1.4 Typography
 
 `DM Sans` for everything, `JetBrains Mono` for quantities, units, commit ids and
@@ -163,6 +199,28 @@ This is solved **centrally and light-mode-only**, in `main.css`:
 Dark mode keeps the base palette, which already contrasts. **Do not** re-fix
 contrast at a call site with an inline `text-*-700 dark:text-*-400` — that is the
 pattern this section replaces.
+
+#### A `subtle` semantic badge must carry its `.tint-*` class
+
+This is the part of §1.6 that is _not_ automatic, and pretending otherwise is
+what let nine failing badges ship. `variant="subtle"` paints Nuxt UI's
+`text-<color>` — the semantic **500** — on a 10% wash of the same hue. In light
+mode `success` measures **2.03:1**, less than half of AA. The brand ramp is
+darkened wholesale under `:root:not(.dark)`, so `primary` and `neutral` need
+nothing; `success` / `warning` / `error` / `info` are not, and each call site must
+apply the matching class:
+
+```html
+<UBadge color="success" variant="subtle" :class="TINT_CLASS.success" :label="…" />
+<UBadge :color="c" variant="subtle" :class="TINT_CLASS[c]" :label="…" />
+```
+
+A component that already computes its colour may resolve the class once and bind
+it (`<RecipeDifficultyBadge>` does), which is better where it applies.
+
+`design:check` rule 14 enforces this — it is how the nine were found. Before it
+existed, only axe could catch them, and only on a page the sweep happened to
+visit with the badge rendered.
 
 ### 1.7 Elevation and motion
 
@@ -321,15 +379,44 @@ Anything else is full width.
 ### 4.1 The shell
 
 `default`, `dashboard` and `auth` layouts are `flex flex-col h-dvh
-overflow-hidden`. Header, footer and dashboard sidebar are `shrink-0`; **only
-`<main>` scrolls** (`flex-1 overflow-y-auto`). `h-dvh`, never `h-screen`, so
-mobile browser chrome is handled.
+overflow-hidden`. Header and footer are `shrink-0`; **only `<main>` scrolls**
+(`flex-1 overflow-y-auto`). `h-dvh`, never `h-screen`, so mobile browser chrome is
+handled.
 
-Layouts do **not** wrap page content. `<main>` is a bare scroll container. The
-dashboard body row is full-width so the sidebar touches the left edge and
-`<main>`'s scrollbar touches the right edge; content is capped **inside**
-`<main>`, by the page. Capping the row instead leaves the scrollbar floating
-mid-page on wide screens.
+Layouts do **not** wrap page content. `<main>` is a bare scroll container; the
+page's own `<CommonPageShell>` owns the cap and the gutters.
+
+**There is no sidebar.** The signed-in shell used to carry a 256px `<aside>`
+listing four destinations that were already in the header nav and again in the
+user menu — fifteen entries for nine destinations. Removing it also removed the
+reason the logo and the content never lined up: the header is centred in the
+window, so a content column that started after a sidebar could not agree with it,
+and the previous fix was a block of magic numbers in `main.css` pinned by an E2E
+test and only active from `lg` up. Both are now the same `max-w-7xl` container in
+the same viewport, so a `wide` page's content starts exactly under the logo at
+every width, with no CSS. `tests/e2e/layout-alignment.spec.ts` measures it.
+
+Navigation lives in exactly two places, with distinct jobs: `<LayoutMainNav>` for
+destinations you move between while working (Entdecken, Meine Rezepte, Favoriten,
+Neues Rezept) and `<LayoutUserDropdown>` for your account (Dashboard, public
+profile, settings, sign out). A destination appears in one, never both.
+
+**The desktop header starts at `lg`, not `md`**, and all three parts of that
+switch must agree — `<LayoutMainNav>`, both layouts' control clusters, and
+`<LayoutMobileMenu>`'s own `lg:hidden`. Four labelled nav items plus the logo plus
+the cluster need ~1000px; at `md` the header's content measured **949px against a
+768px viewport**, and because the shell is `h-dvh overflow-hidden` that overflow
+was clipped rather than scrolled, so the account menu was off-screen between 768px
+and ~1000px with nothing to show for it. `tests/e2e/layout-alignment.spec.ts`
+asserts `header.scrollWidth <= window.innerWidth` at seven widths, so adding a
+fifth nav item fails a test instead of quietly eating the avatar.
+
+Every item in the nav carries its label. One icon-only entry among labelled ones
+reads as a link whose text failed to load, not as a deliberately quieter item —
+rank is expressed by `variant` (§2), never by withholding the word.
+
+`<main>` carries `data-shell="app"` or `data-shell="public"` — the only thing in
+the DOM naming which layout rendered, since all three share `#main-content`.
 
 ### 4.2 Content width — three values, one component
 
@@ -528,6 +615,9 @@ own needs a label on its control.
 11. `defaultVariants` for `button`, `badge` or `card` in `app.config.ts` (§2.1).
 12. A `<UBadge>` with no `color` → Nuxt UI's default is solid primary (§7).
 13. A decorative `shadow-*` on a `<UButton>` (§2).
+14. A `<UBadge variant="subtle">` in a semantic colour with no `.tint-*` class →
+    ~2:1 contrast in light mode (§1.6). A `:class` binding is accepted in a file
+    whose script already uses `TINT_CLASS`.
 
 The checker is `scripts/design-check.mjs`. Its allow-lists are short and each
 entry is commented with why. If you need to add one, that is a signal to change

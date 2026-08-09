@@ -19,15 +19,25 @@
 These constrain everything below. They are decisions, not plans — they do not
 expire when a phase completes.
 
+> **Decision 2 was revised on 2026-08-09** (owner request). It used to read "No
+> images, no uploads — text only." Recipes now carry exactly one uploaded photo.
+> The revised wording is below; the reasoning for the storage choice is in
+> §"Images, and why the bytes live in MySQL".
+
 1. **Deployment: Netcup Webhosting** (shared) running Node via **Apache + Phusion
    Passenger**, separate MySQL server (**8.4.11**, a Netcup MySQL host). No
    Docker in production — `docker-compose.yml` is local-dev MySQL only. No root,
    no Redis, no self-hosted daemons. Consequences that keep mattering: in-memory
    state is not multi-process safe (hence the DB-backed rate limiter), and the
    host cannot build (hence build-in-CI, ship-the-artifact).
-2. **No images, no uploads — text only.** TipTap runs without image nodes.
-   Ingredients are identified by real names from the `ingredients` master table;
-   icons are decorative.
+2. **One uploaded image per recipe, and no other uploads.** _(Revised
+   2026-08-09; previously "no images, no uploads — text only".)_ A recipe may
+   carry a single serving-suggestion photo, stored in `recipe_images` and served
+   from `/api/recipes/:id/image`. Everything else stays text: TipTap still runs
+   without image nodes, so **step content cannot contain an image**, and there is
+   no general upload surface. Ingredients are identified by real names from the
+   `ingredients` master table; icons are decorative. Avatars are either a URL the
+   user supplies or a generated identicon-QR badge — never an upload.
 3. **The full git workflow is not optional.** Fork, branch comparison, GourMerge
    Requests and three-way merge are core product, not add-ons.
 4. **Observability: Pino file logging + Sentry.io + UptimeRobot** on
@@ -55,6 +65,167 @@ Nuxt 4 · Vue 3 `<script setup lang="ts">` · Nuxt UI v4 (Reka + Tailwind v4) ·
 MySQL 8.4 · Drizzle ORM (`mysql2`) · TipTap 3 · `@nuxtjs/i18n` ·
 `@vite-pwa/nuxt` · `nuxt-auth-utils` (+ `@simplewebauthn` for passkeys, `otpauth` for
 TOTP) · Zod · `diff-match-patch-es`.
+
+---
+
+## Audit — 2026-08-09
+
+A feature pass (discussions, recipe photo, navigation rework, identicon-QR
+avatars) plus a full read of the repository against `ARCHITECTURE.md`,
+`DESIGNBOOK.md`, the Lighthouse report and a white-hat sweep of every endpoint.
+**Fixed in this pass** is recorded so the same ground is not re-covered; **still
+open** is the actual backlog this section adds.
+
+### Fixed — security
+
+| #   | Severity     | What                                                                                                                                                                                                                                                                                                                                                                                                | Where                                           |
+| --- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| 1   | **Critical** | `GET /api/recipes/:id/diff` had **no** visibility check **and** never scoped `?from=`/`?to=` to the recipe in the path. `/api/recipes/<any public id>/diff?from=1&to=2` returned the ingredients and steps of commits 1 and 2 from _whatever recipe they belonged to_, with no session. Recipe and commit ids are sequential integers, so walking them dumped every private recipe in the database. | `server/api/recipes/[id]/diff.get.ts`           |
+| 2   | High         | `GET /api/recipes/:id/commits` had no visibility check — a private recipe's entire history (commit messages, author names, timestamps) answered to anyone.                                                                                                                                                                                                                                          | `server/api/recipes/[id]/commits/index.get.ts`  |
+| 3   | Medium       | `GET /api/recipes/:id/branches` had no visibility check — leaked private recipes' branch names.                                                                                                                                                                                                                                                                                                     | `server/api/recipes/[id]/branches/index.get.ts` |
+
+All three now go through `requireVisibleRecipe()` / `requireCommitInRecipe()`
+(`server/utils/recipeAccess.ts`), which is the substantive fix: **twelve of the
+fifteen recipe `GET`s had a hand-written copy of the rule and three did not**, and
+nothing in the codebase could tell you which. One implementation, one place to
+audit. `tests/e2e/api/private-recipe-leaks.spec.ts` pins all three shut and
+asserts 404-not-403 (a 403 confirms the id exists, which on sequential integers is
+itself the disclosure).
+
+### Fixed — robustness, a11y, design
+
+- **An early rejection poisoned the _next_ request on the connection.** Any guard
+  that answers before the body is read — `requireUserSession`, an ownership check,
+  the new upload size cap — leaves unread bytes on the socket; Node then destroys
+  it and the client's next keep-alive request dies with `ECONNRESET` rather than
+  getting an answer. Reproduced against an existing endpoint (a 4 MB `POST
+/api/recipes` rejected 401 broke the following `/auth/register`), so this
+  predates the new code. `server/plugins/error-handler.ts` now sends
+  `Connection: close` on an error whose request body was not consumed — RFC 9110
+  §6.1 — guarded on `readableEnded` so ordinary 4xx keep their connection.
+- **Nine `variant="subtle"` badges failed AA in light mode** (`success` measures
+  **2.03:1** on its own wash) across `RecipeDiffViewer`, `NutritionFacts` and the
+  new discussion panel. DESIGNBOOK §1.6 claimed this was "solved centrally", but
+  the `.tint-*` classes only work where a call site applies one. Fixed, and made
+  mechanical: **`design:check` rule 14** now fails on a semantic subtle badge with
+  no tint. That rule is how the other eight were found.
+- **The axe sweep never visited a recipe page** — the highest-traffic page in the
+  app, and the one carrying user-generated content. Added, in both colour schemes,
+  with a discussion thread rendered. It is what surfaced the contrast defects
+  above.
+
+### Still open — security
+
+| Item                                                                                                             | Why it matters                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| ---------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Rate-limit the content-creating endpoints**                                                                    | 21 mutating endpoints have no limiter. The worst is `POST /api/recipes/:id/fork`: one request replays up to `MAX_FORK_HISTORY` = **1000** commits plus every ingredient and step row, so a single signed-in account can amplify writes enormously in a loop. `POST /api/recipes`, `/commits`, `/gourmerge-requests` and their comments are the same shape at lower cost. The new discussion and image endpoints already carry per-_user_ limits — copy that key choice: an IP key lets one account spread across addresses while punishing a shared NAT. |
+| **`POST /api/ingredients` writes to the global master catalog**                                                  | Any signed-in user inserts rows into `ingredients`, which every other user's autocomplete then reads. No rate limit, no review, no soft-delete. Spam here degrades the product for everyone and `scripts/cleanup-seed-ingredients.mjs` only removes unused non-BLV rows after the fact. Consider a per-user cap plus a `created_by` column so pollution is attributable.                                                                                                                                                                                 |
+| ~~Pin the trusted-proxy hop count~~                                                                              | Unchanged and still the top item — see the row in the table below. It is what makes every limit above bypassable even once they exist.                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| **`LIKE` wildcards are not escaped** in ingredient search and the explore fallback (`like(name, '%' + q + '%')`) | `q=%%%%%` forces a full scan on every row. Not injection — Drizzle parameterises — but a cheap way to load the database. Escape `%` and `_` in `q`.                                                                                                                                                                                                                                                                                                                                                                                                      |
+| **`POST /api/recipes/:id/simulate-activity` ships to production**                                                | Owner-only and harmless in effect, but it exists solely to fabricate tour data and writes commits + a GourMerge Request per call with no limiter. Gate it behind the tour or behind an env flag.                                                                                                                                                                                                                                                                                                                                                         |
+
+### Still open — correctness and CI
+
+| Item                                                              | Detail                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`npm run knip` fails today, so CI is red**                      | `scripts/seed-tour-recipe.mjs` imports `dotenv/config`; `dotenv` is installed transitively but absent from `package.json`. One devDependency line plus a lockfile update. Not done here because it touches `package-lock.json`, which deserves its own commit.                                                                                                                                                                                                                              |
+| **`tests/e2e/tour.spec.ts` asserts anchors that no longer exist** | It expects `data-tour="history-link"` and `"gourmerge-requests-link"`; neither is anywhere in `app/`. It also assumes `recipe-form-title` → `star-button` are adjacent, but `BASE_TOUR` now has four steps between them (`add-ingredient`, `add-step`, `commit-button`, `view-recipe-btn`). Two of its four tests fail, and the tail of the tour has had **no** coverage since those steps were added. Rewrite against the current step list.                                               |
+| **Local dev runs MySQL 8.0.45, not 8.4**                          | `docker-compose.yml`, CI and E2E are pinned to `mysql:8.4` and production is 8.4.11, but the developer machine this audit ran on answers `8.0.45`. That is exactly the split the engine correction in `ARCHITECTURE.md` §2 was written to end — and `tests/e2e/api/ingredients.spec.ts` ("the new ingredient must be searchable by translation") fails locally while passing in CI, which is the signature of a `JSON_EXTRACT` + collation difference. Point local dev at the compose file. |
+| **The dashboard sidebar's "recently edited" list was dropped**    | It was the one thing in the removed `<aside>` that had no duplicate elsewhere. If it is missed, it belongs on the dashboard page, not in the chrome.                                                                                                                                                                                                                                                                                                                                        |
+
+### Lighthouse (mobile, `lighthouse.json`, 2026-08-08)
+
+**Performance 99 · Accessibility 100 · Best Practices 100 · SEO 100.** The one
+missing point is arithmetic, not a defect:
+
+| Metric      | Value  | Score | Weight |
+| ----------- | ------ | ----- | ------ |
+| FCP         | 1.6 s  | 0.95  | 10     |
+| LCP         | 1.8 s  | 0.99  | 25     |
+| TBT         | 100 ms | 0.98  | 30     |
+| CLS         | 0.003  | 1.00  | 25     |
+| Speed Index | 1.6 s  | 1.00  | 10     |
+
+That sums to **98.65**, which rounds to 99; 100 needs ≥ 99.5, i.e. ~0.85 points
+across FCP, LCP and TBT together. Fixing FCP _and_ LCP outright yields 0.75 — so
+no single change gets there.
+
+What the report flags, and what each one is actually worth:
+
+- **`render-blocking-insight`, est. 300 ms** — `entry.css`, the only blocking
+  request. Measured on the current build: **237,678 B raw, 31,803 B gzip, 25,148 B
+  brotli**, against a ~12 KB document. Inlining it removes one round trip and
+  roughly triples the HTML on every request, and because the host serves
+  `/_nuxt/*` with **no cache headers at all** (see `cache-insight` below) there is
+  no repeat-visit cache to lose either. That makes it close to break-even on the
+  simulated profile rather than the clear win the audit's "savings" model implies,
+  and it cannot be verified without a production Lighthouse run. **Deliberately
+  not done.** If it is attempted, the honest way is real critical-CSS extraction
+  (`beasties`) at build time, and the acceptance test is a before/after run
+  against production — not the lab estimate.
+- **`cache-insight`, 445 KiB over 61 files** — `/_nuxt/*` and `/_fonts/*` come
+  back with `ETag` and nothing else. `nuxt.config.ts` already sets
+  `immutable` route rules for both and documents at length why they never reach
+  the browser: Plesk's "Smart static files processing" serves those files off disk
+  and Nitro never sees the request. **Owner action, not code** — turning that
+  feature off hands every asset to Node. Weighted 0 by Lighthouse.
+- **`bf-cache`** — "Internal error", flagged by Lighthouse itself as _not
+  actionable_.
+- **`unused-javascript`, 20 KiB of the 47 KiB entry chunk** — the Nuxt entry.
+  Nothing to remove without measurement.
+- **TBT** is the largest remaining lever at weight 30, and the obvious candidate
+  is already spent: `sentry.client.config.ts` removed `browserTracing` for exactly
+  this reason and documents the trade. What is left is Vue hydration.
+
+**Conclusion: no speculative performance change was made.** The report shows a
+99 with one actionable item whose net effect is unmeasurable from a lab run, and
+this project's own standard (see the `/_nuxt/**` comment in `nuxt.config.ts`) is
+not to make host-fragile changes for weight-0 or break-even wins.
+
+### Deviations from ARCHITECTURE.md, accepted
+
+- **`recipe_discussions` and `recipe_images` have no `public_id`.** §6 requires
+  UUIDv7 `public_id` on "externally-linked entities", and names `recipes` and
+  `gourmerge_requests`. Both new tables are reachable only nested under a recipe
+  the caller can already see, exactly as GourMerge Request ids are in practice
+  (`/api/recipes/:id/gourmerge-requests/:gmrId` uses the internal id today). Adding
+  an unused 16-byte column to match the letter of the rule would be dead weight.
+  Revisit if either ever gets a top-level URL.
+- **`server/utils/identiconAvatar.ts` duplicates the brand colours as sRGB hex.**
+  §5 puts visual decisions in `main.css`; this runs on the server, where the
+  stylesheet does not exist. The values carry a comment naming `main.css` as the
+  source of truth, and `tests/unit/identiconAvatar.test.ts` asserts the renderer
+  never emits an off-palette colour — so a drift shows up as a test failure rather
+  than as a slightly-wrong orange.
+
+### Images, and why the bytes live in MySQL
+
+`recipe_images.data` is a `MEDIUMBLOB`, not a file. The deploy ships only
+`.output/` + `app.js`, staged into `.output.new` and swapped by `rename`, so
+anything written inside the app directory is one release away from being replaced
+— or, on a rollback, resurrected at an older state. There is no persistent volume,
+no object storage on the plan, and `scripts/server-backup.sh` dumps the database
+only, so an upload directory would also be the one part of user content with no
+backup and no restore drill. A row is transactional, cascades with its recipe,
+rides the nightly dump, and travels through the GDPR export and erasure paths that
+already exist.
+
+The cost is that reads go through Node instead of the web server. That is what the
+content-addressed URL is for: `?v=<sha256>` plus `immutable`, so a given URL's
+bytes can never change and a replaced photo is simply a different URL.
+
+**Watch this if the product grows.** At one ~250 KB photo per recipe the table is
+trivial; at 10,000 recipes it is ~2.5 GB in the nightly `mysqldump`, which is when
+object storage stops being over-engineering.
+
+Related: **the server never decodes an image.** `server/utils/imageProbe.ts` reads
+the file header and nothing else, and the browser does the resizing
+(`app/utils/imageResize.ts`) — so no image-decoder CVE is reachable from a Passenger
+worker, and there is no `sharp` binary to match against a host we cannot rebuild
+on. The client is not trusted for it: format, dimensions and byte length are all
+re-validated server-side, and the stored MIME type comes from the magic bytes, never
+from the upload's own header (an SVG announced as `image/png` and echoed back would
+be stored XSS on our own origin).
 
 ---
 

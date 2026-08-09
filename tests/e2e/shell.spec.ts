@@ -5,16 +5,23 @@ import { registerUser, uniqueUser, createRecipe, createIngredient, commitSnapsho
  * The app shell on public recipe pages, and the open-request count.
  *
  * Recipe-scoped pages come in two kinds: `branches`/`history` are auth-gated and always
- * had the dashboard sidebar, while the recipe page, its forks list and the GourMerge
- * Request pages are public and used the plain shell unconditionally. A signed-in user
- * therefore lost the sidebar on a recipe and got it back on "Varianten" — flickering in
- * and out with no rule a user could infer. The `shell` middleware makes layout follow the
+ * used the authenticated shell, while the recipe page, its forks list and the GourMerge
+ * Request pages are public and used the plain one unconditionally — so a signed-in user
+ * lost the authenticated chrome on a recipe and got it back on "Varianten", flickering in
+ * and out with no rule they could infer. The `shell` middleware makes layout follow the
  * viewer instead of the route.
+ *
+ * **What it asserts changed with the nav rework.** The visible marker used to be the
+ * dashboard `<aside>`; that sidebar is gone (it triple-listed every destination — see
+ * `layouts/dashboard.vue`). The remaining difference between the two shells is the
+ * email-verification banner region, which is what this now checks: the authenticated shell
+ * renders `<LayoutVerifyEmailBanner>`'s host element, the public one does not. A stale
+ * `<aside>` assertion would have passed vacuously against zero sidebars on both.
  *
  * The count is deliberately OPEN-only: a badge is a call for attention, and including
  * closed or merged requests would make it permanently non-zero and therefore meaningless.
  */
-test('sidebar for signed-in viewers + open-GMR count badge', async ({ page, request }) => {
+test('authenticated shell for signed-in viewers + open-GMR count badge', async ({ page, request }) => {
   const user = uniqueUser('shell')
   await registerUser(request, user)
   const recipe = await createRecipe(request, { title: 'Shell Check' })
@@ -40,12 +47,13 @@ test('sidebar for signed-in viewers + open-GMR count badge', async ({ page, requ
 
   const url = `/${recipe.owner.username}/${recipe.slug}`
 
-  // ── Anonymous: no sidebar, no count in the payload badge ─────
+  // ── Anonymous: the public shell, and the count in the payload ─
   await page.goto(url, { waitUntil: 'load' })
   await page.waitForTimeout(1200)
-  const anonSidebar = await page.locator('aside').count()
+  const anonShell = await page.locator('#main-content').getAttribute('data-shell')
   const anonApi = await page.evaluate(async (u) => (await fetch(`/api/recipes/by-slug${u}?locale=de`)).json(), url)
-  console.log('  anonymous: <aside> count =', anonSidebar, '| openGmrCount =', anonApi.openGmrCount)
+  console.log('  anonymous: data-shell =', anonShell, '| openGmrCount =', anonApi.openGmrCount)
+  expect(anonShell, 'a guest must get the public shell').toBe('public')
   expect(anonApi.openGmrCount).toBe(1)
 
   // The old "Varianten" button must be gone from the header row.
@@ -53,7 +61,7 @@ test('sidebar for signed-in viewers + open-GMR count badge', async ({ page, requ
   console.log('  header "Varianten" buttons (expect 0):', variantenButtons)
   expect(variantenButtons).toBe(0)
 
-  // ── Signed in: sidebar present ───────────────────────────────
+  // ── Signed in: the authenticated shell on the same public pages ──
   await page.goto('/auth/login', { waitUntil: 'load' })
   await page.evaluate(async (u) => {
     await fetch('/auth/login', {
@@ -66,9 +74,9 @@ test('sidebar for signed-in viewers + open-GMR count badge', async ({ page, requ
   for (const path of [url, `${url}/gourmerge-requests`, `${url}/gourmerge-requests/${gmr.id}`]) {
     await page.goto(path, { waitUntil: 'load' })
     await page.waitForTimeout(1500)
-    const sidebars = await page.locator('aside').count()
-    console.log(`  signed-in ${path.replace(url, '') || '/recipe'} → <aside> count = ${sidebars}`)
-    expect(sidebars, `${path} should render the dashboard sidebar`).toBeGreaterThan(0)
+    const shell = await page.locator('#main-content').getAttribute('data-shell')
+    console.log(`  signed-in ${path.replace(url, '') || '/recipe'} → data-shell = ${shell}`)
+    expect(shell, `${path} should render the authenticated shell`).toBe('app')
   }
 
   // Closing the GMR must drop the badge to zero.

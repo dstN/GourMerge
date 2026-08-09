@@ -26,6 +26,26 @@ export const DIFFICULTY_COLOR: Record<string, Color> = {
 }
 
 /**
+ * Discussion thread category. `issue` is `error` rather than `warning` because it is the
+ * only one of the four that reports something wrong with the recipe; the other three are
+ * conversation and must not read as alarms.
+ */
+export const DISCUSSION_CATEGORY_COLOR: Record<string, Color> = {
+  idea: 'primary',
+  question: 'info',
+  issue: 'error',
+  praise: 'success',
+}
+
+/** Discussion thread category → its Lucide icon, so list and form cannot drift. */
+export const DISCUSSION_CATEGORY_ICON: Record<string, string> = {
+  idea: 'i-lucide-lightbulb',
+  question: 'i-lucide-help-circle',
+  issue: 'i-lucide-alert-triangle',
+  praise: 'i-lucide-heart',
+}
+
+/**
  * Light-mode-readable label class for a tinted badge (DESIGNBOOK §1.6). The
  * `.tint-*` classes are defined in `main.css`; this maps a semantic colour onto
  * one so no call site writes `text-*-700 dark:text-*-400` by hand.

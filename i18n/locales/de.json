@@ -17,13 +17,13 @@
     "myRecipes": "Meine Rezepte",
     "newRecipe": "Neues Rezept",
     "dashboard": "Dashboard",
-    "quickActions": "Schnellaktionen",
     "editProfile": "Profil bearbeiten",
     "starred": "Favoriten",
     "menu": "Menü",
     "language": "Sprache",
     "appearance": "Erscheinungsbild",
-    "recentRecipes": "Zuletzt bearbeitete Rezepte"
+    "publicProfile": "Öffentliches Profil",
+    "accountMenu": "Konto-Menü von {name}"
   },
   "auth": {
     "login": "Anmelden",
@@ -210,7 +210,19 @@
     "copyIngredients": "Zutaten kopieren",
     "shareIngredients": "Zutaten teilen",
     "ingredientsCopied": "Einkaufsliste kopiert.",
-    "copyFailed": "Kopieren war nicht möglich."
+    "copyFailed": "Kopieren war nicht möglich.",
+    "imageLabel": "Serviervorschlag",
+    "imageOptional": "optional",
+    "imageUpload": "Bild hochladen",
+    "imageReplace": "Bild ersetzen",
+    "imageHint": "JPEG, PNG oder WebP. Wird im Browser auf 1600 px verkleinert.",
+    "imageAlt": "Bildbeschreibung",
+    "imageAltHint": "Für Screenreader und Suchmaschinen",
+    "imageAltPlaceholder": "z. B. Angerichteter Teller mit Kräutern",
+    "imageSaved": "Bild gespeichert",
+    "imageRemoved": "Bild entfernt",
+    "imageError": "Bild konnte nicht gespeichert werden",
+    "imageCaption": "Serviervorschlag"
   },
   "common": {
     "edit": "Bearbeiten",
@@ -355,7 +367,10 @@
     "starred": "Favoriten",
     "noRecipes": "Noch keine Rezepte.",
     "noStarred": "Noch keine Favoriten.",
-    "editSettings": "Einstellungen bearbeiten"
+    "editSettings": "Einstellungen bearbeiten",
+    "qrAvatarAlt": "Generiertes QR-Profilbild von {name}",
+    "qrAvatarTitle": "{name} — QR-Code scannen, um das Profil zu öffnen",
+    "qrAvatarScanHint": "Scannen öffnet dieses Profil"
   },
   "settings": {
     "title": "Einstellungen",
@@ -376,7 +391,9 @@
     "currentPasswordPlaceholder": "Dein aktuelles Passwort",
     "sendConfirmation": "Bestätigungslink senden",
     "emailChangeSent": "Ein Bestätigungslink wurde an {email} gesendet. Er ist 2 Stunden gültig.",
-    "changeEmailError": "Die E-Mail-Adresse konnte nicht geändert werden."
+    "changeEmailError": "Die E-Mail-Adresse konnte nicht geändert werden.",
+    "avatarQrHint": "leer lassen für QR-Code",
+    "avatarQrExplain": "Ohne Bild erzeugen wir aus deinem Benutzernamen ein QR-Code-Profilbild. Es lässt sich scannen und führt direkt auf dein Profil."
   },
   "explore": {
     "search": "Rezepte suchen...",
@@ -752,5 +769,43 @@
   },
   "seo": {
     "description": "Rezepte wie Code verwalten: forken, verzweigen, committen und zusammenführen. Jede Variante behält ihre Herkunft, mit Zutaten aus einer gemeinsamen Datenbank samt Nährwerten."
+  },
+  "discussion": {
+    "title": "Diskussion",
+    "commitTitle": "Notizen zu diesem Commit",
+    "subtitle": "Ideen, Fragen und Erfahrungen zu diesem Rezept.",
+    "commitSubtitle": "Anmerkungen genau zu diesem Stand des Rezepts.",
+    "commitNotes": "Notizen",
+    "new": "Neue Diskussion",
+    "openCount": "{n} offen",
+    "categoryLabel": "Art",
+    "titleLabel": "Titel",
+    "titlePlaceholder": "Worum geht es?",
+    "bodyLabel": "Nachricht",
+    "bodyPlaceholder": "Beschreibe deine Idee, Frage oder Beobachtung …",
+    "markdownHint": "Markdown wird unterstützt",
+    "submit": "Diskussion starten",
+    "created": "Diskussion gestartet",
+    "createError": "Diskussion konnte nicht gestartet werden",
+    "reply": "Antworten",
+    "replyLabel": "Antwort auf „{title}“",
+    "replyPlaceholder": "Antwort schreiben …",
+    "replyError": "Antwort konnte nicht gespeichert werden",
+    "deleteReply": "Antwort löschen",
+    "resolved": "Erledigt",
+    "markResolved": "Als erledigt markieren",
+    "reopen": "Wieder öffnen",
+    "deleted": "Diskussion gelöscht",
+    "deleteTitle": "Diskussion löschen?",
+    "deleteConfirm": "Die Diskussion und alle Antworten darin werden dauerhaft gelöscht.",
+    "emptyTitle": "Noch keine Diskussion",
+    "emptyDesc": "Starte die erste Diskussion zu diesem Rezept.",
+    "emptyGuest": "Melde dich an, um mitzudiskutieren.",
+    "category": {
+      "idea": "Idee",
+      "question": "Frage",
+      "issue": "Problem",
+      "praise": "Lob"
+    }
   }
 }

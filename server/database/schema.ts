@@ -32,6 +32,30 @@ const binary16 = customType<{ data: Buffer; driverData: Buffer }>({
   },
 })
 
+/**
+ * MEDIUMBLOB (up to 16 MB) for the one image a recipe may carry.
+ *
+ * Drizzle's mysql-core has no `mediumblob` helper, hence the custom type — the same
+ * escape hatch `binary16` above uses.
+ *
+ * **Why the bytes live in MySQL and not on disk.** Production is Netcup + Passenger and
+ * the deploy ships only `.output/` + `app.js`, staged into `.output.new` and swapped by
+ * `rename` (see `deploy.yml`). Anything written inside the app directory is therefore one
+ * release away from being replaced or, on a rollback, resurrected at an older state.
+ * There is no persistent volume, no object storage on the plan, and `server-backup.sh`
+ * dumps the database only — so a filesystem upload directory would also be the one part
+ * of user content with no backup and no restore drill. A row is transactional, cascades
+ * with its recipe, is covered by the nightly dump, and travels through the GDPR export
+ * and erasure paths that already exist. The cost is that reads go through Node instead of
+ * the web server, which is what the ETag + immutable `?v=` cache key on
+ * `/api/recipes/:id/image` is for.
+ */
+const mediumblob = customType<{ data: Buffer; driverData: Buffer }>({
+  dataType() {
+    return 'MEDIUMBLOB'
+  },
+})
+
 // ═══════════════════════════════════════════════════════════════
 // USERS
 // ═══════════════════════════════════════════════════════════════
@@ -376,6 +400,50 @@ export const recipes = mysqlTable(
 )
 
 // ═══════════════════════════════════════════════════════════════
+// RECIPE IMAGE (exactly one per recipe — the "Serviervorschlag")
+// ═══════════════════════════════════════════════════════════════
+// One row per recipe, enforced by a UNIQUE index rather than a column on `recipes`:
+// the blob would otherwise be dragged into every `SELECT` on the hottest table in the
+// app (explore, dashboard, by-slug all read `recipes`), and MySQL stores off-page BLOBs
+// as pointers whose pages still land in the buffer pool on a row read.
+//
+// The image is metadata about the recipe, NOT part of a commit snapshot: swapping the
+// photo is not a change to the recipe the way an ingredient is, it does not diff, and it
+// must not turn every fork into a copy of a megabyte of bytes. Same reasoning as `tags`
+// and `visibility`, which are likewise recipe-level rather than commit-level.
+export const recipeImages = mysqlTable(
+  'recipe_images',
+  {
+    id: int('id').primaryKey().autoincrement(),
+    recipeId: int('recipe_id')
+      .notNull()
+      .references(() => recipes.id, { onDelete: 'cascade' }),
+    /** Sniffed from the magic bytes server-side — never the client's Content-Type. */
+    mimeType: varchar('mime_type', { length: 30 }).notNull(),
+    width: int('width').notNull(),
+    height: int('height').notNull(),
+    byteSize: int('byte_size').notNull(),
+    /**
+     * Hex SHA-256 of the bytes. Doubles as the ETag and as the `?v=` cache key, so the
+     * delivery route can be `immutable` while a replaced image still busts every cache —
+     * a timestamp would do the first job but not survive a restore.
+     */
+    checksum: varchar('checksum', { length: 64 }).notNull(),
+    /** Author-supplied alternative text. Required by a11y, so the upload form asks for it. */
+    altText: varchar('alt_text', { length: 300 }),
+    data: mediumblob('data').notNull(),
+    createdAt: datetime('created_at')
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: timestamp('updated_at')
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`)
+      .onUpdateNow(),
+  },
+  (table) => [uniqueIndex('idx_recipe_images_recipe').on(table.recipeId)]
+)
+
+// ═══════════════════════════════════════════════════════════════
 // RECIPE TAGS
 // ═══════════════════════════════════════════════════════════════
 
@@ -632,6 +700,93 @@ export const gourmergeRequestComments = mysqlTable(
 )
 
 // ═══════════════════════════════════════════════════════════════
+// RECIPE DISCUSSIONS (threads) + their replies
+// ═══════════════════════════════════════════════════════════════
+// The collaboration loop had exactly one place to say anything — a comment on a
+// GourMerge Request, i.e. only once you had already forked, branched, edited and
+// proposed. "I used oat milk and it worked" had nowhere to go.
+//
+// Modelled on GitHub Discussions rather than on Issues: a thread carries a category and
+// resolves, it does not get assigned, labelled or milestoned. Two tables (thread + reply)
+// rather than one self-referencing comment table, because the root of a thread genuinely
+// has fields a reply does not (title, category, status) and a nullable-title comment row
+// makes every query pretend otherwise.
+//
+// `commitId` is what makes this work at commit level too — the same thread shape,
+// anchored to one snapshot in the history instead of to the recipe as a whole. A single
+// nullable FK rather than a second pair of tables: the read path, the permission checks,
+// the Markdown sanitizing and the moderation rules are identical, and the only difference
+// is where the thread is listed.
+export const recipeDiscussions = mysqlTable(
+  'recipe_discussions',
+  {
+    id: int('id').primaryKey().autoincrement(),
+    recipeId: int('recipe_id')
+      .notNull()
+      .references(() => recipes.id, { onDelete: 'cascade' }),
+    /**
+     * NULL = a thread about the recipe. Set = a thread about that one commit, shown on
+     * the history page. CASCADE, because a commit that is gone takes its thread with it —
+     * there is nothing left for the discussion to be about.
+     */
+    commitId: int('commit_id').references(() => recipeCommits.id, { onDelete: 'cascade' }),
+    /**
+     * NOT NULL + NO ACTION (= RESTRICT), like `recipe_commits.author_id` and
+     * `gm_request_comments.author_id`. A thread inside somebody else's recipe must
+     * survive its author leaving, so `hardDeleteUser()` reassigns it to the ghost —
+     * see that file before adding any further author FK.
+     */
+    authorId: int('author_id')
+      .notNull()
+      .references(() => users.id),
+    title: varchar('title', { length: 200 }).notNull(),
+    /** Markdown body — sanitized on render, never on write (see app/utils/markdown.ts). */
+    body: text('body').notNull(),
+    category: mysqlEnum('category', ['idea', 'question', 'issue', 'praise']).notNull().default('idea'),
+    /** `resolved` is the thread's own end state; it is not a moderation action. */
+    status: mysqlEnum('status', ['open', 'resolved']).notNull().default('open'),
+    createdAt: datetime('created_at')
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: timestamp('updated_at')
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`)
+      .onUpdateNow(),
+  },
+  (table) => [
+    index('idx_discussions_recipe_created').on(table.recipeId, table.createdAt),
+    index('idx_discussions_commit').on(table.commitId),
+    index('idx_discussions_author').on(table.authorId),
+  ]
+)
+
+export const recipeDiscussionComments = mysqlTable(
+  'recipe_discussion_comments',
+  {
+    id: int('id').primaryKey().autoincrement(),
+    discussionId: int('discussion_id')
+      .notNull()
+      .references(() => recipeDiscussions.id, { onDelete: 'cascade' }),
+    /** Same RESTRICT-plus-ghost reasoning as `recipe_discussions.author_id` above. */
+    authorId: int('author_id')
+      .notNull()
+      .references(() => users.id),
+    body: text('body').notNull(),
+    createdAt: datetime('created_at')
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: timestamp('updated_at')
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`)
+      .onUpdateNow(),
+  },
+  (table) => [
+    index('idx_discussion_comments_thread').on(table.discussionId, table.createdAt),
+    index('idx_discussion_comments_author').on(table.authorId),
+  ]
+)
+
+// ═══════════════════════════════════════════════════════════════
 // EMAIL VERIFICATION TOKENS
 // ═══════════════════════════════════════════════════════════════
 // Tokens are CSPRNG — NOT UUIDv7 (predictable prefix would weaken them).
@@ -799,6 +954,27 @@ export const recipesRelations = relations(recipes, ({ one, many }) => ({
   tags: many(recipeTags),
   stars: many(recipeStars),
   gourmergeRequests: many(gourmergeRequests),
+  discussions: many(recipeDiscussions),
+  image: one(recipeImages, { fields: [recipes.id], references: [recipeImages.recipeId] }),
+}))
+
+export const recipeImagesRelations = relations(recipeImages, ({ one }) => ({
+  recipe: one(recipes, { fields: [recipeImages.recipeId], references: [recipes.id] }),
+}))
+
+export const recipeDiscussionsRelations = relations(recipeDiscussions, ({ one, many }) => ({
+  recipe: one(recipes, { fields: [recipeDiscussions.recipeId], references: [recipes.id] }),
+  commit: one(recipeCommits, { fields: [recipeDiscussions.commitId], references: [recipeCommits.id] }),
+  author: one(users, { fields: [recipeDiscussions.authorId], references: [users.id] }),
+  comments: many(recipeDiscussionComments),
+}))
+
+export const recipeDiscussionCommentsRelations = relations(recipeDiscussionComments, ({ one }) => ({
+  discussion: one(recipeDiscussions, {
+    fields: [recipeDiscussionComments.discussionId],
+    references: [recipeDiscussions.id],
+  }),
+  author: one(users, { fields: [recipeDiscussionComments.authorId], references: [users.id] }),
 }))
 
 export const recipeBranchesRelations = relations(recipeBranches, ({ one, many }) => ({

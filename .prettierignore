@@ -1,0 +1,23 @@
+# Generated build/report output — nothing here is hand-edited.
+.nuxt/
+.output/
+coverage/
+dist/
+node_modules/
+playwright-report/
+test-results/
+logs/
+
+# Drizzle Kit's migration journal and snapshots.
+#
+# `drizzle-kit generate` writes JSON that Prettier disagrees with, so every new migration
+# turned `npm run format:check` red until someone ran `prettier --write` over generated
+# artefacts — which then produced a diff nobody could review and which the next `generate`
+# would undo. They are tracked (never re-ignore them in git: without the journal,
+# `drizzle-kit migrate` applies nothing on a fresh checkout), but they are machine output
+# and Prettier has no business reformatting them.
+server/database/migrations/meta/
+
+# Committed reference data: one food per line, on purpose, so a dataset update is a
+# reviewable diff rather than one rewritten mega-line.
+server/database/seeds/

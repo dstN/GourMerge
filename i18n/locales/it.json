@@ -17,13 +17,13 @@
     "myRecipes": "Le mie ricette",
     "newRecipe": "Nuova ricetta",
     "dashboard": "Dashboard",
-    "quickActions": "Azioni rapide",
     "editProfile": "Modifica profilo",
     "starred": "Preferiti",
     "menu": "Menu",
     "language": "Lingua",
     "appearance": "Aspetto",
-    "recentRecipes": "Ricette modificate di recente"
+    "publicProfile": "Profilo pubblico",
+    "accountMenu": "Menu account di {name}"
   },
   "auth": {
     "login": "Accedi",
@@ -210,7 +210,19 @@
     "copyIngredients": "Copia ingredienti",
     "shareIngredients": "Condividi ingredienti",
     "ingredientsCopied": "Lista della spesa copiata.",
-    "copyFailed": "Impossibile copiare negli appunti."
+    "copyFailed": "Impossibile copiare negli appunti.",
+    "imageLabel": "Suggerimento di presentazione",
+    "imageOptional": "facoltativo",
+    "imageUpload": "Carica immagine",
+    "imageReplace": "Sostituisci immagine",
+    "imageHint": "JPEG, PNG o WebP. Ridimensionata a 1600 px nel browser.",
+    "imageAlt": "Descrizione dell’immagine",
+    "imageAltHint": "Per screen reader e motori di ricerca",
+    "imageAltPlaceholder": "es. Piatto impiattato guarnito con erbe",
+    "imageSaved": "Immagine salvata",
+    "imageRemoved": "Immagine rimossa",
+    "imageError": "Impossibile salvare l’immagine",
+    "imageCaption": "Suggerimento di presentazione"
   },
   "common": {
     "edit": "Modifica",
@@ -355,7 +367,10 @@
     "starred": "Preferiti",
     "noRecipes": "Nessuna ricetta al momento.",
     "noStarred": "Nessuna ricetta nei preferiti.",
-    "editSettings": "Modifica impostazioni"
+    "editSettings": "Modifica impostazioni",
+    "qrAvatarAlt": "Avatar QR generato per {name}",
+    "qrAvatarTitle": "{name} — scansiona il QR code per aprire il profilo",
+    "qrAvatarScanHint": "Scansiona per aprire questo profilo"
   },
   "settings": {
     "title": "Impostazioni",
@@ -376,7 +391,9 @@
     "currentPasswordPlaceholder": "La tua password attuale",
     "sendConfirmation": "Invia link di conferma",
     "emailChangeSent": "Un link di conferma è stato inviato a {email}. È valido per 2 ore.",
-    "changeEmailError": "Non è stato possibile modificare l’indirizzo e-mail."
+    "changeEmailError": "Non è stato possibile modificare l’indirizzo e-mail.",
+    "avatarQrHint": "lascia vuoto per un QR code",
+    "avatarQrExplain": "Senza foto generiamo un avatar QR code dal tuo nome utente. È scansionabile e apre il tuo profilo."
   },
   "explore": {
     "search": "Cerca ricette...",
@@ -752,5 +769,43 @@
   },
   "seo": {
     "description": "Gestisci le ricette come codice: fai un fork, crea rami, esegui commit e uniscili. Ogni variante conserva la sua origine, con ingredienti da un database condiviso e i loro valori nutrizionali."
+  },
+  "discussion": {
+    "title": "Discussione",
+    "commitTitle": "Note su questo commit",
+    "subtitle": "Idee, domande ed esperienze su questa ricetta.",
+    "commitSubtitle": "Osservazioni su questo preciso stato della ricetta.",
+    "commitNotes": "Note",
+    "new": "Nuova discussione",
+    "openCount": "{n} aperte",
+    "categoryLabel": "Tipo",
+    "titleLabel": "Titolo",
+    "titlePlaceholder": "Di cosa si tratta?",
+    "bodyLabel": "Messaggio",
+    "bodyPlaceholder": "Descrivi la tua idea, domanda o osservazione …",
+    "markdownHint": "Markdown supportato",
+    "submit": "Avvia discussione",
+    "created": "Discussione avviata",
+    "createError": "Impossibile avviare la discussione",
+    "reply": "Rispondi",
+    "replyLabel": "Risposta a «{title}»",
+    "replyPlaceholder": "Scrivi una risposta …",
+    "replyError": "Impossibile salvare la risposta",
+    "deleteReply": "Elimina risposta",
+    "resolved": "Risolta",
+    "markResolved": "Segna come risolta",
+    "reopen": "Riapri",
+    "deleted": "Discussione eliminata",
+    "deleteTitle": "Eliminare la discussione?",
+    "deleteConfirm": "La discussione e tutte le risposte verranno eliminate definitivamente.",
+    "emptyTitle": "Ancora nessuna discussione",
+    "emptyDesc": "Avvia la prima discussione su questa ricetta.",
+    "emptyGuest": "Accedi per partecipare alla conversazione.",
+    "category": {
+      "idea": "Idea",
+      "question": "Domanda",
+      "issue": "Problema",
+      "praise": "Complimento"
+    }
   }
 }

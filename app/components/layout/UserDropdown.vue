@@ -1,13 +1,34 @@
 <script setup lang="ts">
 /**
- * UserDropdown — Avatar + dropdown menu for authenticated users
+ * UserDropdown — the avatar, and the single home for everything about *your* account.
+ *
+ * ## The trigger is an avatar, not a username
+ *
+ * A username in the header is a variable-width string in a fixed-width row: it pushed the
+ * whole control cluster around by up to 70px depending on who was signed in, which is what
+ * made aligning anything to the header's centre group impossible (see the note that used to
+ * live in `main.css`). An avatar is a constant 32px. It also says who you are faster than
+ * text does, which is why every comparable product does it.
+ *
+ * Users without an uploaded picture get a generated QR-code avatar
+ * (`<CommonUserAvatar>` → `/api/users/:username/avatar`) rather than a shared placeholder
+ * icon: it is per-user, so accounts are visually distinguishable, and it is a working QR
+ * that opens that profile when scanned.
+ *
+ * ## What is in the menu
+ *
+ * Account-scoped destinations only. `Entdecken`, `Meine Rezepte`, `Favoriten` and
+ * `Neues Rezept` live in `<LayoutMainNav>` and are deliberately NOT repeated here — that
+ * triple-listing is what this pass removed. `Dashboard` is here rather than in the nav
+ * because the logo already goes there, so it needs a named entry somewhere but not a third
+ * one.
  *
  * ## The items array is typed, and that is not decoration
  *
- * The logout entry carried `click: handleLogout` — the Nuxt UI **v3** API. In v4 a
+ * The logout entry once carried `click: handleLogout` — the Nuxt UI **v3** API. In v4 a
  * `DropdownMenuItem` has `onSelect`, and `click` is simply not a property the renderer
  * looks at, so the entry rendered perfectly and did nothing at all when clicked. Signing
- * out was impossible from the desktop header for as long as the app has been on v4.
+ * out was impossible from the desktop header for as long as the app had been on v4.
  *
  * Typecheck did not catch it because `DropdownMenuItem` extends `LinkProps` and the array
  * was built inside an untyped `computed`, where excess-property checking does not apply.
@@ -26,8 +47,8 @@ const { user, clear } = useUserSession()
  * `navigateTo` is a plain router call with no component in the way, so it is the one place
  * here that would otherwise send a French visitor to the German landing page on sign-out.
  *
- * The components that DO need `localePath` on every entry are `LayoutDashboardSidebar` and
- * `LayoutMobileMenu`: they bind `:to` on a bare `<NuxtLink>`, which nothing auto-localizes.
+ * `<LayoutMobileMenu>` still needs `localePath` on every entry: it binds `:to` on a bare
+ * `<NuxtLink>`, which nothing auto-localizes.
  */
 const localePath = useLocalePath()
 
@@ -54,16 +75,10 @@ const items = computed<DropdownMenuItem[][]>(() => [
       to: '/dashboard',
     },
     {
-      label: t('nav.myRecipes'),
-      icon: 'i-lucide-book-open',
+      label: t('nav.publicProfile'),
+      icon: 'i-lucide-id-card',
       color: 'neutral' as const,
-      to: '/recipes',
-    },
-    {
-      label: t('nav.newRecipe'),
-      icon: 'i-lucide-plus',
-      color: 'neutral' as const,
-      to: '/recipes/new',
+      to: `/${user.value?.username ?? ''}`,
     },
     {
       label: t('nav.editProfile'),
@@ -85,13 +100,21 @@ const items = computed<DropdownMenuItem[][]>(() => [
 
 <template>
   <UDropdownMenu :items="items">
-    <UButton
-      variant="ghost"
-      color="neutral"
-      :label="user?.username"
-      icon="i-lucide-user-circle"
-      trailing-icon="i-lucide-chevron-down"
-      size="sm"
-    />
+    <!-- A plain button rather than <UButton>: the avatar is the whole control, and a
+         button's own padding and hover fill would put a box around a picture. `aria-label`
+         carries the name, since the trigger has no text. -->
+    <button
+      type="button"
+      class="flex items-center gap-1 rounded-full p-0.5 transition-opacity hover:opacity-80"
+      :aria-label="t('nav.accountMenu', { name: user?.displayName || user?.username || '' })"
+    >
+      <CommonUserAvatar
+        :username="user?.username ?? ''"
+        :display-name="user?.displayName"
+        :avatar-url="user?.avatarUrl"
+        size="sm"
+      />
+      <UIcon name="i-lucide-chevron-down" class="size-4 text-muted" aria-hidden="true" />
+    </button>
   </UDropdownMenu>
 </template>

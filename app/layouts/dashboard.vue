@@ -1,6 +1,30 @@
 <script setup lang="ts">
 /**
- * Dashboard Layout — Authenticated layout with sidebar and user header
+ * Dashboard Layout — the signed-in shell.
+ *
+ * ## There is no sidebar any more, and that is the point
+ *
+ * This layout used to carry a 256px `<aside>` whose four links (Dashboard, Meine Rezepte,
+ * Favoriten, Entdecken) were *also* in the header nav and *also* in the user dropdown, and
+ * whose two "quick actions" (Neues Rezept, Einstellungen) were likewise duplicated in both.
+ * Fifteen entries for nine destinations, and no rule anyone could infer about which copy to
+ * use.
+ *
+ * Removing it fixes a second thing at the same time. With a sidebar, the header is centred
+ * in the *window* while the content column starts after the sidebar, so the logo and the
+ * content it sits above never line up — the previous attempt at that alignment needed a
+ * documented block of magic numbers in `main.css` plus an E2E test pinning them, and still
+ * only worked from `lg` up. Without it, both the header and the content are the same
+ * `max-w-7xl` container centred in the same viewport, and they line up by construction, at
+ * every width, with no CSS at all. That is exactly what the logged-out `/explore` state was
+ * already doing right.
+ *
+ * What remains layout-specific is the email-verification banner, which is why this is still
+ * a separate layout from `default` rather than the two being merged.
+ *
+ * Navigation now lives in exactly two places, each with a distinct job: `<LayoutMainNav>`
+ * for destinations you move between while working, and `<LayoutUserDropdown>` for
+ * everything about *your* account. Below `lg`, `<LayoutMobileMenu>` carries both.
  */
 const { t, locale, setLocale } = useI18n()
 // Explicit, not implicit: see the note in `default.vue`. A link's locale must not depend on
@@ -21,12 +45,14 @@ const localeSwitchItems = [
     <!-- Skip-to-content for keyboard/screen reader users -->
     <a href="#main-content" class="skip-link">{{ t('a11y.skipToContent') }}</a>
 
-    <!-- ── Header (fixed) ──────────────────────────────────── -->
+    <!-- ── Header (fixed) ──────────────────────────────────────
+         Same `max-w-7xl mx-auto px-4 sm:px-6 lg:px-8` container as <CommonPageShell>'s
+         `wide`, so the logo and the page content below share one left edge. -->
     <header class="shrink-0 bg-default border-b border-default">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex items-center justify-between h-16">
+        <div class="flex items-center justify-between h-16 gap-2">
           <!-- Logo -->
-          <NuxtLink :to="localePath('/dashboard')" class="flex items-center gap-2.5 group">
+          <NuxtLink :to="localePath('/dashboard')" class="flex items-center gap-2.5 group shrink-0">
             <CommonBrandLogo class="size-7 text-primary transition-opacity group-hover:opacity-80" />
             <span class="text-xl font-bold tracking-tight"> Gour<span class="text-primary">Merge</span> </span>
           </NuxtLink>
@@ -35,7 +61,10 @@ const localeSwitchItems = [
 
           <!-- Right side -->
           <div class="flex items-center gap-2">
-            <div class="hidden md:flex items-center gap-2">
+            <!-- Same breakpoint as <LayoutMainNav> and <LayoutMobileMenu>: below lg there is not
+                 room for the nav AND this cluster, and the shell clips rather than scrolls.
+                 See the note in MainNav.vue. -->
+            <div class="hidden lg:flex items-center gap-2">
               <USelect
                 :model-value="locale"
                 :items="localeSwitchItems"
@@ -61,38 +90,21 @@ const localeSwitchItems = [
          one page. Renders nothing when the address is verified or the gate is off. -->
     <LayoutVerifyEmailBanner class="shrink-0" />
 
-    <!-- ── Body (fixed sidebar; only main scrolls) ───────────
-         Full width so the sidebar sits at the left edge and main's scrollbar
-         sits at the viewport's right edge; content is capped + centred INSIDE
-         main by the page's own <CommonPageShell> (capping the row would push the
-         scrollbar into mid-page).
+    <!-- ── Main Content (the only scrollable region) ─────────
+         A bare scroll container — DESIGNBOOK §4.1. The page's own <CommonPageShell>
+         owns the cap and the gutters, and because those match the header's container
+         exactly, content and chrome align without any layout CSS here.
 
-         <main> is a BARE scroll container — DESIGNBOOK §4.1. It used to add its
-         own `max-w-screen-2xl px-4 … py-8` wrapper, which then fought the page's
-         own cap and doubled the padding on every dashboard page. -->
-    <div class="flex-1 flex min-h-0 overflow-hidden">
-      <!-- Sidebar (fixed; scrolls independently if it overflows) -->
-      <aside class="hidden lg:block w-64 shrink-0 border-r border-default overflow-y-auto">
-        <LayoutDashboardSidebar />
-      </aside>
-
-      <!-- Main content (the only scrollable region) -->
-      <!-- `data-shell="sidebar"` tells the page shell to align its cap left instead of
-           centring it. All three layouts use `#main-content`, so that id cannot
-           distinguish them; this attribute can. -->
-      <!-- `scrollbar-gutter-stable` is what makes the content column line up with the
-           header at all. The header is centred in the WINDOW; this region scrolls, so
-           without a reserved gutter its width changes the moment content overflows, the
-           column shifts by half a scrollbar and the alignment drifts per page. -->
-      <main
-        id="main-content"
-        data-shell="sidebar"
-        tabindex="0"
-        class="flex-1 overflow-y-auto [scrollbar-gutter:stable]"
-      >
-        <slot />
-      </main>
-    </div>
+         `tabindex="0"`, not `-1`: <main> is the ONLY scroll container in this shell, so
+         it has to be reachable by keyboard or the content cannot be scrolled without a
+         mouse (axe: `scrollable-region-focusable`). -->
+    <!-- `data-shell` is the only thing in the DOM that names which shell rendered. All
+         three layouts use `#main-content`, so that id cannot tell them apart, and the
+         email-verification banner — the one remaining behavioural difference — renders
+         nothing unless the gate is on. `tests/e2e/shell.spec.ts` asserts against this. -->
+    <main id="main-content" data-shell="app" tabindex="0" class="flex-1 overflow-y-auto">
+      <slot />
+    </main>
 
     <!-- ── Footer (fixed) ──────────────────────────────────── -->
     <footer class="shrink-0 border-t border-default">

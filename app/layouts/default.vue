@@ -45,7 +45,10 @@ const localeSwitchItems = [
 
           <!-- Right side -->
           <div class="flex items-center gap-2">
-            <div class="hidden md:flex items-center gap-2">
+            <!-- Same breakpoint as <LayoutMainNav> and <LayoutMobileMenu>: below lg there is not
+                 room for the nav AND this cluster, and the shell clips rather than scrolls.
+                 See the note in MainNav.vue. -->
+            <div class="hidden lg:flex items-center gap-2">
               <USelect
                 :model-value="locale"
                 :items="localeSwitchItems"
@@ -80,7 +83,9 @@ const localeSwitchItems = [
          scrolled without a mouse. axe caught this as `scrollable-region-focusable`
          on /help/glossary — the one page whose content holds nothing focusable, so
          the region had no other way in. The skip-link still works either way. -->
-    <main id="main-content" tabindex="0" class="flex-1 overflow-y-auto">
+    <!-- See the note on the same attribute in `dashboard.vue`: it is what tells the two
+         shells apart in the DOM, for `tests/e2e/shell.spec.ts`. -->
+    <main id="main-content" data-shell="public" tabindex="0" class="flex-1 overflow-y-auto">
       <slot />
     </main>
 

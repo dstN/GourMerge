@@ -66,10 +66,10 @@ GourMerge/
 │   ├── app.vue                 # <UApp><NuxtLayout><NuxtPage />
 │   └── app.config.ts           # Nuxt UI theme + central component defaults
 ├── server/
-│   ├── api/                    # 41 REST endpoints (see §6)
+│   ├── api/                    # 49 REST endpoints (see §6)
 │   ├── database/
-│   │   ├── schema.ts           # Drizzle ORM schema (20 tables)
-│   │   └── migrations/         # 9 versioned SQL migrations (0000–0008)
+│   │   ├── schema.ts           # Drizzle ORM schema (23 tables)
+│   │   └── migrations/         # 14 versioned SQL migrations (0000–0013)
 │   ├── middleware/             # Nitro middleware
 │   ├── plugins/                # Nitro plugins (db, logger, sentry)
 │   └── utils/                  # drizzle.ts, diff.ts, merge.ts, units.ts, slug.ts
@@ -88,34 +88,37 @@ GourMerge/
 
 ---
 
-## 4. Database Schema (20 tables)
+## 4. Database Schema (23 tables)
 
 All migrations versioned in `server/database/migrations/`. **Never use `db:push` against production.**
 
-| Table                       | Purpose                                     | Key Relations                        |
-| --------------------------- | ------------------------------------------- | ------------------------------------ |
-| `users`                     | Auth + profile                              | —                                    |
-| `ingredients`               | Global master catalog (Swiss BLV)           | 1:1 → `ingredient_nutrition`         |
-| `ingredient_nutrition`      | Per-100g nutritional data (Swiss BLV V7.0)  | —                                    |
-| `recipes`                   | Repository equivalent                       | owner → `users`; forkedFrom → self   |
-| `recipe_tags`               | Recipe ↔ tag M:M                            | CASCADE on recipe delete             |
-| `tags`                      | Tag master list                             | —                                    |
-| `recipe_stars`              | Favorites (unique per user+recipe)          | CASCADE on recipe delete             |
-| `recipe_branches`           | Lightweight branch pointer                  | CASCADE on recipe delete             |
-| `recipe_commits`            | Full snapshot per commit (not deltas)       | CASCADE on branch delete             |
-| `recipe_commit_ingredients` | Ingredient snapshot per commit              | CASCADE on commit delete             |
-| `recipe_commit_steps`       | Step (Markdown) snapshot per commit         | CASCADE on commit delete             |
-| `gourmerge_requests`        | GMR (cross-branch/fork proposals)           | CASCADE on recipe delete (recipe_id) |
-| `gm_request_comments`       | Comments on GMRs                            | CASCADE on GMR delete                |
-| `email_verification_tokens` | CSPRNG tokens (bcrypt-hashed)               | CASCADE on user delete               |
-| `password_reset_tokens`     | CSPRNG tokens (bcrypt-hashed)               | CASCADE on user delete               |
-| `rate_limit_hits`           | DB-backed rate limiter (multi-process safe) | —                                    |
-| `contact_messages`          | Contact form submissions                    | —                                    |
-| `data_requests`             | GDPR self-service tokens (export/erasure)   | CASCADE on user delete               |
-| `user_totp`                 | Opt-in TOTP enrolment (secret encrypted)    | CASCADE on user delete               |
-| `user_recovery_codes`       | Single-use 2FA recovery codes (hashed)      | CASCADE on user delete               |
-| `user_passkeys`             | WebAuthn credentials (`credential_id` uniq) | CASCADE on user delete               |
-| `webauthn_challenges`       | Single-use ceremony challenges, 5-min TTL   | —                                    |
+| Table                        | Purpose                                      | Key Relations                        |
+| ---------------------------- | -------------------------------------------- | ------------------------------------ |
+| `users`                      | Auth + profile                               | —                                    |
+| `ingredients`                | Global master catalog (Swiss BLV)            | 1:1 → `ingredient_nutrition`         |
+| `ingredient_nutrition`       | Per-100g nutritional data (Swiss BLV V7.0)   | —                                    |
+| `recipes`                    | Repository equivalent                        | owner → `users`; forkedFrom → self   |
+| `recipe_tags`                | Recipe ↔ tag M:M                             | CASCADE on recipe delete             |
+| `tags`                       | Tag master list                              | —                                    |
+| `recipe_stars`               | Favorites (unique per user+recipe)           | CASCADE on recipe delete             |
+| `recipe_branches`            | Lightweight branch pointer                   | CASCADE on recipe delete             |
+| `recipe_commits`             | Full snapshot per commit (not deltas)        | CASCADE on branch delete             |
+| `recipe_commit_ingredients`  | Ingredient snapshot per commit               | CASCADE on commit delete             |
+| `recipe_commit_steps`        | Step (Markdown) snapshot per commit          | CASCADE on commit delete             |
+| `gourmerge_requests`         | GMR (cross-branch/fork proposals)            | CASCADE on recipe delete (recipe_id) |
+| `gm_request_comments`        | Comments on GMRs                             | CASCADE on GMR delete                |
+| `email_verification_tokens`  | CSPRNG tokens (bcrypt-hashed)                | CASCADE on user delete               |
+| `password_reset_tokens`      | CSPRNG tokens (bcrypt-hashed)                | CASCADE on user delete               |
+| `rate_limit_hits`            | DB-backed rate limiter (multi-process safe)  | —                                    |
+| `contact_messages`           | Contact form submissions                     | —                                    |
+| `data_requests`              | GDPR self-service tokens (export/erasure)    | CASCADE on user delete               |
+| `user_totp`                  | Opt-in TOTP enrolment (secret encrypted)     | CASCADE on user delete               |
+| `user_recovery_codes`        | Single-use 2FA recovery codes (hashed)       | CASCADE on user delete               |
+| `recipe_images`              | The one serving-suggestion photo per recipe  | CASCADE on recipe delete             |
+| `recipe_discussions`         | Discussion threads (recipe- or commit-level) | CASCADE on recipe / commit delete    |
+| `recipe_discussion_comments` | Replies within a thread                      | CASCADE on thread delete             |
+| `user_passkeys`              | WebAuthn credentials (`credential_id` uniq)  | CASCADE on user delete               |
+| `webauthn_challenges`        | Single-use ceremony challenges, 5-min TTL    | —                                    |
 
 ### FK cascade gaps (manually handled in API)
 
@@ -181,7 +184,7 @@ One implementation, `server/utils/hardDeleteUser.ts`, serves both callers — th
 
 ---
 
-## 6. API Routes (41 endpoints)
+## 6. API Routes (49 endpoints)
 
 All routes: Zod-validated body/query, `requireUserSession()` where auth required, `createError()` for errors.
 
@@ -240,13 +243,36 @@ All routes: Zod-validated body/query, `requireUserSession()` where auth required
 | POST   | `/api/recipes/[id]/gourmerge-requests/[gmrId]/comments` | Yes         | Add comment             |
 | POST   | `/api/recipes/[id]/gourmerge-requests/[gmrId]/merge`    | Yes (owner) | Execute three-way merge |
 
+### Recipe photo (one per recipe)
+
+| Method | Route                     | Auth        | Purpose                                             |
+| ------ | ------------------------- | ----------- | --------------------------------------------------- |
+| GET    | `/api/recipes/[id]/image` | No\*        | Serve the bytes. ETag + `?v=<sha256>` + `immutable` |
+| PUT    | `/api/recipes/[id]/image` | Yes (owner) | Upsert (multipart). Type sniffed from magic bytes   |
+| DELETE | `/api/recipes/[id]/image` | Yes (owner) | Remove                                              |
+
+\* Same 404-not-403 visibility rule as the recipe itself; a private recipe's photo
+is `Cache-Control: private`.
+
+### Discussions
+
+| Method | Route                                                         | Auth | Purpose                                          |
+| ------ | ------------------------------------------------------------- | ---- | ------------------------------------------------ |
+| GET    | `/api/recipes/[id]/discussions`                               | No   | Threads. `?commitId=<id>` or `all` selects scope |
+| POST   | `/api/recipes/[id]/discussions`                               | Yes  | Open a thread (verified + rate-limited)          |
+| PATCH  | `/api/recipes/[id]/discussions/[discussionId]`                | Yes  | Edit (author) / resolve (author or owner)        |
+| DELETE | `/api/recipes/[id]/discussions/[discussionId]`                | Yes  | Author or recipe owner                           |
+| POST   | `/api/recipes/[id]/discussions/[discussionId]/comments`       | Yes  | Reply (refused on a resolved thread)             |
+| DELETE | `/api/recipes/[id]/discussions/[discussionId]/comments/[cId]` | Yes  | Author or recipe owner                           |
+
 ### Misc
 
-| Method | Route          | Auth | Purpose                         |
-| ------ | -------------- | ---- | ------------------------------- |
-| GET    | `/api/tags`    | No   | All tags                        |
-| POST   | `/api/contact` | No   | Contact form submission         |
-| GET    | `/api/health`  | No   | Health check (`{ status, db }`) |
+| Method | Route                          | Auth | Purpose                                             |
+| ------ | ------------------------------ | ---- | --------------------------------------------------- |
+| GET    | `/api/users/[username]/avatar` | No   | Generated identicon-QR badge. `?variant=mark` small |
+| GET    | `/api/tags`                    | No   | All tags                                            |
+| POST   | `/api/contact`                 | No   | Contact form submission                             |
+| GET    | `/api/health`                  | No   | Health check (`{ status, db }`)                     |
 
 ### Privacy / GDPR self-service
 
@@ -351,6 +377,34 @@ The `ingredients` master table is populated from the **Swiss BLV Food Compositio
 
 ### ✓ Complete
 
+- **Discussions (2026-08-09)**: threads on a recipe, and on any single commit, with Markdown bodies, replies, four
+  categories (idea/question/issue/praise) and an open→resolved state. One table pair serves both scopes — a note about a
+  snapshot has the same shape as a note about the dish, and only where it is listed differs. The panel sits **under** the
+  steps rather than beside them: the reading column is capped at `max-w-4xl` because that is the measure a recipe reads
+  at, a rail would come out of that budget, and below `lg` a rail _is_ the stacked version anyway. Commit-level threads
+  open in a modal from the history page so the timeline stays scannable. Moderation splits deliberately — only the author
+  may edit the text, while the recipe owner may resolve or delete, because moderation is not authorship
+- **Recipe photo (2026-08-09)**: exactly one serving-suggestion image per recipe, rendered **between the ingredients and
+  the steps** — the seam where the reader stops asking "what do I need" and starts asking "how do I make it". Stored as a
+  `MEDIUMBLOB` row, not a file (the deploy swaps `.output/` by rename and nothing else is backed up — see ROADMAP).
+  Downscaled to 1600px WebP **in the browser**, so the server never runs an image decoder; it reads the header only
+  (`imageProbe.ts`) and re-validates format, dimensions and length. Delivered content-addressed (`?v=<sha256>` +
+  `immutable`). Revises locked decision 2
+- **Navigation, de-duplicated (2026-08-09)**: the 256px dashboard `<aside>` is gone. It listed four destinations that
+  were already in the header nav and again in the user dropdown — fifteen entries for nine destinations, with no rule
+  about which copy to use. Navigation now lives in exactly two places with distinct jobs: `<LayoutMainNav>` for
+  destinations you move between while working, `<LayoutUserDropdown>` for your account. Removing it also fixed the
+  logo/content alignment for free: header and content are now the same `max-w-7xl` container centred in the same
+  viewport, so they line up at every width — which retired a block of magic numbers in `main.css`
+  (`--gm-shell-lead`/`--gm-shell-trail`) that only worked from `lg` up. `tests/e2e/layout-alignment.spec.ts` measures the
+  logo's left edge against the content's; `nav.spec.ts` asserts each destination appears **once**
+- **Identicon-QR avatars (2026-08-09)**: a user with no uploaded picture gets a mark generated from their username, in
+  two renderings picked by size. `badge` (`lg`+) is an identicon bezel around a soft-dotted QR of their profile URL —
+  scan it and it opens the profile. `mark` (below `lg`) is the identicon alone, because a QR at 32px is not a small QR,
+  it is grey noise. The header shows the avatar instead of the username, which also removed the variable-width string
+  that used to shove the whole control cluster around by ~70px. Machine readability is **measured**, not assumed:
+  `tests/unit/identiconAvatar.test.ts` rasterises the real SVG and samples every module centre against the matrix —
+  exact from 192px (`size="2xl"`, what the profile page uses), inside the error-correction budget at 160px
 - **Auth**: register, login, logout, email verification, password reset, session rotation, rate limiting
 - **Recipe CRUD**: create (transactional), read, update metadata, delete (with FK cleanup)
 - **Editor**: TipTap 3 WYSIWYG (no images), step translations (DE/EN/FR/IT per step), Markdown output

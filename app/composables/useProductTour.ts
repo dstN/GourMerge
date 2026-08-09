@@ -88,7 +88,10 @@ const BASE_TOUR: TourStep[] = [
     route: '@demo',
     titleKey: 'tour.step.favorites.title',
     descKey: 'tour.step.favorites.desc',
-    placement: 'right',
+    // `bottom`, not `right`: this anchor used to hang off the 256px dashboard sidebar, where
+    // a panel to the right was the only place it fit. The sidebar is gone and the anchor now
+    // lives in the header nav, so the panel belongs under it.
+    placement: 'bottom',
   },
   {
     id: 'tour-pointers',

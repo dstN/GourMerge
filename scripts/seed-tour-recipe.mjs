@@ -34,10 +34,7 @@ try {
   // Sentinel hash that no password can produce (same approach as `ghost`).
   const SENTINEL_HASH = '$2b$10$SYSTEM_USER_NOT_LOGINABLE_SENTINEL_HASH_VALUE_NO_MATCH_EVER'
 
-  const [existingUser] = await conn.execute(
-    'SELECT id FROM users WHERE username = ?',
-    [SYSTEM_USERNAME]
-  )
+  const [existingUser] = await conn.execute('SELECT id FROM users WHERE username = ?', [SYSTEM_USERNAME])
 
   let systemUserId
   if (/** @type {any[]} */ (existingUser).length > 0) {
@@ -55,13 +52,13 @@ try {
 
   // ── 2. Tour recipe ──────────────────────────────────────────────
   const RECIPE_SLUG = 'klassische-tomatensuppe'
-  const [existingRecipe] = await conn.execute(
-    'SELECT id FROM recipes WHERE owner_id = ? AND slug = ?',
-    [systemUserId, RECIPE_SLUG]
-  )
+  const [existingRecipe] = await conn.execute('SELECT id FROM recipes WHERE owner_id = ? AND slug = ?', [
+    systemUserId,
+    RECIPE_SLUG,
+  ])
 
   if (/** @type {any[]} */ (existingRecipe).length > 0) {
-    console.log(`  ✓ tour recipe already exists (id=${/** @type {any} */(existingRecipe)[0].id})`)
+    console.log(`  ✓ tour recipe already exists (id=${/** @type {any} */ (existingRecipe)[0].id})`)
     await conn.end()
     process.exit(0)
   }
@@ -87,9 +84,9 @@ try {
       RECIPE_SLUG,
       'Eine wärmende, samtige Tomatensuppe — perfekt als leichtes Mittagessen oder Vorspeise. Frische Tomaten, Zwiebeln und Basilikum ergeben einen Klassiker, der immer schmeckt.',
       'public',
-      4,    // servings
-      10,   // prep_time_minutes
-      25,   // cook_time_minutes
+      4, // servings
+      10, // prep_time_minutes
+      25, // cook_time_minutes
       'easy',
       'vegetarian',
       JSON.stringify({
@@ -124,22 +121,49 @@ try {
   const commitId = /** @type {any} */ (commitResult).insertId
 
   // Point branch head to the commit
-  await conn.execute(
-    `UPDATE recipe_branches SET head_commit_id = ? WHERE id = ?`,
-    [commitId, branchId]
-  )
+  await conn.execute(`UPDATE recipe_branches SET head_commit_id = ? WHERE id = ?`, [commitId, branchId])
 
   // ── 5. Ingredients ──────────────────────────────────────────────
   // Look up Swiss-BLV ingredients by German name (they are already seeded).
   // Fall back to name search for each.
   const ingredientData = [
-    { nameDe: 'Tomate',       qty: '800', unit: 'g',     notes: 'reif, gewürfelt',     notesTr: { en: 'ripe, diced', fr: 'mûres, en dés', it: 'maturi, a cubetti' } },
-    { nameDe: 'Zwiebel',      qty: '1',   unit: 'piece', notes: 'fein gehackt',        notesTr: { en: 'finely chopped', fr: 'finement hachée', it: 'tritata finemente' } },
-    { nameDe: 'Knoblauch',    qty: '2',   unit: 'piece', notes: 'Zehen, gepresst',     notesTr: { en: 'cloves, pressed', fr: 'gousses, pressées', it: 'spicchi, schiacciati' } },
-    { nameDe: 'Olivenöl',     qty: '2',   unit: 'tbsp',  notes: null,                  notesTr: null },
-    { nameDe: 'Basilikum',    qty: '1',   unit: 'pinch', notes: 'frisch, in Streifen', notesTr: { en: 'fresh, sliced', fr: 'frais, en chiffonnade', it: 'fresco, a listarelle' } },
-    { nameDe: 'Salz',         qty: '1',   unit: 'pinch', notes: null,                  notesTr: null },
-    { nameDe: 'Pfeffer',      qty: '1',   unit: 'pinch', notes: 'schwarz, frisch gemahlen', notesTr: { en: 'black, freshly ground', fr: 'noir, fraîchement moulu', it: 'nero, appena macinato' } },
+    {
+      nameDe: 'Tomate',
+      qty: '800',
+      unit: 'g',
+      notes: 'reif, gewürfelt',
+      notesTr: { en: 'ripe, diced', fr: 'mûres, en dés', it: 'maturi, a cubetti' },
+    },
+    {
+      nameDe: 'Zwiebel',
+      qty: '1',
+      unit: 'piece',
+      notes: 'fein gehackt',
+      notesTr: { en: 'finely chopped', fr: 'finement hachée', it: 'tritata finemente' },
+    },
+    {
+      nameDe: 'Knoblauch',
+      qty: '2',
+      unit: 'piece',
+      notes: 'Zehen, gepresst',
+      notesTr: { en: 'cloves, pressed', fr: 'gousses, pressées', it: 'spicchi, schiacciati' },
+    },
+    { nameDe: 'Olivenöl', qty: '2', unit: 'tbsp', notes: null, notesTr: null },
+    {
+      nameDe: 'Basilikum',
+      qty: '1',
+      unit: 'pinch',
+      notes: 'frisch, in Streifen',
+      notesTr: { en: 'fresh, sliced', fr: 'frais, en chiffonnade', it: 'fresco, a listarelle' },
+    },
+    { nameDe: 'Salz', qty: '1', unit: 'pinch', notes: null, notesTr: null },
+    {
+      nameDe: 'Pfeffer',
+      qty: '1',
+      unit: 'pinch',
+      notes: 'schwarz, frisch gemahlen',
+      notesTr: { en: 'black, freshly ground', fr: 'noir, fraîchement moulu', it: 'nero, appena macinato' },
+    },
   ]
 
   for (let i = 0; i < ingredientData.length; i++) {
@@ -177,7 +201,8 @@ try {
   // ── 6. Steps (with 4-locale translations) ──────────────────────
   const steps = [
     {
-      content: 'Olivenöl in einem grossen Topf bei mittlerer Hitze erwärmen. Zwiebel und Knoblauch darin 2–3 Minuten glasig dünsten, bis sie duften.',
+      content:
+        'Olivenöl in einem grossen Topf bei mittlerer Hitze erwärmen. Zwiebel und Knoblauch darin 2–3 Minuten glasig dünsten, bis sie duften.',
       translations: {
         en: 'Heat olive oil in a large pot over medium heat. Sauté the onion and garlic for 2–3 minutes until translucent and fragrant.',
         fr: "Chauffer l'huile d'olive dans une grande casserole à feu moyen. Faire revenir l'oignon et l'ail 2 à 3 minutes jusqu'à ce qu'ils soient translucides et parfumés.",
@@ -185,18 +210,20 @@ try {
       },
     },
     {
-      content: 'Die gewürfelten Tomaten hinzufügen und alles 15–20 Minuten köcheln lassen, bis die Tomaten zerfallen sind. Mit Salz und Pfeffer abschmecken.',
+      content:
+        'Die gewürfelten Tomaten hinzufügen und alles 15–20 Minuten köcheln lassen, bis die Tomaten zerfallen sind. Mit Salz und Pfeffer abschmecken.',
       translations: {
         en: 'Add the diced tomatoes and let everything simmer for 15–20 minutes until the tomatoes have broken down. Season with salt and pepper.',
-        fr: 'Ajouter les tomates en dés et laisser mijoter 15 à 20 minutes jusqu\'à ce que les tomates soient fondues. Assaisonner de sel et de poivre.',
+        fr: "Ajouter les tomates en dés et laisser mijoter 15 à 20 minutes jusqu'à ce que les tomates soient fondues. Assaisonner de sel et de poivre.",
         it: 'Aggiungere i pomodori a cubetti e lasciar sobbollire per 15–20 minuti finché i pomodori si saranno disfatti. Condire con sale e pepe.',
       },
     },
     {
-      content: 'Die Suppe mit einem Stabmixer fein pürieren oder in Stücken lassen. Mit frischem Basilikum garnieren und heiss servieren. Dazu passt frisches Brot.',
+      content:
+        'Die Suppe mit einem Stabmixer fein pürieren oder in Stücken lassen. Mit frischem Basilikum garnieren und heiss servieren. Dazu passt frisches Brot.',
       translations: {
         en: 'Blend the soup until smooth with a stick blender, or leave chunky. Garnish with fresh basil and serve hot. Best with crusty bread.',
-        fr: 'Mixer la soupe au mixeur plongeant jusqu\'à obtenir une texture lisse, ou la laisser en morceaux. Garnir de basilic frais et servir chaud. Accompagner de pain frais.',
+        fr: "Mixer la soupe au mixeur plongeant jusqu'à obtenir une texture lisse, ou la laisser en morceaux. Garnir de basilic frais et servir chaud. Accompagner de pain frais.",
         it: 'Frullare la zuppa con un frullatore a immersione fino a ottenere una consistenza liscia, oppure lasciarla a pezzi. Guarnire con basilico fresco e servire calda. Ottima con pane croccante.',
       },
     },
@@ -214,15 +241,12 @@ try {
   // ── 7. Tags ──────────────────────────────────────────────────────
   const tagNames = ['Suppe', 'Vegetarisch']
   for (const tagName of tagNames) {
-    const [tagRows] = await conn.execute(
-      'SELECT id FROM tags WHERE name = ?',
-      [tagName]
-    )
+    const [tagRows] = await conn.execute('SELECT id FROM tags WHERE name = ?', [tagName])
     if (/** @type {any[]} */ (tagRows).length > 0) {
-      await conn.execute(
-        `INSERT IGNORE INTO recipe_tags (recipe_id, tag_id) VALUES (?, ?)`,
-        [recipeId, /** @type {any} */ (tagRows)[0].id]
-      )
+      await conn.execute(`INSERT IGNORE INTO recipe_tags (recipe_id, tag_id) VALUES (?, ?)`, [
+        recipeId,
+        /** @type {any} */ (tagRows)[0].id,
+      ])
     }
   }
   console.log(`  ✓ tags linked`)

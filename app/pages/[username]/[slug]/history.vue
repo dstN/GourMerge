@@ -83,6 +83,21 @@ function formatDate(dateStr: string) {
     minute: '2-digit',
   })
 }
+// ── Commit-level discussion ──────────────────────────────────
+/**
+ * Opened per commit in a modal rather than expanded inline. The timeline is a scan
+ * surface — its job is "what changed, when, by whom" — and an inline thread of arbitrary
+ * length inside one entry destroys that the moment anyone writes three paragraphs. A modal
+ * keeps the list scannable and gives the conversation the full width it needs.
+ *
+ * `discussionCommit` doubles as the open flag: one piece of state cannot disagree with
+ * itself about which commit is being discussed.
+ */
+const discussionCommit = ref<CommitListItem | null>(null)
+
+const { user } = useUserSession()
+const isRecipeOwner = computed(() => !!user.value && recipe.value?.owner?.id === user.value.id)
+
 // ── Tour Automation ───────────────────────────────────────────
 const tour = useProductTour()
 const onboarding = useOnboarding()
@@ -153,23 +168,37 @@ onMounted(() => {
               </div>
             </div>
 
-            <!-- Diff button (not for initial commit) -->
-            <UButton
-              v-if="commit.parentCommitId && index < (commits?.length || 0) - 1"
-              :label="t('history.viewDiff')"
-              icon="i-lucide-diff"
-              size="sm"
-              color="neutral"
-              variant="outline"
-              class="shrink-0"
-              @click="viewDiff(commits![index + 1]!, commit)"
-            />
-            <UBadge
-              v-else-if="!commit.parentCommitId"
-              :label="t('history.initialCommit')"
-              color="primary"
-              class="shrink-0"
-            />
+            <!-- Row actions, all `sm` per DESIGNBOOK §2.3 -->
+            <div class="flex shrink-0 flex-wrap items-center gap-2">
+              <UButton
+                :label="t('discussion.commitNotes')"
+                icon="i-lucide-message-square"
+                size="sm"
+                color="neutral"
+                variant="outline"
+                @click="
+                  () => {
+                    discussionCommit = commit
+                  }
+                "
+              />
+              <!-- Diff button (not for initial commit) -->
+              <UButton
+                v-if="commit.parentCommitId && index < (commits?.length || 0) - 1"
+                :label="t('history.viewDiff')"
+                icon="i-lucide-diff"
+                size="sm"
+                color="neutral"
+                variant="outline"
+                @click="viewDiff(commits![index + 1]!, commit)"
+              />
+              <UBadge
+                v-else-if="!commit.parentCommitId"
+                :label="t('history.initialCommit')"
+                color="primary"
+                variant="subtle"
+              />
+            </div>
           </div>
         </UCard>
       </div>
@@ -199,6 +228,29 @@ onMounted(() => {
         <div v-else class="text-center py-8 text-muted">
           {{ t('history.diffError') }}
         </div>
+      </template>
+    </UModal>
+
+    <!-- Commit-level discussion. `v-if` on the body so the panel mounts (and fetches)
+         only for the commit actually opened — one request per opened thread, not one per
+         commit in the timeline. -->
+    <UModal
+      :open="discussionCommit !== null"
+      :title="discussionCommit?.message ?? t('discussion.commitTitle')"
+      :ui="{ content: 'sm:max-w-3xl' }"
+      @update:open="
+        (v) => {
+          if (!v) discussionCommit = null
+        }
+      "
+    >
+      <template #body>
+        <RecipeDiscussionPanel
+          v-if="discussionCommit && recipe"
+          :recipe-id="recipe.id"
+          :commit-id="discussionCommit.id"
+          :is-recipe-owner="isRecipeOwner"
+        />
       </template>
     </UModal>
   </CommonPageShell>

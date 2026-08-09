@@ -1,5 +1,6 @@
 <script setup lang="ts">
-// Hamburger + offcanvas panel for small screens (md:hidden). Order: account CTA (guests),
+// Hamburger + offcanvas panel for everything below lg. Not md: four labelled nav items
+// plus the control cluster overflow a md viewport and the shell clips it — see MainNav.vue. Order: account CTA (guests),
 // nav, help, account actions, then preferences last as a compact single row.
 const { t, locale, setLocale } = useI18n()
 const { loggedIn, user, clear } = useUserSession()
@@ -54,7 +55,7 @@ const linkClass = (to: string) => navLinkClass(route.path === to)
 </script>
 
 <template>
-  <div class="md:hidden">
+  <div class="lg:hidden">
     <USlideover v-model:open="open" side="right" :title="t('nav.menu')">
       <UButton icon="i-lucide-menu" color="neutral" variant="ghost" :aria-label="t('a11y.openMenu')" />
 

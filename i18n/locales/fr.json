@@ -17,13 +17,13 @@
     "myRecipes": "Mes recettes",
     "newRecipe": "Nouvelle recette",
     "dashboard": "Tableau de bord",
-    "quickActions": "Actions rapides",
     "editProfile": "Modifier le profil",
     "starred": "Favoris",
     "menu": "Menu",
     "language": "Langue",
     "appearance": "Apparence",
-    "recentRecipes": "Recettes modifiées récemment"
+    "publicProfile": "Profil public",
+    "accountMenu": "Menu du compte de {name}"
   },
   "auth": {
     "login": "Se connecter",
@@ -210,7 +210,19 @@
     "copyIngredients": "Copier les ingrédients",
     "shareIngredients": "Partager les ingrédients",
     "ingredientsCopied": "Liste de courses copiée.",
-    "copyFailed": "Impossible de copier dans le presse-papiers."
+    "copyFailed": "Impossible de copier dans le presse-papiers.",
+    "imageLabel": "Suggestion de présentation",
+    "imageOptional": "facultatif",
+    "imageUpload": "Téléverser une image",
+    "imageReplace": "Remplacer l’image",
+    "imageHint": "JPEG, PNG ou WebP. Redimensionnée à 1600 px dans votre navigateur.",
+    "imageAlt": "Description de l’image",
+    "imageAltHint": "Pour les lecteurs d’écran et les moteurs de recherche",
+    "imageAltPlaceholder": "p. ex. Assiette dressée garnie d’herbes",
+    "imageSaved": "Image enregistrée",
+    "imageRemoved": "Image supprimée",
+    "imageError": "Impossible d’enregistrer l’image",
+    "imageCaption": "Suggestion de présentation"
   },
   "common": {
     "edit": "Modifier",
@@ -355,7 +367,10 @@
     "starred": "Favoris",
     "noRecipes": "Aucune recette pour l'instant.",
     "noStarred": "Aucune recette en favori.",
-    "editSettings": "Modifier les paramètres"
+    "editSettings": "Modifier les paramètres",
+    "qrAvatarAlt": "Avatar QR généré pour {name}",
+    "qrAvatarTitle": "{name} — scannez le QR code pour ouvrir le profil",
+    "qrAvatarScanHint": "Scannez pour ouvrir ce profil"
   },
   "settings": {
     "title": "Paramètres",
@@ -376,7 +391,9 @@
     "currentPasswordPlaceholder": "Ton mot de passe actuel",
     "sendConfirmation": "Envoyer le lien de confirmation",
     "emailChangeSent": "Un lien de confirmation a été envoyé à {email}. Il est valable 2 heures.",
-    "changeEmailError": "L’adresse e-mail n’a pas pu être modifiée."
+    "changeEmailError": "L’adresse e-mail n’a pas pu être modifiée.",
+    "avatarQrHint": "laisser vide pour un QR code",
+    "avatarQrExplain": "Sans photo, nous générons un avatar QR code à partir de votre nom d’utilisateur. Il est scannable et ouvre votre profil."
   },
   "explore": {
     "search": "Rechercher des recettes...",
@@ -752,5 +769,43 @@
   },
   "seo": {
     "description": "Gérez vos recettes comme du code : forkez, créez des branches, committez et fusionnez. Chaque variante conserve son origine, avec des ingrédients issus d’une base commune et leurs valeurs nutritionnelles."
+  },
+  "discussion": {
+    "title": "Discussion",
+    "commitTitle": "Notes sur ce commit",
+    "subtitle": "Idées, questions et retours sur cette recette.",
+    "commitSubtitle": "Remarques sur cet état précis de la recette.",
+    "commitNotes": "Notes",
+    "new": "Nouvelle discussion",
+    "openCount": "{n} ouverte(s)",
+    "categoryLabel": "Type",
+    "titleLabel": "Titre",
+    "titlePlaceholder": "De quoi s’agit-il ?",
+    "bodyLabel": "Message",
+    "bodyPlaceholder": "Décrivez votre idée, question ou observation …",
+    "markdownHint": "Markdown pris en charge",
+    "submit": "Lancer la discussion",
+    "created": "Discussion lancée",
+    "createError": "Impossible de lancer la discussion",
+    "reply": "Répondre",
+    "replyLabel": "Réponse à « {title} »",
+    "replyPlaceholder": "Écrire une réponse …",
+    "replyError": "Impossible d’enregistrer la réponse",
+    "deleteReply": "Supprimer la réponse",
+    "resolved": "Résolue",
+    "markResolved": "Marquer comme résolue",
+    "reopen": "Rouvrir",
+    "deleted": "Discussion supprimée",
+    "deleteTitle": "Supprimer la discussion ?",
+    "deleteConfirm": "La discussion et toutes ses réponses seront définitivement supprimées.",
+    "emptyTitle": "Pas encore de discussion",
+    "emptyDesc": "Lancez la première discussion sur cette recette.",
+    "emptyGuest": "Connectez-vous pour participer.",
+    "category": {
+      "idea": "Idée",
+      "question": "Question",
+      "issue": "Problème",
+      "praise": "Compliment"
+    }
   }
 }

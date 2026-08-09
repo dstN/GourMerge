@@ -50,15 +50,24 @@ useSeoMeta({
 
     <template v-else-if="profile">
       <!-- Profile header -->
-      <div class="flex items-start gap-6 mb-8">
-        <div class="w-20 h-20 rounded-full bg-primary-500/10 flex items-center justify-center shrink-0 overflow-hidden">
-          <img
-            v-if="profile.user.avatarUrl"
-            :src="profile.user.avatarUrl"
-            :alt="profile.user.username"
-            class="w-full h-full object-cover"
+      <div class="flex flex-col items-start gap-6 mb-8 sm:flex-row">
+        <div class="flex flex-col items-center gap-2">
+          <!-- `2xl` (192px) is the smallest size at which every module of the generated
+               badge rasterises correctly — this is the one page a stranger would point a
+               camera at, so it is the one place that size is warranted. An uploaded photo
+               is just a photo here and takes the same box. -->
+          <CommonUserAvatar
+            :username="profile.user.username"
+            :display-name="profile.user.displayName"
+            :avatar-url="profile.user.avatarUrl"
+            size="2xl"
           />
-          <UIcon v-else name="i-lucide-user-circle" class="size-12 text-primary" />
+          <!-- Only for the generated badge: telling someone their own uploaded photo is
+               scannable would be a lie. -->
+          <p v-if="!profile.user.avatarUrl" class="flex items-center gap-1 text-xs text-dimmed">
+            <UIcon name="i-lucide-scan-line" class="size-3.5 shrink-0" aria-hidden="true" />
+            {{ t('profile.qrAvatarScanHint') }}
+          </p>
         </div>
         <div class="flex-1 min-w-0">
           <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">

@@ -17,6 +17,8 @@ import {
   recipeTags,
   tags,
   gourmergeRequests,
+  recipeImages,
+  recipeDiscussions,
 } from '~~/server/database/schema'
 import { computeNutritionTotals, perServing } from '~~/server/utils/nutrition'
 import { getBestDisplayUnit } from '~~/server/utils/units'
@@ -229,9 +231,38 @@ export default defineEventHandler(async (event) => {
     .from(gourmergeRequests)
     .where(and(eq(gourmergeRequests.recipeId, recipe.id), eq(gourmergeRequests.status, 'open')))
 
+  /**
+   * Image METADATA only — never `recipeImages.data`. The bytes come from
+   * `/api/recipes/:id/image`, so the JSON payload of every recipe page stays small and
+   * the photo is a separately cacheable resource. `width`/`height` travel with it because
+   * the page sets them as attributes to reserve the box before the image arrives; without
+   * them the photo landing between ingredients and steps would shove the steps down the
+   * page, which is precisely the layout shift CLS measures.
+   */
+  const [image] = await db
+    .select({
+      checksum: recipeImages.checksum,
+      width: recipeImages.width,
+      height: recipeImages.height,
+      altText: recipeImages.altText,
+      mimeType: recipeImages.mimeType,
+    })
+    .from(recipeImages)
+    .where(eq(recipeImages.recipeId, recipe.id))
+    .limit(1)
+
+  // Recipe-level threads only: a note on one commit is history, and counting it here
+  // would make the badge on the recipe page describe something the page does not show.
+  const [discussionCount] = await db
+    .select({ n: sql<number>`COUNT(*)` })
+    .from(recipeDiscussions)
+    .where(and(eq(recipeDiscussions.recipeId, recipe.id), sql`${recipeDiscussions.commitId} IS NULL`))
+
   return {
     ...recipe,
     openGmrCount: Number(openGmrs?.n ?? 0),
+    discussionCount: Number(discussionCount?.n ?? 0),
+    image: image ?? null,
     tags: recipeTags_,
     owner,
     forkedFrom,

@@ -17,13 +17,13 @@
     "myRecipes": "My Recipes",
     "newRecipe": "New Recipe",
     "dashboard": "Dashboard",
-    "quickActions": "Quick Actions",
     "editProfile": "Edit Profile",
     "starred": "Starred",
     "menu": "Menu",
     "language": "Language",
     "appearance": "Appearance",
-    "recentRecipes": "Recently edited recipes"
+    "publicProfile": "Public profile",
+    "accountMenu": "Account menu for {name}"
   },
   "auth": {
     "login": "Log In",
@@ -210,7 +210,19 @@
     "copyIngredients": "Copy ingredients",
     "shareIngredients": "Share ingredients",
     "ingredientsCopied": "Shopping list copied.",
-    "copyFailed": "Could not copy to the clipboard."
+    "copyFailed": "Could not copy to the clipboard.",
+    "imageLabel": "Serving suggestion",
+    "imageOptional": "optional",
+    "imageUpload": "Upload image",
+    "imageReplace": "Replace image",
+    "imageHint": "JPEG, PNG or WebP. Resized to 1600 px in your browser.",
+    "imageAlt": "Image description",
+    "imageAltHint": "For screen readers and search engines",
+    "imageAltPlaceholder": "e.g. Plated dish garnished with herbs",
+    "imageSaved": "Image saved",
+    "imageRemoved": "Image removed",
+    "imageError": "Could not save the image",
+    "imageCaption": "Serving suggestion"
   },
   "common": {
     "edit": "Edit",
@@ -355,7 +367,10 @@
     "starred": "Starred",
     "noRecipes": "No recipes yet.",
     "noStarred": "No starred recipes yet.",
-    "editSettings": "Edit Settings"
+    "editSettings": "Edit Settings",
+    "qrAvatarAlt": "Generated QR avatar for {name}",
+    "qrAvatarTitle": "{name} — scan the QR code to open the profile",
+    "qrAvatarScanHint": "Scan to open this profile"
   },
   "settings": {
     "title": "Settings",
@@ -376,7 +391,9 @@
     "currentPasswordPlaceholder": "Your current password",
     "sendConfirmation": "Send confirmation link",
     "emailChangeSent": "A confirmation link was sent to {email}. It is valid for 2 hours.",
-    "changeEmailError": "The email address could not be changed."
+    "changeEmailError": "The email address could not be changed.",
+    "avatarQrHint": "leave empty for a QR code",
+    "avatarQrExplain": "With no picture we generate a QR-code avatar from your username. It is scannable and opens your profile."
   },
   "explore": {
     "search": "Search recipes...",
@@ -752,5 +769,43 @@
   },
   "seo": {
     "description": "Manage recipes like code: fork, branch, commit and merge. Every variation keeps its lineage, with ingredients from a shared database including nutrition data."
+  },
+  "discussion": {
+    "title": "Discussion",
+    "commitTitle": "Notes on this commit",
+    "subtitle": "Ideas, questions and experiences with this recipe.",
+    "commitSubtitle": "Remarks about this exact state of the recipe.",
+    "commitNotes": "Notes",
+    "new": "New discussion",
+    "openCount": "{n} open",
+    "categoryLabel": "Type",
+    "titleLabel": "Title",
+    "titlePlaceholder": "What is this about?",
+    "bodyLabel": "Message",
+    "bodyPlaceholder": "Describe your idea, question or observation …",
+    "markdownHint": "Markdown supported",
+    "submit": "Start discussion",
+    "created": "Discussion started",
+    "createError": "Could not start the discussion",
+    "reply": "Reply",
+    "replyLabel": "Reply to “{title}”",
+    "replyPlaceholder": "Write a reply …",
+    "replyError": "Could not save the reply",
+    "deleteReply": "Delete reply",
+    "resolved": "Resolved",
+    "markResolved": "Mark as resolved",
+    "reopen": "Reopen",
+    "deleted": "Discussion deleted",
+    "deleteTitle": "Delete discussion?",
+    "deleteConfirm": "The discussion and every reply in it will be permanently deleted.",
+    "emptyTitle": "No discussion yet",
+    "emptyDesc": "Start the first discussion about this recipe.",
+    "emptyGuest": "Sign in to join the conversation.",
+    "category": {
+      "idea": "Idea",
+      "question": "Question",
+      "issue": "Issue",
+      "praise": "Praise"
+    }
   }
 }

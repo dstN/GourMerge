@@ -3,9 +3,10 @@
  *
  * ## Why this is not a plain `DELETE FROM users`
  *
- * Four FKs point at `users.id` as **NOT NULL with NO ACTION** (= RESTRICT in MySQL):
- * `recipes.owner_id`, `recipe_commits.author_id`, `gourmerge_requests.author_id` and
- * `gm_request_comments.author_id`. On top of that, `fork.post.ts` copies commits
+ * Six FKs point at `users.id` as **NOT NULL with NO ACTION** (= RESTRICT in MySQL):
+ * `recipes.owner_id`, `recipe_commits.author_id`, `gourmerge_requests.author_id`,
+ * `gm_request_comments.author_id`, `recipe_discussions.author_id` and
+ * `recipe_discussion_comments.author_id`. On top of that, `fork.post.ts` copies commits
  * keeping the **original** `author_id`, so a stranger's fork legitimately contains
  * rows authored by the departing user. A raw delete therefore either fails on the
  * constraint or destroys rows inside somebody else's recipe history.
@@ -31,6 +32,8 @@ import {
   gourmergeRequests,
   recipeBranches,
   recipeCommits,
+  recipeDiscussionComments,
+  recipeDiscussions,
   recipes,
   users,
 } from '~~/server/database/schema'
@@ -67,6 +70,8 @@ export interface HardDeleteResult {
   commitsReassigned: number
   requestsReassigned: number
   commentsReassigned: number
+  /** Discussion threads + replies handed to the ghost, summed. */
+  discussionsReassigned: number
 }
 
 /**
@@ -83,6 +88,7 @@ export async function hardDeleteUser(db: Db, userId: number, deleteOwnedRecipes:
     commitsReassigned: 0,
     requestsReassigned: 0,
     commentsReassigned: 0,
+    discussionsReassigned: 0,
   }
 
   await db.transaction(async (tx) => {
@@ -148,9 +154,23 @@ export async function hardDeleteUser(db: Db, userId: number, deleteOwnedRecipes:
 
     // mysql2 reports affected rows on the result header; shape varies, so read
     // defensively — these counts are for the audit log, not for control flow.
+    // Discussion threads and their replies live inside other people's recipes for exactly
+    // the same reason a comment does, and their author FK is RESTRICT for the same reason.
+    // Omitting these two is not a soft failure: `DELETE FROM users` would raise
+    // ER_ROW_IS_REFERENCED and the whole erasure would abort.
+    const threads = await tx
+      .update(recipeDiscussions)
+      .set({ authorId: ghostId })
+      .where(eq(recipeDiscussions.authorId, userId))
+    const threadReplies = await tx
+      .update(recipeDiscussionComments)
+      .set({ authorId: ghostId })
+      .where(eq(recipeDiscussionComments.authorId, userId))
+
     result.commitsReassigned = readAffected(commits)
     result.requestsReassigned = readAffected(requests)
     result.commentsReassigned = readAffected(comments)
+    result.discussionsReassigned = readAffected(threads) + readAffected(threadReplies)
 
     // Contact-form messages are linked only by address, so they are matched here
     // and removed regardless of the recipe choice — purely personal data of no

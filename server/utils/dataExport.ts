@@ -24,6 +24,9 @@ import {
   tags,
   gourmergeRequests,
   gourmergeRequestComments,
+  recipeDiscussions,
+  recipeDiscussionComments,
+  recipeImages,
   contactMessages,
 } from '~~/server/database/schema'
 import { bufferToUuid } from '~~/server/utils/uuid'
@@ -39,6 +42,9 @@ export interface DataExport {
   starredRecipes: unknown[]
   gourmergeRequests: unknown[]
   comments: unknown[]
+  /** Discussion threads the user opened, and replies they wrote, on any recipe. */
+  discussions: unknown[]
+  discussionComments: unknown[]
   contactMessages: unknown[]
 }
 
@@ -79,7 +85,7 @@ export async function buildDataExport(
     : []
   const commitIds = commits.map((c) => c.id)
 
-  const [ingredients, steps, recipeTagRows] = await Promise.all([
+  const [ingredients, steps, recipeTagRows, imageMeta] = await Promise.all([
     commitIds.length
       ? db.select().from(recipeCommitIngredients).where(inArray(recipeCommitIngredients.commitId, commitIds))
       : Promise.resolve([]),
@@ -93,6 +99,27 @@ export async function buildDataExport(
           .innerJoin(tags, eq(tags.id, recipeTags.tagId))
           .where(inArray(recipeTags.recipeId, recipeIds))
       : Promise.resolve([]),
+    /**
+     * Metadata only. The photo's bytes are deliberately NOT inlined: base64 in a JSON
+     * document would multiply the export size for no gain, and the user already has the
+     * file — they uploaded it. The row is listed so the export is honest about what is
+     * stored, and `url` tells them where to fetch the original while the account lives.
+     */
+    recipeIds.length
+      ? db
+          .select({
+            recipeId: recipeImages.recipeId,
+            mimeType: recipeImages.mimeType,
+            width: recipeImages.width,
+            height: recipeImages.height,
+            byteSize: recipeImages.byteSize,
+            checksum: recipeImages.checksum,
+            altText: recipeImages.altText,
+            createdAt: recipeImages.createdAt,
+          })
+          .from(recipeImages)
+          .where(inArray(recipeImages.recipeId, recipeIds))
+      : Promise.resolve([]),
   ])
 
   // Nest the version history under each recipe — a flat dump of commit ids is
@@ -103,6 +130,9 @@ export async function buildDataExport(
       ...r,
       publicId: r.publicId ? bufferToUuid(r.publicId) : null,
       tags: recipeTagRows.filter((t) => t.recipeId === r.id).map((t) => t.tag),
+      image: imageMeta.find((i) => i.recipeId === r.id)
+        ? { ...imageMeta.find((i) => i.recipeId === r.id), url: `/api/recipes/${r.id}/image` }
+        : null,
       branches: rBranches.map((b) => ({
         ...b,
         commits: commits
@@ -116,13 +146,17 @@ export async function buildDataExport(
     }
   })
 
-  const [starred, ownGmrs, ownComments, contacts] = await Promise.all([
+  const [starred, ownGmrs, ownComments, ownDiscussions, ownDiscussionComments, contacts] = await Promise.all([
     db
       .select({ recipeId: recipeStars.recipeId, createdAt: recipeStars.createdAt })
       .from(recipeStars)
       .where(eq(recipeStars.userId, userId)),
     db.select().from(gourmergeRequests).where(eq(gourmergeRequests.authorId, userId)),
     db.select().from(gourmergeRequestComments).where(eq(gourmergeRequestComments.authorId, userId)),
+    // Threads and replies the user wrote anywhere, including on other people's recipes —
+    // those are their words and Art. 15 covers them wherever they sit.
+    db.select().from(recipeDiscussions).where(eq(recipeDiscussions.authorId, userId)),
+    db.select().from(recipeDiscussionComments).where(eq(recipeDiscussionComments.authorId, userId)),
     // Contact messages have no user FK — they are matched on the address, which
     // is the only link that exists between a message and an account.
     db.select().from(contactMessages).where(eq(contactMessages.email, account.email)),
@@ -132,13 +166,15 @@ export async function buildDataExport(
     meta: {
       generatedAt: new Date().toISOString(),
       format: 'GourMerge data export v1 (GDPR Art. 15 / Art. 20)',
-      note: 'Recipes include their full branch and commit history. Contact-form messages are matched by email address. The password hash is deliberately excluded.',
+      note: 'Recipes include their full branch and commit history. Recipe photos are listed as metadata with a download URL rather than inlined as base64. Contact-form messages are matched by email address. The password hash is deliberately excluded.',
     },
     account: safeAccount,
     recipes: recipesOut,
     starredRecipes: starred,
     gourmergeRequests: ownGmrs.map((g) => ({ ...g, publicId: g.publicId ? bufferToUuid(g.publicId) : null })),
     comments: ownComments,
+    discussions: ownDiscussions,
+    discussionComments: ownDiscussionComments,
     contactMessages: contacts,
   }
 }

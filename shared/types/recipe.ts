@@ -57,6 +57,20 @@ export interface RecipeDetail {
     | undefined
   /** Count of OPEN GourMerge Requests only — closed and merged ones are history. */
   openGmrCount: number
+  /** Recipe-level discussion threads. Commit-anchored ones are counted on the history page. */
+  discussionCount: number
+  /**
+   * Metadata for the serving-suggestion photo, or null. The bytes live at
+   * `/api/recipes/:id/image?v=<checksum>` — never inline in this payload.
+   */
+  image: {
+    /** SHA-256 of the bytes. Cache key and ETag; a new photo means a new URL. */
+    checksum: string
+    width: number
+    height: number
+    altText: string | null
+    mimeType: string
+  } | null
   currentIngredients: Array<{
     id: number
     ingredientId: number

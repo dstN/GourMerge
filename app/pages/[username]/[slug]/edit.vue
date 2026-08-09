@@ -609,6 +609,12 @@ watch(
             </div>
           </div>
 
+          <!-- Serving suggestion. Saves on its own rather than on commit — it is recipe
+               metadata, not part of a snapshot; see RecipeImageUpload. -->
+          <UFormField :label="t('recipe.imageLabel')" :hint="t('recipe.imageOptional')">
+            <RecipeImageUpload :recipe-id="recipe!.id" :initial-image="recipe!.image" />
+          </UFormField>
+
           <!-- Times, servings, difficulty, visibility -->
           <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
             <UFormField :label="t('recipe.servingsLabel')">
