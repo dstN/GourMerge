@@ -490,15 +490,6 @@ useHead(() => {
             </UButton>
 
             <UButton
-              icon="i-lucide-history"
-              size="sm"
-              color="neutral"
-              variant="outline"
-              :aria-label="t('history.title')"
-              :title="t('history.title')"
-              :to="`${recipeUrl}/history`"
-            />
-            <UButton
               v-if="isOwner"
               icon="i-lucide-pencil"
               size="sm"
@@ -639,6 +630,20 @@ useHead(() => {
           variant="ghost"
           size="sm"
           :to="`${recipeUrl}/branches`"
+        />
+
+        <!-- Moved out of the icon-only action cluster above: six icon buttons no longer
+             fit on one line at exactly the `lg` breakpoint once the report kebab joined
+             them (tests/e2e/layout-alignment.spec.ts caught it), and a labelled link sits
+             more naturally here anyway — commit history belongs with the branch it walks,
+             the same reasoning that already keeps "Varianten" out of that row. -->
+        <UButton
+          :label="t('history.title')"
+          icon="i-lucide-history"
+          color="neutral"
+          variant="ghost"
+          size="sm"
+          :to="`${recipeUrl}/history`"
         />
       </div>
 

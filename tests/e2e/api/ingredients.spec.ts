@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { resetRateLimits } from '../support/db'
+import { resetRateLimits, dbQuery } from '../support/db'
 import { registerUser, uniqueUser } from '../support/api'
 
 /**
@@ -166,13 +166,19 @@ test.describe('editing', () => {
 
   test('a Swiss BLV ingredient (no creator) cannot be edited by anyone', async ({ request }) => {
     await registerUser(request)
-    // Seeded rows exist without ever going through POST /api/ingredients — found via the
-    // autocomplete rather than assumed to sit at a specific id.
-    const found = await (await request.get('/api/ingredients?q=Karotte&locale=de')).json()
-    const seeded = found[0]
-    expect(seeded, 'the Swiss BLV seed must contain at least one match').toBeTruthy()
+    // A real seeded row has `created_by IS NULL` — inserted directly rather than found via
+    // the autocomplete, because the E2E job's `db:seed:tour` does not load the full Swiss
+    // BLV catalog (that's `npm run seed:swiss`, a local/CI-migrate-only step), so a fixed
+    // name like "Karotte" is not guaranteed to exist here the way it does in local dev.
+    const seededName = `Seeded No-Creator ${Date.now()}`
+    await dbQuery('INSERT INTO ingredients (name, name_translations, synonyms) VALUES (?, ?, ?)', [
+      seededName,
+      '{}',
+      '{}',
+    ])
+    const [seeded] = await dbQuery<{ id: number }>('SELECT id FROM ingredients WHERE name = ?', [seededName])
 
-    const res = await request.patch(`/api/ingredients/${seeded.id}`, { data: { name: 'Hijacked' } })
+    const res = await request.patch(`/api/ingredients/${seeded!.id}`, { data: { name: 'Hijacked' } })
     expect(res.status()).toBe(404)
   })
 
