@@ -118,11 +118,7 @@ async function submit() {
 </script>
 
 <template>
-  <UModal
-    :open="open"
-    :title="t('recipe.editIngredientTitle')"
-    @update:open="(v: boolean) => emit('update:open', v)"
-  >
+  <UModal :open="open" :title="t('recipe.editIngredientTitle')" @update:open="(v: boolean) => emit('update:open', v)">
     <template #body>
       <div v-if="loading" class="space-y-3">
         <USkeleton class="h-10 w-full" />

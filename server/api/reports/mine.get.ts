@@ -11,7 +11,14 @@
  * `resolveReportTarget` over every row.
  */
 import { and, eq, or } from 'drizzle-orm'
-import { ingredients, recipeDiscussionComments, recipeDiscussions, recipes, reports, users } from '~~/server/database/schema'
+import {
+  ingredients,
+  recipeDiscussionComments,
+  recipeDiscussions,
+  recipes,
+  reports,
+  users,
+} from '~~/server/database/schema'
 
 interface MineReport {
   id: number

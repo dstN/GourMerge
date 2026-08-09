@@ -13,7 +13,13 @@
  *      — cross-recipe GMRs that reference branches of this recipe
  */
 import { eq, inArray, or } from 'drizzle-orm'
-import { recipes, recipeBranches, gourmergeRequests, recipeDiscussionComments, recipeDiscussions } from '~~/server/database/schema'
+import {
+  recipes,
+  recipeBranches,
+  gourmergeRequests,
+  recipeDiscussionComments,
+  recipeDiscussions,
+} from '~~/server/database/schema'
 
 export default defineEventHandler(async (event) => {
   const session = await requireUserSession(event)

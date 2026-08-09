@@ -78,7 +78,10 @@ export default defineEventHandler(async (event) => {
           .where(inArray(recipeDiscussionComments.id, idsByKind.discussion_comment))
       : Promise.resolve([]),
     idsByKind.ingredient
-      ? db.select({ id: ingredients.id, name: ingredients.name }).from(ingredients).where(inArray(ingredients.id, idsByKind.ingredient))
+      ? db
+          .select({ id: ingredients.id, name: ingredients.name })
+          .from(ingredients)
+          .where(inArray(ingredients.id, idsByKind.ingredient))
       : Promise.resolve([]),
   ])
 

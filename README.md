@@ -227,9 +227,9 @@ Full runbook: [`docs/RUNBOOK.md`](docs/RUNBOOK.md).
 Users handle both of their main rights themselves at `/legal/data-request`, with
 no support ticket in the loop:
 
-| Right                   | Flow                                                                                                |
-| ----------------------- | --------------------------------------------------------------------------------------------------- |
-| **Access** (Art. 15/20) | username + email → confirmation email → download link, valid 24 h, also emailed                     |
+| Right                   | Flow                                                                                                  |
+| ----------------------- | ----------------------------------------------------------------------------------------------------- |
+| **Access** (Art. 15/20) | username + email → confirmation email → download link, valid 24 h, also emailed                       |
 | **Erasure** (Art. 17)   | username + email → confirmation email → choose whether recipes are deleted too → account hard-deleted |
 
 Two design points worth knowing before touching this code:

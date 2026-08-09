@@ -48,9 +48,7 @@ const upload = (buffer: Buffer, mimeType = 'image/jpeg') => ({
   file: { name: 'avatar.jpg', mimeType, buffer },
 })
 
-test('upload is re-encoded to WebP, the profile and delivery URL agree, and it caches forever', async ({
-  request,
-}) => {
+test('upload is re-encoded to WebP, the profile and delivery URL agree, and it caches forever', async ({ request }) => {
   const owner = await registerUser(request)
 
   const source = await realSquarePhoto(900)
@@ -111,9 +109,9 @@ test('a decompression bomb is refused by pixel count, before any decode', async 
 test('dimensions and size are bounded', async ({ request }) => {
   await registerUser(request)
 
-  expect((await request.put('/api/users/me/avatar', { multipart: upload(pngHeader(32, 32), 'image/png') })).status()).toBe(
-    422
-  )
+  expect(
+    (await request.put('/api/users/me/avatar', { multipart: upload(pngHeader(32, 32), 'image/png') })).status()
+  ).toBe(422)
   expect(
     (await request.put('/api/users/me/avatar', { multipart: upload(pngHeader(5000, 5000), 'image/png') })).status()
   ).toBe(422)

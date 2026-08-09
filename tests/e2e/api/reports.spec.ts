@@ -72,9 +72,9 @@ test('a recipe owner sees a report on their recipe via /mine; a reported user do
   await request.post('/auth/login', { data: { identifier: owner.email, password: owner.password } })
   const mine = await (await request.get('/api/reports/mine')).json()
 
-  expect(mine.some((r: { targetKind: string; targetId: number }) => r.targetKind === 'recipe' && r.targetId === recipe.id)).toBe(
-    true
-  )
+  expect(
+    mine.some((r: { targetKind: string; targetId: number }) => r.targetKind === 'recipe' && r.targetId === recipe.id)
+  ).toBe(true)
   // The 'user' report is deliberately absent — a reported person is not told they were
   // reported, only an admin sees that one.
   expect(mine.some((r: { targetKind: string }) => r.targetKind === 'user')).toBe(false)
@@ -108,12 +108,15 @@ test('only an admin can list or act on /api/admin/reports', async ({ request }) 
   expect(patched.status()).toBe(200)
 
   const openList = await (await request.get('/api/admin/reports')).json()
-  expect(openList.some((r: { id: number }) => r.id === created.id), 'moved out of the open queue').toBe(false)
+  expect(
+    openList.some((r: { id: number }) => r.id === created.id),
+    'moved out of the open queue'
+  ).toBe(false)
 
   const dismissedList = await (await request.get('/api/admin/reports?status=dismissed')).json()
-  expect(dismissedList.some((r: { id: number; status: string }) => r.id === created.id && r.status === 'dismissed')).toBe(
-    true
-  )
+  expect(
+    dismissedList.some((r: { id: number; status: string }) => r.id === created.id && r.status === 'dismissed')
+  ).toBe(true)
 })
 
 test('deleting the reported recipe auto-closes its open report', async ({ request }) => {

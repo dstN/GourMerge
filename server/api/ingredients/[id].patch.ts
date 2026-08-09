@@ -33,7 +33,11 @@ export default defineEventHandler(async (event) => {
   const db = useDrizzle()
   if (!db) throw createError({ statusCode: 503, statusMessage: 'Database unavailable.' })
 
-  const [existing] = await db.select({ createdBy: ingredients.createdBy }).from(ingredients).where(eq(ingredients.id, id)).limit(1)
+  const [existing] = await db
+    .select({ createdBy: ingredients.createdBy })
+    .from(ingredients)
+    .where(eq(ingredients.id, id))
+    .limit(1)
   if (!existing) throw createError({ statusCode: 404, statusMessage: 'Ingredient not found' })
   if (existing.createdBy !== session.user.id) {
     // 404, not 403: same reasoning as `requireVisibleRecipe` — an ingredient's edit

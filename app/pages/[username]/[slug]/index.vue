@@ -523,12 +523,7 @@ useHead(() => {
                 :title="t('report.title')"
               />
             </UDropdownMenu>
-            <CommonReportButton
-              v-if="recipe"
-              ref="reportRecipeButton"
-              target-kind="recipe"
-              :target-id="recipe.id"
-            />
+            <CommonReportButton v-if="recipe" ref="reportRecipeButton" target-kind="recipe" :target-id="recipe.id" />
             <CommonReportButton
               v-if="recipe?.image"
               ref="reportImageButton"
@@ -742,7 +737,11 @@ useHead(() => {
         v-if="editingIngredientId !== null"
         :open="editingIngredientId !== null"
         :ingredient-id="editingIngredientId"
-        @update:open="(v) => { if (!v) editingIngredientId = null }"
+        @update:open="
+          (v) => {
+            if (!v) editingIngredientId = null
+          }
+        "
         @saved="refresh"
       />
 

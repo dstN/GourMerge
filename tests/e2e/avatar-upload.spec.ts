@@ -44,7 +44,10 @@ test('picking a photo opens the cropper, and confirming stores a square WebP ava
   await request.patch('/api/users/me', { data: { onboardingCompletedAt: new Date().toISOString() } })
 
   await page.goto('/settings')
-  await page.locator('button').filter({ hasText: /foto hochladen|upload photo/i }).click()
+  await page
+    .locator('button')
+    .filter({ hasText: /foto hochladen|upload photo/i })
+    .click()
   await page.locator('input[type="file"]').setInputFiles({
     name: 'photo.jpg',
     mimeType: 'image/jpeg',
@@ -80,7 +83,10 @@ test('picking a photo opens the cropper, and confirming stores a square WebP ava
   expect(delivered.headers()['content-type']).toContain('image/webp')
 
   // Remove it — falls back to the generated identicon, and the button relabels accordingly.
-  await page.locator('button').filter({ hasText: /^löschen$|^delete$/i }).click()
+  await page
+    .locator('button')
+    .filter({ hasText: /^löschen$|^delete$/i })
+    .click()
   await expect(page.locator('[data-slot="title"]').filter({ hasText: /foto entfernt|photo removed/i })).toBeVisible({
     timeout: 10_000,
   })

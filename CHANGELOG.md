@@ -36,7 +36,7 @@ standard moderation practice: telling someone they were reported is a retaliatio
 against whoever reported them, and the product has no reason to take it.
 
 **There is no separate resolve workflow, on purpose.** Deleting the flagged content —
-already a capability every owner has — *is* the moderation response. `closeReportsForTarget()`
+already a capability every owner has — _is_ the moderation response. `closeReportsForTarget()`
 marks matching open reports `actioned` the moment a recipe, its photo, or a discussion
 comment is deleted, so a report never sits open against something that no longer exists.
 
@@ -60,7 +60,7 @@ which is a worse outcome than leaving a bad row as something to flag instead.
 
 Clearing the energy value deletes the nutrition row rather than zeroing it, the same rule
 creation already followed: `computeNutrition` treats a present row with a null energy
-value as *covered*, so a row of zeros would claim coverage the data doesn't have and drag
+value as _covered_, so a row of zeros would claim coverage the data doesn't have and drag
 every recipe's total toward zero.
 
 ### Security — 21 mutating endpoints had no rate limit at all
@@ -115,7 +115,7 @@ timezone-conversion assumptions — but that's inference, not proof, and it wasn
 further: guessing at a timezone fix is worse than the bug it would "fix", because a wrong
 guess quietly shifts every `createdAt`/`updatedAt`, every rate-limit window, and every
 token expiry in the app at once. The label itself is defensively clamped so it can never
-*display* a future time regardless of which direction a real skew runs. The actual cause
+_display_ a future time regardless of which direction a real skew runs. The actual cause
 is `.claude/ROADMAP.md`'s problem now, to be checked against the pinned `docker-compose.yml`
 MySQL and against production before anyone touches a timezone setting.
 

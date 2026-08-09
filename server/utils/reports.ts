@@ -9,7 +9,15 @@
  * private-recipe case wrong in one of them.
  */
 import { and, eq } from 'drizzle-orm'
-import { ingredients, recipeDiscussionComments, recipeDiscussions, recipeImages, recipes, reports, users } from '~~/server/database/schema'
+import {
+  ingredients,
+  recipeDiscussionComments,
+  recipeDiscussions,
+  recipeImages,
+  recipes,
+  reports,
+  users,
+} from '~~/server/database/schema'
 
 export type ReportTargetKind = 'recipe' | 'user' | 'discussion_comment' | 'image' | 'ingredient'
 
@@ -81,13 +89,21 @@ export async function resolveReportTarget(
         .limit(1)
       if (!r) return null
       if (r.visibility === 'private' && r.ownerId !== viewerId) return null
-      const [img] = await db.select({ id: recipeImages.id }).from(recipeImages).where(eq(recipeImages.recipeId, targetId)).limit(1)
+      const [img] = await db
+        .select({ id: recipeImages.id })
+        .from(recipeImages)
+        .where(eq(recipeImages.recipeId, targetId))
+        .limit(1)
       if (!img) return null
       return { responsibleUserIds: [r.ownerId] }
     }
 
     case 'ingredient': {
-      const [ing] = await db.select({ createdBy: ingredients.createdBy }).from(ingredients).where(eq(ingredients.id, targetId)).limit(1)
+      const [ing] = await db
+        .select({ createdBy: ingredients.createdBy })
+        .from(ingredients)
+        .where(eq(ingredients.id, targetId))
+        .limit(1)
       if (!ing) return null
       return { responsibleUserIds: ing.createdBy != null ? [ing.createdBy] : [] }
     }

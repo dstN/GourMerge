@@ -101,38 +101,38 @@ GourMerge/
 
 All migrations versioned in `server/database/migrations/`. **Never use `db:push` against production.**
 
-| Table                        | Purpose                                      | Key Relations                        |
-| ----------------------------- | --------------------------------------------- | ------------------------------------ |
-| `users`                      | Auth + profile (`is_admin` gates `/admin/*`) | —                                    |
-| `user_avatars`               | Profile picture, `MEDIUMBLOB` (WebP)         | CASCADE on user delete               |
-| `ingredients`                | Global master catalog (Swiss BLV + user-created); `created_by` null for the BLV import | 1:1 → `ingredient_nutrition`; creator → `users` (SET NULL) |
-| `ingredient_nutrition`       | Per-100g nutritional data (Swiss BLV V7.0 or user-supplied) | —                                    |
-| `recipes`                    | Repository equivalent                        | owner → `users`; forkedFrom → self   |
-| `recipe_tags`                | Recipe ↔ tag M:M                             | CASCADE on recipe delete             |
-| `tags`                       | Tag master list                              | —                                    |
-| `recipe_stars`               | Favorites (unique per user+recipe)           | CASCADE on recipe delete             |
-| `recipe_branches`            | Lightweight branch pointer                   | CASCADE on recipe delete             |
-| `recipe_commits`             | Full snapshot per commit (not deltas)        | CASCADE on branch delete             |
-| `recipe_commit_ingredients`  | Ingredient snapshot per commit               | CASCADE on commit delete             |
-| `recipe_commit_steps`        | Step (Markdown) snapshot per commit          | CASCADE on commit delete             |
-| `gourmerge_requests`         | GMR (cross-branch/fork proposals)            | CASCADE on recipe delete (recipe_id) |
-| `gm_request_comments`        | Comments on GMRs                             | CASCADE on GMR delete                |
-| `email_verification_tokens`  | CSPRNG tokens (bcrypt-hashed)                | CASCADE on user delete               |
-| `email_change_tokens`        | CSPRNG tokens for changing a verified email  | CASCADE on user delete               |
-| `password_reset_tokens`      | CSPRNG tokens (bcrypt-hashed)                | CASCADE on user delete               |
-| `rate_limit_hits`            | DB-backed rate limiter (multi-process safe)  | —                                    |
-| `contact_messages`           | Contact form submissions                     | —                                    |
-| `data_requests`              | GDPR self-service tokens (export/erasure)    | CASCADE on user delete               |
-| `user_totp`                  | Opt-in TOTP enrolment (secret encrypted)     | CASCADE on user delete               |
-| `user_recovery_codes`        | Single-use 2FA recovery codes (hashed)       | CASCADE on user delete               |
-| `recipe_images`              | The one serving-suggestion photo per recipe  | CASCADE on recipe delete             |
-| `recipe_discussions`         | Discussion threads (recipe- or commit-level) | CASCADE on recipe / commit delete    |
-| `recipe_discussion_comments` | Replies within a thread                      | CASCADE on thread delete             |
-| `user_passkeys`              | WebAuthn credentials (`credential_id` uniq)  | CASCADE on user delete               |
-| `webauthn_challenges`        | Single-use ceremony challenges, 5-min TTL    | —                                    |
+| Table                        | Purpose                                                                                                                               | Key Relations                                                              |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| `users`                      | Auth + profile (`is_admin` gates `/admin/*`)                                                                                          | —                                                                          |
+| `user_avatars`               | Profile picture, `MEDIUMBLOB` (WebP)                                                                                                  | CASCADE on user delete                                                     |
+| `ingredients`                | Global master catalog (Swiss BLV + user-created); `created_by` null for the BLV import                                                | 1:1 → `ingredient_nutrition`; creator → `users` (SET NULL)                 |
+| `ingredient_nutrition`       | Per-100g nutritional data (Swiss BLV V7.0 or user-supplied)                                                                           | —                                                                          |
+| `recipes`                    | Repository equivalent                                                                                                                 | owner → `users`; forkedFrom → self                                         |
+| `recipe_tags`                | Recipe ↔ tag M:M                                                                                                                      | CASCADE on recipe delete                                                   |
+| `tags`                       | Tag master list                                                                                                                       | —                                                                          |
+| `recipe_stars`               | Favorites (unique per user+recipe)                                                                                                    | CASCADE on recipe delete                                                   |
+| `recipe_branches`            | Lightweight branch pointer                                                                                                            | CASCADE on recipe delete                                                   |
+| `recipe_commits`             | Full snapshot per commit (not deltas)                                                                                                 | CASCADE on branch delete                                                   |
+| `recipe_commit_ingredients`  | Ingredient snapshot per commit                                                                                                        | CASCADE on commit delete                                                   |
+| `recipe_commit_steps`        | Step (Markdown) snapshot per commit                                                                                                   | CASCADE on commit delete                                                   |
+| `gourmerge_requests`         | GMR (cross-branch/fork proposals)                                                                                                     | CASCADE on recipe delete (recipe_id)                                       |
+| `gm_request_comments`        | Comments on GMRs                                                                                                                      | CASCADE on GMR delete                                                      |
+| `email_verification_tokens`  | CSPRNG tokens (bcrypt-hashed)                                                                                                         | CASCADE on user delete                                                     |
+| `email_change_tokens`        | CSPRNG tokens for changing a verified email                                                                                           | CASCADE on user delete                                                     |
+| `password_reset_tokens`      | CSPRNG tokens (bcrypt-hashed)                                                                                                         | CASCADE on user delete                                                     |
+| `rate_limit_hits`            | DB-backed rate limiter (multi-process safe)                                                                                           | —                                                                          |
+| `contact_messages`           | Contact form submissions                                                                                                              | —                                                                          |
+| `data_requests`              | GDPR self-service tokens (export/erasure)                                                                                             | CASCADE on user delete                                                     |
+| `user_totp`                  | Opt-in TOTP enrolment (secret encrypted)                                                                                              | CASCADE on user delete                                                     |
+| `user_recovery_codes`        | Single-use 2FA recovery codes (hashed)                                                                                                | CASCADE on user delete                                                     |
+| `recipe_images`              | The one serving-suggestion photo per recipe                                                                                           | CASCADE on recipe delete                                                   |
+| `recipe_discussions`         | Discussion threads (recipe- or commit-level)                                                                                          | CASCADE on recipe / commit delete                                          |
+| `recipe_discussion_comments` | Replies within a thread                                                                                                               | CASCADE on thread delete                                                   |
+| `user_passkeys`              | WebAuthn credentials (`credential_id` uniq)                                                                                           | CASCADE on user delete                                                     |
+| `webauthn_challenges`        | Single-use ceremony challenges, 5-min TTL                                                                                             | —                                                                          |
 | `reports`                    | Polymorphic moderation flag (`target_kind` + `target_id`, no real FK on the target) — recipe/user/discussion_comment/image/ingredient | reporter → `users` (CASCADE); unique on (reporter, target_kind, target_id) |
-| `user_passkeys`              | WebAuthn credentials (`credential_id` uniq)  | CASCADE on user delete               |
-| `webauthn_challenges`        | Single-use ceremony challenges, 5-min TTL    | —                                    |
+| `user_passkeys`              | WebAuthn credentials (`credential_id` uniq)                                                                                           | CASCADE on user delete                                                     |
+| `webauthn_challenges`        | Single-use ceremony challenges, 5-min TTL                                                                                             | —                                                                          |
 
 ### FK cascade gaps (manually handled in API)
 
@@ -208,88 +208,88 @@ All routes: Zod-validated body/query, `requireUserSession()` where auth required
 
 ### Auth / Users
 
-| Method | Route                                | Auth        | Purpose                                              |
-| ------ | ------------------------------------- | ----------- | ------------------------------------------------------ |
-| GET    | `/api/users/[username]`              | No          | Public profile                                         |
-| PATCH  | `/api/users/me`                      | Yes         | Update own profile                                      |
-| POST   | `/api/users/me/email`                | Yes (pw)    | Request an email change (mails a confirm link + a plain notice to the old address) |
-| PUT    | `/api/users/me/avatar`               | Yes         | Upload/replace avatar (multipart, forced square, re-encoded WebP) |
-| DELETE | `/api/users/me/avatar`               | Yes         | Remove avatar, full session replace so the header updates immediately |
-| GET    | `/api/users/[username]/avatar`       | No          | Generated identicon-QR badge (no upload on file). `?variant=mark` small |
-| GET    | `/api/users/[username]/avatar-image` | No          | Serve an uploaded avatar's bytes. 404 if none — never a placeholder |
+| Method | Route                                | Auth     | Purpose                                                                            |
+| ------ | ------------------------------------ | -------- | ---------------------------------------------------------------------------------- |
+| GET    | `/api/users/[username]`              | No       | Public profile                                                                     |
+| PATCH  | `/api/users/me`                      | Yes      | Update own profile                                                                 |
+| POST   | `/api/users/me/email`                | Yes (pw) | Request an email change (mails a confirm link + a plain notice to the old address) |
+| PUT    | `/api/users/me/avatar`               | Yes      | Upload/replace avatar (multipart, forced square, re-encoded WebP)                  |
+| DELETE | `/api/users/me/avatar`               | Yes      | Remove avatar, full session replace so the header updates immediately              |
+| GET    | `/api/users/[username]/avatar`       | No       | Generated identicon-QR badge (no upload on file). `?variant=mark` small            |
+| GET    | `/api/users/[username]/avatar-image` | No       | Serve an uploaded avatar's bytes. 404 if none — never a placeholder                |
 
 ### Auth — 2FA / Passkeys
 
-| Method | Route                       | Auth     | Purpose                                                |
-| ------ | ---------------------------- | -------- | --------------------------------------------------------- |
-| GET    | `/api/auth/totp`            | Yes      | Enrollment status                                          |
-| POST   | `/api/auth/totp/setup`      | Yes      | Begin enrollment — returns the secret + QR enrolment URI  |
-| POST   | `/api/auth/totp/confirm`    | Yes      | Confirm the first code, activate 2FA, issue recovery codes |
-| POST   | `/api/auth/totp/disable`    | Yes (pw) | Disable 2FA — password required, not a code               |
-| GET    | `/api/auth/passkeys`        | Yes      | List enrolled passkeys                                     |
-| POST   | `/api/auth/passkeys/register` | Yes    | WebAuthn registration ceremony (options + verify)          |
-| PATCH  | `/api/auth/passkeys/[id]`   | Yes      | Rename a passkey                                            |
-| DELETE | `/api/auth/passkeys/[id]`   | Yes      | Remove a passkey                                            |
+| Method | Route                         | Auth     | Purpose                                                    |
+| ------ | ----------------------------- | -------- | ---------------------------------------------------------- |
+| GET    | `/api/auth/totp`              | Yes      | Enrollment status                                          |
+| POST   | `/api/auth/totp/setup`        | Yes      | Begin enrollment — returns the secret + QR enrolment URI   |
+| POST   | `/api/auth/totp/confirm`      | Yes      | Confirm the first code, activate 2FA, issue recovery codes |
+| POST   | `/api/auth/totp/disable`      | Yes (pw) | Disable 2FA — password required, not a code                |
+| GET    | `/api/auth/passkeys`          | Yes      | List enrolled passkeys                                     |
+| POST   | `/api/auth/passkeys/register` | Yes      | WebAuthn registration ceremony (options + verify)          |
+| PATCH  | `/api/auth/passkeys/[id]`     | Yes      | Rename a passkey                                           |
+| DELETE | `/api/auth/passkeys/[id]`     | Yes      | Remove a passkey                                           |
 
 ### Ingredients
 
-| Method | Route                       | Auth | Purpose                                                        |
-| ------ | ----------------------------- | ---- | ------------------------------------------------------------------ |
-| GET    | `/api/ingredients`            | No   | Search (q + locale) — Swiss BLV catalog + user-created ingredients |
-| POST   | `/api/ingredients`            | Yes  | Create ingredient on-the-fly (deduped, rate-limited, sets `createdBy`) |
-| GET    | `/api/ingredients/categories` | No   | Distinct category list for the picker                              |
-| GET    | `/api/ingredients/[id]`       | No   | Detail (incl. `canEdit` for the viewer's session, never raw `createdBy`) |
+| Method | Route                         | Auth | Purpose                                                                                              |
+| ------ | ----------------------------- | ---- | ---------------------------------------------------------------------------------------------------- |
+| GET    | `/api/ingredients`            | No   | Search (q + locale) — Swiss BLV catalog + user-created ingredients                                   |
+| POST   | `/api/ingredients`            | Yes  | Create ingredient on-the-fly (deduped, rate-limited, sets `createdBy`)                               |
+| GET    | `/api/ingredients/categories` | No   | Distinct category list for the picker                                                                |
+| GET    | `/api/ingredients/[id]`       | No   | Detail (incl. `canEdit` for the viewer's session, never raw `createdBy`)                             |
 | PATCH  | `/api/ingredients/[id]`       | Yes  | Edit name/translations/category/nutrition — creator only, 404 (not 403) otherwise, no admin override |
 
 ### Recipes
 
-| Method | Route                                    | Auth        | Purpose                                             |
-| ------ | ------------------------------------------ | ----------- | ------------------------------------------------------ |
-| GET    | `/api/recipes`                           | Yes         | Own recipes list                                    |
-| GET    | `/api/recipes/starred`                   | Yes         | Recipes the viewer has starred (card shape)         |
-| GET    | `/api/recipes/tour-recipe`                | Yes         | The `system` account's demo recipe, for the guided-tour fork step — invisible once the tour is finished |
-| POST   | `/api/recipes`                           | Yes         | Create recipe (transactional: recipe+branch+commit) |
-| GET    | `/api/recipes/explore`                   | No          | Public browse (search/filter/sort/paginate)         |
-| GET    | `/api/recipes/by-slug/[username]/[slug]` | No          | Fetch by URL slug (incl. resolved `forkedFrom`, per-viewer `canEdit` on ingredients) |
-| GET    | `/api/recipes/[id]`                      | No          | Fetch by internal ID                                |
-| PATCH  | `/api/recipes/[id]`                      | Yes (owner) | Update metadata (rate-limited)                      |
-| DELETE | `/api/recipes/[id]`                      | Yes (owner) | Delete + cascade cleanup; closes any open reports on the recipe, its photo and its comments |
-| POST   | `/api/recipes/[id]/fork`                 | Yes         | Deep-copy fork **incl. full commit history** (rate-limited) |
-| GET    | `/api/recipes/[id]/forks`                | No          | List recipes forked from this one                   |
-| POST   | `/api/recipes/[id]/star`                 | Yes         | Toggle star (rate-limited)                          |
-| POST   | `/api/recipes/[id]/tags`                 | Yes (owner) | Set tags (rate-limited)                             |
+| Method | Route                                    | Auth        | Purpose                                                                                                                             |
+| ------ | ---------------------------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | `/api/recipes`                           | Yes         | Own recipes list                                                                                                                    |
+| GET    | `/api/recipes/starred`                   | Yes         | Recipes the viewer has starred (card shape)                                                                                         |
+| GET    | `/api/recipes/tour-recipe`               | Yes         | The `system` account's demo recipe, for the guided-tour fork step — invisible once the tour is finished                             |
+| POST   | `/api/recipes`                           | Yes         | Create recipe (transactional: recipe+branch+commit)                                                                                 |
+| GET    | `/api/recipes/explore`                   | No          | Public browse (search/filter/sort/paginate)                                                                                         |
+| GET    | `/api/recipes/by-slug/[username]/[slug]` | No          | Fetch by URL slug (incl. resolved `forkedFrom`, per-viewer `canEdit` on ingredients)                                                |
+| GET    | `/api/recipes/[id]`                      | No          | Fetch by internal ID                                                                                                                |
+| PATCH  | `/api/recipes/[id]`                      | Yes (owner) | Update metadata (rate-limited)                                                                                                      |
+| DELETE | `/api/recipes/[id]`                      | Yes (owner) | Delete + cascade cleanup; closes any open reports on the recipe, its photo and its comments                                         |
+| POST   | `/api/recipes/[id]/fork`                 | Yes         | Deep-copy fork **incl. full commit history** (rate-limited)                                                                         |
+| GET    | `/api/recipes/[id]/forks`                | No          | List recipes forked from this one                                                                                                   |
+| POST   | `/api/recipes/[id]/star`                 | Yes         | Toggle star (rate-limited)                                                                                                          |
+| POST   | `/api/recipes/[id]/tags`                 | Yes (owner) | Set tags (rate-limited)                                                                                                             |
 | POST   | `/api/recipes/[id]/simulate-activity`    | Yes (owner) | Tour-only: seed a demo commit + GMR. Gated on the recipe having **exactly one commit**, not a client flag — see the file's docblock |
 
 ### Branches / Commits
 
-| Method | Route                                            | Auth        | Purpose                    |
-| ------ | -------------------------------------------------- | ----------- | ------------------------------ |
-| GET    | `/api/recipes/[id]/branches`                     | No          | List branches              |
-| POST   | `/api/recipes/[id]/branches`                     | Yes (owner) | Create branch (rate-limited) |
-| DELETE | `/api/recipes/[id]/branches/[branchId]`          | Yes (owner) | Delete branch (rate-limited) |
-| GET    | `/api/recipes/[id]/branches/[branchId]/snapshot` | No          | Current snapshot on branch |
-| GET    | `/api/recipes/[id]/branches/compare`             | No          | Compare two branch heads   |
-| GET    | `/api/recipes/[id]/commits`                      | No          | Commit history             |
+| Method | Route                                            | Auth        | Purpose                               |
+| ------ | ------------------------------------------------ | ----------- | ------------------------------------- |
+| GET    | `/api/recipes/[id]/branches`                     | No          | List branches                         |
+| POST   | `/api/recipes/[id]/branches`                     | Yes (owner) | Create branch (rate-limited)          |
+| DELETE | `/api/recipes/[id]/branches/[branchId]`          | Yes (owner) | Delete branch (rate-limited)          |
+| GET    | `/api/recipes/[id]/branches/[branchId]/snapshot` | No          | Current snapshot on branch            |
+| GET    | `/api/recipes/[id]/branches/compare`             | No          | Compare two branch heads              |
+| GET    | `/api/recipes/[id]/commits`                      | No          | Commit history                        |
 | POST   | `/api/recipes/[id]/commits`                      | Yes (owner) | Create snapshot commit (rate-limited) |
-| GET    | `/api/recipes/[id]/diff`                         | No          | Diff between two commits   |
+| GET    | `/api/recipes/[id]/diff`                         | No          | Diff between two commits              |
 
 ### GourMerge Requests
 
-| Method | Route                                                   | Auth        | Purpose                 |
-| ------ | ---------------------------------------------------------- | ----------- | ---------------------------- |
-| GET    | `/api/recipes/[id]/gourmerge-requests`                  | No          | List GMRs               |
-| POST   | `/api/recipes/[id]/gourmerge-requests`                  | Yes         | Create GMR (rate-limited) |
-| GET    | `/api/recipes/[id]/gourmerge-requests/[gmrId]`          | No          | GMR detail with diff    |
-| PATCH  | `/api/recipes/[id]/gourmerge-requests/[gmrId]`          | Yes         | Status transitions (rate-limited) |
-| POST   | `/api/recipes/[id]/gourmerge-requests/[gmrId]/comments` | Yes         | Add comment (rate-limited) |
+| Method | Route                                                   | Auth        | Purpose                                |
+| ------ | ------------------------------------------------------- | ----------- | -------------------------------------- |
+| GET    | `/api/recipes/[id]/gourmerge-requests`                  | No          | List GMRs                              |
+| POST   | `/api/recipes/[id]/gourmerge-requests`                  | Yes         | Create GMR (rate-limited)              |
+| GET    | `/api/recipes/[id]/gourmerge-requests/[gmrId]`          | No          | GMR detail with diff                   |
+| PATCH  | `/api/recipes/[id]/gourmerge-requests/[gmrId]`          | Yes         | Status transitions (rate-limited)      |
+| POST   | `/api/recipes/[id]/gourmerge-requests/[gmrId]/comments` | Yes         | Add comment (rate-limited)             |
 | POST   | `/api/recipes/[id]/gourmerge-requests/[gmrId]/merge`    | Yes (owner) | Execute three-way merge (rate-limited) |
 
 ### Recipe photo (one per recipe)
 
-| Method | Route                     | Auth        | Purpose                                             |
-| ------ | --------------------------- | ----------- | -------------------------------------------------------- |
-| GET    | `/api/recipes/[id]/image` | No\*        | Serve the bytes. ETag + `?v=<sha256>` + `immutable` |
-| PUT    | `/api/recipes/[id]/image` | Yes (owner) | Upsert (multipart). Type sniffed from magic bytes   |
+| Method | Route                     | Auth        | Purpose                                                    |
+| ------ | ------------------------- | ----------- | ---------------------------------------------------------- |
+| GET    | `/api/recipes/[id]/image` | No\*        | Serve the bytes. ETag + `?v=<sha256>` + `immutable`        |
+| PUT    | `/api/recipes/[id]/image` | Yes (owner) | Upsert (multipart). Type sniffed from magic bytes          |
 | DELETE | `/api/recipes/[id]/image` | Yes (owner) | Remove (rate-limited); closes any open report on the photo |
 
 \* Same 404-not-403 visibility rule as the recipe itself; a private recipe's photo
@@ -297,23 +297,23 @@ is `Cache-Control: private`.
 
 ### Discussions
 
-| Method | Route                                                         | Auth | Purpose                                          |
-| ------ | ------------------------------------------------------------------ | ---- | ------------------------------------------------------ |
-| GET    | `/api/recipes/[id]/discussions`                               | No   | Threads. `?commitId=<id>` or `all` selects scope |
-| POST   | `/api/recipes/[id]/discussions`                               | Yes  | Open a thread (verified + rate-limited)          |
-| PATCH  | `/api/recipes/[id]/discussions/[discussionId]`                | Yes  | Edit (author) / resolve (author or owner), rate-limited |
+| Method | Route                                                         | Auth | Purpose                                                                        |
+| ------ | ------------------------------------------------------------- | ---- | ------------------------------------------------------------------------------ |
+| GET    | `/api/recipes/[id]/discussions`                               | No   | Threads. `?commitId=<id>` or `all` selects scope                               |
+| POST   | `/api/recipes/[id]/discussions`                               | Yes  | Open a thread (verified + rate-limited)                                        |
+| PATCH  | `/api/recipes/[id]/discussions/[discussionId]`                | Yes  | Edit (author) / resolve (author or owner), rate-limited                        |
 | DELETE | `/api/recipes/[id]/discussions/[discussionId]`                | Yes  | Author or recipe owner (rate-limited); closes reports on the thread's comments |
-| POST   | `/api/recipes/[id]/discussions/[discussionId]/comments`       | Yes  | Reply (refused on a resolved thread, rate-limited) |
-| DELETE | `/api/recipes/[id]/discussions/[discussionId]/comments/[cId]` | Yes  | Author or recipe owner (rate-limited); closes reports on the comment |
+| POST   | `/api/recipes/[id]/discussions/[discussionId]/comments`       | Yes  | Reply (refused on a resolved thread, rate-limited)                             |
+| DELETE | `/api/recipes/[id]/discussions/[discussionId]/comments/[cId]` | Yes  | Author or recipe owner (rate-limited); closes reports on the comment           |
 
 ### Reports (moderation)
 
-| Method | Route                    | Auth        | Purpose                                                        |
-| ------ | -------------------------- | ----------- | ------------------------------------------------------------------- |
-| POST   | `/api/reports`           | Yes         | Flag a recipe/user/comment/image/ingredient. Idempotent per (reporter, target); 404 (not 403) on a target the reporter cannot see; cannot report yourself |
-| GET    | `/api/reports/mine`      | Yes         | Open reports against content the viewer owns — never for `targetKind: 'user'`, so a reported person is never told |
-| GET    | `/api/admin/reports`     | Yes (admin) | `?status=open\|actioned\|dismissed` moderation queue                |
-| PATCH  | `/api/admin/reports/[id]` | Yes (admin) | Set status to `actioned` or `dismissed`                             |
+| Method | Route                     | Auth        | Purpose                                                                                                                                                   |
+| ------ | ------------------------- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| POST   | `/api/reports`            | Yes         | Flag a recipe/user/comment/image/ingredient. Idempotent per (reporter, target); 404 (not 403) on a target the reporter cannot see; cannot report yourself |
+| GET    | `/api/reports/mine`       | Yes         | Open reports against content the viewer owns — never for `targetKind: 'user'`, so a reported person is never told                                         |
+| GET    | `/api/admin/reports`      | Yes (admin) | `?status=open\|actioned\|dismissed` moderation queue                                                                                                      |
+| PATCH  | `/api/admin/reports/[id]` | Yes (admin) | Set status to `actioned` or `dismissed`                                                                                                                   |
 
 Deleting the reported content is the moderation response — there is no separate
 resolve workflow. `closeReportsForTarget()` marks matching open reports `actioned`
@@ -322,11 +322,11 @@ Recipes/Discussions rows above).
 
 ### Misc
 
-| Method | Route          | Auth | Purpose                          |
-| ------ | ---------------- | ---- | ------------------------------------- |
-| GET    | `/api/tags`    | No   | All tags                              |
-| POST   | `/api/contact` | No   | Contact form submission               |
-| GET    | `/api/health`  | No   | Health check (`{ status, db }`)       |
+| Method | Route          | Auth | Purpose                         |
+| ------ | -------------- | ---- | ------------------------------- |
+| GET    | `/api/tags`    | No   | All tags                        |
+| POST   | `/api/contact` | No   | Contact form submission         |
+| GET    | `/api/health`  | No   | Health check (`{ status, db }`) |
 
 ### Privacy / GDPR self-service
 
@@ -334,7 +334,7 @@ Deliberately **session-less**: ownership is proven by the emailed confirmation
 link, because a user locked out of their account still holds both rights.
 
 | Method | Route                  | Auth | Purpose                                                        |
-| ------ | ------------------------ | ---- | ------------------------------------------------------------------- |
+| ------ | ---------------------- | ---- | -------------------------------------------------------------- |
 | POST   | `/api/privacy/request` | No   | Start export/erasure. Always `{ sent: true }` (no enumeration) |
 | POST   | `/api/privacy/confirm` | No   | Consume the emailed token; extends the export window to 24h    |
 | GET    | `/api/privacy/export`  | No   | Stream the JSON export (token in query, `no-store`)            |

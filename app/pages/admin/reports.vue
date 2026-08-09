@@ -97,7 +97,11 @@ useSeoMeta({ title: `${t('admin.reports.title')}: GourMerge` })
         <div class="flex flex-wrap items-start justify-between gap-3">
           <div class="min-w-0">
             <div class="flex items-center gap-2">
-              <UIcon :name="KIND_ICON[report.targetKind] ?? 'i-lucide-flag'" class="size-4 text-dimmed" aria-hidden="true" />
+              <UIcon
+                :name="KIND_ICON[report.targetKind] ?? 'i-lucide-flag'"
+                class="size-4 text-dimmed"
+                aria-hidden="true"
+              />
               <NuxtLink v-if="report.target.url" :to="report.target.url" class="link truncate font-medium">
                 {{ report.target.label }}
               </NuxtLink>

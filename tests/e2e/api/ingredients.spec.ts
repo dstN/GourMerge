@@ -112,9 +112,7 @@ test('creating an ingredient requires a session', async ({ request }) => {
 test.describe('editing', () => {
   test('the creator can edit name, category and nutrition; GET reflects canEdit', async ({ request }) => {
     const creator = await registerUser(request)
-    const created = await (
-      await request.post('/api/ingredients', { data: { name: `Spec Edit ${Date.now()}` } })
-    ).json()
+    const created = await (await request.post('/api/ingredients', { data: { name: `Spec Edit ${Date.now()}` } })).json()
 
     const ownDetail = await (await request.get(`/api/ingredients/${created.id}`)).json()
     expect(ownDetail.canEdit).toBe(true)
