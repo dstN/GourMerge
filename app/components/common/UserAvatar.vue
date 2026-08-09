@@ -59,10 +59,21 @@ const label = computed(() => props.displayName || props.username)
 const hasPhoto = computed(() => !!props.avatarUrl)
 const isBadge = computed(() => !hasPhoto.value && SCANNABLE_SIZES.has(props.size))
 
+/**
+ * The generated badge has no upload behind it to content-address, unlike `avatarUrl`'s own
+ * `?v=<sha256>` — but `server/utils/identiconAvatar.ts`'s rendering has already changed
+ * shape twice in one day (colour inversion, then the centre logo), and its response is
+ * `Cache-Control: immutable, max-age=604800`. Every browser that had already fetched a
+ * user's mark kept the bytes from whichever revision it first saw for up to a week,
+ * `immutable` telling it never to even check — bump this by one whenever the renderer's
+ * *output* changes again, so every existing cache orphans itself instead of going stale.
+ */
+const IDENTICON_RENDER_VERSION = 2
+
 const src = computed(() => {
   if (props.avatarUrl) return props.avatarUrl
-  const base = `/api/users/${encodeURIComponent(props.username)}/avatar`
-  return isBadge.value ? base : `${base}?variant=mark`
+  const base = `/api/users/${encodeURIComponent(props.username)}/avatar?v=${IDENTICON_RENDER_VERSION}`
+  return isBadge.value ? base : `${base}&variant=mark`
 })
 
 /**

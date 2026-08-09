@@ -111,6 +111,13 @@ test('the generated QR avatar is a real, cacheable SVG for the profile URL', asy
   // A quiet zone is what makes it scan at all; `margin: 2` shows up as a viewBox larger
   // than the module grid. Guarding on the path being non-trivial catches an empty render.
   expect(svg.length).toBeGreaterThan(500)
+  // The chef's hat is a nested <svg> element set into the middle — distinct from the
+  // outer document, so this cannot pass on the identicon alone. Only against a BUILT
+  // artifact does this mean anything: `getBrandMark()` reads the icon through Nitro's
+  // server-assets storage, which resolves to a `Uint8Array` there and to a plain string
+  // under `npm run dev`'s filesystem read — a mismatch this exact assertion caught once
+  // already, silently, in production (the logo simply never rendered, no error anywhere).
+  expect(svg, 'the chef’s-hat logo must be set into the middle of the code').toContain('<svg x=')
 
   // The charset is the same one registration enforces — this must not become a generic
   // "put arbitrary text in a QR on our domain" endpoint.

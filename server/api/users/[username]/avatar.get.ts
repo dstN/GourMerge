@@ -42,8 +42,13 @@ let brandMark: BrandMark | null | undefined
 async function getBrandMark(): Promise<BrandMark | null> {
   if (brandMark !== undefined) return brandMark
   try {
-    const svg = await useStorage('assets:brand').getItem<string>('icon.svg')
-    brandMark = parseBrandMark(typeof svg === 'string' ? svg : null)
+    const raw = await useStorage('assets:brand').getItem('icon.svg')
+    // A dev-mode `nuxt dev` run reads this asset straight off disk as text, but the built
+    // Nitro server embeds it as bytes: `getItem` there resolves to a `Uint8Array`, which
+    // `typeof … === 'string'` silently rejects — that mismatch, not a missing or moved
+    // file, is why the logo never appeared in a production build.
+    const svg = raw instanceof Uint8Array ? new TextDecoder().decode(raw) : typeof raw === 'string' ? raw : null
+    brandMark = parseBrandMark(svg)
   } catch {
     brandMark = null
   }
