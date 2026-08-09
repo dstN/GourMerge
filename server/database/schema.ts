@@ -138,6 +138,45 @@ export const users = mysqlTable('users', {
 })
 
 // ═══════════════════════════════════════════════════════════════
+// USER AVATAR (uploaded picture — at most one per account)
+// ═══════════════════════════════════════════════════════════════
+// Same storage argument as `recipe_images`: a MEDIUMBLOB row rather than a file, because
+// the deploy swaps `.output/` by rename, there is no persistent volume, and the nightly
+// dump is the only backup. See that table for the full reasoning.
+//
+// It is a separate table and not a column on `users` for a sharper reason than there: the
+// `users` row is read on **every authenticated request** (session refresh, ownership
+// checks, the inactivity sweep), and MySQL keeps off-page BLOB pointers in the buffer pool
+// on a row read. A quarter-megabyte column on the hottest table in the app is not something
+// to find out about later.
+//
+// `users.avatar_url` stays and keeps its meaning — "where to fetch this user's picture".
+// Uploading simply points it at `/api/users/:username/avatar-image?v=<checksum>`, so every
+// payload and component that already renders that column keeps working untouched.
+export const userAvatars = mysqlTable('user_avatars', {
+  id: int('id').primaryKey().autoincrement(),
+  userId: int('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' })
+    .unique(),
+  /** Always `image/webp` — the upload is re-encoded, never stored as it arrived. */
+  mimeType: varchar('mime_type', { length: 30 }).notNull(),
+  /** Always square. `AVATAR_EDGE` in the upload handler is the single source for the value. */
+  edge: int('edge').notNull(),
+  byteSize: int('byte_size').notNull(),
+  /** Hex SHA-256 of the stored bytes: the ETag, and the `?v=` that makes it cacheable. */
+  checksum: varchar('checksum', { length: 64 }).notNull(),
+  data: mediumblob('data').notNull(),
+  createdAt: datetime('created_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp('updated_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`)
+    .onUpdateNow(),
+})
+
+// ═══════════════════════════════════════════════════════════════
 // TWO-FACTOR AUTHENTICATION (TOTP, RFC 6238)
 // ═══════════════════════════════════════════════════════════════
 // App-agnostic on purpose: the standard `otpauth://totp/…` URI with the default

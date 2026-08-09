@@ -17,7 +17,6 @@ const toast = useAppToast()
 const form = reactive({
   displayName: '',
   bio: '',
-  avatarUrl: '',
   // All four locales are supported — this was typed `'de' | 'en'`, predating the
   // FR/IT rollout, so picking Français here was a type error that only didn't
   // surface because the value was never loaded from the profile either.
@@ -36,7 +35,6 @@ watch(
     if (p?.user) {
       form.displayName = p.user.displayName || ''
       form.bio = p.user.bio || ''
-      form.avatarUrl = p.user.avatarUrl || ''
       // These two were NOT loaded, so both selects always rendered their
       // hardcoded defaults ("Deutsch" / metric) no matter what was stored — and
       // because `save()` sends the whole form, editing only your bio silently
@@ -58,7 +56,6 @@ async function save() {
       body: {
         displayName: form.displayName || undefined,
         bio: form.bio || null,
-        avatarUrl: form.avatarUrl || null,
         preferredLocale: form.preferredLocale,
         preferredMeasurementSystem: form.preferredMeasurementSystem,
       },
@@ -89,25 +86,8 @@ useSeoMeta({ title: `${t('settings.title')}: GourMerge` })
           <UTextarea v-model="form.bio" :placeholder="t('settings.bioPlaceholder')" :rows="3" />
         </UFormField>
 
-        <!-- The preview sits beside the field so the effect of clearing it is visible
-             rather than described: empty → the generated QR avatar appears immediately. -->
-        <UFormField :label="t('settings.avatarUrl')" :hint="t('settings.avatarQrHint')">
-          <div class="flex items-start gap-3">
-            <CommonUserAvatar
-              :username="user?.username ?? ''"
-              :display-name="user?.displayName"
-              :avatar-url="form.avatarUrl || null"
-              size="lg"
-            />
-            <div class="min-w-0 flex-1">
-              <UInput
-                v-model="form.avatarUrl"
-                :placeholder="t('settings.avatarUrlPlaceholder')"
-                icon="i-lucide-image"
-              />
-              <p class="mt-1 text-xs text-dimmed">{{ t('settings.avatarQrExplain') }}</p>
-            </div>
-          </div>
+        <UFormField :label="t('settings.avatar')">
+          <CommonAvatarUpload />
         </UFormField>
 
         <UFormField :label="t('settings.language')">

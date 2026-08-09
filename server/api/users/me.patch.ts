@@ -1,5 +1,11 @@
 /**
  * PATCH /api/users/me — Update current user's profile settings
+ *
+ * `avatarUrl` is deliberately not a field here — it used to accept any URL, which meant a
+ * profile picture could point at an arbitrary third-party origin (mixed content, hotlinking,
+ * a link that silently changes what it serves later). `PUT/DELETE /api/users/me/avatar` are
+ * now the only writers of that column, and they always set it to our own content-addressed
+ * delivery URL. See the `user_avatars` table comment in schema.ts.
  */
 import { z } from 'zod'
 import { eq } from 'drizzle-orm'
@@ -8,7 +14,6 @@ import { users } from '~~/server/database/schema'
 const updateSchema = z.object({
   displayName: z.string().min(1).max(100).optional(),
   bio: z.string().max(500).optional().nullable(),
-  avatarUrl: z.string().url().max(500).optional().nullable(),
   preferredLocale: z.enum(['de', 'en', 'fr', 'it']).optional(),
   preferredMeasurementSystem: z.enum(['metric', 'imperial']).optional(),
   onboardingCompletedAt: z.string().datetime().optional().nullable(),
@@ -36,7 +41,6 @@ export default defineEventHandler(async (event) => {
 
   if (result.data.displayName !== undefined) updates.displayName = result.data.displayName
   if (result.data.bio !== undefined) updates.bio = result.data.bio ?? undefined
-  if (result.data.avatarUrl !== undefined) updates.avatarUrl = result.data.avatarUrl ?? undefined
   if (result.data.preferredLocale !== undefined) updates.preferredLocale = result.data.preferredLocale
   if (result.data.preferredMeasurementSystem !== undefined)
     updates.preferredMeasurementSystem = result.data.preferredMeasurementSystem
@@ -69,7 +73,6 @@ export default defineEventHandler(async (event) => {
       ...(result.data.tourDismissed !== undefined && { tourDismissed: result.data.tourDismissed }),
       ...(result.data.hasFinishedTour !== undefined && { hasFinishedTour: result.data.hasFinishedTour }),
       ...(result.data.completedTours !== undefined && { completedTours: result.data.completedTours }),
-      ...(result.data.avatarUrl !== undefined && { avatarUrl: result.data.avatarUrl }),
     },
   })
 

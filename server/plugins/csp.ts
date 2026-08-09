@@ -37,7 +37,10 @@ export default defineNitroPlugin((nitroApp) => {
       // 'unsafe-inline' stays for style-src because TipTap sets inline styles.
       "style-src 'self' 'unsafe-inline'",
       "font-src 'self'",
-      "img-src 'self' data: https:",
+      // `blob:` is for the avatar cropper's live preview (`URL.createObjectURL(file)`) — a
+      // blob URL can only ever be minted by script already running on this page, so it
+      // carries none of the "loads attacker content" risk a wildcard scheme normally would.
+      "img-src 'self' data: blob: https:",
       scriptSrc,
       "connect-src 'self' https://*.sentry.io",
       "frame-ancestors 'none'",

@@ -27,6 +27,7 @@ import {
   recipeDiscussions,
   recipeDiscussionComments,
   recipeImages,
+  userAvatars,
   contactMessages,
 } from '~~/server/database/schema'
 import { bufferToUuid } from '~~/server/utils/uuid'
@@ -38,6 +39,7 @@ export interface DataExport {
     note: string
   }
   account: Record<string, unknown>
+  avatar: unknown
   recipes: unknown[]
   starredRecipes: unknown[]
   gourmergeRequests: unknown[]
@@ -70,6 +72,21 @@ export async function buildDataExport(
     passwordHash: string
     publicId?: Buffer
   }
+
+  // Metadata only, same reasoning as the recipe photo below: the bytes are not inlined,
+  // `url` says where to fetch them while the account lives.
+  const [avatarMeta] = await db
+    .select({
+      mimeType: userAvatars.mimeType,
+      edge: userAvatars.edge,
+      byteSize: userAvatars.byteSize,
+      checksum: userAvatars.checksum,
+      createdAt: userAvatars.createdAt,
+    })
+    .from(userAvatars)
+    .where(eq(userAvatars.userId, userId))
+    .limit(1)
+  const avatarOut = avatarMeta ? { ...avatarMeta, url: `/api/users/${account.username}/avatar-image` } : null
 
   const ownRecipes = await db.select().from(recipes).where(eq(recipes.ownerId, userId))
   const recipeIds = ownRecipes.map((r) => r.id)
@@ -166,9 +183,10 @@ export async function buildDataExport(
     meta: {
       generatedAt: new Date().toISOString(),
       format: 'GourMerge data export v1 (GDPR Art. 15 / Art. 20)',
-      note: 'Recipes include their full branch and commit history. Recipe photos are listed as metadata with a download URL rather than inlined as base64. Contact-form messages are matched by email address. The password hash is deliberately excluded.',
+      note: 'Recipes include their full branch and commit history. Recipe and avatar photos are listed as metadata with a download URL rather than inlined as base64. Contact-form messages are matched by email address. The password hash is deliberately excluded.',
     },
     account: safeAccount,
+    avatar: avatarOut,
     recipes: recipesOut,
     starredRecipes: starred,
     gourmergeRequests: ownGmrs.map((g) => ({ ...g, publicId: g.publicId ? bufferToUuid(g.publicId) : null })),

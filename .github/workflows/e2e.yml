@@ -71,6 +71,13 @@ jobs:
       - name: Run database migrations
         run: npx drizzle-kit migrate
 
+      - name: Seed the onboarding tour's system recipe
+        # tour.spec.ts's fork-step test forks off the hidden `system` account's recipe
+        # (`GET /api/recipes/tour-recipe`) — without it the fork tour has nothing to resolve
+        # to and the anchor never appears. Self-contained (creates its own ingredients if
+        # the Swiss-BLV catalog isn't seeded), so this is the only seed step this job needs.
+        run: npm run db:seed:tour
+
       - name: Build
         run: npm run build
 

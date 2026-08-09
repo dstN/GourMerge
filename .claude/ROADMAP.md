@@ -30,16 +30,17 @@ expire when a phase completes.
    no Redis, no self-hosted daemons. Consequences that keep mattering: in-memory
    state is not multi-process safe (hence the DB-backed rate limiter), and the
    host cannot build (hence build-in-CI, ship-the-artifact).
-2. **One uploaded image per recipe, and no other uploads.** _(Revised
-   2026-08-09; previously "no images, no uploads — text only".)_ A recipe may
-   carry a single serving-suggestion photo, stored in `recipe_images` and served
-   from `/api/recipes/:id/image`. Everything else stays text: TipTap still runs
-   without image nodes, so **step content cannot contain an image**, and there is
-   no general upload surface. Ingredients are identified by real names from the
-   `ingredients` master table; icons are decorative. Avatars are today either a URL
-   the user supplies or a generated identicon-QR badge — **avatar upload is agreed
-   and specified but not yet built**, see "Accepted — specified, not yet built";
-   this clause changes again when it lands.
+2. **One uploaded image per recipe, plus one profile picture — no other
+   uploads.** _(Revised 2026-08-09; previously "no images, no uploads — text
+   only".)_ A recipe may carry a single serving-suggestion photo, stored in
+   `recipe_images` and served from `/api/recipes/:id/image`. A user may carry a
+   single profile picture, stored in `user_avatars` and served from
+   `/api/users/:username/avatar-image`, cropped to 1:1 in the browser before
+   upload. Everything else stays text: TipTap still runs without image nodes, so
+   **step content cannot contain an image**, and there is no general upload
+   surface. Ingredients are identified by real names from the `ingredients`
+   master table; icons are decorative. A user with no uploaded picture still
+   gets the generated identicon-QR badge.
 3. **The full git workflow is not optional.** Fork, branch comparison, GourMerge
    Requests and three-way merge are core product, not add-ons.
 4. **Observability: Pino file logging + Sentry.io + UptimeRobot** on
@@ -270,51 +271,11 @@ allow-listing.
 Requested and agreed; listed here with the constraints that shape them so the work does
 not have to rediscover them. Nothing below is implemented yet.
 
-### Uploads: 2 MB recipe photos, 512 kB avatars, both re-encoded server-side
-
-|             | Recipe photo    | Avatar                  |
-| ----------- | --------------- | ----------------------- |
-| Accepted in | JPEG, PNG, WebP | JPEG, PNG, WebP         |
-| Cap         | 2 MB            | 512 kB                  |
-| Stored as   | WebP            | WebP                    |
-| Aspect      | free            | **1:1**, cropped if not |
-
-**This reverses a decision made hours earlier, and the reversal has a cost worth naming.**
-The shipped pipeline deliberately has the server _never decode an image_: the browser
-re-encodes and `imageProbe.ts` reads the header only. That removed the entire class of
-image-decoder CVEs from a Passenger worker and avoided a native binary that has to match a
-host we cannot rebuild on. Compressing server-side gives that up.
-
-It is still the right call for storage, so the way to do it safely:
-
-- **`sharp`, but failing open.** It is already a devDependency (`generate-icons.mjs`), CI
-  builds on `ubuntu-latest` x64 and Netcup is linux x64, so the prebuilt binary Nitro
-  bundles should load. "Should" is doing real work in that sentence — same phrasing as the
-  proxy-hop item above, and for the same reason. So: if `sharp` fails to load or throws,
-  **store the client-encoded WebP unchanged** rather than 500. The upload keeps working; only
-  the extra compression is lost.
-- **Report it.** `/api/health` should say whether server-side re-encoding is actually
-  running, or nobody will notice it silently degraded to client-only on the one host that
-  matters.
-- **Decode bounds, not just byte bounds.** A 2 MB file can be a 30 000 × 30 000 PNG. `sharp`
-  must run with `limitInputPixels` set, and the existing `MAX_EDGE_PX` check has to happen
-  _before_ the decode, from the probed header — which it already does.
-
-### Avatar upload with a 1:1 cropper
-
-Currently the avatar is a URL field. It needs a real upload with a square cropper
-(square and circular preview, the usual social pattern), 512 kB, WebP.
-
-- **Dropped: composing the QR into an uploaded picture.** Considered and cut (owner, same
-  day). It only works with an opaque plate behind the code — a QR straight onto a photo does
-  not binarise — so the honest version is a code sitting in a box on someone's portrait,
-  which is neither a good avatar nor a good code. The generated badge already covers the
-  scannable case for people who have not uploaded anything.
-- The cropper is the one part with no existing building block. Nuxt UI has no crop
-  component; this is a canvas plus pointer maths, or a dependency.
-- **The size cap is on the stored bytes.** 512 kB means 512 kB in the row, checked after the
-  re-encode — not the transfer size, which is transient and not what gets dumped nightly.
-  The recipe photo now works this way (`MAX_STORED_BYTES`); the avatar must match.
+> Both upload items that used to live here — recipe photos (2 MB, re-encoded server-side)
+> and the avatar (512 kB, 1:1 crop in the browser) — have shipped. See the CHANGELOG's
+> [1.6.0] entry, "Changed — uploads are re-encoded to WebP…" and "Added — a profile
+> picture, cropped in the browser…". The QR-in-avatar-center idea mentioned in the original
+> avatar spec was cut before being built and stays cut.
 
 ### Reporting, for recipes / users / discussion comments / images
 

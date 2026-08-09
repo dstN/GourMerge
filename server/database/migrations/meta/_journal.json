@@ -99,6 +99,13 @@
       "when": 1786285603976,
       "tag": "0013_discussions-and-recipe-image",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "5",
+      "when": 1786288882181,
+      "tag": "0014_user-avatar",
+      "breakpoints": true
     }
   ]
 }

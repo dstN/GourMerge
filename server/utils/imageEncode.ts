@@ -50,6 +50,13 @@ export interface EncodedImage {
   recompressed: boolean
 }
 
+export interface EncodeOptions {
+  /** Longest edge after downscaling. Defaults to the recipe-photo value, {@link MAX_EDGE}. */
+  maxEdge?: number
+  /** WebP quality, 0–100. Defaults to {@link QUALITY}. */
+  quality?: number
+}
+
 /**
  * True when server-side re-encoding is actually available in this process.
  *
@@ -65,7 +72,14 @@ export async function imageEncoderAvailable(): Promise<boolean> {
   }
 }
 
-export async function reencodeToWebp(input: Buffer, probed: ProbedImage): Promise<EncodedImage> {
+export async function reencodeToWebp(
+  input: Buffer,
+  probed: ProbedImage,
+  options: EncodeOptions = {}
+): Promise<EncodedImage> {
+  const maxEdge = options.maxEdge ?? MAX_EDGE
+  const quality = options.quality ?? QUALITY
+
   const untouched: EncodedImage = {
     data: input,
     mimeType: probed.mimeType,
@@ -87,8 +101,8 @@ export async function reencodeToWebp(input: Buffer, probed: ProbedImage): Promis
       // stored sideways — the browser uploader handles this too, but a direct API caller
       // does not, and this path exists precisely for the callers that skip the browser.
       .rotate()
-      .resize({ width: MAX_EDGE, height: MAX_EDGE, fit: 'inside', withoutEnlargement: true })
-      .webp({ quality: QUALITY, effort: 4 })
+      .resize({ width: maxEdge, height: maxEdge, fit: 'inside', withoutEnlargement: true })
+      .webp({ quality, effort: 4 })
       .toBuffer({ resolveWithObject: true })
 
     // Only keep it if it actually helped — see the docblock.

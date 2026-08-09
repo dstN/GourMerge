@@ -280,6 +280,94 @@ when browser tracing came out of the Sentry client.
 Full reasoning, the open backlog it produced, and the accepted architecture deviations are in
 `.claude/ROADMAP.md` under "Audit — 2026-08-09".
 
+### Added — a profile picture, cropped in the browser, replacing the free-text avatar URL
+
+Settings had an "Avatar URL" text field: paste any link, we render it. That means a profile
+picture on our own pages could point at an arbitrary third-party origin — mixed content, a
+hotlink someone else's server can break at will, or content that quietly changes after the
+fact to something never approved. `PUT`/`DELETE /api/users/me/avatar` are now the only
+writers of `users.avatar_url`, and they always set it to our own content-addressed delivery
+URL; `PATCH /api/users/me` no longer accepts the field at all.
+
+The upload is forced square before storage — `probeImage()`'s own width/height, not a client
+promise — because `user_avatars.edge` and everything downstream assumes `width === height`
+unconditionally. The in-browser cropper always exports a square canvas, so this only bites a
+caller that skips it, but a stored invariant has to hold regardless of who is calling.
+Everything else follows the recipe photo's shape from earlier in this release: a `MEDIUMBLOB`
+row (not a file — same deploy-has-no-filesystem reasoning), re-encoded to WebP server-side
+with the same fail-open `sharp` path, checksum-addressed so the URL can cache forever. The cap
+is tighter — 512 KB stored, 512px edge, against the photo's 2 MB / 1600px — because this is a
+header-sized thumbnail, not a serving suggestion. `reencodeToWebp()` gained a `maxEdge`/
+`quality` option rather than becoming two near-duplicate functions.
+
+It is a separate table from `users`, and more pointedly than the recipe photo's case: the
+`users` row is read on **every authenticated request**, and MySQL keeps off-page BLOB
+pointers in the buffer pool on a row read. A quarter-megabyte column on the hottest table in
+the app was not something to find out about later.
+
+**The crop tool has no Nuxt UI building block, so it is hand-rolled** — a plain `<img>`
+panned and zoomed with CSS `left`/`top`, a `<canvas>` touched exactly once, on confirm, to cut
+the visible square out of source-image pixel space. A QR-in-the-center overlay was floated
+for this and explicitly dropped before any of it was built: the identicon badge already earns
+that job for accounts with no photo, and a scannable code stops being scannable the moment a
+real, arbitrarily-cropped face sits behind it.
+
+Two bugs here were invisible to an endpoint test and only showed up driving the actual
+control in a browser:
+
+- The cropper's live preview is a `blob:` object URL, and the page's
+  `Content-Security-Policy` `img-src` did not list `blob:` — a scheme that can only ever be
+  minted by script already running on the page, so allowing it costs nothing. The browser
+  dropped the image with no console error reachable from the app's own code; the only visible
+  symptom was "Apply crop" staying disabled forever, because the load event that flips
+  `ready` to true never fired.
+- `DELETE /api/users/me/avatar` cleared the row and set `users.avatar_url = null`, but the
+  session cookie kept the old URL. `setUserSession` merges onto the existing session with
+  `defu`, and `defu` skips any key whose new value is `null` — reasonable for a partial
+  update that omits fields it does not touch, wrong for an explicit clear. The header, which
+  reads the session rather than re-fetching, kept showing the deleted photo until next login
+  even though the database and the profile page both already agreed it was gone.
+  `replaceUserSession` — full replace, no merge — is now what a clear uses.
+
+Both are why `tests/e2e/avatar-upload.spec.ts` drives the real cropper in a real browser
+rather than stopping at the endpoint contract in `tests/e2e/api/avatar.spec.ts`: the encode
+pipeline, the CSRF/session plumbing and the crop math are each tested where they actually run.
+
+### Fixed — the guided tour's own demo edit made "View recipe" ask "leave without saving?"
+
+Found while re-verifying the E2E suite after the avatar work above, not while touching the
+tour at all: `tests/e2e/tour.spec.ts` was failing on `master` already, on a commit this
+session never touched. Worth separating what that failure actually was from what it looked
+like at first.
+
+**The test was stale, not the app.** `useProductTour.ts` was restructured a while back from
+one continuous flow into named sub-tours (`BASE_TOUR`, `BRANCHES_TOUR`, `HISTORY_TOUR`,
+`GMR_TOUR`, `FORK_TOUR`) — history and GourMerge Requests now get their own contextual
+mini-tour on arrival at those pages instead of being steps in the main one, and forking is
+its own guided path the first time anyone clicks "Remix", demoed on a hidden `system`
+account's recipe rather than on someone else's real one. The test still clicked "Weiter"
+looking for `history-link` / `gourmerge-requests-link` / a `fork-button` that no longer exist
+in that flow, and CI had nothing seeding the `system` account's recipe for the fork path
+either. Both fixed: the test now walks the actual current steps, and
+`db:seed:tour` runs in the E2E workflow before the suite does.
+
+**Making that fix expose the real, separate bug is the part worth keeping.** Once the test
+followed the actual flow, "View recipe" — the button the tour itself highlights, `hideNext`
+so there is no "Weiter" past it — started raising `edit.vue`'s unsaved-changes modal, on a
+recipe the visitor had done nothing to yet. The tour's own automation types a demo ingredient
+and a demo step into the form while walking through those two steps, character by character,
+so the visitor sees what adding one looks like without touching anything themselves. `isDirty`
+compares the current form against the baseline captured when the page loaded — before that
+typing — so from the moment it started, the page was "dirty" against content the visitor
+never asked to keep. A plain nav-link click is not a save, so clicking exactly the button the
+tour had just told them to click interrupted the tour with an unrelated warning about losing
+work that was never theirs.
+
+Fixed at the source: the automation re-baselines `isDirty` right after it finishes typing
+each demo value in, so "dirty" means changed since the tour handed the page over, not changed
+since the empty page first loaded. A real edit on top of the demo content still counts and
+still prompts on the way out — only the tour's own scripted contribution is exempted.
+
 ## [1.5.0] — 2026-08-07
 
 The first release written after the site had real users hitting it, and it shows: most of

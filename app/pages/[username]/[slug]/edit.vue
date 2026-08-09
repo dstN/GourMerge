@@ -451,6 +451,16 @@ useSeoMeta({
 })
 
 // ── Tour Automation ───────────────────────────────────────────
+//
+// The typed-in ingredient and step below are demonstration content the TOUR adds, not
+// something the visitor asked to keep — but `isDirty` cannot tell the difference between
+// that and real unsaved work, and used not to: it compares against the baseline captured
+// at load, so the moment this watcher typed "Apfel" in, the page was "dirty" for a visitor
+// who had done nothing yet. `view-recipe-btn`, three steps later, is a plain nav-link click
+// with no save step of its own — so clicking exactly the button the tour just told them to
+// click tripped the unsaved-changes prompt every time. Re-baselining after each demo edit
+// is what makes "dirty" mean "changed since the tour handed it to you" instead of "changed
+// since the empty page loaded" — a real edit on top of the demo content still counts.
 watch(
   () => tour.currentStep.value?.id,
   async (stepId) => {
@@ -470,6 +480,7 @@ watch(
         if (row) row.quantity = '1'
         await new Promise((r) => setTimeout(r, 200))
         if (row) row.unit = 'piece'
+        initialSnapshot.value = JSON.stringify({ ingredients: ingredients.value, steps: stepsForSnapshot.value })
       }
     } else if (stepId === 'add-step') {
       while (pending.value || snapshotLoading.value) {
@@ -483,6 +494,7 @@ watch(
           await new Promise((r) => setTimeout(r, 50))
           if (step) step.content += text[i]
         }
+        initialSnapshot.value = JSON.stringify({ ingredients: ingredients.value, steps: stepsForSnapshot.value })
       }
     }
   }
