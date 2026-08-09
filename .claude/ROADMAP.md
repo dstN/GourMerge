@@ -305,14 +305,16 @@ It is still the right call for storage, so the way to do it safely:
 Currently the avatar is a URL field. It needs a real upload with a square cropper
 (square and circular preview, the usual social pattern), 512 kB, WebP.
 
-- **Option to compose the QR into the centre of the uploaded picture.** The generator
-  already exists (`identiconAvatar.ts`) and already knows the contrast and quiet-zone rules;
-  what is new is that the surrounding pixels are now a photo, which is exactly the case the
-  current design refuses. It only works with an opaque plate behind the code, the way the
-  generated badge does — a QR straight onto a photo does not binarise. Say so in the UI
-  rather than shipping something that scans for the person who tested it.
+- **Dropped: composing the QR into an uploaded picture.** Considered and cut (owner, same
+  day). It only works with an opaque plate behind the code — a QR straight onto a photo does
+  not binarise — so the honest version is a code sitting in a box on someone's portrait,
+  which is neither a good avatar nor a good code. The generated badge already covers the
+  scannable case for people who have not uploaded anything.
 - The cropper is the one part with no existing building block. Nuxt UI has no crop
   component; this is a canvas plus pointer maths, or a dependency.
+- **The size cap is on the stored bytes.** 512 kB means 512 kB in the row, checked after the
+  re-encode — not the transfer size, which is transient and not what gets dumped nightly.
+  The recipe photo now works this way (`MAX_STORED_BYTES`); the avatar must match.
 
 ### Reporting, for recipes / users / discussion comments / images
 

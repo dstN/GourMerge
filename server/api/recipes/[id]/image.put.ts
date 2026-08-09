@@ -37,6 +37,21 @@ import { recipeImages, recipes } from '~~/server/database/schema'
  * which is what `limitInputPixels` in `imageEncode.ts` is for.
  */
 const MAX_UPLOAD_BYTES = 2 * 1024 * 1024
+
+/**
+ * The limit that actually means something: the size of what ends up in the row.
+ *
+ * There is no filesystem here — `recipe_images.data` is a `MEDIUMBLOB`, so "the stored
+ * size" is exactly `Buffer.length`, with no base64 inflation and nothing on disk to
+ * measure. Enforcing only `MAX_UPLOAD_BYTES` checked the *transfer*, which is the number
+ * nobody cares about: the wire is transient, the row is what gets backed up, dumped
+ * nightly and paid for.
+ *
+ * The two are equal on purpose — "2 MB" should mean the same thing whichever end you look
+ * at. In practice the re-encode lands far under it (150–350 KB), so this only bites when
+ * `sharp` fell open and the client's own bytes are what would be stored.
+ */
+const MAX_STORED_BYTES = 2 * 1024 * 1024
 /** Below this it is a thumbnail, not a photo, and it will look broken in the layout. */
 const MIN_EDGE_PX = 200
 /** Above this someone is uploading a poster; MEDIUMBLOB would cope, the page would not. */
@@ -89,6 +104,12 @@ export default defineEventHandler(async (event) => {
    * failure mode on this host, and for the decompression-bomb guard a byte cap cannot give.
    */
   const encoded = await reencodeToWebp(filePart.data, probed)
+
+  // The cap that counts, applied to what will actually occupy the row. Reachable only when
+  // the re-encode failed open, since a successful one lands an order of magnitude below it.
+  if (encoded.data.length > MAX_STORED_BYTES) {
+    throw createError({ statusCode: 413, statusMessage: 'Image too large' })
+  }
 
   // Of the bytes we are about to store, not of the bytes that arrived: the checksum is the
   // cache key for the delivery URL, so it has to describe what is served.

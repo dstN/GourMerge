@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "0ea47538-defa-4f33-85e6-c1fd36752bc2",
+  "id": "4da16331-920e-43ee-9a01-c9c007f5ff68",
   "prevId": "3e4c30c8-2414-4bc6-966d-cd728e553657",
   "tables": {
     "contact_messages": {
@@ -49,7 +49,9 @@
       "compositePrimaryKeys": {
         "contact_messages_id": {
           "name": "contact_messages_id",
-          "columns": ["id"]
+          "columns": [
+            "id"
+          ]
         }
       },
       "uniqueConstraints": {},
@@ -119,7 +121,9 @@
       "indexes": {
         "idx_data_requests_user": {
           "name": "idx_data_requests_user",
-          "columns": ["user_id"],
+          "columns": [
+            "user_id"
+          ],
           "isUnique": false
         }
       },
@@ -128,8 +132,12 @@
           "name": "data_requests_user_id_users_id_fk",
           "tableFrom": "data_requests",
           "tableTo": "users",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -137,13 +145,17 @@
       "compositePrimaryKeys": {
         "data_requests_id": {
           "name": "data_requests_id",
-          "columns": ["id"]
+          "columns": [
+            "id"
+          ]
         }
       },
       "uniqueConstraints": {
         "data_requests_token_hash_unique": {
           "name": "data_requests_token_hash_unique",
-          "columns": ["token_hash"]
+          "columns": [
+            "token_hash"
+          ]
         }
       },
       "checkConstraint": {}
@@ -205,7 +217,9 @@
       "indexes": {
         "idx_email_change_tokens_user": {
           "name": "idx_email_change_tokens_user",
-          "columns": ["user_id"],
+          "columns": [
+            "user_id"
+          ],
           "isUnique": false
         }
       },
@@ -214,8 +228,12 @@
           "name": "email_change_tokens_user_id_users_id_fk",
           "tableFrom": "email_change_tokens",
           "tableTo": "users",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -223,13 +241,17 @@
       "compositePrimaryKeys": {
         "email_change_tokens_id": {
           "name": "email_change_tokens_id",
-          "columns": ["id"]
+          "columns": [
+            "id"
+          ]
         }
       },
       "uniqueConstraints": {
         "email_change_tokens_token_hash_unique": {
           "name": "email_change_tokens_token_hash_unique",
-          "columns": ["token_hash"]
+          "columns": [
+            "token_hash"
+          ]
         }
       },
       "checkConstraint": {}
@@ -284,7 +306,9 @@
       "indexes": {
         "idx_email_tokens_user": {
           "name": "idx_email_tokens_user",
-          "columns": ["user_id"],
+          "columns": [
+            "user_id"
+          ],
           "isUnique": false
         }
       },
@@ -293,8 +317,12 @@
           "name": "email_verification_tokens_user_id_users_id_fk",
           "tableFrom": "email_verification_tokens",
           "tableTo": "users",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -302,13 +330,17 @@
       "compositePrimaryKeys": {
         "email_verification_tokens_id": {
           "name": "email_verification_tokens_id",
-          "columns": ["id"]
+          "columns": [
+            "id"
+          ]
         }
       },
       "uniqueConstraints": {
         "email_verification_tokens_token_hash_unique": {
           "name": "email_verification_tokens_token_hash_unique",
-          "columns": ["token_hash"]
+          "columns": [
+            "token_hash"
+          ]
         }
       },
       "checkConstraint": {}
@@ -365,12 +397,16 @@
       "indexes": {
         "idx_gm_comments_request": {
           "name": "idx_gm_comments_request",
-          "columns": ["gm_request_id"],
+          "columns": [
+            "gm_request_id"
+          ],
           "isUnique": false
         },
         "idx_gm_comments_author": {
           "name": "idx_gm_comments_author",
-          "columns": ["author_id"],
+          "columns": [
+            "author_id"
+          ],
           "isUnique": false
         }
       },
@@ -379,8 +415,12 @@
           "name": "gm_request_comments_gm_request_id_gourmerge_requests_id_fk",
           "tableFrom": "gm_request_comments",
           "tableTo": "gourmerge_requests",
-          "columnsFrom": ["gm_request_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "gm_request_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -388,8 +428,12 @@
           "name": "gm_request_comments_author_id_users_id_fk",
           "tableFrom": "gm_request_comments",
           "tableTo": "users",
-          "columnsFrom": ["author_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "author_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -397,7 +441,9 @@
       "compositePrimaryKeys": {
         "gm_request_comments_id": {
           "name": "gm_request_comments_id",
-          "columns": ["id"]
+          "columns": [
+            "id"
+          ]
         }
       },
       "uniqueConstraints": {},
@@ -498,32 +544,44 @@
       "indexes": {
         "idx_gourmerge_requests_public_id": {
           "name": "idx_gourmerge_requests_public_id",
-          "columns": ["public_id"],
+          "columns": [
+            "public_id"
+          ],
           "isUnique": true
         },
         "idx_gourmerge_requests_recipe": {
           "name": "idx_gourmerge_requests_recipe",
-          "columns": ["recipe_id"],
+          "columns": [
+            "recipe_id"
+          ],
           "isUnique": false
         },
         "idx_gourmerge_requests_author": {
           "name": "idx_gourmerge_requests_author",
-          "columns": ["author_id"],
+          "columns": [
+            "author_id"
+          ],
           "isUnique": false
         },
         "idx_gourmerge_requests_status": {
           "name": "idx_gourmerge_requests_status",
-          "columns": ["status"],
+          "columns": [
+            "status"
+          ],
           "isUnique": false
         },
         "idx_gourmerge_requests_source": {
           "name": "idx_gourmerge_requests_source",
-          "columns": ["source_branch_id"],
+          "columns": [
+            "source_branch_id"
+          ],
           "isUnique": false
         },
         "idx_gourmerge_requests_target": {
           "name": "idx_gourmerge_requests_target",
-          "columns": ["target_branch_id"],
+          "columns": [
+            "target_branch_id"
+          ],
           "isUnique": false
         }
       },
@@ -532,8 +590,12 @@
           "name": "gourmerge_requests_recipe_id_recipes_id_fk",
           "tableFrom": "gourmerge_requests",
           "tableTo": "recipes",
-          "columnsFrom": ["recipe_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "recipe_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -541,8 +603,12 @@
           "name": "gourmerge_requests_author_id_users_id_fk",
           "tableFrom": "gourmerge_requests",
           "tableTo": "users",
-          "columnsFrom": ["author_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "author_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -550,8 +616,12 @@
           "name": "gourmerge_requests_source_branch_id_recipe_branches_id_fk",
           "tableFrom": "gourmerge_requests",
           "tableTo": "recipe_branches",
-          "columnsFrom": ["source_branch_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "source_branch_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -559,8 +629,12 @@
           "name": "gourmerge_requests_target_branch_id_recipe_branches_id_fk",
           "tableFrom": "gourmerge_requests",
           "tableTo": "recipe_branches",
-          "columnsFrom": ["target_branch_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "target_branch_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -568,8 +642,12 @@
           "name": "gourmerge_requests_source_recipe_id_recipes_id_fk",
           "tableFrom": "gourmerge_requests",
           "tableTo": "recipes",
-          "columnsFrom": ["source_recipe_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "source_recipe_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -577,7 +655,9 @@
       "compositePrimaryKeys": {
         "gourmerge_requests_id": {
           "name": "gourmerge_requests_id",
-          "columns": ["id"]
+          "columns": [
+            "id"
+          ]
         }
       },
       "uniqueConstraints": {},
@@ -735,7 +815,10 @@
       "indexes": {
         "idx_nutrition_source_ext": {
           "name": "idx_nutrition_source_ext",
-          "columns": ["source", "external_id"],
+          "columns": [
+            "source",
+            "external_id"
+          ],
           "isUnique": false
         }
       },
@@ -744,8 +827,12 @@
           "name": "ingredient_nutrition_ingredient_id_ingredients_id_fk",
           "tableFrom": "ingredient_nutrition",
           "tableTo": "ingredients",
-          "columnsFrom": ["ingredient_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "ingredient_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -753,7 +840,9 @@
       "compositePrimaryKeys": {
         "ingredient_nutrition_ingredient_id": {
           "name": "ingredient_nutrition_ingredient_id",
-          "columns": ["ingredient_id"]
+          "columns": [
+            "ingredient_id"
+          ]
         }
       },
       "uniqueConstraints": {},
@@ -811,12 +900,16 @@
       "indexes": {
         "idx_ingredients_name": {
           "name": "idx_ingredients_name",
-          "columns": ["name"],
+          "columns": [
+            "name"
+          ],
           "isUnique": false
         },
         "idx_ingredients_category": {
           "name": "idx_ingredients_category",
-          "columns": ["category"],
+          "columns": [
+            "category"
+          ],
           "isUnique": false
         }
       },
@@ -824,7 +917,9 @@
       "compositePrimaryKeys": {
         "ingredients_id": {
           "name": "ingredients_id",
-          "columns": ["id"]
+          "columns": [
+            "id"
+          ]
         }
       },
       "uniqueConstraints": {},
@@ -880,7 +975,9 @@
       "indexes": {
         "idx_reset_tokens_user": {
           "name": "idx_reset_tokens_user",
-          "columns": ["user_id"],
+          "columns": [
+            "user_id"
+          ],
           "isUnique": false
         }
       },
@@ -889,8 +986,12 @@
           "name": "password_reset_tokens_user_id_users_id_fk",
           "tableFrom": "password_reset_tokens",
           "tableTo": "users",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -898,13 +999,17 @@
       "compositePrimaryKeys": {
         "password_reset_tokens_id": {
           "name": "password_reset_tokens_id",
-          "columns": ["id"]
+          "columns": [
+            "id"
+          ]
         }
       },
       "uniqueConstraints": {
         "password_reset_tokens_token_hash_unique": {
           "name": "password_reset_tokens_token_hash_unique",
-          "columns": ["token_hash"]
+          "columns": [
+            "token_hash"
+          ]
         }
       },
       "checkConstraint": {}
@@ -945,7 +1050,10 @@
       "indexes": {
         "idx_rate_limit_bucket_window": {
           "name": "idx_rate_limit_bucket_window",
-          "columns": ["bucket_key", "window_start"],
+          "columns": [
+            "bucket_key",
+            "window_start"
+          ],
           "isUnique": true
         }
       },
@@ -953,7 +1061,9 @@
       "compositePrimaryKeys": {
         "rate_limit_hits_id": {
           "name": "rate_limit_hits_id",
-          "columns": ["id"]
+          "columns": [
+            "id"
+          ]
         }
       },
       "uniqueConstraints": {},
@@ -1010,12 +1120,17 @@
       "indexes": {
         "idx_branches_recipe_name": {
           "name": "idx_branches_recipe_name",
-          "columns": ["recipe_id", "name"],
+          "columns": [
+            "recipe_id",
+            "name"
+          ],
           "isUnique": true
         },
         "idx_branches_head_commit": {
           "name": "idx_branches_head_commit",
-          "columns": ["head_commit_id"],
+          "columns": [
+            "head_commit_id"
+          ],
           "isUnique": false
         }
       },
@@ -1024,8 +1139,12 @@
           "name": "recipe_branches_recipe_id_recipes_id_fk",
           "tableFrom": "recipe_branches",
           "tableTo": "recipes",
-          "columnsFrom": ["recipe_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "recipe_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1033,7 +1152,9 @@
       "compositePrimaryKeys": {
         "recipe_branches_id": {
           "name": "recipe_branches_id",
-          "columns": ["id"]
+          "columns": [
+            "id"
+          ]
         }
       },
       "uniqueConstraints": {},
@@ -1096,12 +1217,16 @@
       "indexes": {
         "idx_commit_ingredients_commit": {
           "name": "idx_commit_ingredients_commit",
-          "columns": ["commit_id"],
+          "columns": [
+            "commit_id"
+          ],
           "isUnique": false
         },
         "idx_commit_ingredients_ingredient": {
           "name": "idx_commit_ingredients_ingredient",
-          "columns": ["ingredient_id"],
+          "columns": [
+            "ingredient_id"
+          ],
           "isUnique": false
         }
       },
@@ -1110,8 +1235,12 @@
           "name": "recipe_commit_ingredients_commit_id_recipe_commits_id_fk",
           "tableFrom": "recipe_commit_ingredients",
           "tableTo": "recipe_commits",
-          "columnsFrom": ["commit_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "commit_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1119,8 +1248,12 @@
           "name": "recipe_commit_ingredients_ingredient_id_ingredients_id_fk",
           "tableFrom": "recipe_commit_ingredients",
           "tableTo": "ingredients",
-          "columnsFrom": ["ingredient_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "ingredient_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1128,7 +1261,9 @@
       "compositePrimaryKeys": {
         "recipe_commit_ingredients_id": {
           "name": "recipe_commit_ingredients_id",
-          "columns": ["id"]
+          "columns": [
+            "id"
+          ]
         }
       },
       "uniqueConstraints": {},
@@ -1177,12 +1312,17 @@
       "indexes": {
         "idx_commit_steps_commit": {
           "name": "idx_commit_steps_commit",
-          "columns": ["commit_id"],
+          "columns": [
+            "commit_id"
+          ],
           "isUnique": false
         },
         "idx_commit_steps_order": {
           "name": "idx_commit_steps_order",
-          "columns": ["commit_id", "sort_order"],
+          "columns": [
+            "commit_id",
+            "sort_order"
+          ],
           "isUnique": false
         }
       },
@@ -1191,8 +1331,12 @@
           "name": "recipe_commit_steps_commit_id_recipe_commits_id_fk",
           "tableFrom": "recipe_commit_steps",
           "tableTo": "recipe_commits",
-          "columnsFrom": ["commit_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "commit_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1200,7 +1344,9 @@
       "compositePrimaryKeys": {
         "recipe_commit_steps_id": {
           "name": "recipe_commit_steps_id",
-          "columns": ["id"]
+          "columns": [
+            "id"
+          ]
         }
       },
       "uniqueConstraints": {},
@@ -1271,22 +1417,30 @@
       "indexes": {
         "idx_commits_branch": {
           "name": "idx_commits_branch",
-          "columns": ["branch_id"],
+          "columns": [
+            "branch_id"
+          ],
           "isUnique": false
         },
         "idx_commits_parent": {
           "name": "idx_commits_parent",
-          "columns": ["parent_commit_id"],
+          "columns": [
+            "parent_commit_id"
+          ],
           "isUnique": false
         },
         "idx_commits_author": {
           "name": "idx_commits_author",
-          "columns": ["author_id"],
+          "columns": [
+            "author_id"
+          ],
           "isUnique": false
         },
         "idx_commits_created": {
           "name": "idx_commits_created",
-          "columns": ["created_at"],
+          "columns": [
+            "created_at"
+          ],
           "isUnique": false
         }
       },
@@ -1295,8 +1449,12 @@
           "name": "recipe_commits_branch_id_recipe_branches_id_fk",
           "tableFrom": "recipe_commits",
           "tableTo": "recipe_branches",
-          "columnsFrom": ["branch_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "branch_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1304,8 +1462,12 @@
           "name": "recipe_commits_author_id_users_id_fk",
           "tableFrom": "recipe_commits",
           "tableTo": "users",
-          "columnsFrom": ["author_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "author_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1313,7 +1475,9 @@
       "compositePrimaryKeys": {
         "recipe_commits_id": {
           "name": "recipe_commits_id",
-          "columns": ["id"]
+          "columns": [
+            "id"
+          ]
         }
       },
       "uniqueConstraints": {},
@@ -1371,31 +1535,44 @@
       "indexes": {
         "idx_discussion_comments_thread": {
           "name": "idx_discussion_comments_thread",
-          "columns": ["discussion_id", "created_at"],
+          "columns": [
+            "discussion_id",
+            "created_at"
+          ],
           "isUnique": false
         },
         "idx_discussion_comments_author": {
           "name": "idx_discussion_comments_author",
-          "columns": ["author_id"],
+          "columns": [
+            "author_id"
+          ],
           "isUnique": false
         }
       },
       "foreignKeys": {
-        "recipe_discussion_comments_discussion_id_recipe_discussions_id_fk": {
-          "name": "recipe_discussion_comments_discussion_id_recipe_discussions_id_fk",
+        "fk_discussion_comments_thread": {
+          "name": "fk_discussion_comments_thread",
           "tableFrom": "recipe_discussion_comments",
           "tableTo": "recipe_discussions",
-          "columnsFrom": ["discussion_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "discussion_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "recipe_discussion_comments_author_id_users_id_fk": {
-          "name": "recipe_discussion_comments_author_id_users_id_fk",
+        "fk_discussion_comments_author": {
+          "name": "fk_discussion_comments_author",
           "tableFrom": "recipe_discussion_comments",
           "tableTo": "users",
-          "columnsFrom": ["author_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "author_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1403,7 +1580,9 @@
       "compositePrimaryKeys": {
         "recipe_discussion_comments_id": {
           "name": "recipe_discussion_comments_id",
-          "columns": ["id"]
+          "columns": [
+            "id"
+          ]
         }
       },
       "uniqueConstraints": {},
@@ -1491,17 +1670,24 @@
       "indexes": {
         "idx_discussions_recipe_created": {
           "name": "idx_discussions_recipe_created",
-          "columns": ["recipe_id", "created_at"],
+          "columns": [
+            "recipe_id",
+            "created_at"
+          ],
           "isUnique": false
         },
         "idx_discussions_commit": {
           "name": "idx_discussions_commit",
-          "columns": ["commit_id"],
+          "columns": [
+            "commit_id"
+          ],
           "isUnique": false
         },
         "idx_discussions_author": {
           "name": "idx_discussions_author",
-          "columns": ["author_id"],
+          "columns": [
+            "author_id"
+          ],
           "isUnique": false
         }
       },
@@ -1510,8 +1696,12 @@
           "name": "recipe_discussions_recipe_id_recipes_id_fk",
           "tableFrom": "recipe_discussions",
           "tableTo": "recipes",
-          "columnsFrom": ["recipe_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "recipe_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1519,8 +1709,12 @@
           "name": "recipe_discussions_commit_id_recipe_commits_id_fk",
           "tableFrom": "recipe_discussions",
           "tableTo": "recipe_commits",
-          "columnsFrom": ["commit_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "commit_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1528,8 +1722,12 @@
           "name": "recipe_discussions_author_id_users_id_fk",
           "tableFrom": "recipe_discussions",
           "tableTo": "users",
-          "columnsFrom": ["author_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "author_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1537,7 +1735,9 @@
       "compositePrimaryKeys": {
         "recipe_discussions_id": {
           "name": "recipe_discussions_id",
-          "columns": ["id"]
+          "columns": [
+            "id"
+          ]
         }
       },
       "uniqueConstraints": {},
@@ -1630,7 +1830,9 @@
       "indexes": {
         "idx_recipe_images_recipe": {
           "name": "idx_recipe_images_recipe",
-          "columns": ["recipe_id"],
+          "columns": [
+            "recipe_id"
+          ],
           "isUnique": true
         }
       },
@@ -1639,8 +1841,12 @@
           "name": "recipe_images_recipe_id_recipes_id_fk",
           "tableFrom": "recipe_images",
           "tableTo": "recipes",
-          "columnsFrom": ["recipe_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "recipe_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1648,7 +1854,9 @@
       "compositePrimaryKeys": {
         "recipe_images_id": {
           "name": "recipe_images_id",
-          "columns": ["id"]
+          "columns": [
+            "id"
+          ]
         }
       },
       "uniqueConstraints": {},
@@ -1690,7 +1898,10 @@
       "indexes": {
         "idx_recipe_stars_unique": {
           "name": "idx_recipe_stars_unique",
-          "columns": ["recipe_id", "user_id"],
+          "columns": [
+            "recipe_id",
+            "user_id"
+          ],
           "isUnique": true
         }
       },
@@ -1699,8 +1910,12 @@
           "name": "recipe_stars_recipe_id_recipes_id_fk",
           "tableFrom": "recipe_stars",
           "tableTo": "recipes",
-          "columnsFrom": ["recipe_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "recipe_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1708,8 +1923,12 @@
           "name": "recipe_stars_user_id_users_id_fk",
           "tableFrom": "recipe_stars",
           "tableTo": "users",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1717,7 +1936,9 @@
       "compositePrimaryKeys": {
         "recipe_stars_id": {
           "name": "recipe_stars_id",
-          "columns": ["id"]
+          "columns": [
+            "id"
+          ]
         }
       },
       "uniqueConstraints": {},
@@ -1751,7 +1972,10 @@
       "indexes": {
         "idx_recipe_tags_unique": {
           "name": "idx_recipe_tags_unique",
-          "columns": ["recipe_id", "tag_id"],
+          "columns": [
+            "recipe_id",
+            "tag_id"
+          ],
           "isUnique": true
         }
       },
@@ -1760,8 +1984,12 @@
           "name": "recipe_tags_recipe_id_recipes_id_fk",
           "tableFrom": "recipe_tags",
           "tableTo": "recipes",
-          "columnsFrom": ["recipe_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "recipe_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1769,8 +1997,12 @@
           "name": "recipe_tags_tag_id_tags_id_fk",
           "tableFrom": "recipe_tags",
           "tableTo": "tags",
-          "columnsFrom": ["tag_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "tag_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1778,7 +2010,9 @@
       "compositePrimaryKeys": {
         "recipe_tags_id": {
           "name": "recipe_tags_id",
-          "columns": ["id"]
+          "columns": [
+            "id"
+          ]
         }
       },
       "uniqueConstraints": {},
@@ -1934,37 +2168,54 @@
       "indexes": {
         "idx_recipes_public_id": {
           "name": "idx_recipes_public_id",
-          "columns": ["public_id"],
+          "columns": [
+            "public_id"
+          ],
           "isUnique": true
         },
         "idx_recipes_owner": {
           "name": "idx_recipes_owner",
-          "columns": ["owner_id"],
+          "columns": [
+            "owner_id"
+          ],
           "isUnique": false
         },
         "idx_recipes_forked_from": {
           "name": "idx_recipes_forked_from",
-          "columns": ["forked_from_recipe_id"],
+          "columns": [
+            "forked_from_recipe_id"
+          ],
           "isUnique": false
         },
         "idx_recipes_visibility": {
           "name": "idx_recipes_visibility",
-          "columns": ["visibility"],
+          "columns": [
+            "visibility"
+          ],
           "isUnique": false
         },
         "idx_recipes_visibility_stars": {
           "name": "idx_recipes_visibility_stars",
-          "columns": ["visibility", "star_count"],
+          "columns": [
+            "visibility",
+            "star_count"
+          ],
           "isUnique": false
         },
         "idx_recipes_visibility_created": {
           "name": "idx_recipes_visibility_created",
-          "columns": ["visibility", "created_at"],
+          "columns": [
+            "visibility",
+            "created_at"
+          ],
           "isUnique": false
         },
         "idx_recipes_owner_slug": {
           "name": "idx_recipes_owner_slug",
-          "columns": ["owner_id", "slug"],
+          "columns": [
+            "owner_id",
+            "slug"
+          ],
           "isUnique": true
         }
       },
@@ -1973,8 +2224,12 @@
           "name": "recipes_owner_id_users_id_fk",
           "tableFrom": "recipes",
           "tableTo": "users",
-          "columnsFrom": ["owner_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1982,8 +2237,12 @@
           "name": "recipes_forked_from_recipe_id_recipes_id_fk",
           "tableFrom": "recipes",
           "tableTo": "recipes",
-          "columnsFrom": ["forked_from_recipe_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "forked_from_recipe_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1991,7 +2250,9 @@
       "compositePrimaryKeys": {
         "recipes_id": {
           "name": "recipes_id",
-          "columns": ["id"]
+          "columns": [
+            "id"
+          ]
         }
       },
       "uniqueConstraints": {},
@@ -2028,13 +2289,17 @@
       "compositePrimaryKeys": {
         "tags_id": {
           "name": "tags_id",
-          "columns": ["id"]
+          "columns": [
+            "id"
+          ]
         }
       },
       "uniqueConstraints": {
         "tags_name_unique": {
           "name": "tags_name_unique",
-          "columns": ["name"]
+          "columns": [
+            "name"
+          ]
         }
       },
       "checkConstraint": {}
@@ -2119,7 +2384,9 @@
       "indexes": {
         "user_passkeys_user_idx": {
           "name": "user_passkeys_user_idx",
-          "columns": ["user_id"],
+          "columns": [
+            "user_id"
+          ],
           "isUnique": false
         }
       },
@@ -2128,8 +2395,12 @@
           "name": "user_passkeys_user_id_users_id_fk",
           "tableFrom": "user_passkeys",
           "tableTo": "users",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2137,13 +2408,17 @@
       "compositePrimaryKeys": {
         "user_passkeys_id": {
           "name": "user_passkeys_id",
-          "columns": ["id"]
+          "columns": [
+            "id"
+          ]
         }
       },
       "uniqueConstraints": {
         "user_passkeys_credential_id_unique": {
           "name": "user_passkeys_credential_id_unique",
-          "columns": ["credential_id"]
+          "columns": [
+            "credential_id"
+          ]
         }
       },
       "checkConstraint": {}
@@ -2191,7 +2466,9 @@
       "indexes": {
         "user_recovery_codes_user_idx": {
           "name": "user_recovery_codes_user_idx",
-          "columns": ["user_id"],
+          "columns": [
+            "user_id"
+          ],
           "isUnique": false
         }
       },
@@ -2200,8 +2477,12 @@
           "name": "user_recovery_codes_user_id_users_id_fk",
           "tableFrom": "user_recovery_codes",
           "tableTo": "users",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2209,7 +2490,9 @@
       "compositePrimaryKeys": {
         "user_recovery_codes_id": {
           "name": "user_recovery_codes_id",
-          "columns": ["id"]
+          "columns": [
+            "id"
+          ]
         }
       },
       "uniqueConstraints": {},
@@ -2268,8 +2551,12 @@
           "name": "user_totp_user_id_users_id_fk",
           "tableFrom": "user_totp",
           "tableTo": "users",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2277,13 +2564,17 @@
       "compositePrimaryKeys": {
         "user_totp_id": {
           "name": "user_totp_id",
-          "columns": ["id"]
+          "columns": [
+            "id"
+          ]
         }
       },
       "uniqueConstraints": {
         "user_totp_user_id_unique": {
           "name": "user_totp_user_id_unique",
-          "columns": ["user_id"]
+          "columns": [
+            "user_id"
+          ]
         }
       },
       "checkConstraint": {}
@@ -2459,17 +2750,23 @@
       "compositePrimaryKeys": {
         "users_id": {
           "name": "users_id",
-          "columns": ["id"]
+          "columns": [
+            "id"
+          ]
         }
       },
       "uniqueConstraints": {
         "users_username_unique": {
           "name": "users_username_unique",
-          "columns": ["username"]
+          "columns": [
+            "username"
+          ]
         },
         "users_email_unique": {
           "name": "users_email_unique",
-          "columns": ["email"]
+          "columns": [
+            "email"
+          ]
         }
       },
       "checkConstraint": {}
@@ -2517,7 +2814,9 @@
       "indexes": {
         "webauthn_challenges_expires_idx": {
           "name": "webauthn_challenges_expires_idx",
-          "columns": ["expires_at"],
+          "columns": [
+            "expires_at"
+          ],
           "isUnique": false
         }
       },
@@ -2525,13 +2824,17 @@
       "compositePrimaryKeys": {
         "webauthn_challenges_id": {
           "name": "webauthn_challenges_id",
-          "columns": ["id"]
+          "columns": [
+            "id"
+          ]
         }
       },
       "uniqueConstraints": {
         "webauthn_challenges_attempt_id_unique": {
           "name": "webauthn_challenges_attempt_id_unique",
-          "columns": ["attempt_id"]
+          "columns": [
+            "attempt_id"
+          ]
         }
       },
       "checkConstraint": {}

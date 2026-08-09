@@ -38,8 +38,8 @@ CREATE TABLE `recipe_images` (
 	CONSTRAINT `idx_recipe_images_recipe` UNIQUE(`recipe_id`)
 );
 --> statement-breakpoint
-ALTER TABLE `recipe_discussion_comments` ADD CONSTRAINT `recipe_discussion_comments_discussion_id_recipe_discussions_id_fk` FOREIGN KEY (`discussion_id`) REFERENCES `recipe_discussions`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE `recipe_discussion_comments` ADD CONSTRAINT `recipe_discussion_comments_author_id_users_id_fk` FOREIGN KEY (`author_id`) REFERENCES `users`(`id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE `recipe_discussion_comments` ADD CONSTRAINT `fk_discussion_comments_thread` FOREIGN KEY (`discussion_id`) REFERENCES `recipe_discussions`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE `recipe_discussion_comments` ADD CONSTRAINT `fk_discussion_comments_author` FOREIGN KEY (`author_id`) REFERENCES `users`(`id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE `recipe_discussions` ADD CONSTRAINT `recipe_discussions_recipe_id_recipes_id_fk` FOREIGN KEY (`recipe_id`) REFERENCES `recipes`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE `recipe_discussions` ADD CONSTRAINT `recipe_discussions_commit_id_recipe_commits_id_fk` FOREIGN KEY (`commit_id`) REFERENCES `recipe_commits`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE `recipe_discussions` ADD CONSTRAINT `recipe_discussions_author_id_users_id_fk` FOREIGN KEY (`author_id`) REFERENCES `users`(`id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint

@@ -20,6 +20,7 @@ import {
   index,
   uniqueIndex,
   customType,
+  foreignKey,
 } from 'drizzle-orm/mysql-core'
 import type { MySqlColumn } from 'drizzle-orm/mysql-core'
 import { relations, sql } from 'drizzle-orm'
@@ -764,13 +765,21 @@ export const recipeDiscussionComments = mysqlTable(
   'recipe_discussion_comments',
   {
     id: int('id').primaryKey().autoincrement(),
-    discussionId: int('discussion_id')
-      .notNull()
-      .references(() => recipeDiscussions.id, { onDelete: 'cascade' }),
+    /**
+     * The FK is declared in the table config below rather than inline, and that is not a
+     * style choice — it is the only way to name it.
+     *
+     * Drizzle derives a constraint name as `{table}_{column}_{refTable}_{refColumn}_fk`,
+     * which here comes to `recipe_discussion_comments_discussion_id_recipe_discussions_id_fk`
+     * — **65 characters against MySQL's 64-character limit**. The `CREATE TABLE`s succeed and
+     * the `ALTER TABLE … ADD CONSTRAINT` fails with ER_TOO_LONG_IDENT, so the tables exist,
+     * the foreign key does not, and `drizzle-kit migrate` exits non-zero having printed only
+     * a spinner. That is what broke the E2E workflow, and it is why
+     * `tests/unit/migrations.test.ts` now measures every identifier in every migration.
+     */
+    discussionId: int('discussion_id').notNull(),
     /** Same RESTRICT-plus-ghost reasoning as `recipe_discussions.author_id` above. */
-    authorId: int('author_id')
-      .notNull()
-      .references(() => users.id),
+    authorId: int('author_id').notNull(),
     body: text('body').notNull(),
     createdAt: datetime('created_at')
       .notNull()
@@ -781,6 +790,16 @@ export const recipeDiscussionComments = mysqlTable(
       .onUpdateNow(),
   },
   (table) => [
+    foreignKey({
+      columns: [table.discussionId],
+      foreignColumns: [recipeDiscussions.id],
+      name: 'fk_discussion_comments_thread',
+    }).onDelete('cascade'),
+    foreignKey({
+      columns: [table.authorId],
+      foreignColumns: [users.id],
+      name: 'fk_discussion_comments_author',
+    }),
     index('idx_discussion_comments_thread').on(table.discussionId, table.createdAt),
     index('idx_discussion_comments_author').on(table.authorId),
   ]

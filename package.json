@@ -33,7 +33,7 @@
     "db:cleanup": "node scripts/cleanup-retention.mjs",
     "db:backup": "node scripts/backup-db.mjs",
     "db:inactive": "node scripts/inactive-accounts.mjs",
-    "db:seed:tour": "node scripts/seed-tour-recipe.mjs",
+    "db:seed:tour": "node --env-file-if-exists=.env scripts/seed-tour-recipe.mjs",
     "db:setup": "npm run db:migrate && npm run seed:swiss && npm run db:seed && npm run db:seed:tags && npm run db:seed:tour",
     "seed:swiss": "node scripts/import-swiss-foods.mjs",
     "seed:swiss:regen": "node scripts/import-swiss-foods.mjs --from-xlsx --emit-seed",
@@ -99,6 +99,10 @@
     },
     "fontless": {
       "esbuild": "^0.28.1"
+    },
+    "nuxt-auth-utils": {
+      "@simplewebauthn/browser": "$@simplewebauthn/browser",
+      "@simplewebauthn/server": "$@simplewebauthn/server"
     }
   }
 }

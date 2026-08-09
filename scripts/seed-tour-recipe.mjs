@@ -16,7 +16,11 @@
  *   node scripts/seed-tour-recipe.mjs
  *   npm run db:seed:tour
  */
-import 'dotenv/config'
+// No `dotenv`. `.env` is loaded by `--env-file-if-exists` in the npm script (a Node
+// built-in since 20.12), which is what every sibling script here effectively relies on
+// through the caller's environment. The import was the repo's only use of the package and
+// it was never in `package.json` — so `npm run knip` failed on it, and CI with it, while
+// the module resolved anyway because something else pulled it in transitively.
 import mysql from 'mysql2/promise'
 import crypto from 'node:crypto'
 
