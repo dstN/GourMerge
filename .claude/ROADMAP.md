@@ -36,8 +36,10 @@ expire when a phase completes.
    from `/api/recipes/:id/image`. Everything else stays text: TipTap still runs
    without image nodes, so **step content cannot contain an image**, and there is
    no general upload surface. Ingredients are identified by real names from the
-   `ingredients` master table; icons are decorative. Avatars are either a URL the
-   user supplies or a generated identicon-QR badge — never an upload.
+   `ingredients` master table; icons are decorative. Avatars are today either a URL
+   the user supplies or a generated identicon-QR badge — **avatar upload is agreed
+   and specified but not yet built**, see "Accepted — specified, not yet built";
+   this clause changes again when it lands.
 3. **The full git workflow is not optional.** Fork, branch comparison, GourMerge
    Requests and three-way merge are core product, not add-ons.
 4. **Observability: Pino file logging + Sentry.io + UptimeRobot** on
@@ -263,9 +265,110 @@ allow-listing.
 
 ---
 
+## Accepted — specified, not yet built (2026-08-09)
+
+Requested and agreed; listed here with the constraints that shape them so the work does
+not have to rediscover them. Nothing below is implemented yet.
+
+### Uploads: 2 MB recipe photos, 512 kB avatars, both re-encoded server-side
+
+|             | Recipe photo    | Avatar                  |
+| ----------- | --------------- | ----------------------- |
+| Accepted in | JPEG, PNG, WebP | JPEG, PNG, WebP         |
+| Cap         | 2 MB            | 512 kB                  |
+| Stored as   | WebP            | WebP                    |
+| Aspect      | free            | **1:1**, cropped if not |
+
+**This reverses a decision made hours earlier, and the reversal has a cost worth naming.**
+The shipped pipeline deliberately has the server _never decode an image_: the browser
+re-encodes and `imageProbe.ts` reads the header only. That removed the entire class of
+image-decoder CVEs from a Passenger worker and avoided a native binary that has to match a
+host we cannot rebuild on. Compressing server-side gives that up.
+
+It is still the right call for storage, so the way to do it safely:
+
+- **`sharp`, but failing open.** It is already a devDependency (`generate-icons.mjs`), CI
+  builds on `ubuntu-latest` x64 and Netcup is linux x64, so the prebuilt binary Nitro
+  bundles should load. "Should" is doing real work in that sentence — same phrasing as the
+  proxy-hop item above, and for the same reason. So: if `sharp` fails to load or throws,
+  **store the client-encoded WebP unchanged** rather than 500. The upload keeps working; only
+  the extra compression is lost.
+- **Report it.** `/api/health` should say whether server-side re-encoding is actually
+  running, or nobody will notice it silently degraded to client-only on the one host that
+  matters.
+- **Decode bounds, not just byte bounds.** A 2 MB file can be a 30 000 × 30 000 PNG. `sharp`
+  must run with `limitInputPixels` set, and the existing `MAX_EDGE_PX` check has to happen
+  _before_ the decode, from the probed header — which it already does.
+
+### Avatar upload with a 1:1 cropper
+
+Currently the avatar is a URL field. It needs a real upload with a square cropper
+(square and circular preview, the usual social pattern), 512 kB, WebP.
+
+- **Option to compose the QR into the centre of the uploaded picture.** The generator
+  already exists (`identiconAvatar.ts`) and already knows the contrast and quiet-zone rules;
+  what is new is that the surrounding pixels are now a photo, which is exactly the case the
+  current design refuses. It only works with an opaque plate behind the code, the way the
+  generated badge does — a QR straight onto a photo does not binarise. Say so in the UI
+  rather than shipping something that scans for the person who tested it.
+- The cropper is the one part with no existing building block. Nuxt UI has no crop
+  component; this is a canvas plus pointer maths, or a dependency.
+
+### Reporting, for recipes / users / discussion comments / images
+
+One `reports` table with a target kind and id, a reason, an optional note, and a status
+(`open` / `actioned` / `dismissed`). Rate-limited per user, unique per (reporter, target) so
+one person cannot inflate a count.
+
+Two things this needs that do not exist yet and are the actual work:
+
+- **Somewhere for reports to go.** A queue nobody reads is theatre. There is no admin role
+  and no moderation surface in the app today — `users` has no `is_admin`.
+- **A defined consequence.** Auto-hide at a threshold invites brigading; hide-nothing makes
+  reporting pointless. Recommend: reports are visible to the owner of the reported artefact
+  _and_ to an admin, nothing is auto-hidden at v1, and the shipped moderation tools
+  (thread/comment delete, image delete) are the response.
+
+### Ingredients: report, and edit the ones we did not ship
+
+Only ingredients created by users — `ingredient_nutrition.source = 'curated'` / not
+`swiss-blv-v7` — are editable or reportable. The Swiss BLV rows are reference data and must
+stay immutable, or the nutrition figures stop meaning anything.
+
+This needs a `created_by` column on `ingredients`, which does not exist today, and it pairs
+with the rate-limit gap already listed above: `POST /api/ingredients` currently lets any
+signed-in user write to the global catalogue unthrottled.
+
 ## Post-v1 backlog
 
 Not scoped, not scheduled. Roughly in the order they would earn their keep.
+
+0. **Community verification for user-added ingredients and nutrition** — the
+   Community-Notes-shaped idea. A user-added ingredient is immediately usable **in that
+   user's own recipes**, but does not enter the public catalogue (autocomplete for
+   everyone else, explore, nutrition aggregates) until _x_ other users have confirmed it.
+   Nutrition values go through the same gate, independently: an ingredient can be confirmed
+   as real while its kcal figure is still pending.
+
+   Why it is worth doing: the catalogue is shared state that any account can write to today,
+   and the two failure modes are opposite — pollution ("Mehl", "mehl ", "Weizenmehl!!") and
+   plausible-but-wrong nutrition, which is worse because it is invisible and propagates into
+   every recipe that uses it.
+
+   What has to be settled before writing code:
+   - **Who may confirm.** Anyone signed in is brigadeable. Weighting by account age or by
+     recipes published is the usual answer, and needs a decision.
+   - **What _x_ is, and what happens below it.** A number that is too high means nothing is
+     ever promoted, which is the same as not having a catalogue.
+   - **What a confirmation means for nutrition.** "This ingredient exists" is a fact anyone
+     can check; "this is 387 kcal per 100 g" is not. Consider requiring a source, the way
+     `ingredient_nutrition.source` already distinguishes `swiss-blv-v7` from `curated`.
+   - **Denormalised counters, in the same transaction as the vote** — the `starCount` /
+     `forkCount` rule in ARCHITECTURE §6 applies here too.
+
+   The cheap first slice, if the full thing is too much: keep user ingredients private to
+   their author's recipes and let an admin promote them. That is the same data model with
+   the voting deferred, and it stops pollution today.
 
 1. **Notifications** — someone forked your recipe, opened a GourMerge Request,
    commented. The highest-value gap: the collaboration loop currently has no way
