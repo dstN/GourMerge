@@ -331,8 +331,23 @@ useHead(() => {
       <!-- Header -->
       <div class="mb-6">
         <!-- Top row: owner path + action cluster. Every action here is the same
-             rank, so every button is `sm` (DESIGNBOOK §2). -->
-        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-3">
+             rank, so every button is `sm` (DESIGNBOOK §2).
+
+             Side by side only from `lg`, and the cluster is NOT `shrink-0`. Both of those
+             are corrections to a measured fault, not preference. The cluster held six `sm`
+             buttons at a fixed 578px and refused to shrink, while the identity line beside
+             it carried `min-w-0` — so the identity was always the side that gave way. At a
+             640px viewport it was squeezed to **zero width** and vanished entirely; at 768px
+             the slug was fully truncated; and even at the full 832px content column it got
+             238px, showing 93px of a 435px recipe name. Six buttons were legible and the
+             name of the page was not.
+
+             Stacking until `lg` gives the identity the whole line at the widths where it
+             was losing, and dropping `shrink-0` lets the cluster wrap into a second row
+             instead of monopolising the first. Same failure the header had at `md` — see
+             `LayoutMainNav` — and the same reason it went unnoticed: nothing overflowed
+             visibly, the wrong element simply lost. -->
+        <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between mb-3">
           <div class="flex items-center gap-x-2 text-sm text-muted min-w-0">
             <UIcon name="i-lucide-user-circle" class="size-4 shrink-0" aria-hidden="true" />
             <NuxtLink :to="`/${recipe.owner.username}`" class="shrink-0 transition-colors hover:text-default">
@@ -342,7 +357,7 @@ useHead(() => {
             <span class="font-semibold text-default truncate">{{ recipe.slug }}</span>
           </div>
 
-          <div class="flex items-center gap-2 shrink-0 flex-wrap" data-tour="tour-pointers">
+          <div class="flex items-center gap-2 flex-wrap lg:justify-end" data-tour="tour-pointers">
             <UBadge
               v-if="recipe.visibility === 'private'"
               color="neutral"

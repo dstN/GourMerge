@@ -164,6 +164,75 @@ test.describe('logo / content alignment', () => {
     }
   })
 
+  /**
+   * The recipe header row must not spend its width on buttons and leave none for the name.
+   *
+   * Same failure as the app header, one level down and harder to see. The action cluster
+   * held six `sm` buttons at a fixed 578px with `shrink-0`, while the identity line beside
+   * it carried `min-w-0` — so the identity was structurally the side that gave way. At a
+   * 640px viewport it was squeezed to **zero width** and disappeared; at 768px the slug was
+   * fully truncated; at the full 832px content column it showed 93px of a 435px name. Six
+   * buttons were legible and the name of the page was not, and nothing overflowed visibly,
+   * so no existing test or axe rule had anything to report.
+   *
+   * The assertions are therefore about *who loses*, not about pixels: the identity is never
+   * zero, the row never overflows, and once there is room to stack it gets a real share.
+   */
+  test('the recipe header gives the name room, not just the buttons', async ({ page, request }) => {
+    const user = uniqueUser('rechdr')
+    await registerUser(request, user)
+    const recipe = await createRecipe(request, {
+      // Deliberately long: a short slug hides this bug completely.
+      title: 'Geschmorte Ochsenbacken mit Selleriepüree und Rotweinjus',
+      visibility: 'public',
+    })
+    const flour = await createIngredient(request, 'Mehl, Weizen, hell')
+    await commitSnapshot(request, recipe.id, recipe.branchId, {
+      message: 'base',
+      ingredients: [{ ingredientId: flour, quantity: '100', unit: 'g', notes: null, sortOrder: 0 }],
+      steps: [{ sortOrder: 1, content: 'Schmoren.', contentTranslations: {} }],
+    })
+
+    await page.goto('/auth/login', { waitUntil: 'load' })
+    await page.evaluate(async (u) => {
+      await fetch('/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: u.email, password: u.password }),
+      })
+    }, user)
+
+    const url = `/${recipe.owner.username}/${recipe.slug}`
+    for (const width of [390, 640, 768, 900, 1024, 1280]) {
+      await page.setViewportSize({ width, height: 900 })
+      await page.goto(url, { waitUntil: 'load' })
+      await page.waitForTimeout(500)
+
+      const m = await page.evaluate(() => {
+        const cluster = document.querySelector('[data-tour="tour-pointers"]') as HTMLElement
+        const row = cluster.parentElement as HTMLElement
+        const ident = row.firstElementChild as HTMLElement
+        const shell = document.querySelector('.page-shell') as HTMLElement
+        const cs = getComputedStyle(shell)
+        const inner = shell.getBoundingClientRect().width - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight)
+        return {
+          inner: Math.round(inner),
+          rowScroll: Math.round(row.scrollWidth),
+          identW: Math.round(ident.getBoundingClientRect().width),
+        }
+      })
+      // eslint-disable-next-line no-console -- the measured numbers are the point of the run
+      console.log(`  ${String(width).padStart(4)}px  inner=${m.inner} row=${m.rowScroll} identity=${m.identW}`)
+
+      expect(m.rowScroll, `the header row overflows its column at ${width}px`).toBeLessThanOrEqual(m.inner + 1)
+      expect(m.identW, `the recipe name was squeezed to nothing at ${width}px`).toBeGreaterThan(0)
+      expect(
+        m.identW / m.inner,
+        `at ${width}px the buttons left the recipe name only ${Math.round((m.identW / m.inner) * 100)}% of the row`
+      ).toBeGreaterThan(0.4)
+    }
+  })
+
   test('signed out: /explore is the reference, and still matches', async ({ page }) => {
     await page.setViewportSize({ width: 1600, height: 900 })
     await page.goto('/explore', { waitUntil: 'load' })

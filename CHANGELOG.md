@@ -5,6 +5,209 @@ All notable changes to GourMerge are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versioning follows [Semantic Versioning](https://semver.org/).
 
+## [1.6.0] — 2026-08-09
+
+Two features the collaboration loop was missing, one that was ruled out by an old decision
+and is not any more, a navigation pass, and a security sweep that found the worst bug in the
+project's history sitting in an endpoint nobody had reason to look at.
+
+### Security — three endpoints answered for private recipes, one of them completely
+
+Reading every `GET` under `/api/recipes/:id/` in one sitting turned up three that never
+checked visibility while the other twelve did. The third is the one that matters:
+
+`/api/recipes/:id/diff` had **no** visibility check **and** never scoped its `?from=` /
+`?to=` commit ids to the recipe in the path. The path parameter was decoration. So
+`/api/recipes/<any public recipe>/diff?from=1&to=2` returned the ingredients and the steps of
+commits 1 and 2 — from whatever recipe those commits happened to belong to, private or not,
+with no session at all. Recipe and commit ids are sequential integers. Walking them read the
+whole table.
+
+The other two were quieter but the same shape: `/commits` handed out a private recipe's
+entire history (commit messages, author names, timestamps) to anyone, and `/branches` its
+branch names. Commit messages in particular are prose somebody wrote assuming nobody outside
+could read them.
+
+None of this needed a clever attack. It needed someone to change one number in a URL.
+
+The fix worth describing is not the three `if`s. It is that **each of the fifteen endpoints
+carried its own hand-written copy of the rule**, twelve were complete and three were not, and
+nothing in the codebase could tell you which — no shared helper, no test that walked the
+list, nothing. They now go through one `requireVisibleRecipe()` /
+`requireCommitInRecipe()`. The commit-scoping half is the easiest to forget because
+`recipe_commits` has no `recipe_id` of its own; it belongs to a branch, which belongs to a
+recipe, so scoping it takes a join and omitting it looks like nothing is missing.
+
+404, never 403, for a private recipe — a 403 confirms the id exists, and on sequential
+integers that is the disclosure by itself. `tests/e2e/api/private-recipe-leaks.spec.ts` walks
+all three plus the cross-recipe commit case.
+
+### Fixed — an early rejection killed the _next_ request on the connection
+
+Found while testing an upload cap, then reproduced against an endpoint that predates all of
+this: `POST /api/recipes` with a 4 MB body and no session answered 401 correctly, and then
+the following `/auth/register` on the same keep-alive connection died with `ECONNRESET`.
+
+Any guard that answers before reading the body — `requireUserSession`, an ownership check,
+a size cap — leaves unread bytes on the socket. Node destroys it after the response, and the
+client's next request over that connection gets nothing. The failure therefore lands on an
+unrelated, innocent request, which is the worst possible place for it: neither request
+suggests the cause. `Connection: close` on an errored response whose body was never consumed
+(RFC 9110 §6.1), guarded so ordinary 4xx keep their connection.
+
+### Added — discussions, on a recipe and on a single commit
+
+The collaboration loop had exactly one place to say anything: a comment on a GourMerge
+Request, which you reach only after forking, branching, editing and proposing. "I used oat
+milk and it worked" had nowhere to go.
+
+Threads carry a title, a category (idea / question / issue / praise), a Markdown body,
+replies, and an open→resolved state. Modelled on GitHub Discussions rather than Issues — a
+thread resolves, it does not get assigned, labelled or milestoned.
+
+**They sit under the recipe, not beside it.** A side rail was the other candidate and it
+loses on every axis: the reading column is capped at `max-w-4xl` because that is the measure
+a recipe reads at, so a rail comes out of that budget and makes both halves worse; below
+`lg` a rail collapses underneath anyway, which means designing the stacked version
+regardless; and a recipe is used on a phone, where the rail _is_ the stacked version.
+
+**Commit level was worth answering before building anything, and the answer is yes,
+cheaply.** A note about one snapshot has the identical shape to a note about the dish — same
+table, same endpoints, one nullable `commit_id`. It earns its place in this product
+specifically: "this is the version that worked, the next commit over-salted it" is a remark
+about one commit and belongs on it. The history page opens it per commit in a modal so the
+timeline stays scannable.
+
+Moderation splits deliberately. Only the **author** may edit the text — nobody puts words in
+someone's mouth, the recipe owner included. The **owner** may resolve or delete, because this
+is the first place in the app where strangers write onto their page and without a removal
+path moderation would mean deleting the recipe. Rate limits are keyed on the **user**, not
+the IP: the limit protects other people's recipes from one account, and an IP key would let
+one account spread across addresses while punishing a shared NAT.
+
+### Added — one serving-suggestion photo per recipe
+
+This revises **locked decision 2**, which read "no images, no uploads — text only". Step
+content still cannot contain an image and there is no general upload surface; a recipe may
+carry exactly one photo.
+
+It renders **between the ingredients and the steps**. That is the seam where the reader stops
+asking "do I want this / what do I need to buy" and starts asking "how do I make it", and it
+is the one moment a picture of the finished dish is worth something. At the top it competes
+with the title for the first impression and pushes the ingredient list — the part people
+actually scroll to — below the fold on a phone.
+
+**The bytes live in MySQL, not on disk.** The deploy ships only `.output/` + `app.js`, staged
+into `.output.new` and swapped by `rename`, so anything written inside the app directory is
+one release away from being replaced or, on a rollback, resurrected at an older state. There
+is no persistent volume, no object storage on the plan, and `server-backup.sh` dumps the
+database only — a filesystem upload directory would also be the one part of user content with
+no backup and no restore drill. A row is transactional, cascades with its recipe, rides the
+nightly dump, and travels through the GDPR export and erasure paths that already exist. The
+cost is that reads go through Node, which is what the content-addressed URL
+(`?v=<sha256>` + `immutable`) pays for.
+
+**The server never decodes an image.** The browser downsizes to 1600px WebP and the server
+reads the file header only — a few dozen bytes, no decoder, so no decoder CVE is reachable
+from a Passenger worker, and no `sharp` binary has to match a host we cannot rebuild on. The
+client is not trusted for any of it: format, dimensions and byte length are re-validated, and
+the stored MIME type comes from the **magic bytes**, never the upload's own header. That last
+one is not theoretical — an SVG announced as `image/png`, stored and echoed back with the
+announced type, is stored XSS on our own origin, and `img-src 'self'` does nothing about it
+because the browser never treats the response as an image.
+
+### Changed — one home per destination, and the logo finally lines up with the content
+
+The signed-in shell carried a 256px sidebar listing four destinations that were **also** in
+the header nav and **also** in the user dropdown, plus two "quick actions" duplicated in
+both. Fifteen entries for nine destinations, and no rule anyone could infer about which copy
+to use. It is gone. Navigation now lives in exactly two places with distinct jobs:
+`MainNav` for destinations you move between while working, `UserDropdown` for your account.
+
+Removing it fixed a second thing for free. With a sidebar the header is centred in the
+_window_ while the content column starts after the sidebar, so the two frames can never
+agree — the previous attempt at that alignment needed a documented block of magic numbers in
+`main.css` (`--gm-shell-lead`, `--gm-shell-trail`) pinned by an E2E test, and still only
+worked from `lg` up. Both are now the same `max-w-7xl` container in the same viewport, so a
+`wide` page's content begins exactly under the logo at every width, with no CSS at all. The
+logged-out `/explore` state had been doing this right all along.
+
+### Fixed — the header was clipped between 768px and ~1000px, and so was the recipe row
+
+Two instances of the same fault, found by measuring rather than by looking, because neither
+overflows visibly — the shell is `h-dvh overflow-hidden`, so an over-wide row is silently
+**clipped** and the page does not scroll.
+
+The app header wanted **949px against a 768px viewport**: the account menu and the theme
+toggle were simply not on screen between `md` and ~1000px. The desktop cluster now starts at
+`lg`, where there is room; below it the offcanvas menu already carried every one of those
+destinations.
+
+The recipe page's header row was worse because it picked a loser. The action cluster held six
+`sm` buttons at a fixed 578px with `shrink-0` — it could not shrink — while the identity line
+beside it carried `min-w-0`. So the recipe name was structurally the side that gave way: at
+640px it was squeezed to **zero width** and vanished, at 768px the slug was fully truncated,
+and even in the full 832px content column it got 238px and showed 93px of a 435px name. Six
+buttons legible, the name of the page not. The row now stacks until `lg` and the cluster
+wraps instead of monopolising.
+
+Both are asserted at seven and six widths respectively, so a fifth nav item or a seventh
+action button fails a test rather than quietly eating something.
+
+### Changed — an identicon-QR badge instead of a username in the header
+
+The header showed the signed-in username, a variable-width string in a fixed row that moved
+the whole control cluster by up to ~70px depending on who was signed in. It shows an avatar
+now.
+
+Users without an uploaded picture get a mark generated from their username, in two renderings
+picked by size. `badge` (from `lg`) is an identicon bezel around a soft-dotted QR of their
+profile URL — point a phone at it and it opens the profile. `mark` (below `lg`) is the
+identicon alone, because **a QR at 32px is not a small QR, it is grey noise**: the modules
+fall under a pixel and it is neither scannable nor recognisable, failing both halves of its
+job at once. At that size the job is "tell two users apart at a glance".
+
+Colour comes only from the two brand ramps, never a per-user hue. Individuality is geometry.
+A random hue per account is what GitHub does and it would make a comment thread look like a
+bag of sweets next to a saffron-and-slate product.
+
+Machine readability is **measured, not asserted**: the test rasterises the real SVG and
+samples the centre of every module against the matrix `qrcode` produced. Exact from 192px
+(what the profile page renders), inside the error-correction budget at 160px. It earned its
+keep immediately — the first eye corner radius looked lovely and had silently deleted
+seventeen modules, and the bound turns out to be geometric: above ~1.71 modules the rounding
+arc excludes the corner module's own centre.
+
+### Fixed — nine badges below AA in light mode, and the rule that lets them ship
+
+`variant="subtle"` paints Nuxt UI's `text-<color>` — the semantic 500 — on a 10% wash of the
+same hue. In light mode `success` measures **2.03:1**, less than half of AA. The design book
+said this was "solved centrally", which is why nobody looked; it is solved centrally for the
+brand ramp and for neutral text, and the four semantic ramps need a `.tint-*` class at the
+call site. Nine did not have one, across the diff viewer and the nutrition panel.
+
+Fixed, and then made mechanical — `design:check` rule 14 fails on a semantic subtle badge
+with no tint, and that rule is how eight of the nine were found. The first came from adding
+a recipe page to the axe sweep, which had never scanned the highest-traffic page in the app.
+
+### Performance — 99 / 100 / 100 / 100 on mobile, and why it stays 99 for now
+
+The missing point is arithmetic: FCP 0.95 (×10) + LCP 0.99 (×25) + TBT 0.98 (×30) + CLS and
+Speed Index at 1.00 sums to **98.65**. Reaching 100 needs ≥ 99.5, and fixing FCP _and_ LCP
+outright yields 0.75 — no single change gets there.
+
+The one actionable item is the render-blocking `entry.css`: measured at 237,678 B raw /
+**25,148 B brotli** against a ~12 KB document. Inlining it removes one round trip and roughly
+triples the HTML on every request; because this host serves `/_nuxt/*` with no cache headers
+at all there is no repeat-visit cache to lose either, which makes it close to break-even
+rather than the clear win the audit's savings model implies — and unverifiable without a
+production run. Deliberately not done. `cache-insight` is a host setting, `bf-cache` is
+flagged by Lighthouse itself as not actionable, and the obvious TBT lever was already spent
+when browser tracing came out of the Sentry client.
+
+Full reasoning, the open backlog it produced, and the accepted architecture deviations are in
+`.claude/ROADMAP.md` under "Audit — 2026-08-09".
+
 ## [1.5.0] — 2026-08-07
 
 The first release written after the site had real users hitting it, and it shows: most of
