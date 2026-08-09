@@ -372,9 +372,54 @@ Not scoped, not scheduled. Roughly in the order they would earn their keep.
    their author's recipes and let an admin promote them. That is the same data model with
    the voting deferred, and it stops pollution today.
 
-1. **Notifications** — someone forked your recipe, opened a GourMerge Request,
-   commented. The highest-value gap: the collaboration loop currently has no way
-   to tell you something happened.
+1. **Mentions and an inbox** — `@username` in a discussion, and a GitHub-style
+   notification centre. _(Absorbs the former "Notifications" entry, which predates
+   discussions and is now the smaller half of the same feature.)_
+
+   This is still the highest-value gap: someone forks your recipe, opens a
+   GourMerge Request, starts a discussion or replies to yours, and **nothing tells
+   you**. Discussions made it worse, not better — the app now invites strangers to
+   write on your page and then keeps it a secret. A mention is the other half: a
+   thread where you cannot pull someone in is a thread that only reaches whoever
+   happens to look.
+
+   Shape: one `notifications` table (recipient, kind, actor, target, `read_at`),
+   written in the same transaction as the event that causes it. A header bell with
+   an unread count, an inbox page, per-kind mute.
+
+   The constraints that will actually decide the design, none of them optional
+   here:
+
+   - **The DB is the queue.** No Redis, no background worker, and Passenger runs
+     several processes — so there is nowhere to hold a job in memory (the same
+     reason the rate limiter is a table). Writing a row per recipient inside the
+     event's own transaction is the only version that cannot lose a notification
+     or double-send one.
+   - **A mention must not become an oracle.** Mentioning someone in a **private**
+     recipe's discussion would tell them a recipe exists that they cannot open.
+     Either suppress the notification when the target cannot see the recipe, or do
+     not offer the mention at all — but decide it deliberately, because the whole
+     `requireVisibleRecipe` effort is undone by one notification row.
+   - **Rendering `@name` goes through the existing sanitiser.** Discussion bodies
+     are Markdown rendered by `app/utils/markdown.ts`'s allowlist. A mention has to
+     become a link on that path, not by pre-injecting HTML into the stored body —
+     otherwise the one place in the app that is careful about user HTML gets a
+     bypass.
+   - **Email is where this gets dangerous.** `sendMail()` falls back to a
+     `streamTransport` that succeeds while delivering nothing. The inactivity sweep
+     already learned that the expensive way — it would have stamped "notified" and
+     deleted accounts unwarned. Any notification email needs the same refusal to
+     run without real SMTP, plus a digest: one row per event is fine, one mail per
+     event is a spam complaint.
+   - **`actor_id` is another RESTRICT foreign key.** There are already six, and
+     `hardDeleteUser()` has to reassign every one of them to the ghost or account
+     erasure fails outright on `ER_ROW_IS_REFERENCED`. Notifications must be in
+     that function and in the GDPR export the day they are added, not after.
+   - **Polling, not realtime.** No websockets on this host worth betting on. An
+     unread count on an interval, cached, and cheap — it will be requested on every
+     page by every signed-in visitor, which is the same hot path the avatar
+     endpoint had to be careful about.
+
 2. **Collections / cookbooks** — group recipes beyond tags.
 3. **Print / PDF export** — a kitchen-friendly single page. Cheap given steps are
    already Markdown.
