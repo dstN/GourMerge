@@ -90,11 +90,19 @@ async function sampleModules(username: string, pixels: number, withLogo = false)
         continue
       }
       const value = at(Math.round(ux * scale), Math.round(uy * scale))
-      const expected = truth.modules.data[r * n + c] === 1
-      ;(expected ? dark : light).push(value)
+      const isSetBit = truth.modules.data[r * n + c] === 1
+      /**
+       * **The symbol is inverted**, so a set bit renders LIGHT and a clear bit renders dark.
+       * The arrays keep their names by what the bit means, not by how it looks: `dark`
+       * collects the set bits (rendered light) and `light` the clear ones. What the assertions
+       * downstream actually check is that the two populations stay far apart, which is
+       * polarity-agnostic — the whole point of measuring separation rather than absolute
+       * luminance.
+       */
+      ;(isSetBit ? dark : light).push(value)
       // 128 is the midpoint a naive binariser uses; real ones adapt, so passing at the
       // naive threshold is the stronger claim.
-      if (value < 128 !== expected) mismatches++
+      if (value > 128 !== isSetBit) mismatches++
     }
   }
 
@@ -103,8 +111,10 @@ async function sampleModules(username: string, pixels: number, withLogo = false)
     mismatches,
     covered,
     total: n * n,
-    maxDark: Math.max(...dark),
-    minLight: Math.min(...light),
+    /** The worst-rendered SET bit — inverted, so "worst" means the *darkest* of the lights. */
+    setBitWorst: Math.min(...dark),
+    /** The worst-rendered CLEAR bit — the *lightest* of the darks. */
+    clearBitWorst: Math.max(...light),
   }
 }
 
@@ -205,10 +215,12 @@ describe('identicon avatar — machine readability', () => {
   it('keeps a wide binarisation margin rather than only just clearing the threshold', async () => {
     // A decoder picks its own threshold from the local histogram. A gap this wide means it
     // lands correctly wherever it puts it; a marginal one would pass the tests above and
-    // still fail on a phone under warm light.
-    const { maxDark, minLight } = await sampleModules('margin_check', 192)
-    expect(maxDark, 'a dark module sampled too light').toBeLessThan(110)
-    expect(minLight, 'a light module sampled too dark').toBeGreaterThan(150)
+    // still fail on a phone under warm light. Inverted, so a set bit must render LIGHT and a
+    // clear bit dark — the assertion is the separation, not the absolute values.
+    const { setBitWorst, clearBitWorst } = await sampleModules('margin_check', 192)
+    expect(setBitWorst, 'a set module rendered too dark').toBeGreaterThan(150)
+    expect(clearBitWorst, 'a clear module rendered too light').toBeLessThan(110)
+    expect(setBitWorst - clearBitWorst, 'not enough separation to binarise').toBeGreaterThan(60)
   })
 
   it('leaves the quiet zone clear on all four sides', async () => {
@@ -225,8 +237,9 @@ describe('identicon avatar — machine readability', () => {
       return luma(data[i]!, data[i + 1]!, data[i + 2]!)
     }
 
-    // One module out from the matrix on every side must still be plate-light. Without this
-    // band the identicon frame would be crowding the symbol and decoders start failing.
+    // One module out from the matrix on every side must still be clear plate. The symbol is
+    // inverted, so "clear" is DARK here — the assertion is that nothing from the identicon
+    // frame or a stray module intrudes, not that the pixels are bright.
     for (let k = 0; k < n; k++) {
       const along = (origin + (k + 0.5) * module) * scale
       const before = (origin - 0.5 * module) * scale
@@ -237,7 +250,7 @@ describe('identicon avatar — machine readability', () => {
         [before, along],
         [after, along],
       ] as const) {
-        expect(at(x, y), `quiet zone contaminated at module ${k}`).toBeGreaterThan(180)
+        expect(at(x, y), `quiet zone contaminated at module ${k}`).toBeLessThan(110)
       }
     }
   })
@@ -275,15 +288,16 @@ describe('identicon avatar — identity and safety', () => {
     // DESIGNBOOK §1.3: individuality comes from geometry, not from inventing a palette.
     // Every value here is a `--color-{primary,secondary}-*` token from main.css.
     const ALLOWED = new Set([
-      '#fcedd1', // primary-100  wash
-      '#f6bb6a', // primary-300  soft
-      '#dd7d00', // primary-500  accent
-      '#7e3a06', // primary-800  ink
-      '#fff8ea', // primary-50   plate
-      '#d7f0d9', // secondary-100
-      '#91c985', // secondary-300
+      '#5b2b10', // primary-900   tile
+      '#dd7d00', // primary-500   quiet bezel dot
+      '#f6bb6a', // primary-300   loud bezel dot + modules
+      '#381706', // primary-950   plate
+      '#fcd8a2', // primary-200   logo
+      '#212e09', // secondary-900
       '#578b35', // secondary-500
-      '#3a5713', // secondary-700
+      '#91c985', // secondary-300
+      '#121904', // secondary-950
+      '#b8e1b8', // secondary-200
     ])
     for (const username of ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight']) {
       const svg = await renderIdenticonAvatar({ username, origin: ORIGIN })
@@ -298,6 +312,7 @@ describe('identicon avatar — identity and safety', () => {
     const badge = await renderIdenticonAvatar({ username: 'small_user', origin: ORIGIN })
     // The badge's ink is the QR; a mark that still carried one would be the noise this
     // variant exists to avoid. Same seed, so the ramp must match — one identity, two views.
+    // The plate is the code's ground; a mark that had one would mean a QR crept in.
     expect(mark).not.toContain('#381706')
     expect(mark).not.toContain('#121904')
     expect(mark.length).toBeLessThan(badge.length / 4)
@@ -306,7 +321,7 @@ describe('identicon avatar — identity and safety', () => {
   })
 
   it('the mark is deterministic and stays on-palette', async () => {
-    const ALLOWED = new Set(['#fcedd1', '#f6bb6a', '#dd7d00', '#d7f0d9', '#91c985', '#578b35'])
+    const ALLOWED = new Set(['#5b2b10', '#f6bb6a', '#dd7d00', '#212e09', '#91c985', '#578b35'])
     for (const username of ['one', 'two', 'three', 'four']) {
       const svg = await renderIdenticonAvatar({ username, origin: ORIGIN, variant: 'mark' })
       expect(svg).toBe(await renderIdenticonAvatar({ username, origin: ORIGIN, variant: 'mark' }))

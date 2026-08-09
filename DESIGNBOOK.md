@@ -137,19 +137,28 @@ which of the two ramps the seed picks. `server/utils/identiconAvatar.ts` mirrors
 the `@theme` token values as sRGB hex and must be kept in step with `main.css`; a
 unit test asserts no other colour is ever emitted.
 
-**The code's modules are the ramp's 800/700, not a near-black.** A QR does not
-need black, it needs to binarise, and 8:1 on the plate is about double what a
-decoder wants — so the symbol reads as saffron or herb rather than as brown on
-sand. The 950s measured 15:1 and looked like a barcode; the 600 drops to 3.9:1,
-which is where a phone in warm light starts guessing. That boundary is the whole
-budget: styling a QR is free right up until it is not.
+**The symbol is inverted: the ramp's 300 on its 950, at ~9.5:1.** A QR does not
+need to be dark-on-light, it needs its two states to binarise apart — so light
+modules on a dark ground is a legitimate symbol and is what lets the badge be a
+dark brand object rather than a pale one. It also has _more_ contrast than the
+dark-on-light version it replaced (8:1), because both ends moved. The 300 is
+chosen over the brighter 100/200 because it is the most saturated shade that still
+clears a wide margin; 14:1 would be cream again, which is the look this replaces.
 
-**The chef's hat sits in the middle**, on a plate-coloured pad, in the ramp's 500
-— it is not a module, so it owes the decoder no contrast. It costs error
-correction `H` (30%) instead of `M`, which grows the symbol and shrinks each
-module; the knockout itself is 24% of the width, about 6% of the area, well under
-a third of what `H` reconstructs. The artwork is read from `public/icon.svg` at
-runtime, never copied into the renderer.
+**The caveat, stated rather than hidden:** ISO/IEC 18004 defines a symbol as
+dark-on-light and says readers **should** also handle reflectance reversal. iOS,
+Android's ML Kit and every mainstream scanner do; a strict or very old decoder may
+not. That is a small, deliberate narrowing of what can read the badge. Undoing it
+is swapping `plate` and `ink` per ramp — the geometry, the quiet zone and the
+tests are all polarity-agnostic.
+
+**The chef's hat sits in the middle**, on a plate-coloured pad, in the ramp's 200
+— a step brighter than the modules, so it reads as the focal point. It is not a
+module, so it owes the decoder no contrast. It costs error correction `H` (30%)
+instead of `M`, which grows the symbol and shrinks each module; the knockout is
+24% of the width, about 6% of the area, well under a third of what `H`
+reconstructs. The artwork is read from `public/icon.svg` at runtime, never copied
+into the renderer.
 
 `size="2xl"` (192px) is the smallest rendering at which every module rasterises
 correctly, so it is the only one that makes the "scan me" promise true — which is

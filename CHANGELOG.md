@@ -171,12 +171,17 @@ Colour comes only from the two brand ramps, never a per-user hue. Individuality 
 A random hue per account is what GitHub does and it would make a comment thread look like a
 bag of sweets next to a saffron-and-slate product.
 
-The symbol is in brand colours with the chef's hat set into the middle, because a QR does
-not need black — it needs to **binarise**. Modules are the ramp's 800/700 at ~8:1 on the
-plate, roughly double what a decoder wants, so it reads as saffron or herb instead of as
-brown on sand. (The 950s it started as measured 15:1 and looked like a barcode; the 600
-drops to 3.9:1, which is where a phone in warm light starts guessing — that boundary is the
-entire styling budget.) The logo costs error correction `H` rather than `M`, which grows the
+The symbol is **inverted** and in brand colours, with the chef's hat set into the middle. A
+QR does not need to be dark-on-light — it needs its two states to **binarise apart** — so
+the code is now the ramp's 300 on its 950, measured at 9.5:1. That is _more_ contrast than
+the dark-on-light version it replaced, because both ends moved, and it is what lets the
+badge be a dark brand object instead of a pale one. The caveat is stated rather than hidden:
+ISO/IEC 18004 defines a symbol as dark-on-light and says readers **should** also handle
+reflectance reversal; iOS, Android's ML Kit and every mainstream scanner do, a strict or very
+old decoder may not. Undoing it is swapping two colours per ramp — the geometry, the quiet
+zone and the tests are all polarity-agnostic.
+
+The logo costs error correction `H` rather than `M`, which grows the
 symbol and shrinks each module; the knockout is 24% of the width, about 6% of the area,
 comfortably under a third of what `H` reconstructs. The artwork is read from
 `public/icon.svg` at runtime rather than becoming a third hand-copied set of path data.

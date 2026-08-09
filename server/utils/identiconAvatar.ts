@@ -24,10 +24,11 @@
  * every module against the matrix `qrcode` produced (`tests/unit/identiconAvatar.test.ts`).
  * None of it is safe by inspection, and three of the five were bugs first.
  *
- * 1. **Contrast, but not black.** Modules are the ramp's **800/700** on the 50 — about
- *    **8:1**, roughly double what a decoder needs. The 950s measured 15:1 and read as
- *    brown-on-sand rather than as this product; the 600 drops to 3.9:1, which is where a
- *    phone in warm light starts guessing. See `RAMPS`.
+ * 1. **Contrast, and a polarity.** The symbol is **inverted** — the ramp's 300 on its 950,
+ *    about **9.5:1**. A QR does not need to be dark-on-light, it needs the two states to
+ *    binarise apart, and inverting is what lets the badge be a dark brand object instead of
+ *    a pale one. It costs a small amount of decoder compatibility, which `RAMPS` states
+ *    rather than hides.
  * 2. **A quiet zone.** Two modules of plate on every side, inside the plate's own padding.
  *    Decoders fail without it far more often than they fail on styling.
  * 3. **Intact finder patterns.** The eyes are rounded squares — corner radius is tolerated,
@@ -69,29 +70,52 @@ import QRCode from 'qrcode'
 /**
  * sRGB of the `--color-{primary,secondary}-*` tokens in main.css. Keep in step.
  *
- * `ink` is **primary-800 / secondary-700**, not the 950s it started as. A QR's modules do
- * not have to be black — they have to *binarise* — and the 950s were so dark that the
- * result read as brown-on-sand rather than as this product. Measured against the plate:
+ * ## The symbol is inverted: light modules on a dark ground
  *
- * | ink                     | contrast on #fff8ea |
- * | ----------------------- | ------------------- |
- * | primary-950 `#381706`   | 15.4:1 (near-black) |
- * | **primary-800 `#7e3a06`** | **8.0:1**         |
- * | primary-700 `#a34d00`   | 5.5:1               |
- * | primary-600 `#c26300`   | 3.9:1 ← too close   |
+ * Two earlier versions were dark-on-light — first a near-black 950 (15:1, which read as a
+ * barcode on sand) and then an 800 (8:1, saffron but still a pale badge). Neither looked
+ * like this product next to a dark UI. The ground is now the ramp's 950 and the modules its
+ * 300, measured at **9.5:1 (primary) / 9.3:1 (secondary)** — better contrast than the
+ * dark-on-light version it replaces, because both ends moved.
  *
- * 8:1 is roughly double what a decoder needs and the colour is unmistakably saffron, so
- * this is brand identity bought for nothing. The 600 is where it stops being free: at
- * 3.9:1 a phone in warm light starts guessing, and a QR that only *usually* scans is worse
- * than one that is a shade darker.
+ * | modules on the 950 ground | contrast |
+ * | ------------------------- | -------- |
+ * | 100                       | 14.1:1   |
+ * | 200                       | 12.0:1   |
+ * | **300** ← chosen          | **9.5:1** |
+ * | 400                       | 7.1:1    |
+ * | 500                       | 5.4:1    |
+ *
+ * The 300 is picked over the brighter 100/200 because it is the most *saturated* shade that
+ * still clears a wide margin — 14:1 would be cream again, which is the look this replaces.
+ *
+ * ## The caveat that comes with inverting, stated plainly
+ *
+ * ISO/IEC 18004 defines a symbol as dark-on-light and says readers *should* also handle
+ * reflectance reversal. In practice the iOS camera, Android's ML Kit and every mainstream
+ * scanner app do; a strict or very old decoder may not. That is a real, if small, narrowing
+ * of what can read this badge, and it was accepted deliberately for the brand look — not
+ * overlooked. If it ever needs undoing, swap `plate` and `ink` per ramp and nothing else
+ * changes: the geometry, the quiet zone and the tests are all polarity-agnostic.
  */
 const RAMPS = {
-  primary: { wash: '#fcedd1', soft: '#f6bb6a', accent: '#dd7d00', ink: '#7e3a06' },
-  secondary: { wash: '#d7f0d9', soft: '#91c985', accent: '#578b35', ink: '#3a5713' },
+  primary: {
+    tile: '#5b2b10', // primary-900  the badge ground
+    dotSoft: '#dd7d00', // primary-500  quieter bezel dots
+    dotBright: '#f6bb6a', // primary-300  louder bezel dots, and the plate hairline
+    plate: '#381706', // primary-950  the code's ground — darker than the tile, so it reads inset
+    ink: '#f6bb6a', // primary-300  the modules
+    logo: '#fcd8a2', // primary-200  brighter than the modules, so the mark is the focal point
+  },
+  secondary: {
+    tile: '#212e09', // secondary-900
+    dotSoft: '#578b35', // secondary-500
+    dotBright: '#91c985', // secondary-300
+    plate: '#121904', // secondary-950
+    ink: '#91c985', // secondary-300
+    logo: '#b8e1b8', // secondary-200
+  },
 } as const
-
-/** `--color-primary-50`. One plate colour for both ramps, so ink contrast is a constant. */
-const PLATE = '#fff8ea'
 
 /**
  * How much of the symbol's width the centre logo knockout takes.
@@ -244,7 +268,7 @@ function renderMark(seed: Buffer, ramp: (typeof RAMPS)[keyof typeof RAMPS]): str
   const cells = identiconCells(seed, MARK_GRID, false)
   const inset = 8
   const cell = (TILE - 2 * inset) / MARK_GRID
-  const parts = [`<rect width="${TILE}" height="${TILE}" fill="${ramp.wash}"/>`]
+  const parts = [`<rect width="${TILE}" height="${TILE}" fill="${ramp.tile}"/>`]
 
   for (let r = 0; r < MARK_GRID; r++) {
     for (let c = 0; c < MARK_GRID; c++) {
@@ -257,7 +281,7 @@ function renderMark(seed: Buffer, ramp: (typeof RAMPS)[keyof typeof RAMPS]): str
       parts.push(
         `<rect x="${(inset + c * cell + cell * pad).toFixed(2)}" y="${(inset + r * cell + cell * pad).toFixed(2)}" ` +
           `width="${size.toFixed(2)}" height="${size.toFixed(2)}" rx="${(size * 0.28).toFixed(2)}" fill="${
-            value === 1 ? ramp.soft : ramp.accent
+            value === 1 ? ramp.dotSoft : ramp.dotBright
           }"/>`
       )
     }
@@ -336,7 +360,7 @@ export async function renderIdenticonAvatar({
   const parts: string[] = []
 
   // ── Identicon frame ────────────────────────────────────────────
-  parts.push(`<rect width="${TILE}" height="${TILE}" fill="${ramp.wash}"/>`)
+  parts.push(`<rect width="${TILE}" height="${TILE}" fill="${ramp.tile}"/>`)
   const DOT_R = [0, 0.16, 0.26, 0.34] // by cell value, as a fraction of a cell
   for (let r = 0; r < GRID; r++) {
     for (let c = 0; c < GRID; c++) {
@@ -348,7 +372,7 @@ export async function renderIdenticonAvatar({
       const cy = (r + 0.5) * CELL
       parts.push(
         `<circle cx="${cx.toFixed(2)}" cy="${cy.toFixed(2)}" r="${(DOT_R[value]! * CELL).toFixed(2)}" fill="${
-          value === 1 ? ramp.soft : ramp.accent
+          value === 1 ? ramp.dotSoft : ramp.dotBright
         }"/>`
       )
     }
@@ -359,7 +383,7 @@ export async function renderIdenticonAvatar({
   // objects rather than one badge.
   parts.push(
     `<rect x="${PLATE_INSET}" y="${PLATE_INSET}" width="${PLATE_SIZE}" height="${PLATE_SIZE}" rx="9" ` +
-      `fill="${PLATE}" stroke="${ramp.accent}" stroke-opacity="0.35" stroke-width="0.9"/>`
+      `fill="${ramp.plate}" stroke="${ramp.dotBright}" stroke-opacity="0.35" stroke-width="0.9"/>`
   )
 
   // ── QR ─────────────────────────────────────────────────────────
@@ -411,7 +435,7 @@ export async function renderIdenticonAvatar({
       `<rect x="${(ox + module * inset).toFixed(3)}" y="${(oy + module * inset).toFixed(3)}" width="${(
         module * span
       ).toFixed(3)}" height="${(module * span).toFixed(3)}" rx="${(module * rx).toFixed(3)}" fill="${fill}"/>`
-    parts.push(rect(0, 7, EYE_RX, ramp.ink), rect(1, 5, WINDOW_RX, PLATE), rect(2, 3, CORE_RX, ramp.ink))
+    parts.push(rect(0, 7, EYE_RX, ramp.ink), rect(1, 5, WINDOW_RX, ramp.plate), rect(2, 3, CORE_RX, ramp.ink))
   }
 
   /**
@@ -423,8 +447,9 @@ export async function renderIdenticonAvatar({
    * carries its own `viewBox` and an internal `translate/scale`, and re-deriving that as one
    * matrix is arithmetic nobody would ever check. The nested element does it exactly.
    *
-   * `ramp.accent` (the 500), not `ramp.ink`: the logo is not a module, so it does not owe
-   * the decoder any contrast, and the saturated saffron is the point of putting it there.
+   * `ramp.logo` (the 200), a step brighter than the modules: the logo is not a module, so it
+   * owes the decoder no contrast, and being the lightest thing on the plate is what makes it
+   * read as the focal point rather than as a dense patch of code.
    */
   if (logo) {
     parts.push(
@@ -433,11 +458,11 @@ export async function renderIdenticonAvatar({
         2 * logoPad
       ).toFixed(3)}" height="${(logoSize + 2 * logoPad).toFixed(3)}" rx="${(module * 1.4).toFixed(
         3
-      )}" fill="${PLATE}"/>`,
+      )}" fill="${ramp.plate}"/>`,
       `<svg x="${logoLeft.toFixed(3)}" y="${logoLeft.toFixed(3)}" width="${logoSize.toFixed(3)}" height="${logoSize.toFixed(
         3
       )}" viewBox="${logo.viewBox}" preserveAspectRatio="xMidYMid meet">` +
-        `<g transform="${logo.transform}" fill="${ramp.accent}" stroke="none">` +
+        `<g transform="${logo.transform}" fill="${ramp.logo}" stroke="none">` +
         logo.paths.map((d) => `<path d="${d}"/>`).join('') +
         `</g></svg>`
     )
