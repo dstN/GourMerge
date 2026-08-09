@@ -275,6 +275,49 @@ for (const abs of walk(join(ROOT, 'app'))) {
       )
     }
   }
+
+  // ── Rule 14: a subtle semantic badge must carry its tint (§1.6, §7) ──
+  //
+  // `variant="subtle"` paints Nuxt UI's `text-<color>` on a 10% wash of the same hue.
+  // In light mode that is the semantic 500 on near-white: `success` measures **2.03:1**,
+  // less than half of AA. §1.6 solves it with the `.tint-*` classes, but only for call
+  // sites that remember to apply one — and the design book claimed the fix was central
+  // while three of four subtle badges on a recipe page did not have it. axe only sees
+  // this on a page the sweep happens to visit with the badge rendered, which is why it
+  // sat undetected: it was found by adding the recipe page to the a11y sweep, not by any
+  // gate.
+  //
+  // `primary` and `neutral` are excluded on purpose: the brand ramp is darkened
+  // wholesale under `:root:not(.dark)` (§1.6) and neutral text is pinned there too, so
+  // neither needs a per-call-site class — `TINT_CLASS` maps both to `''` for that reason.
+  const TINTED = ['success', 'warning', 'error', 'info']
+  for (const { tag, attrs, index } of uiTags(tpl.text, tpl.offset)) {
+    if (tag !== 'UBadge') continue
+    if (!/(?:^|\s)variant="subtle"/.test(attrs)) continue
+
+    const literal = /(?:^|\s)color="([a-z]+)"/.exec(attrs)?.[1]
+    const dynamic = /(?:^|\s):color="/.test(attrs)
+    // A literal colour outside the tinted set (or none) is fine; a dynamic one might
+    // resolve to any of them, so it must go through TINT_CLASS too.
+    if (!dynamic && !(literal && TINTED.includes(literal))) continue
+    if (/class="[^"]*\btint-(?:success|warning|error|info|herb)\b/.test(attrs)) continue
+    if (/:class="[^"]*TINT_CLASS/.test(attrs)) continue
+    // A component may resolve the class into a local (`const tint = computed(() =>
+    // TINT_CLASS[color.value])`) and bind that — `RecipeDifficultyBadge` does exactly
+    // that, and it is the better pattern where the colour is already computed. Accept any
+    // `:class` binding in a file whose script reaches for TINT_CLASS at all; requiring the
+    // literal at the tag would push call sites back to re-deriving the map.
+    if (/(?::|v-bind:)class="/.test(attrs) && src.slice(0, tpl.offset || src.length).includes('TINT_CLASS')) continue
+
+    report(
+      file,
+      lineOf(src, index),
+      'subtle-badge-missing-tint',
+      '§1.6',
+      `<UBadge variant="subtle" color="${literal ?? '<dynamic>'}"> needs its light-mode label colour — ` +
+        'add `:class="TINT_CLASS[color]"` (app/utils/ui.ts). Nuxt UI\'s own subtle text measures ~2:1 on white.'
+    )
+  }
 }
 
 // ── Rule 11: forbidden defaultVariants in app.config (§2.1) ──────

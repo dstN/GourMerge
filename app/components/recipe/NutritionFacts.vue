@@ -249,6 +249,7 @@ const hasMicros = computed(() => vitamins.value.length > 0 || minerals.value.len
             v-if="total.isApproximate"
             color="warning"
             variant="subtle"
+            :class="TINT_CLASS.warning"
             icon="i-lucide-info"
             :label="t('nutrition.approximate')"
             size="xs"

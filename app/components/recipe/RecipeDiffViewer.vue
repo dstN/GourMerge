@@ -127,6 +127,7 @@ function getSegmentClass(type: number): string {
           v-if="diff.summary.ingredientsAdded > 0"
           color="success"
           variant="subtle"
+          :class="TINT_CLASS.success"
           icon="i-lucide-plus"
           :label="`${diff.summary.ingredientsAdded} ${t('diff.added')}`"
         />
@@ -134,6 +135,7 @@ function getSegmentClass(type: number): string {
           v-if="diff.summary.ingredientsRemoved > 0"
           color="error"
           variant="subtle"
+          :class="TINT_CLASS.error"
           icon="i-lucide-minus"
           :label="`${diff.summary.ingredientsRemoved} ${t('diff.removed')}`"
         />
@@ -141,6 +143,7 @@ function getSegmentClass(type: number): string {
           v-if="diff.summary.ingredientsModified > 0"
           color="warning"
           variant="subtle"
+          :class="TINT_CLASS.warning"
           icon="i-lucide-pencil"
           :label="`${diff.summary.ingredientsModified} ${t('diff.modified')}`"
         />
@@ -149,6 +152,7 @@ function getSegmentClass(type: number): string {
           v-if="diff.summary.stepsAdded > 0"
           color="success"
           variant="subtle"
+          :class="TINT_CLASS.success"
           icon="i-lucide-plus"
           :label="`${diff.summary.stepsAdded} ${t('diff.steps')} ${t('diff.added').toLowerCase()}`"
         />
@@ -156,6 +160,7 @@ function getSegmentClass(type: number): string {
           v-if="diff.summary.stepsRemoved > 0"
           color="error"
           variant="subtle"
+          :class="TINT_CLASS.error"
           icon="i-lucide-minus"
           :label="`${diff.summary.stepsRemoved} ${t('diff.steps')} ${t('diff.removed').toLowerCase()}`"
         />
@@ -163,6 +168,7 @@ function getSegmentClass(type: number): string {
           v-if="diff.summary.stepsModified > 0"
           color="warning"
           variant="subtle"
+          :class="TINT_CLASS.warning"
           icon="i-lucide-pencil"
           :label="`${diff.summary.stepsModified} ${t('diff.steps')} ${t('diff.modified').toLowerCase()}`"
         />
@@ -215,7 +221,13 @@ function getSegmentClass(type: number): string {
             >
               <!-- Status icon -->
               <div class="col-span-1 flex items-center">
-                <UBadge :color="getDiffColor(entry.type)" variant="subtle" :icon="getDiffIcon(entry.type)" size="xs" />
+                <UBadge
+                  :color="getDiffColor(entry.type)"
+                  variant="subtle"
+                  :class="TINT_CLASS[getDiffColor(entry.type)]"
+                  :icon="getDiffIcon(entry.type)"
+                  size="xs"
+                />
               </div>
 
               <!-- Ingredient name -->
@@ -301,6 +313,7 @@ function getSegmentClass(type: number): string {
                   <UBadge
                     :color="getDiffColor(step.type)"
                     variant="subtle"
+                    :class="TINT_CLASS[getDiffColor(step.type)]"
                     :icon="getDiffIcon(step.type)"
                     :label="t('diff.' + step.type)"
                     size="sm"
