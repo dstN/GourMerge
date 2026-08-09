@@ -222,7 +222,9 @@
     "imageSaved": "Bild gespeichert",
     "imageRemoved": "Bild entfernt",
     "imageError": "Bild konnte nicht gespeichert werden",
-    "imageCaption": "Serviervorschlag"
+    "imageCaption": "Serviervorschlag",
+    "starAdd": "Zu Favoriten hinzufügen",
+    "starRemove": "Aus Favoriten entfernen"
   },
   "common": {
     "edit": "Bearbeiten",

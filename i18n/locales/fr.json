@@ -222,7 +222,9 @@
     "imageSaved": "Image enregistrée",
     "imageRemoved": "Image supprimée",
     "imageError": "Impossible d’enregistrer l’image",
-    "imageCaption": "Suggestion de présentation"
+    "imageCaption": "Suggestion de présentation",
+    "starAdd": "Ajouter aux favoris",
+    "starRemove": "Retirer des favoris"
   },
   "common": {
     "edit": "Modifier",

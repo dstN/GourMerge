@@ -239,6 +239,25 @@ async function forkRecipe() {
   }
 }
 
+/**
+ * Jump to the discussion panel at the foot of the page.
+ *
+ * Deliberately imperative. `<UButton to="#discussion">` renders a `ULink`, which
+ * auto-localises its target through `$localePath` — a bare hash is not a route, so the
+ * router had nothing to resolve and the click did nothing at all. And even without i18n it
+ * would be unreliable in this shell: `<main>` is the only scroll container (DESIGNBOOK
+ * §4.1), so the browser's own hash scroll, which moves the window, has nothing to move.
+ *
+ * `smooth` unless the visitor has asked for less motion — the panel is a long way down, and
+ * an instant jump there reads as a page change rather than as a scroll.
+ */
+function scrollToDiscussion() {
+  const target = document.getElementById('discussion')
+  if (!target) return
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  target.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' })
+}
+
 const appUrl = useRuntimeConfig().public.appUrl as string
 
 useSeoMeta({
@@ -376,7 +395,9 @@ useHead(() => {
               icon="i-lucide-lock"
               :label="t('recipe.private')"
             />
-            <!-- Star toggle -->
+            <!-- Star toggle. The visible text is the COUNT, not a name, so the control still
+                 needs both a label and a title like its icon-only neighbours — and both have
+                 to say what the click will do, which depends on the current state. -->
             <UButton
               v-if="loggedIn"
               icon="i-lucide-star"
@@ -386,6 +407,8 @@ useHead(() => {
               :aria-pressed="starred"
               :loading="starPending"
               :label="`${starCount}`"
+              :aria-label="starred ? t('recipe.starRemove') : t('recipe.starAdd')"
+              :title="starred ? t('recipe.starRemove') : t('recipe.starAdd')"
               data-tour="star-button"
               @click="toggleStar"
             />
@@ -427,6 +450,13 @@ useHead(() => {
                  page, so this is a jump. The badge counts every thread rather than only the
                  open ones — unlike the GourMerge Request badge above, where "open" means
                  "needs your attention". A resolved discussion is still worth reading. -->
+            <!-- A click handler, not `to="#discussion"`.
+                 The link form did nothing: `<UButton to>` renders a `ULink`, which
+                 auto-localises through `$localePath` — and a bare hash is not a route, so
+                 the router had nothing to resolve and swallowed the navigation. Even
+                 unlocalised it would be unreliable here, because only `<main>` scrolls: the
+                 window-level hash scroll the browser performs has no effect on an inner
+                 scroll container. `scrollIntoView` targets the right one. -->
             <UButton
               icon="i-lucide-messages-square"
               size="sm"
@@ -434,7 +464,7 @@ useHead(() => {
               variant="outline"
               :aria-label="t('discussion.title')"
               :title="t('discussion.title')"
-              to="#discussion"
+              @click="scrollToDiscussion"
             >
               <template v-if="recipe.discussionCount > 0" #trailing>
                 <UBadge :label="String(recipe.discussionCount)" color="neutral" variant="subtle" size="sm" />

@@ -77,6 +77,17 @@ export default defineEventHandler(async (event) => {
   if (!isMailConfigured()) warnings.push('SMTP_HOST/SMTP_USER/SMTP_PASS (mail is discarded, not delivered)')
   if (!process.env.TOTP_ENCRYPTION_KEY) warnings.push('TOTP_ENCRYPTION_KEY (falling back to the session secret)')
   if (!process.env.CRON_SECRET) warnings.push('CRON_SECRET (/tasks/* refuse every request, so no sweeps run)')
+  /**
+   * Server-side image re-encoding fails **open** — an upload whose compression step cannot
+   * run is stored as the client sent it rather than rejected. That is the right failure
+   * mode, and it is also invisible: without this line, a host where the native binary never
+   * loaded would look identical to one where it works, and the first symptom would be the
+   * image table growing faster than anyone expected. A warning, not a problem: uploads still
+   * succeed, so a rollback loop would be worse than the degradation.
+   */
+  if (!(await imageEncoderAvailable())) {
+    warnings.push('sharp unavailable (uploads are stored as sent, without server-side WebP re-encoding)')
+  }
 
   const healthy = problems.length === 0
   const body = {

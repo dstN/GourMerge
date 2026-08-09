@@ -29,11 +29,14 @@ import { eq } from 'drizzle-orm'
 import { recipeImages, recipes } from '~~/server/database/schema'
 
 /**
- * 3 MB on the wire. The uploader downsizes to 1600px WebP before sending (typically
+ * 2 MB on the wire. The uploader downsizes to 1600px WebP before sending (typically
  * 150–350 KB), so this is the ceiling for a client that skipped that — an original
  * phone JPEG — not the expected size.
+ *
+ * It bounds the *transfer*, not the decode. A 2 MB PNG can expand to gigabytes of pixels,
+ * which is what `limitInputPixels` in `imageEncode.ts` is for.
  */
-const MAX_UPLOAD_BYTES = 3 * 1024 * 1024
+const MAX_UPLOAD_BYTES = 2 * 1024 * 1024
 /** Below this it is a thumbnail, not a photo, and it will look broken in the layout. */
 const MIN_EDGE_PX = 200
 /** Above this someone is uploading a poster; MEDIUMBLOB would cope, the page would not. */
@@ -80,20 +83,29 @@ export default defineEventHandler(async (event) => {
   const alt = altSchema.safeParse(altRaw)
   if (!alt.success) throw createError({ statusCode: 422, statusMessage: 'Validation failed' })
 
-  const checksum = createHash('sha256').update(filePart.data).digest('hex')
+  /**
+   * Re-encoded to WebP for storage, after the header checks and never instead of them.
+   * Fails open to the client's bytes — see `imageEncode.ts` for why that is the right
+   * failure mode on this host, and for the decompression-bomb guard a byte cap cannot give.
+   */
+  const encoded = await reencodeToWebp(filePart.data, probed)
+
+  // Of the bytes we are about to store, not of the bytes that arrived: the checksum is the
+  // cache key for the delivery URL, so it has to describe what is served.
+  const checksum = createHash('sha256').update(encoded.data).digest('hex')
 
   const db = useDrizzle()
   if (!db) throw createError({ statusCode: 503, statusMessage: 'Database unavailable.' })
 
   const row = {
     recipeId: recipe.id,
-    mimeType: probed.mimeType,
-    width: probed.width,
-    height: probed.height,
-    byteSize: filePart.data.length,
+    mimeType: encoded.mimeType,
+    width: encoded.width,
+    height: encoded.height,
+    byteSize: encoded.data.length,
     checksum,
     altText: alt.data || null,
-    data: filePart.data,
+    data: encoded.data,
   }
 
   /**
@@ -118,5 +130,15 @@ export default defineEventHandler(async (event) => {
   // Bump the recipe so caches keyed on `updatedAt` (explore cards, sitemap) notice.
   await db.update(recipes).set({ updatedAt: new Date() }).where(eq(recipes.id, recipe.id))
 
-  return { checksum, width: probed.width, height: probed.height, mimeType: probed.mimeType, altText: row.altText }
+  // The stored shape, not the uploaded one — the client renders from this, so it has to
+  // describe what `/image` will actually serve.
+  return {
+    checksum,
+    width: encoded.width,
+    height: encoded.height,
+    mimeType: encoded.mimeType,
+    altText: row.altText,
+    byteSize: encoded.data.length,
+    recompressed: encoded.recompressed,
+  }
 })

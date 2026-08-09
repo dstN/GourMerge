@@ -85,6 +85,61 @@ path moderation would mean deleting the recipe. Rate limits are keyed on the **u
 the IP: the limit protects other people's recipes from one account, and an IP key would let
 one account spread across addresses while punishing a shared NAT.
 
+### Changed — uploads are re-encoded to WebP on the server, capped at 2 MB
+
+The cap drops from 3 MB to 2 MB and the accepted set stays JPEG / PNG / WebP, but the
+substantive change is that what gets **stored** is now always WebP, resized to 1600px,
+produced by `sharp` on the server rather than trusted from the browser.
+
+**This reverses a decision made in the same release, and the cost is worth naming.** The
+upload path was built so the server never decodes an image: the browser re-encodes and
+`imageProbe.ts` reads only the file header. That removed the entire class of image-decoder
+vulnerabilities from a Passenger worker and avoided a native binary that has to match a host
+we cannot rebuild on. Decoding server-side gives that up in exchange for bytes on disk.
+
+Three things keep it from being a bad trade:
+
+- **It fails open.** If `sharp` cannot load or throws, the client's bytes are stored
+  unchanged. The upload keeps working; only the compression is lost. A 500 would mean the
+  feature dies on a host nobody can test against until it is live — which is the failure
+  mode this deployment keeps producing.
+- **`/api/health` reports it.** A fail-open nobody can observe is indistinguishable from a
+  feature that works, and the first symptom would otherwise be the image table growing
+  faster than anyone expected.
+- **`limitInputPixels`.** A 2 MB file can be a 30 000 × 30 000 PNG that decodes to
+  gigabytes — the decompression bomb a byte cap does nothing about. The header dimension
+  check still runs first, so sharp is only handed bytes we have already looked at.
+
+The result is only kept when it is actually smaller, because the browser has usually already
+produced a WebP and re-encoding one is a second lossy pass that can come out larger.
+"Compress for storage" is a claim about the stored size, not about having run a compressor.
+
+The checksum now describes the **stored** bytes rather than the uploaded ones — computing it
+before the re-encode would have made every `ETag` and every `?v=` cache key a lie.
+
+Verified rather than assumed: `sharp` lands in `.output/server/node_modules/` in a real
+build, which is what makes keeping it a devDependency safe here — the artifact ships its own
+`node_modules` and the host never runs an install.
+
+### Fixed — the star had no name, and "Diskussion" did nothing
+
+Two defects from collapsing the recipe actions to icons, neither of which any gate caught.
+
+The star kept its **count** as a label, so it looked labelled and was not — a count is
+information, not a name for a control. It shipped with no `title` and no `aria-label` while
+its four neighbours had both. axe does not flag it, because a name derived from the count
+text is still _a_ name.
+
+"Diskussion" was `<UButton to="#discussion">` and clicking it did nothing at all. `UButton`
+with a `to` renders a `ULink`, which auto-localises through `$localePath`, and a bare hash is
+not a route — so there was nothing to resolve. Even unlocalised it would have failed: only
+`<main>` scrolls in this shell, so the browser's window-level hash scroll has nothing to
+move. It is a `scrollIntoView` handler now, honouring `prefers-reduced-motion`.
+
+`tests/e2e/recipe-actions.spec.ts` asserts every control in the cluster has both attributes,
+that the star's name flips with its state, and that the jump actually moves the scroll
+container.
+
 ### Added — one serving-suggestion photo per recipe
 
 This revises **locked decision 2**, which read "no images, no uploads — text only". Step

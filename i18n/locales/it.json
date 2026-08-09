@@ -222,7 +222,9 @@
     "imageSaved": "Immagine salvata",
     "imageRemoved": "Immagine rimossa",
     "imageError": "Impossibile salvare l’immagine",
-    "imageCaption": "Suggerimento di presentazione"
+    "imageCaption": "Suggerimento di presentazione",
+    "starAdd": "Aggiungi ai preferiti",
+    "starRemove": "Rimuovi dai preferiti"
   },
   "common": {
     "edit": "Modifica",

@@ -222,7 +222,9 @@
     "imageSaved": "Image saved",
     "imageRemoved": "Image removed",
     "imageError": "Could not save the image",
-    "imageCaption": "Serving suggestion"
+    "imageCaption": "Serving suggestion",
+    "starAdd": "Add to favourites",
+    "starRemove": "Remove from favourites"
   },
   "common": {
     "edit": "Edit",
