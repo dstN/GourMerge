@@ -21,10 +21,34 @@
  * The username is still validated against the exact charset registration enforces, so this
  * cannot be turned into a generic "put arbitrary text in a QR on gourmerge.de" service.
  */
-import { renderIdenticonAvatar } from '~~/server/utils/identiconAvatar'
+import { renderIdenticonAvatar, parseBrandMark, type BrandMark } from '~~/server/utils/identiconAvatar'
 
 /** Same rule as `registerSchema.username` — keep the two in step. */
 const USERNAME_RE = /^[a-zA-Z0-9_-]{3,50}$/
+
+/**
+ * The chef's hat, parsed once per process.
+ *
+ * `undefined` = not looked up yet, `null` = looked up and unavailable. The distinction
+ * matters: without it a missing asset would re-read storage on every avatar request, and
+ * this endpoint runs on nearly every page view.
+ *
+ * A failure here degrades to a badge without a logo, never to an error. This is an
+ * `<img src>` in the site header; a 500 would put a broken image on every page because the
+ * icon file moved.
+ */
+let brandMark: BrandMark | null | undefined
+
+async function getBrandMark(): Promise<BrandMark | null> {
+  if (brandMark !== undefined) return brandMark
+  try {
+    const svg = await useStorage('assets:brand').getItem<string>('icon.svg')
+    brandMark = parseBrandMark(typeof svg === 'string' ? svg : null)
+  } catch {
+    brandMark = null
+  }
+  return brandMark
+}
 
 export default defineEventHandler(async (event) => {
   const username = getRouterParam(event, 'username')
@@ -41,7 +65,9 @@ export default defineEventHandler(async (event) => {
   const variant = getQuery(event).variant === 'mark' ? 'mark' : 'badge'
 
   const origin = String(useRuntimeConfig(event).public.appUrl || '').replace(/\/+$/, '')
-  const svg = await renderIdenticonAvatar({ username, origin, variant })
+  // The small `mark` has no code to set a logo into, so it does not pay for the lookup.
+  const logo = variant === 'badge' ? await getBrandMark() : null
+  const svg = await renderIdenticonAvatar({ username, origin, variant, logo })
 
   /**
    * `image/svg+xml` from our own origin is normally a stored-XSS shape — but nothing here is

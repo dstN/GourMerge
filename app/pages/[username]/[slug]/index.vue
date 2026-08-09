@@ -346,7 +346,18 @@ useHead(() => {
              was losing, and dropping `shrink-0` lets the cluster wrap into a second row
              instead of monopolising the first. Same failure the header had at `md` — see
              `LayoutMainNav` — and the same reason it went unnoticed: nothing overflowed
-             visibly, the wrong element simply lost. -->
+             visibly, the wrong element simply lost.
+
+             **The actions are icon-only at every width**, and that is the other half of the
+             fix. Labelled, the cluster is 578px against an 832px reading column, so even at
+             2560px it wrapped to two ragged lines with "Bearbeiten" orphaned underneath —
+             the content column is capped at `max-w-4xl`, so a wider screen buys it nothing.
+             As icons it is ~250px on one line and the recipe name gets the rest.
+
+             This is the DESIGNBOOK §2.4 pattern: ALL of them collapse together, never one
+             among labelled siblings. Each carries `aria-label` (the accessible name, since
+             there is no text) and `title` (what a mouse user gets for an icon they do not
+             recognise). The star keeps its number — a count is information, not a name. -->
         <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between mb-3">
           <div class="flex items-center gap-x-2 text-sm text-muted min-w-0">
             <UIcon name="i-lucide-user-circle" class="size-4 shrink-0" aria-hidden="true" />
@@ -381,11 +392,12 @@ useHead(() => {
             <UButton
               v-if="loggedIn && !isOwner"
               icon="i-lucide-git-fork"
-              :label="t('recipe.fork')"
               size="sm"
               color="neutral"
               variant="outline"
               :loading="forkPending"
+              :aria-label="t('recipe.fork')"
+              :title="t('recipe.fork')"
               data-tour="fork-button"
               @click="forkRecipe"
             />
@@ -395,11 +407,12 @@ useHead(() => {
                  rather than showing a `0`, so the badge only ever means "there is
                  something here". -->
             <UButton
-              :label="t('gourmergeRequest.titlePlural')"
               icon="i-lucide-git-pull-request"
               size="sm"
               color="neutral"
               variant="outline"
+              :aria-label="t('gourmergeRequest.titlePlural')"
+              :title="t('gourmergeRequest.titlePlural')"
               :to="`${recipeUrl}/gourmerge-requests`"
             >
               <template v-if="openGmrCount > 0" #trailing>
@@ -415,11 +428,12 @@ useHead(() => {
                  open ones — unlike the GourMerge Request badge above, where "open" means
                  "needs your attention". A resolved discussion is still worth reading. -->
             <UButton
-              :label="t('discussion.title')"
               icon="i-lucide-messages-square"
               size="sm"
               color="neutral"
               variant="outline"
+              :aria-label="t('discussion.title')"
+              :title="t('discussion.title')"
               to="#discussion"
             >
               <template v-if="recipe.discussionCount > 0" #trailing>
@@ -428,19 +442,21 @@ useHead(() => {
             </UButton>
 
             <UButton
-              :label="t('history.title')"
               icon="i-lucide-history"
               size="sm"
               color="neutral"
               variant="outline"
+              :aria-label="t('history.title')"
+              :title="t('history.title')"
               :to="`${recipeUrl}/history`"
             />
             <UButton
               v-if="isOwner"
-              :label="t('common.edit')"
               icon="i-lucide-pencil"
               size="sm"
               variant="soft"
+              :aria-label="t('common.edit')"
+              :title="t('common.edit')"
               :to="`${recipeUrl}/edit`"
               data-tour="edit-recipe-btn"
             />

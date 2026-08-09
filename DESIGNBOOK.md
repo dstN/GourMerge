@@ -134,7 +134,22 @@ their badge read as the same identity.
 hue per account (GitHub's approach) would turn a comment thread into a bag of
 sweets beside a saffron-and-slate product. Individuality comes from geometry, plus
 which of the two ramps the seed picks. `server/utils/identiconAvatar.ts` mirrors
-the `@theme` token values as sRGB hex and must be kept in step with `main.css`.
+the `@theme` token values as sRGB hex and must be kept in step with `main.css`; a
+unit test asserts no other colour is ever emitted.
+
+**The code's modules are the ramp's 800/700, not a near-black.** A QR does not
+need black, it needs to binarise, and 8:1 on the plate is about double what a
+decoder wants — so the symbol reads as saffron or herb rather than as brown on
+sand. The 950s measured 15:1 and looked like a barcode; the 600 drops to 3.9:1,
+which is where a phone in warm light starts guessing. That boundary is the whole
+budget: styling a QR is free right up until it is not.
+
+**The chef's hat sits in the middle**, on a plate-coloured pad, in the ramp's 500
+— it is not a module, so it owes the decoder no contrast. It costs error
+correction `H` (30%) instead of `M`, which grows the symbol and shrinks each
+module; the knockout itself is 24% of the width, about 6% of the area, well under
+a third of what `H` reconstructs. The artwork is read from `public/icon.svg` at
+runtime, never copied into the renderer.
 
 `size="2xl"` (192px) is the smallest rendering at which every module rasterises
 correctly, so it is the only one that makes the "scan me" promise true — which is
@@ -315,7 +330,46 @@ header's locale switcher was `size="sm"` (28px) beside `md` buttons (32px) — a
 4px mismatch on top of the perceptual one. Form controls default to `md` (§3.2),
 which matches `md` buttons, so the fix is to pass no `size` at all.
 
-### 2.4 Interactive elements need a pointer cursor
+### 2.4 A crowded toolbar collapses its labels — all of them, together
+
+An action cluster that runs out of room drops its **labels**, not its buttons, and
+only below the width where the labelled version stops fitting:
+
+```html
+<UButton
+  icon="i-lucide-history"
+  size="sm"
+  :class="COMPACT_BTN"
+  :aria-label="t('history.title')"
+  :title="t('history.title')"
+>
+  <span :class="COMPACT_LABEL">{{ t('history.title') }}</span>
+</UButton>
+<!-- COMPACT_LABEL = 'hidden sm:inline'   COMPACT_BTN = 'max-sm:gap-0' -->
+```
+
+Rules that make this work rather than merely look clever:
+
+- **All or none.** A whole row of icons is a toolbar and reads as one. A single
+  icon among labelled siblings reads as a link whose text failed to load — that
+  shipped once in the header nav and was reported as a bug within the hour. Rank
+  is expressed by `variant`, never by withholding a word.
+- **The breakpoint is measured, not chosen.** Collapse at the width where the
+  labelled cluster no longer fits, and not one step earlier: the recipe header's
+  cluster is 578px, `sm` (640px) is the first width where that fits, so `sm` is
+  the switch. Hiding labels where there is room spends clarity for nothing.
+- **A hidden span, not a second set of buttons.** `hidden sm:inline` keeps one
+  element with one `data-tour` anchor. Duplicating the row behind `sm:hidden` /
+  `hidden sm:flex` puts every anchor in the DOM twice, and `TourOverlay` takes the
+  first match — which would be whichever copy is currently hidden.
+- **`aria-label` and `title` on every one.** `display:none` removes the span from
+  the accessibility tree, so a collapsed button has no accessible name without the
+  former; the latter is how a mouse user checks an icon they do not recognise.
+  Both carry the same string as the visible label (WCAG 2.5.3).
+- **A count is not a label.** The star keeps its number at every width — it is
+  information, not a name for the control.
+
+### 2.5 Interactive elements need a pointer cursor
 
 Tailwind v3's preflight set `cursor: pointer` on `button`; **v4 removed it** and
 defers to the browser default (`cursor: default`). After the v4 migration every

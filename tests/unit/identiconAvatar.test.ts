@@ -1,7 +1,17 @@
 import { describe, it, expect } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import QRCode from 'qrcode'
 import sharp from 'sharp'
-import { renderIdenticonAvatar, qrGeometry } from '../../server/utils/identiconAvatar'
+import { renderIdenticonAvatar, qrGeometry, parseBrandMark } from '../../server/utils/identiconAvatar'
+
+/**
+ * The real brand mark, read from the same file the endpoint serves it from — so this
+ * exercises the actual artwork rather than a fixture that can drift away from it.
+ */
+// `process.cwd()`, not `import.meta.url`: under happy-dom `import.meta.url` is an http URL
+// and `readFileSync` rejects it. Vitest runs from the repo root.
+const LOGO = parseBrandMark(readFileSync(resolve(process.cwd(), 'public/icon.svg'), 'utf8'))
 
 /**
  * The fallback avatar has one requirement that is not a matter of taste: **it must still
@@ -38,9 +48,15 @@ async function rasterise(svg: string, pixels: number) {
   return sharp(Buffer.from(sized)).raw().toBuffer({ resolveWithObject: true })
 }
 
-async function sampleModules(username: string, pixels: number) {
-  const svg = await renderIdenticonAvatar({ username, origin: ORIGIN })
-  const truth = QRCode.create(`${ORIGIN}/${username}`, { errorCorrectionLevel: 'M' })
+/**
+ * @param withLogo when true, the badge carries the centre mark — which raises the error
+ *   correction to `H` and deliberately destroys the modules under it. Those are reported
+ *   separately as `covered`; `mismatches` counts only modules that should have survived.
+ */
+async function sampleModules(username: string, pixels: number, withLogo = false) {
+  const logo = withLogo ? LOGO : null
+  const svg = await renderIdenticonAvatar({ username, origin: ORIGIN, logo })
+  const truth = QRCode.create(`${ORIGIN}/${username}`, { errorCorrectionLevel: withLogo ? 'H' : 'M' })
   const n = truth.modules.size
   const { tile, origin, module } = qrGeometry(n)
 
@@ -54,14 +70,26 @@ async function sampleModules(username: string, pixels: number) {
     return luma(data[i]!, data[i + 1]!, data[i + 2]!)
   }
 
+  // Mirrors `LOGO_FRACTION` and the pad in the renderer, with a module of slack, so the
+  // knockout's own footprint is attributed to the logo rather than reported as damage.
+  const span = n * module
+  const size = withLogo ? span * 0.24 : 0
+  const lo = origin + (span - size) / 2 - module * 1.6
+  const hi = origin + (span + size) / 2 + module * 1.6
+
   let mismatches = 0
+  let covered = 0
   const light: number[] = []
   const dark: number[] = []
   for (let r = 0; r < n; r++) {
     for (let c = 0; c < n; c++) {
-      const px = Math.round((origin + (c + 0.5) * module) * scale)
-      const py = Math.round((origin + (r + 0.5) * module) * scale)
-      const value = at(px, py)
+      const ux = origin + (c + 0.5) * module
+      const uy = origin + (r + 0.5) * module
+      if (withLogo && ux > lo && ux < hi && uy > lo && uy < hi) {
+        covered++
+        continue
+      }
+      const value = at(Math.round(ux * scale), Math.round(uy * scale))
       const expected = truth.modules.data[r * n + c] === 1
       ;(expected ? dark : light).push(value)
       // 128 is the midpoint a naive binariser uses; real ones adapt, so passing at the
@@ -73,6 +101,7 @@ async function sampleModules(username: string, pixels: number) {
   return {
     n,
     mismatches,
+    covered,
     total: n * n,
     maxDark: Math.max(...dark),
     minLight: Math.min(...light),
@@ -125,6 +154,51 @@ describe('identicon avatar — machine readability', () => {
     for (const username of ['ab_cd', 'margin_check', 'gourmerge_user']) {
       const { mismatches, total } = await sampleModules(username, 160)
       expect(mismatches / total, `${username}: ${mismatches}/${total} modules wrong`).toBeLessThan(0.02)
+    }
+  })
+
+  /**
+   * The centre logo is the only thing here that damages the symbol on purpose, so the size
+   * of that damage is the number worth pinning — and the two claims either side of it.
+   *
+   * `covered` is a deliberate **over-estimate**: the box excludes the knockout (24% of the
+   * width, ~5.8% of the area), plus the plate pad around it, plus a module of measurement
+   * slack, so the true damage is smaller than the figure asserted. `H` reconstructs 30% of
+   * the codewords, so even the over-estimate leaves better than half the budget unspent.
+   *
+   * **The two sizes are not arbitrary.** `H` grows the symbol — 37 modules where `M` needed
+   * 29 — so each one is smaller at the same box. 256 device pixels is where the render is
+   * exact, and that is the number that describes reality: the profile badge is a 192 CSS-px
+   * box, and a phone held up to a screen is looking at its *device* pixels, so any display
+   * at 2× or better renders it at 384+. 192 is therefore the 1×-display worst case, and it
+   * is allowed a fraction of a percent of antialiasing noise — three modules of 1369, against
+   * the 30% of codewords `H` reconstructs.
+   */
+  it('the centre logo destroys only a small, budgeted share of the symbol', async () => {
+    expect(LOGO, 'public/icon.svg did not parse — the badge would silently lose its logo').not.toBeNull()
+
+    for (const username of ['gourmerge_user', 'ab_cd', 'a_very_long_username_here']) {
+      const { mismatches, covered, total, n } = await sampleModules(username, 256, true)
+      // eslint-disable-next-line no-console -- the measured numbers are the point of the run
+      console.log(`  ${username}: n=${n} covered≤${covered}/${total} (${((covered / total) * 100).toFixed(1)}%)`)
+      expect(covered, `${username}: the logo covered nothing — is it being drawn?`).toBeGreaterThan(0)
+      expect(covered / total, `${username}: the logo eats ${covered}/${total} modules`).toBeLessThan(0.15)
+      expect(mismatches, `${username}: ${mismatches} modules outside the logo read wrongly at 256px`).toBe(0)
+
+      /**
+       * The 1×-display worst case, budgeted rather than required to be perfect.
+       *
+       * Measured: 0 wrong for a 33-module symbol, 19 of 1681 (**1.1%**) for the densest one
+       * a 25-character username produces. `H` reconstructs 30% of the codewords, so 1.1% of
+       * modules blurring at the threshold is deep inside the budget — and it only happens on
+       * a 1× display, which a phone camera pointed at a screen almost never is. 2% is the
+       * line: past that something structural has changed, not antialiasing.
+       */
+      const small = await sampleModules(username, 192, true)
+      expect(
+        small.mismatches / small.total,
+        `${username}: ${small.mismatches}/${small.total} modules wrong at 192px`
+      ).toBeLessThan(0.02)
     }
   })
 
@@ -199,16 +273,17 @@ describe('identicon avatar — identity and safety', () => {
 
   it('stays inside the two brand ramps — no per-user hue', async () => {
     // DESIGNBOOK §1.3: individuality comes from geometry, not from inventing a palette.
+    // Every value here is a `--color-{primary,secondary}-*` token from main.css.
     const ALLOWED = new Set([
-      '#fcedd1',
-      '#f6bb6a',
-      '#dd7d00',
-      '#381706',
-      '#d7f0d9',
-      '#91c985',
-      '#578b35',
-      '#121904',
-      '#fff8ea',
+      '#fcedd1', // primary-100  wash
+      '#f6bb6a', // primary-300  soft
+      '#dd7d00', // primary-500  accent
+      '#7e3a06', // primary-800  ink
+      '#fff8ea', // primary-50   plate
+      '#d7f0d9', // secondary-100
+      '#91c985', // secondary-300
+      '#578b35', // secondary-500
+      '#3a5713', // secondary-700
     ])
     for (const username of ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight']) {
       const svg = await renderIdenticonAvatar({ username, origin: ORIGIN })
@@ -242,8 +317,10 @@ describe('identicon avatar — identity and safety', () => {
   })
 
   it('emits only shapes — no script, no external reference, no foreignObject', async () => {
-    const svg = await renderIdenticonAvatar({ username: 'safe_user', origin: ORIGIN })
-    expect(svg).not.toMatch(/<script|foreignObject|xlink:href|<image|javascript:/i)
+    // With the logo too: it is the one part assembled from a file on disk rather than from
+    // shapes this module generates, so it is the one that could smuggle something in.
+    const svg = await renderIdenticonAvatar({ username: 'safe_user', origin: ORIGIN, logo: LOGO })
+    expect(svg).not.toMatch(/<script|foreignObject|xlink:href|<image|javascript:|on[a-z]+=/i)
     // The username is the one piece of caller-controlled text in the document.
     const withAngle = await renderIdenticonAvatar({ username: 'a<b>c', origin: ORIGIN })
     expect(withAngle).not.toContain('<b>')

@@ -401,6 +401,19 @@ export default defineNuxtConfig({
   // ── Nitro server preset (Passenger uses node-server) ────────
   nitro: {
     preset: 'node-server',
+    /**
+     * The brand mark, readable from server code.
+     *
+     * `/api/users/:username/avatar` sets the chef's hat into the middle of the generated QR
+     * badge, and it needs the path data at render time. The alternative was a third
+     * hand-copied copy of ~4 KB of `d` attributes (the other two being `BrandLogo.vue` and
+     * `public/icon.svg`), which is a third thing to forget when the logo changes.
+     *
+     * `public/` is served statically and is NOT otherwise reachable from the server bundle —
+     * Nitro ships it as flat files, not as importable modules — so a server asset is the
+     * supported way to read one at runtime. Read via `useStorage('assets:brand')`.
+     */
+    serverAssets: [{ baseName: 'brand', dir: '../public' }],
   },
 
   // ── Dev Tools ───────────────────────────────────────────────

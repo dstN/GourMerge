@@ -12,39 +12,43 @@
  * light everywhere, so any texture under the data area either destroys the read or has to
  * be so faint it is not a pattern at all. Both outcomes are worse than not doing it.
  *
- * So the identicon is the **frame** and the QR sits on an opaque plate at the centre —
- * literally an identicon with a code set into it, and both halves keep their job. The frame
- * is a genuine 9×9 mirrored identicon grid laid over the whole tile whose interior is
- * covered by the plate, which is why it reads as one object rather than as a sticker on
- * wallpaper.
+ * So the identicon is the **frame**, the QR sits on an opaque plate at the centre, and the
+ * chef's hat is set into the middle of the code — an identicon with a code in it, and a code
+ * with the brand in it, each half still doing its job. The frame is a genuine 9×9 mirrored
+ * identicon grid laid over the whole tile whose interior the plate covers, which is why it
+ * reads as one object rather than as a sticker on wallpaper.
  *
  * ## What makes it still scan
  *
- * 1. **Contrast.** Modules are the ramp's 950 on the 50 — 15:1. Brand saffron *as the
- *    module colour* measures about 2:1 on cream and would be decorative nonsense.
+ * Every one of these was arrived at by rasterising the real SVG and sampling the centre of
+ * every module against the matrix `qrcode` produced (`tests/unit/identiconAvatar.test.ts`).
+ * None of it is safe by inspection, and three of the five were bugs first.
+ *
+ * 1. **Contrast, but not black.** Modules are the ramp's **800/700** on the 50 — about
+ *    **8:1**, roughly double what a decoder needs. The 950s measured 15:1 and read as
+ *    brown-on-sand rather than as this product; the 600 drops to 3.9:1, which is where a
+ *    phone in warm light starts guessing. See `RAMPS`.
  * 2. **A quiet zone.** Two modules of plate on every side, inside the plate's own padding.
  *    Decoders fail without it far more often than they fail on styling.
- * 3. **Intact finder patterns.** The three eyes are drawn as rounded squares — corner
- *    radius is tolerated, losing the ring structure is not — and no data dot is drawn
- *    inside their 8×8 reserved area.
+ * 3. **Intact finder patterns.** The eyes are rounded squares — corner radius is tolerated,
+ *    losing the 1:1:3:1:1 ring is not — and no data dot is drawn in their 8×8 reserved area.
+ *    The radius is bounded by geometry, not taste; see the note above `EYE_RX`.
  * 4. **Generous dots.** Radius 0.47 of a module, so adjacent dark modules nearly touch.
  *    Prettier and smaller loses ink until binarisation starts dropping modules.
- * 5. **Enough pixels per module**, which is the constraint everything else was tuned
- *    against. `tests/unit/identiconAvatar.test.ts` rasterises the real SVG and samples every
- *    module centre; the numbers that came out of it are:
+ * 5. **Enough pixels per module.** This is the constraint everything else was tuned against,
+ *    and the centre logo made it tighter: a logo needs error correction `H`, `H` needs a
+ *    bigger symbol for the same URL (37 modules where `M` needed 29), and a bigger symbol
+ *    means smaller modules at the same box.
  *
- *    | rendered | px/module | modules read wrongly |
- *    | -------- | --------- | -------------------- |
- *    | 128 px   | 2.5–3.2   | 3–77                 |
- *    | 160 px   | 3.2–4.1   | 0–3                  |
- *    | 192 px   | 3.8–4.9   | **0**                |
- *    | 256 px+  | 5.1+      | **0**                |
+ *    Measured with the logo, the badge is exact from **256 device pixels**, with a couple of
+ *    antialiased modules at 192. That is not the problem it sounds like: the profile page
+ *    renders a 192 **CSS**-pixel box, and a phone held up to a screen sees its *device*
+ *    pixels — so anything at 2× or better is rendering at 384+. 192 is the 1×-display worst
+ *    case, and a stray module there costs a fraction of a percent against the 30% of
+ *    codewords `H` reconstructs.
  *
- *    That table is why the identicon band is one cell of a **9×9** grid rather than a 7×7:
- *    the thinner frame buys ~13% module size, and it is the difference between "0 wrong at
- *    192 px" and "2 wrong". It is also why `<CommonUserAvatar size="2xl">` (192 px) exists
- *    and is what the profile page uses — the one place a stranger would point a camera.
- *    Below `md` the badge is an identity mark, not a scanning target, and that is fine.
+ *    It is also why the identicon band is one cell of a **9×9** grid rather than a 7×7: the
+ *    thinner frame buys ~13% module size, and that margin is what the logo then spent.
  *
  * ## Colour
  *
@@ -57,19 +61,47 @@
  * `app/assets/css/main.css` and must be kept in step with them. They are duplicated rather
  * than read because this runs on the server, where the stylesheet does not exist, and
  * emitted as hex rather than `oklch()` so the contrast a decoder sees never depends on the
- * browser's colour support.
+ * browser's colour support. A unit test asserts no other colour is ever emitted.
  */
 import { createHash } from 'node:crypto'
 import QRCode from 'qrcode'
 
-/** sRGB of the `--color-{primary,secondary}-*` tokens in main.css. Keep in step. */
+/**
+ * sRGB of the `--color-{primary,secondary}-*` tokens in main.css. Keep in step.
+ *
+ * `ink` is **primary-800 / secondary-700**, not the 950s it started as. A QR's modules do
+ * not have to be black — they have to *binarise* — and the 950s were so dark that the
+ * result read as brown-on-sand rather than as this product. Measured against the plate:
+ *
+ * | ink                     | contrast on #fff8ea |
+ * | ----------------------- | ------------------- |
+ * | primary-950 `#381706`   | 15.4:1 (near-black) |
+ * | **primary-800 `#7e3a06`** | **8.0:1**         |
+ * | primary-700 `#a34d00`   | 5.5:1               |
+ * | primary-600 `#c26300`   | 3.9:1 ← too close   |
+ *
+ * 8:1 is roughly double what a decoder needs and the colour is unmistakably saffron, so
+ * this is brand identity bought for nothing. The 600 is where it stops being free: at
+ * 3.9:1 a phone in warm light starts guessing, and a QR that only *usually* scans is worse
+ * than one that is a shade darker.
+ */
 const RAMPS = {
-  primary: { wash: '#fcedd1', soft: '#f6bb6a', accent: '#dd7d00', ink: '#381706' },
-  secondary: { wash: '#d7f0d9', soft: '#91c985', accent: '#578b35', ink: '#121904' },
+  primary: { wash: '#fcedd1', soft: '#f6bb6a', accent: '#dd7d00', ink: '#7e3a06' },
+  secondary: { wash: '#d7f0d9', soft: '#91c985', accent: '#578b35', ink: '#3a5713' },
 } as const
 
 /** `--color-primary-50`. One plate colour for both ramps, so ink contrast is a constant. */
 const PLATE = '#fff8ea'
+
+/**
+ * How much of the symbol's width the centre logo knockout takes.
+ *
+ * 0.24 of the width is ~5.8% of the **area**. The usual ceiling quoted for a centre mark is
+ * 25–30% of area, and error correction `H` recovers 30% of the codewords, so this is a
+ * quarter of the budget — deliberately conservative, because the damage is concentrated in
+ * one place rather than spread out, which is the harder case for the Reed–Solomon blocks.
+ */
+const LOGO_FRACTION = 0.24
 
 /** The tile is a 100-unit square; every dimension below is in those units. */
 const TILE = 100
@@ -105,12 +137,44 @@ const QUIET = 2
  */
 export type AvatarVariant = 'badge' | 'mark'
 
+export interface BrandMark {
+  viewBox: string
+  transform: string
+  paths: string[]
+}
+
+/**
+ * Pull the chef's hat out of `public/icon.svg`.
+ *
+ * The mark is **not** duplicated into this file. It is ~4 KB of path data that also lives in
+ * `BrandLogo.vue`, and a third hand-copied version is a third thing to forget when the logo
+ * changes. The caller passes the file's contents in — the endpoint reads it as a Nitro
+ * server asset, the unit test reads it with `fs` — so both exercise the real artwork.
+ *
+ * Returns `null` on anything unexpected rather than throwing: a missing or restructured
+ * icon file must degrade to a badge without a logo, not to a 500 on an `<img src>` that
+ * sits in the header of every page.
+ */
+export function parseBrandMark(svg: string | null | undefined): BrandMark | null {
+  if (!svg) return null
+  const viewBox = /viewBox="([^"]+)"/.exec(svg)?.[1]
+  const transform = /<g[^>]*\stransform="([^"]+)"/.exec(svg)?.[1]
+  const paths = [...svg.matchAll(/<path[^>]*\sd="([\s\S]*?)"/g)].map((m) => m[1]!.replace(/\s+/g, ' ').trim())
+  if (!viewBox || !transform || paths.length === 0) return null
+  return { viewBox, transform, paths }
+}
+
 export interface IdenticonAvatarOptions {
   username: string
   /** Absolute origin, e.g. `https://gourmerge.de`. The QR encodes `${origin}/${username}`. */
   origin: string
   /** Defaults to `badge`. See {@link AvatarVariant}. */
   variant?: AvatarVariant
+  /**
+   * The brand mark to set into the middle of the code. Omit for a plain symbol — the
+   * `mark` variant ignores it either way.
+   */
+  logo?: BrandMark | null
 }
 
 /** The mark's grid. Coarse on purpose — 5×5 is what still reads at 24px. */
@@ -212,6 +276,7 @@ export async function renderIdenticonAvatar({
   username,
   origin,
   variant = 'badge',
+  logo = null,
 }: IdenticonAvatarOptions): Promise<string> {
   const seed = seedOf(username)
   const ramp = seed[0]! % 2 === 0 ? RAMPS.primary : RAMPS.secondary
@@ -227,17 +292,46 @@ export async function renderIdenticonAvatar({
   const cells = identiconCells(seed, GRID, true, 8)
 
   /**
-   * Error correction `M` (15%), not `L`. The dot styling already spends some of the
-   * decoder's tolerance — every module is a circle inscribed in its square, so the ink a
-   * blur sees is ~74% of a solid block — and `M` is what buys that back. `H` would add
-   * roughly a third more modules, making each one smaller at the same pixel size, which
-   * costs more than the redundancy gains at avatar scale.
+   * Error correction **`H` (30%) when a logo is set into the middle, `M` (15%) otherwise.**
+   *
+   * This is not a preference, it is the price of the logo. Knocking a hole in the centre
+   * destroys the modules underneath, and `H` is the level that can reconstruct them. The
+   * cost is real and worth stating: `H` needs a bigger symbol for the same URL, so each
+   * module is smaller at the same rendered size — measured, ~12% smaller. That is affordable
+   * only because the badge is rendered at 192px where there was headroom; it is exactly the
+   * headroom the 9×9 bezel and the tight plate padding bought earlier.
+   *
+   * Without a logo `M` still wins: the dot styling already spends some tolerance (a circle
+   * inscribed in its square is ~74% of a solid block), and `M` buys that back without
+   * shrinking anything.
    */
-  const qr = QRCode.create(`${origin}/${username}`, { errorCorrectionLevel: 'M' })
+  const qr = QRCode.create(`${origin}/${username}`, { errorCorrectionLevel: logo ? 'H' : 'M' })
   const n = qr.modules.size
   const dark = (r: number, c: number) => qr.modules.data[r * n + c] === 1
 
   const { origin: qrOrigin, module } = qrGeometry(n)
+
+  /**
+   * The centred square the logo occupies, in tile units. Empty when there is no logo.
+   *
+   * `logoPad` is the plate-coloured ring drawn around the mark, and the skip test below uses
+   * **the same number** plus a hair. That is not tidiness: the pad is painted after the
+   * dots, so any dot the skip missed but the pad covers gets silently erased — it reads
+   * light where the matrix says dark, and the module is simply lost. The first version had a
+   * skip of 0.6 modules against a pad of 0.9 and lost exactly the ring between them, which
+   * the rasterise-and-sample test caught as one stray module. One constant, both uses.
+   */
+  const qrSpan = n * module
+  const logoSize = logo ? qrSpan * LOGO_FRACTION : 0
+  const logoLeft = qrOrigin + (qrSpan - logoSize) / 2
+  const logoPad = module * 0.9
+  const skip = logoPad + module * 0.1
+  const inLogo = (px: number, py: number) =>
+    logo !== null &&
+    px > logoLeft - skip &&
+    px < logoLeft + logoSize + skip &&
+    py > logoLeft - skip &&
+    py < logoLeft + logoSize + skip
 
   const parts: string[] = []
 
@@ -278,10 +372,14 @@ export async function renderIdenticonAvatar({
   for (let r = 0; r < n; r++) {
     for (let c = 0; c < n; c++) {
       if (!dark(r, c) || inFinder(r, c)) continue
+      const cx = x(c) + module / 2
+      const cy = y(r) + module / 2
+      // Skipped rather than painted-over: a dot half-under the knockout would poke out past
+      // its rounded corners, and the quiet ring around the logo is what keeps the mark
+      // legible as a mark instead of as a smudge in a field of dots.
+      if (inLogo(cx, cy)) continue
       parts.push(
-        `<circle cx="${(x(c) + module / 2).toFixed(3)}" cy="${(y(r) + module / 2).toFixed(3)}" r="${(
-          module * 0.47
-        ).toFixed(3)}" fill="${ramp.ink}"/>`
+        `<circle cx="${cx.toFixed(3)}" cy="${cy.toFixed(3)}" r="${(module * 0.47).toFixed(3)}" fill="${ramp.ink}"/>`
       )
     }
   }
@@ -299,7 +397,7 @@ export async function renderIdenticonAvatar({
    * `tests/unit/identiconAvatar.test.ts` is what caught. These values keep a comfortable
    * margin under that bound.
    */
-  const EYE_RX = 1
+  const EYE_RX = 0.8
   const WINDOW_RX = 0.8
   const CORE_RX = 0.6
   for (const [fr, fc] of [
@@ -314,6 +412,35 @@ export async function renderIdenticonAvatar({
         module * span
       ).toFixed(3)}" height="${(module * span).toFixed(3)}" rx="${(module * rx).toFixed(3)}" fill="${fill}"/>`
     parts.push(rect(0, 7, EYE_RX, ramp.ink), rect(1, 5, WINDOW_RX, PLATE), rect(2, 3, CORE_RX, ramp.ink))
+  }
+
+  /**
+   * The chef's hat, set into the middle.
+   *
+   * Drawn last so it sits over anything the skip above did not catch, on its own
+   * plate-coloured pad — the pad is what gives the mark a quiet ring and stops it reading as
+   * a smudge among the dots. A **nested `<svg>`** rather than a transformed `<g>`: the mark
+   * carries its own `viewBox` and an internal `translate/scale`, and re-deriving that as one
+   * matrix is arithmetic nobody would ever check. The nested element does it exactly.
+   *
+   * `ramp.accent` (the 500), not `ramp.ink`: the logo is not a module, so it does not owe
+   * the decoder any contrast, and the saturated saffron is the point of putting it there.
+   */
+  if (logo) {
+    parts.push(
+      `<rect x="${(logoLeft - logoPad).toFixed(3)}" y="${(logoLeft - logoPad).toFixed(3)}" width="${(
+        logoSize +
+        2 * logoPad
+      ).toFixed(3)}" height="${(logoSize + 2 * logoPad).toFixed(3)}" rx="${(module * 1.4).toFixed(
+        3
+      )}" fill="${PLATE}"/>`,
+      `<svg x="${logoLeft.toFixed(3)}" y="${logoLeft.toFixed(3)}" width="${logoSize.toFixed(3)}" height="${logoSize.toFixed(
+        3
+      )}" viewBox="${logo.viewBox}" preserveAspectRatio="xMidYMid meet">` +
+        `<g transform="${logo.transform}" fill="${ramp.accent}" stroke="none">` +
+        logo.paths.map((d) => `<path d="${d}"/>`).join('') +
+        `</g></svg>`
+    )
   }
 
   return document(parts.join(''))

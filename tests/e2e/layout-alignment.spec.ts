@@ -203,7 +203,7 @@ test.describe('logo / content alignment', () => {
     }, user)
 
     const url = `/${recipe.owner.username}/${recipe.slug}`
-    for (const width of [390, 640, 768, 900, 1024, 1280]) {
+    for (const width of [390, 500, 640, 768, 900, 1024, 1280]) {
       await page.setViewportSize({ width, height: 900 })
       await page.goto(url, { waitUntil: 'load' })
       await page.waitForTimeout(500)
@@ -215,14 +215,33 @@ test.describe('logo / content alignment', () => {
         const shell = document.querySelector('.page-shell') as HTMLElement
         const cs = getComputedStyle(shell)
         const inner = shell.getBoundingClientRect().width - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight)
+        // How many lines the buttons occupy, by counting distinct top offsets.
+        const buttons = [...cluster.querySelectorAll('a,button')] as HTMLElement[]
         return {
           inner: Math.round(inner),
           rowScroll: Math.round(row.scrollWidth),
           identW: Math.round(ident.getBoundingClientRect().width),
+          buttonLines: new Set(buttons.map((b) => Math.round(b.getBoundingClientRect().top))).size,
+          /**
+           * A visible text label on an action, as opposed to a count.
+           *
+           * The star's number and the two trailing count badges are `UBadge`s and legitimate
+           * at every width — a count is information, not a name — so this looks for a
+           * `data-slot="label"` on the buttons themselves, which is what Nuxt UI renders for
+           * a `label` prop and what would come back if someone re-added one.
+           */
+          labelsVisible: [...cluster.querySelectorAll('a,button')].some((b) =>
+            [...b.querySelectorAll('span')].some(
+              (s) => s.getAttribute('data-slot') === 'label' && s.textContent!.trim().length > 2
+            )
+          ),
         }
       })
       // eslint-disable-next-line no-console -- the measured numbers are the point of the run
-      console.log(`  ${String(width).padStart(4)}px  inner=${m.inner} row=${m.rowScroll} identity=${m.identW}`)
+      console.log(
+        `  ${String(width).padStart(4)}px  inner=${m.inner} row=${m.rowScroll} identity=${m.identW} ` +
+          `buttonLines=${m.buttonLines} labels=${m.labelsVisible}`
+      )
 
       expect(m.rowScroll, `the header row overflows its column at ${width}px`).toBeLessThanOrEqual(m.inner + 1)
       expect(m.identW, `the recipe name was squeezed to nothing at ${width}px`).toBeGreaterThan(0)
@@ -230,6 +249,13 @@ test.describe('logo / content alignment', () => {
         m.identW / m.inner,
         `at ${width}px the buttons left the recipe name only ${Math.round((m.identW / m.inner) * 100)}% of the row`
       ).toBeGreaterThan(0.4)
+
+      // Icon-only at EVERY width, so the cluster is always one line. Labelled it was
+      // 578px against a reading column capped at 832px, which wrapped to two ragged rows
+      // even at 2560px — a wider screen buys a `content` page nothing. See DESIGNBOOK §2.4:
+      // all of them collapse together, never one icon among labelled siblings.
+      expect(m.labelsVisible, `the actions must stay icon-only at ${width}px`).toBe(false)
+      expect(m.buttonLines, `the action cluster wrapped to ${m.buttonLines} lines at ${width}px`).toBe(1)
     }
   })
 
