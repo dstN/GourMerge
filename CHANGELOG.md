@@ -125,6 +125,35 @@ MySQL and against production before anyone touches a timezone setting.
 left over from an earlier draft of the [1.6.0] avatar work, caught only while running the
 full gate for this release rather than by anything specific to it. Removed.
 
+### Fixed — the generated avatar's chef's-hat logo never actually appeared in production
+
+Reported as "prod is orange with no logo, dev is green with a logo" against the same
+account. Only half of that was real: the colour is `sha256(username)`-deterministic
+between exactly two brand ramps, so orange was already the correct answer for that
+username on both — the dev screenshot was almost certainly a stale local browser cache
+(see the second fix below), not a second bug.
+
+The missing logo was real. `getBrandMark()` reads `public/icon.svg` through Nitro's
+server-assets storage and only accepted a plain string back. Under `npm run dev` that is
+exactly what arrives — a filesystem read — but the **built** server resolves the same
+asset to a `Uint8Array`, which the `typeof` check silently rejected, `parseBrandMark()`
+got `null`, and every production badge quietly lost its centre mark with no error
+anywhere to notice by. Fixed by decoding the byte case explicitly.
+
+`tests/e2e/nav.spec.ts`'s avatar test asserted the SVG was well-formed and non-trivially
+long, never that the logo was actually in it — a bare identicon-plus-QR passed exactly as
+well as one with the mark, so this regression shipped silently. The missing assertion is
+now there, and it only means anything run against a **built** artifact, which is what
+caught the `Uint8Array`-vs-string gap in the first place.
+
+**A second, independent finding while chasing the first:** the badge's `Cache-Control` is
+`immutable, max-age=604800`, and its rendering had already changed shape twice in one day
+(colour inversion, then this logo) before this fix. Any browser that cached a user's badge
+before either change keeps serving those exact bytes for up to a week — `immutable` means
+it will not even ask. `CommonUserAvatar.vue` now appends a render-version query parameter,
+so the next deliberate change to the renderer's output invalidates every existing cache
+instead of a browser quietly serving last week's look forever.
+
 ## [1.6.0] — 2026-08-09
 
 Two features the collaboration loop was missing, one that was ruled out by an old decision
