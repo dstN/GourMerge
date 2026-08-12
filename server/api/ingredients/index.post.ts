@@ -92,9 +92,12 @@ export default defineEventHandler(async (event) => {
       energyKcal100g: nutrition!.energyKcal100g ?? null,
       protein100g: nutrition!.protein100g ?? null,
       carbs100g: nutrition!.carbs100g ?? null,
+      sugars100g: nutrition!.sugars100g ?? null,
       fat100g: nutrition!.fat100g ?? null,
-      fiber100g: nutrition!.fiber100g ?? null,
       saturatedFat100g: nutrition!.saturatedFat100g ?? null,
+      fiber100g: nutrition!.fiber100g ?? null,
+      salt100g: nutrition!.salt100g ?? null,
+      gramsPerPiece: nutrition!.gramsPerPiece ?? null,
       micros: microsToStore(nutrition!.micros),
       // Distinguishable from the Swiss BLV import, so a future re-import knows not to
       // overwrite it and the UI can label it as self-reported.

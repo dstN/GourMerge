@@ -87,7 +87,7 @@ GourMerge/
 ├── shared/types/               # TypeScript types shared app ↔ server
 ├── shared/utils/                # ingredientMicros.ts — vitamin/mineral catalog shared by
 │                                # validation, input forms and NutritionFacts.vue
-├── i18n/locales/               # de.json, en.json, fr.json, it.json (710 keys, 4-way parity)
+├── i18n/locales/               # de.json, en.json, fr.json, it.json (714 keys, 4-way parity)
 ├── scripts/                    # Maintenance + setup scripts (see §8)
 ├── public/                     # PWA icons, favicon, apple-touch-icon
 ├── docs/RUNBOOK.md             # Production operations playbook
@@ -459,6 +459,21 @@ The `ingredients` master table is populated from the **Swiss BLV Food Compositio
   (`decimalSchema`) has accepted `,` or `.` all along — switched to `type="text" inputmode="decimal"`
   everywhere. 6 new e2e tests in `tests/e2e/api/ingredients.spec.ts` (delete success/blocked/authz, and a
   manufacturer/comma-decimal-micros round-trip)
+- **Sugar, salt, piece-weight, and a layout bug from the button above (2026-08-12)**: follow-up feedback on the
+  entry above, from actually using it. The new edit-pencil was `v-if`'d onto `IngredientRow.vue` — present only
+  for an owned ingredient — so removing that flex child changed how much width its siblings got, and an owned
+  row's name field rendered a different width than a catalog row's right next to it. Fixed by always rendering
+  the button and toggling `invisible` + `disabled` instead of existence, matching the remove button's own
+  reveal-on-hover mechanism. Also: `ingredients.manufacturer` was written and read back but never shown where a
+  recipe author actually picks an ingredient — now a badge in the autocomplete dropdown, next to category.
+  `ingredient_nutrition.sugars_100g` and `salt_100g` have held Swiss BLV data since v1.0 but were never
+  validated, stored for a user ingredient, or aggregated — wired end to end (validation → POST/PATCH/GET →
+  input forms → `computeNutritionTotals` → `NutritionFacts.vue`, sugars shown as "davon Zucker" under carbs,
+  salt as its own line, same pattern saturated fat already used under fat). And `gramsPerPiece` — the column
+  `toGrams()` has always used for an exact `piece`→grams conversion (falling back to a flagged-approximate
+  100 g guess without it) — finally has an input field, so a user-created ingredient with an accurate per-piece
+  weight (e.g. 60 g for an egg) is no longer stuck with the guess. 3 new e2e tests + 1 unit assertion; a
+  throwaway Playwright check measured the row-width fix directly (344px, same x-offset, owned vs. catalog row)
 - **Reporting / moderation (2026-08-09)**: flag a recipe, a user, a discussion comment, a recipe photo, or an
   ingredient. `reports` is one polymorphic table (`targetKind` + `targetId`, no real FK on the target) rather than five
   near-identical ones. Idempotent per (reporter, target) — resubmitting returns the existing row, guarded by a unique
@@ -563,7 +578,7 @@ The `ingredients` master table is populated from the **Swiss BLV Food Compositio
 
 ### ✓ Complete (test + delivery pipeline)
 
-- **Tests**: **unit** — 304 cases across 24 files (`tests/unit/`: diff, merge incl. resolution, units incl. the display read path, slug, uuid, nutrition, markdown-XSS, emailI18n, i18n-gate, totp, webauthn, seal/pendingTotp, dataRequest, inactivityEmails, ui, likeEscape, imageProbe, identiconAvatar), **86.9% line coverage** against a 75/75/70 gate in CI. **E2E/API/a11y** — 85 Playwright specs across 23 files (`tests/e2e/`): auth lifecycle + authz matrix, recipe CRUD/fork/star, merge conflict-detect → interactive resolve → verify → immutable, discussions, recipe photo + avatar upload, reporting + admin moderation, ingredient create/edit/delete, branch viewing, private-recipe visibility, SSR render, register UI journey, passkey ceremonies over CDP, the guided tour, and axe scans (critical-gated). Run via `npm run test:e2e` + the `E2E` workflow on master
+- **Tests**: **unit** — 304 cases across 24 files (`tests/unit/`: diff, merge incl. resolution, units incl. the display read path, slug, uuid, nutrition, markdown-XSS, emailI18n, i18n-gate, totp, webauthn, seal/pendingTotp, dataRequest, inactivityEmails, ui, likeEscape, imageProbe, identiconAvatar), **86.9% line coverage** against a 75/75/70 gate in CI. **E2E/API/a11y** — 88 Playwright specs across 23 files (`tests/e2e/`): auth lifecycle + authz matrix, recipe CRUD/fork/star, merge conflict-detect → interactive resolve → verify → immutable, discussions, recipe photo + avatar upload, reporting + admin moderation, ingredient create/edit/delete, branch viewing, private-recipe visibility, SSR render, register UI journey, passkey ceremonies over CDP, the guided tour, and axe scans (critical-gated). Run via `npm run test:e2e` + the `E2E` workflow on master
   - `passkey.spec.ts` drives Chrome's **WebAuthn virtual authenticator** over CDP, because nothing weaker proves anything: the browser will not sign without an authenticator and a stubbed `navigator.credentials` would only test the stub — it is what caught both passkey bugs. Two constraints to know before touching it: navigating while an authenticator is attached crashes the renderer, so every ceremony runs on **one page load** via in-page fetches; and it needs `CI=1` (built artifact) like the rest of the suite
 - **CI** (`ci.yml`): lint → **design:check** → format:check → knip → typecheck → i18n → `npm audit` (critical) → migrate → test **with coverage gate** → build → upload artifact. Build stamps `NUXT_SENTRY_RELEASE` = commit SHA
 - **CD** (`deploy.yml`): preflight secrets → E2E gate → `production` environment gate → checkout of the CI-built SHA → migrate from the runner (fail-fast) → **tar-over-ssh** into `.output.new` → atomic rename swap (previous kept as `.output.prev`) → restart → polling smoke test → **auto-rollback on smoke-test failure**. Password auth via `sshpass` over plain `ssh` (Netcup offers no key auth; `rsync` and `gzip` do not exist in the chroot)
@@ -584,6 +599,7 @@ The `ingredients` master table is populated from the **Swiss BLV Food Compositio
 ## 13. Known Quirks and Non-Obvious Decisions
 
 - **`UInput type="number"` coerces to a JS `number` unconditionally** — `Input.vue`'s `updateInput()` checks `props.type === 'number'` directly, not the `.number` v-model modifier the name implies, so a plain `v-model` on a number-type field silently stops being a string the moment a real value is typed (empty stays a string: `looseToNumber('')` is `NaN`, which returns the input unchanged). Broke `NewIngredientModal.vue`'s nutrition fields in production — `.trim()` on the coerced number threw before the request was ever sent (2026-08-12, see CHANGELOG). Bind those fields explicitly with `:model-value` + `@update:model-value="(v) => (x = String(v))"`, same pattern `IngredientRow.vue`'s quantity used. For any decimal input (money, nutrition), also use `type="text" inputmode="decimal"` rather than `type="number"` — the native number input rejects a comma decimal separator in most locales, which matters in a German-first app.
+- **A `v-if`'d trailing button in a flex row changes its siblings' width, not just its own visibility** — `IngredientRow.vue`'s edit-pencil was `v-if`'d on `canEdit`, so an owned row had one more flex child than a catalog row and the (flex-1) name field got less width on the owned row — visibly different, even though the button itself is invisible until hover either way (2026-08-12, see CHANGELOG). Fix for any conditional trailing action in a flex/grid list row: always render it, toggle `invisible` (or `opacity`) + `disabled` instead of `v-if`/`v-show`, so every row reserves the same layout space regardless of which actions apply.
 - **`window.confirm` is suppressed in Chromium dev environments** — always use `UModal` for async confirmations. Replaced in edit page (`onBeforeRouteLeave`).
 - **USelect in Nuxt UI v4** uses `:items` (not `:options`) and requires `value-key="value"` to bind object arrays correctly.
 - **TipTap SSR**: `@tiptap/vue-3` v3 `useEditor` has **no** `immediatelyRender` option (passing it fails typecheck) — SSR safety comes from wrapping `<StepEditor>` in `<ClientOnly>` plus the `v-if="editor"` guard. Empty-state mismatch (`''` vs `'<p></p>'`) causes constant `setContent()` resets — normalize via `isEmpty()` helper.

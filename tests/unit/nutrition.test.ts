@@ -13,9 +13,11 @@ function nutrition(overrides: Partial<IngredientNutritionRow> & { ingredientId: 
     energyKcal100g: '100',
     protein100g: '10',
     carbs100g: '20',
+    sugars100g: '8',
     fat100g: '5',
-    fiber100g: '2',
     saturatedFat100g: '1',
+    fiber100g: '2',
+    salt100g: '0.5',
     densityGPerMl: null,
     gramsPerPiece: null,
     micros: null,
@@ -38,6 +40,8 @@ describe('computeNutritionTotals', () => {
     const totals = computeNutritionTotals([ci(1, '200', 'g')], map([nutrition({ ingredientId: 1 })]))
     expect(totals.kcal).toBe(200) // 100 kcal/100g × 2
     expect(totals.protein).toBe(20)
+    expect(totals.sugars).toBe(16) // 8g/100g × 2
+    expect(totals.salt).toBe(1) // 0.5g/100g × 2
     expect(totals.isApproximate).toBe(false)
     expect(totals.coveredCount).toBe(1)
     expect(totals.missingCount).toBe(0)

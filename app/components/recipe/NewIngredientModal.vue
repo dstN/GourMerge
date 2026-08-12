@@ -53,10 +53,13 @@ const nutrition = ref<Record<MacroKey, string>>({
   fat100g: '',
   saturatedFat100g: '',
   carbs100g: '',
+  sugars100g: '',
   fiber100g: '',
   protein100g: '',
+  salt100g: '',
 })
 const micros = ref(emptyMicros())
+const gramsPerPiece = ref('')
 const saving = ref(false)
 
 const { data: categories } = await useFetch<string[]>('/api/ingredients/categories', { lazy: true, server: false })
@@ -78,6 +81,7 @@ watch(
     microsOpen.value = false
     for (const k of Object.keys(nutrition.value) as MacroKey[]) nutrition.value[k] = ''
     micros.value = emptyMicros()
+    gramsPerPiece.value = ''
   },
   { immediate: true }
 )
@@ -93,6 +97,7 @@ async function submit() {
     const microsPayload = droppedEmpty(micros.value)
     const nutritionPayload = {
       ...macroPayload,
+      ...(gramsPerPiece.value.trim() ? { gramsPerPiece: gramsPerPiece.value.trim() } : {}),
       ...(Object.keys(microsPayload).length ? { micros: microsPayload } : {}),
     }
 
@@ -186,6 +191,17 @@ async function submit() {
                 />
               </UFormField>
             </div>
+
+            <UFormField :label="t('recipe.gramsPerPiece')" :hint="t('recipe.gramsPerPieceHint')">
+              <UInput
+                :model-value="gramsPerPiece"
+                type="text"
+                inputmode="numeric"
+                class="sm:w-48"
+                @update:model-value="(v: string | number) => (gramsPerPiece = String(v))"
+              />
+            </UFormField>
+
             <p class="text-xs text-dimmed italic">{{ t('recipe.nutritionSourceUser') }}</p>
           </div>
         </div>

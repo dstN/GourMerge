@@ -8,6 +8,7 @@ interface IngredientOption {
   name: string
   localeName: string
   category: string | null
+  manufacturer?: string | null
   /** Whether the current viewer created this ingredient and may edit/delete it. */
   canEdit?: boolean
   isNew?: boolean
@@ -138,6 +139,7 @@ watch(
         <span v-else class="flex items-center gap-2">
           <span>{{ option.localeName }}</span>
           <UBadge v-if="option.category" size="xs" variant="soft" color="neutral">{{ option.category }}</UBadge>
+          <UBadge v-if="option.manufacturer" size="xs" variant="soft" color="neutral">{{ option.manufacturer }}</UBadge>
         </span>
       </button>
     </div>

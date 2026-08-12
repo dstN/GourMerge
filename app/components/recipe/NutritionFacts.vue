@@ -30,6 +30,7 @@ function fmt(n: number | null | undefined, decimals = 1) {
 const macros = computed(() => [
   { key: 'protein', label: t('nutrition.protein'), value: current.value.protein, unit: 'g', color: 'bg-macro-protein' },
   { key: 'carbs', label: t('nutrition.carbs'), value: current.value.carbs, unit: 'g', color: 'bg-macro-carbs' },
+  { key: 'sugars', label: t('nutrition.sugars'), value: current.value.sugars, unit: 'g', color: 'bg-warning-500' },
   { key: 'fat', label: t('nutrition.fat'), value: current.value.fat, unit: 'g', color: 'bg-macro-fat' },
   { key: 'fiber', label: t('nutrition.fiber'), value: current.value.fiber, unit: 'g', color: 'bg-success-500' },
   {
@@ -39,6 +40,7 @@ const macros = computed(() => [
     unit: 'g',
     color: 'bg-error-500',
   },
+  { key: 'salt', label: t('nutrition.salt'), value: current.value.salt, unit: 'g', color: 'bg-error-500' },
 ])
 
 // Macro energy ratio bars (protein 4 kcal/g, carbs 4 kcal/g, fat 9 kcal/g)
@@ -103,6 +105,14 @@ const hasMicros = computed(() => vitamins.value.length > 0 || minerals.value.len
           <span class="font-medium">{{ fmt(perServing.carbs, 0) }}g</span>
           <span class="text-muted">{{ t('nutrition.carbs') }}</span>
         </span>
+        <template v-if="perServing.sugars && perServing.sugars > 0">
+          <span class="hidden text-dimmed select-none sm:inline" aria-hidden="true">·</span>
+          <span class="flex items-center gap-1">
+            <span class="inline-block size-2 rounded-full bg-warning-500 shrink-0" />
+            <span class="font-medium">{{ fmt(perServing.sugars, 0) }}g</span>
+            <span class="text-muted">{{ t('nutrition.sugars') }}</span>
+          </span>
+        </template>
         <span class="hidden text-dimmed select-none sm:inline" aria-hidden="true">·</span>
         <span class="flex items-center gap-1">
           <span class="inline-block size-2 rounded-full bg-macro-fat shrink-0" />
@@ -115,6 +125,14 @@ const hasMicros = computed(() => vitamins.value.length > 0 || minerals.value.len
             <span class="inline-block size-2 rounded-full bg-success-500 shrink-0" />
             <span class="font-medium">{{ fmt(perServing.fiber, 0) }}g</span>
             <span class="text-muted">{{ t('nutrition.fiber') }}</span>
+          </span>
+        </template>
+        <template v-if="perServing.salt && perServing.salt > 0">
+          <span class="hidden text-dimmed select-none sm:inline" aria-hidden="true">·</span>
+          <span class="flex items-center gap-1">
+            <span class="inline-block size-2 rounded-full bg-error-500 shrink-0" />
+            <span class="font-medium">{{ fmt(perServing.salt, 1) }}g</span>
+            <span class="text-muted">{{ t('nutrition.salt') }}</span>
           </span>
         </template>
       </div>

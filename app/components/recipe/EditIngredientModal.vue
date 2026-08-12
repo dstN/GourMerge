@@ -28,9 +28,12 @@ interface IngredientDetail {
   energyKcal100g: string | null
   protein100g: string | null
   carbs100g: string | null
+  sugars100g: string | null
   fat100g: string | null
-  fiber100g: string | null
   saturatedFat100g: string | null
+  fiber100g: string | null
+  salt100g: string | null
+  gramsPerPiece: number | null
   micros: Record<string, number> | null
 }
 
@@ -56,10 +59,13 @@ const nutrition = ref<Record<MacroKey, string>>({
   fat100g: '',
   saturatedFat100g: '',
   carbs100g: '',
+  sugars100g: '',
   fiber100g: '',
   protein100g: '',
+  salt100g: '',
 })
 const micros = ref(emptyMicros())
+const gramsPerPiece = ref('')
 
 const { data: categories } = await useFetch<string[]>('/api/ingredients/categories', { lazy: true, server: false })
 const categoryItems = computed(() => (categories.value ?? []).map((c) => ({ label: c, value: c })))
@@ -80,9 +86,12 @@ watch(
         fat100g: detail.fat100g ?? '',
         saturatedFat100g: detail.saturatedFat100g ?? '',
         carbs100g: detail.carbs100g ?? '',
+        sugars100g: detail.sugars100g ?? '',
         fiber100g: detail.fiber100g ?? '',
         protein100g: detail.protein100g ?? '',
+        salt100g: detail.salt100g ?? '',
       }
+      gramsPerPiece.value = detail.gramsPerPiece != null ? String(detail.gramsPerPiece) : ''
       const storedMicros = emptyMicros()
       for (const [k, v] of Object.entries(detail.micros ?? {})) {
         if (k in storedMicros) storedMicros[k as keyof typeof storedMicros] = String(v)
@@ -111,7 +120,7 @@ async function submit() {
         nameTranslations,
         category: category.value.trim() || null,
         manufacturer: manufacturer.value.trim() || null,
-        nutrition: { ...nutrition.value, micros: micros.value },
+        nutrition: { ...nutrition.value, gramsPerPiece: gramsPerPiece.value.trim(), micros: micros.value },
       },
     })
     toast.success(t('recipe.ingredientUpdated'))
@@ -206,6 +215,17 @@ async function confirmDelete() {
                 />
               </UFormField>
             </div>
+
+            <UFormField :label="t('recipe.gramsPerPiece')" :hint="t('recipe.gramsPerPieceHint')">
+              <UInput
+                :model-value="gramsPerPiece"
+                type="text"
+                inputmode="numeric"
+                class="sm:w-48"
+                @update:model-value="(v: string | number) => (gramsPerPiece = String(v))"
+              />
+            </UFormField>
+
             <p class="text-xs text-dimmed italic">{{ t('recipe.nutritionSourceUser') }}</p>
           </div>
         </div>

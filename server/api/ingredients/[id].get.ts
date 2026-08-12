@@ -27,9 +27,12 @@ export default defineEventHandler(async (event) => {
       energyKcal100g: ingredientNutrition.energyKcal100g,
       protein100g: ingredientNutrition.protein100g,
       carbs100g: ingredientNutrition.carbs100g,
+      sugars100g: ingredientNutrition.sugars100g,
       fat100g: ingredientNutrition.fat100g,
-      fiber100g: ingredientNutrition.fiber100g,
       saturatedFat100g: ingredientNutrition.saturatedFat100g,
+      fiber100g: ingredientNutrition.fiber100g,
+      salt100g: ingredientNutrition.salt100g,
+      gramsPerPiece: ingredientNutrition.gramsPerPiece,
       micros: ingredientNutrition.micros,
     })
     .from(ingredients)

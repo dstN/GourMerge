@@ -43,6 +43,7 @@ export default defineEventHandler(async (event) => {
       name: ingredients.name,
       nameTranslations: ingredients.nameTranslations,
       category: ingredients.category,
+      manufacturer: ingredients.manufacturer,
       createdBy: ingredients.createdBy,
       synonyms: ingredients.synonyms,
       energyKcal100g: ingredientNutrition.energyKcal100g,
@@ -77,6 +78,7 @@ export default defineEventHandler(async (event) => {
       name: row.name,
       localeName: translations[locale] ?? translations['en'] ?? row.name,
       category: row.category,
+      manufacturer: row.manufacturer,
       canEdit: !!session?.user && row.createdBy === session.user.id,
       hasNutrition,
       nutrition: hasNutrition

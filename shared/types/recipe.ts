@@ -6,9 +6,11 @@ export interface NutritionTotals {
   kcal: number
   protein: number
   carbs: number
+  sugars: number
   fat: number
-  fiber: number
   saturatedFat: number
+  fiber: number
+  salt: number
   isApproximate: boolean
   missingCount: number
   coveredCount: number

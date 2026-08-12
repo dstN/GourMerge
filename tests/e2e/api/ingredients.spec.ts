@@ -82,6 +82,58 @@ test('manufacturer and micronutrients round-trip, decimal comma included', async
   expect(afterPatch.micros.calcium_mg).toBeCloseTo(33.7, 2)
 })
 
+test('manufacturer shows up in the autocomplete search results', async ({ request }) => {
+  await registerUser(request)
+  const name = `Spec Marke Suche ${Date.now()}`
+  const created = await (await request.post('/api/ingredients', { data: { name, manufacturer: 'Barilla' } })).json()
+
+  const found = await (await request.get(`/api/ingredients?q=${encodeURIComponent(name)}&locale=en`)).json()
+  const hit = found.find((r: { id: number }) => r.id === created.id)
+  expect(hit, 'the new ingredient must be searchable').toBeTruthy()
+  expect(hit.manufacturer).toBe('Barilla')
+})
+
+test('sugars, salt and grams-per-piece round-trip, decimal comma included', async ({ request }) => {
+  await registerUser(request)
+  const created = await (
+    await request.post('/api/ingredients', {
+      data: {
+        name: `Spec Zucker Salz ${Date.now()}`,
+        // `8,5` / `1,2` on purpose — same decimal-comma reasoning as the other macro fields.
+        nutrition: { energyKcal100g: '250', carbs100g: '20', sugars100g: '8,5', salt100g: '1,2', gramsPerPiece: '60' },
+      },
+    })
+  ).json()
+  expect(created.hasNutrition).toBe(true)
+
+  const detail = await (await request.get(`/api/ingredients/${created.id}`)).json()
+  expect(detail.sugars100g).toBe('8.50')
+  expect(detail.salt100g).toBe('1.20')
+  expect(detail.gramsPerPiece).toBe(60)
+
+  // PATCH: clearing sugars/salt (empty string) nulls them out, same rule as the other macros.
+  await request.patch(`/api/ingredients/${created.id}`, {
+    data: { nutrition: { energyKcal100g: '250', carbs100g: '20', sugars100g: '', salt100g: '', gramsPerPiece: '' } },
+  })
+  const afterPatch = await (await request.get(`/api/ingredients/${created.id}`)).json()
+  expect(afterPatch.sugars100g).toBeNull()
+  expect(afterPatch.salt100g).toBeNull()
+  expect(afterPatch.gramsPerPiece).toBeNull()
+})
+
+test('gramsPerPiece rejects a non-positive or fractional value', async ({ request }) => {
+  await registerUser(request)
+  for (const bad of ['0', '-5', '2.5', 'abc']) {
+    const res = await request.post('/api/ingredients', {
+      data: {
+        name: `Spec Stückgewicht ${Date.now()}${Math.random()}`,
+        nutrition: { energyKcal100g: '100', gramsPerPiece: bad },
+      },
+    })
+    expect(res.status(), `gramsPerPiece "${bad}" should not be accepted`).toBe(422)
+  }
+})
+
 test('nutrition is only stored when an energy value is given', async ({ request }) => {
   await registerUser(request)
 

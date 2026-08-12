@@ -5,6 +5,56 @@ All notable changes to GourMerge are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versioning follows [Semantic Versioning](https://semver.org/).
 
+## [1.9.0] — 2026-08-12
+
+Follow-up feedback on 1.8.0's ingredient work, from actually using it: a layout bug in the one
+place the new edit button appears, sugar and salt — two columns the Swiss BLV import has
+always filled in that nothing ever asked a user for — and the "piece" unit's silent 100 g
+guess finally gets a real number to work with.
+
+### Fixed — a custom ingredient's row was visibly narrower than a catalog one
+
+The new edit-pencil button (1.8.0) was `v-if`'d onto `IngredientRow.vue` — present only for an
+ingredient the viewer owns. Absent, not just invisible: removing a flex child changes how much
+width its siblings get, so an owned row's name field rendered at a different width than a
+catalog row's, right next to it in the same list. Fixed by always rendering the button and
+toggling `invisible` + `disabled` instead of existence, the same reveal-on-hover mechanism the
+remove button already used — every row now reserves identical space regardless of ownership.
+
+### Added — a branded product's manufacturer surfaces in the ingredient picker
+
+`ingredients.manufacturer` (added in 1.8.0) was written and read back in the edit dialogs but
+never shown anywhere a recipe author actually picks an ingredient. The autocomplete dropdown
+now shows it as a badge next to the category, the same treatment category already had.
+
+### Added — sugar and salt, the two macro columns nobody ever asked for
+
+`ingredient_nutrition.sugars_100g` and `salt_100g` have held Swiss BLV data since v1.0;
+neither the create/edit dialogs, the validation schema, nor `computeNutritionTotals` ever
+touched them, so a self-reported ingredient's sugar and salt were silently unreachable and a
+recipe's totals never summed them regardless of source. Both now flow end to end: validation,
+POST/PATCH/GET, the input forms (sugars right after carbohydrates, salt last — the order an EU
+nutrition label reads in), aggregation, and `NutritionFacts.vue`'s display, where sugars reads
+as "davon Zucker" under carbs and salt as its own line, mirroring how saturated fat already
+sits under fat.
+
+### Added — a real weight for "piece", instead of a silent 100 g guess
+
+`toGrams()` has always fallen back to treating one `piece` as 100 g when an ingredient has no
+`gramsPerPiece` value — flagged `approximate`, but with no way for a user-created ingredient to
+ever supply a better number (the column has existed since v1.0, filled in by the Swiss BLV
+import for foods like eggs, never exposed to a self-reported one). A "Weight per piece (g)"
+field now sits in both create/edit dialogs, validated as a positive whole number (a fractional
+gram count is never real) and stored in the same `ingredient_nutrition` row as the rest of the
+nutrition data — so, like everything else there, it only takes effect once an energy value is
+also given.
+
+3 new e2e tests in `tests/e2e/api/ingredients.spec.ts` (manufacturer-in-search, sugar/salt/
+piece-weight round-trip incl. decimal comma, piece-weight rejection cases) plus a unit
+assertion in `nutrition.test.ts`. Typecheck, lint, i18n/design gates, the full unit suite and
+the ingredients e2e spec all green; a throwaway Playwright check confirmed the row-width fix
+measures identical (344px, same x-offset) for an owned vs. a catalog ingredient.
+
 ## [1.8.0] — 2026-08-12
 
 A bug report that turned out to be a client-side crash masquerading as a dead server, and

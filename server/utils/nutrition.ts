@@ -22,10 +22,11 @@ export interface IngredientNutritionRow {
   energyKcal100g: string | null
   protein100g: string | null
   carbs100g: string | null
+  sugars100g?: string | null
   fat100g: string | null
-  fiber100g: string | null
   saturatedFat100g: string | null
-  sugar100g?: string | null
+  fiber100g: string | null
+  salt100g?: string | null
   densityGPerMl: string | null
   gramsPerPiece: number | null
   micros?: unknown
@@ -95,9 +96,11 @@ export function computeNutritionTotals(
   let kcal = 0
   let protein = 0
   let carbs = 0
+  let sugars = 0
   let fat = 0
-  let fiber = 0
   let saturatedFat = 0
+  let fiber = 0
+  let salt = 0
   let isApproximate = false
   let missingCount = 0
   let coveredCount = 0
@@ -130,9 +133,11 @@ export function computeNutritionTotals(
     kcal += parseFloat(n.energyKcal100g ?? '0') * factor
     protein += parseFloat(n.protein100g ?? '0') * factor
     carbs += parseFloat(n.carbs100g ?? '0') * factor
+    sugars += parseFloat(n.sugars100g ?? '0') * factor
     fat += parseFloat(n.fat100g ?? '0') * factor
-    fiber += parseFloat(n.fiber100g ?? '0') * factor
     saturatedFat += parseFloat(n.saturatedFat100g ?? '0') * factor
+    fiber += parseFloat(n.fiber100g ?? '0') * factor
+    salt += parseFloat(n.salt100g ?? '0') * factor
     coveredCount++
 
     const micros = n.micros as Record<string, number | null> | null
@@ -156,9 +161,11 @@ export function computeNutritionTotals(
     kcal: round2(kcal),
     protein: round2(protein),
     carbs: round2(carbs),
+    sugars: round2(sugars),
     fat: round2(fat),
-    fiber: round2(fiber),
     saturatedFat: round2(saturatedFat),
+    fiber: round2(fiber),
+    salt: round2(salt),
     isApproximate,
     missingCount,
     coveredCount,
@@ -177,9 +184,11 @@ export function perServing(totals: NutritionTotals, servings: number): Nutrition
     kcal: d(totals.kcal),
     protein: d(totals.protein),
     carbs: d(totals.carbs),
+    sugars: d(totals.sugars),
     fat: d(totals.fat),
-    fiber: d(totals.fiber),
     saturatedFat: d(totals.saturatedFat),
+    fiber: d(totals.fiber),
+    salt: d(totals.salt),
     isApproximate: totals.isApproximate,
     missingCount: totals.missingCount,
     coveredCount: totals.coveredCount,

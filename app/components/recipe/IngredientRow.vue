@@ -32,6 +32,14 @@ const row = computed({
 
 const editOpen = ref(false)
 
+/**
+ * Always rendered (see template) rather than `v-if`, even though it only does something for
+ * an owned ingredient — an absent button changes how much width the flex row's other
+ * children get, so an owned and a non-owned row ended up visibly different widths for their
+ * name field. `invisible` on the disabled state keeps the slot's width without showing it.
+ */
+const canEditRow = computed(() => row.value.canEdit === true && row.value.ingredientId !== null)
+
 const unitOptions = [
   { label: 'g', value: 'g' },
   { label: 'ml', value: 'ml' },
@@ -112,15 +120,17 @@ function update(patch: Partial<IngredientRowData>) {
       />
     </div>
 
-    <!-- Only the row's own creator gets this — same reveal-on-hover treatment as remove,
-         since it is a secondary action on an otherwise plain ingredient list. -->
+    <!-- Only the row's own creator can use this — same reveal-on-hover treatment as remove,
+         since it is a secondary action on an otherwise plain ingredient list. Always
+         rendered, never `v-if`: see `canEditRow`'s comment above. -->
     <UButton
-      v-if="row.canEdit && row.ingredientId !== null"
       icon="i-lucide-pencil"
       color="neutral"
       variant="ghost"
       size="sm"
-      class="mt-0.5 shrink-0 sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
+      class="mt-0.5 shrink-0 sm:transition-opacity"
+      :class="canEditRow ? 'sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100' : 'invisible'"
+      :disabled="!canEditRow"
       :aria-label="t('common.edit')"
       :title="t('common.edit')"
       @click="editOpen = true"
