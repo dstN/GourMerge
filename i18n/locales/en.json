@@ -205,6 +205,11 @@
     "ingredientTranslations": "Names per language",
     "ingredientCategory": "Category",
     "ingredientCategoryPlaceholder": "e.g. vegetable, spice, dairy",
+    "ingredientManufacturer": "Manufacturer",
+    "ingredientManufacturerPlaceholder": "e.g. Barilla, Nestlé (optional)",
+    "deleteIngredientTitle": "Delete ingredient",
+    "deleteIngredientConfirm": "Are you sure? The ingredient will be permanently removed from the catalog.",
+    "ingredientDeleted": "Ingredient deleted.",
     "nutritionOptional": "Nutrition per 100 g (optional)",
     "nutritionOptionalHint": "Without an energy value this ingredient does not count toward the recipe totals — it is reported as missing instead.",
     "nutritionSourceUser": "Source: self-reported",
@@ -790,7 +795,8 @@
     "unavailable": "The service is temporarily unavailable. Please try again later.",
     "server": "Something went wrong on the server. Please try again later.",
     "unknown": "Something went wrong. Please try again.",
-    "emailNotVerified": "Verify your email address before publishing. The confirmation link is in your inbox."
+    "emailNotVerified": "Verify your email address before publishing. The confirmation link is in your inbox.",
+    "ingredientInUse": "This ingredient is already used in one or more recipes and cannot be deleted."
   },
   "passkey": {
     "title": "Passkeys",

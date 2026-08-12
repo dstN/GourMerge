@@ -22,6 +22,7 @@ export default defineEventHandler(async (event) => {
       name: ingredients.name,
       nameTranslations: ingredients.nameTranslations,
       category: ingredients.category,
+      manufacturer: ingredients.manufacturer,
       createdBy: ingredients.createdBy,
       energyKcal100g: ingredientNutrition.energyKcal100g,
       protein100g: ingredientNutrition.protein100g,
@@ -29,6 +30,7 @@ export default defineEventHandler(async (event) => {
       fat100g: ingredientNutrition.fat100g,
       fiber100g: ingredientNutrition.fiber100g,
       saturatedFat100g: ingredientNutrition.saturatedFat100g,
+      micros: ingredientNutrition.micros,
     })
     .from(ingredients)
     .leftJoin(ingredientNutrition, eq(ingredientNutrition.ingredientId, ingredients.id))

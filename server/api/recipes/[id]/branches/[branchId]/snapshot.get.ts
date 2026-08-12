@@ -26,6 +26,8 @@ export default defineEventHandler(async (event) => {
   const db = useDrizzle()
   if (!db) throw createError({ statusCode: 503, statusMessage: 'Database unavailable.' })
 
+  const session = await getUserSession(event)
+
   // Verify recipe exists + check visibility
   const [recipe] = await db
     .select({ ownerId: recipes.ownerId, visibility: recipes.visibility })
@@ -38,7 +40,6 @@ export default defineEventHandler(async (event) => {
   }
 
   if (recipe.visibility === 'private') {
-    const session = await getUserSession(event)
     if (!session?.user || session.user.id !== recipe.ownerId) {
       throw createError({ statusCode: 404, statusMessage: 'Recipe not found' })
     }
@@ -69,6 +70,7 @@ export default defineEventHandler(async (event) => {
         unit: recipeCommitIngredients.unit,
         notes: recipeCommitIngredients.notes,
         sortOrder: recipeCommitIngredients.sortOrder,
+        createdBy: ingredientsTable.createdBy,
       })
       .from(recipeCommitIngredients)
       .innerJoin(ingredientsTable, eq(recipeCommitIngredients.ingredientId, ingredientsTable.id))
@@ -85,7 +87,10 @@ export default defineEventHandler(async (event) => {
   return {
     branchId,
     headCommitId: branch.headCommitId,
-    ingredients: currentIngredients,
+    ingredients: currentIngredients.map(({ createdBy, ...ing }) => ({
+      ...ing,
+      canEdit: !!session?.user && createdBy === session.user.id,
+    })),
     steps: currentSteps,
   }
 })

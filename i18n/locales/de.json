@@ -205,6 +205,11 @@
     "ingredientTranslations": "Namen je Sprache",
     "ingredientCategory": "Kategorie",
     "ingredientCategoryPlaceholder": "z. B. Gemüse, Gewürz, Milchprodukt",
+    "ingredientManufacturer": "Hersteller",
+    "ingredientManufacturerPlaceholder": "z. B. Barilla, Nestlé (optional)",
+    "deleteIngredientTitle": "Zutat löschen",
+    "deleteIngredientConfirm": "Bist du sicher? Die Zutat wird unwiderruflich aus dem Katalog gelöscht.",
+    "ingredientDeleted": "Zutat gelöscht.",
     "nutritionOptional": "Nährwerte je 100 g (optional)",
     "nutritionOptionalHint": "Ohne Energiewert zählt diese Zutat nicht in die Nährwertsumme des Rezepts — sie wird als „fehlend“ gezählt.",
     "nutritionSourceUser": "Quelle: selbst erfasst",
@@ -790,7 +795,8 @@
     "unavailable": "Der Dienst ist gerade nicht verfügbar. Bitte versuche es später erneut.",
     "server": "Auf dem Server ist etwas schiefgelaufen. Bitte versuche es später erneut.",
     "unknown": "Etwas ist schiefgelaufen. Bitte versuche es erneut.",
-    "emailNotVerified": "Bestätige deine E-Mail-Adresse, bevor du veröffentlichst. Den Bestätigungslink findest du in deinem Postfach."
+    "emailNotVerified": "Bestätige deine E-Mail-Adresse, bevor du veröffentlichst. Den Bestätigungslink findest du in deinem Postfach.",
+    "ingredientInUse": "Diese Zutat wird bereits in einem oder mehreren Rezepten verwendet und kann nicht gelöscht werden."
   },
   "passkey": {
     "title": "Passkeys",

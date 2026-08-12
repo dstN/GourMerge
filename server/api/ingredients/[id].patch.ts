@@ -16,6 +16,7 @@ const patchSchema = z.object({
   name: z.string().min(1).max(200).trim().optional(),
   nameTranslations: z.record(z.string(), z.string()).optional(),
   category: z.string().max(100).optional().nullable(),
+  manufacturer: z.string().max(200).trim().optional().nullable(),
   nutrition: ingredientNutritionSchema.optional(),
 })
 
@@ -47,11 +48,12 @@ export default defineEventHandler(async (event) => {
 
   await useRateLimit(`ingredient:update:${session.user.id}`, { max: 20, windowSeconds: 600 })
 
-  const { name, nameTranslations, category, nutrition } = result.data
+  const { name, nameTranslations, category, manufacturer, nutrition } = result.data
   const updates: Partial<typeof ingredients.$inferInsert> = {}
   if (name !== undefined) updates.name = name
   if (nameTranslations !== undefined) updates.nameTranslations = nameTranslations
   if (category !== undefined) updates.category = category
+  if (manufacturer !== undefined) updates.manufacturer = manufacturer
 
   if (Object.keys(updates).length > 0) {
     await db.update(ingredients).set(updates).where(eq(ingredients.id, id))
@@ -60,6 +62,7 @@ export default defineEventHandler(async (event) => {
   if (nutrition !== undefined) {
     const hasNutrition = nutrition.energyKcal100g != null && nutrition.energyKcal100g !== ''
     if (hasNutrition) {
+      const micros = microsToStore(nutrition.micros)
       await db
         .insert(ingredientNutrition)
         .values({
@@ -70,6 +73,7 @@ export default defineEventHandler(async (event) => {
           fat100g: nutrition.fat100g ?? null,
           fiber100g: nutrition.fiber100g ?? null,
           saturatedFat100g: nutrition.saturatedFat100g ?? null,
+          micros,
           source: 'user',
         })
         .onDuplicateKeyUpdate({
@@ -80,6 +84,7 @@ export default defineEventHandler(async (event) => {
             fat100g: nutrition.fat100g ?? null,
             fiber100g: nutrition.fiber100g ?? null,
             saturatedFat100g: nutrition.saturatedFat100g ?? null,
+            micros,
           },
         })
     } else {

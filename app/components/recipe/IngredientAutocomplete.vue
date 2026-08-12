@@ -8,16 +8,18 @@ interface IngredientOption {
   name: string
   localeName: string
   category: string | null
+  /** Whether the current viewer created this ingredient and may edit/delete it. */
+  canEdit?: boolean
   isNew?: boolean
 }
 
 const props = defineProps<{
-  modelValue: { id: number | null; name: string } | null
+  modelValue: { id: number | null; name: string; canEdit?: boolean } | null
   placeholder?: string
 }>()
 
 const emit = defineEmits<{
-  'update:modelValue': [value: { id: number | null; name: string }]
+  'update:modelValue': [value: { id: number | null; name: string; canEdit?: boolean }]
 }>()
 
 const query = ref('')
@@ -82,7 +84,7 @@ function onSelect(option: IngredientOption) {
     isFocused.value = false
     return
   }
-  emit('update:modelValue', { id: option.id, name: option.localeName || option.name })
+  emit('update:modelValue', { id: option.id, name: option.localeName || option.name, canEdit: option.canEdit })
   query.value = option.localeName || option.name
   options.value = []
   isFocused.value = false
@@ -91,7 +93,8 @@ function onSelect(option: IngredientOption) {
 // Typed by the modal's own CreatedIngredient contract, not an inline structural subset, so a
 // payload change here gets caught by the type checker.
 function onCreated(created: CreatedIngredient) {
-  emit('update:modelValue', { id: created.id, name: created.name })
+  // Always true: nobody but the creator can reach this callback for this ingredient.
+  emit('update:modelValue', { id: created.id, name: created.name, canEdit: true })
   query.value = created.name
 }
 

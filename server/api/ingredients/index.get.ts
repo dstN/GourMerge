@@ -31,6 +31,8 @@ export default defineEventHandler(async (event) => {
   const db = useDrizzle()
   if (!db) throw createError({ statusCode: 503, statusMessage: 'Database unavailable.' })
 
+  const session = await getUserSession(event)
+
   // Escaped once, used everywhere below — a `%`/`_` in `q` should match itself, not act as
   // a wildcard the caller never asked for (see likeEscape.ts).
   const qLike = `${escapeLikePattern(q)}%`
@@ -41,6 +43,7 @@ export default defineEventHandler(async (event) => {
       name: ingredients.name,
       nameTranslations: ingredients.nameTranslations,
       category: ingredients.category,
+      createdBy: ingredients.createdBy,
       synonyms: ingredients.synonyms,
       energyKcal100g: ingredientNutrition.energyKcal100g,
       protein100g: ingredientNutrition.protein100g,
@@ -74,6 +77,7 @@ export default defineEventHandler(async (event) => {
       name: row.name,
       localeName: translations[locale] ?? translations['en'] ?? row.name,
       category: row.category,
+      canEdit: !!session?.user && row.createdBy === session.user.id,
       hasNutrition,
       nutrition: hasNutrition
         ? {

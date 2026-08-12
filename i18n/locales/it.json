@@ -205,6 +205,11 @@
     "ingredientTranslations": "Nomi per lingua",
     "ingredientCategory": "Categoria",
     "ingredientCategoryPlaceholder": "es. verdura, spezia, latticino",
+    "ingredientManufacturer": "Produttore",
+    "ingredientManufacturerPlaceholder": "es. Barilla, Nestlé (facoltativo)",
+    "deleteIngredientTitle": "Elimina ingrediente",
+    "deleteIngredientConfirm": "Sei sicuro? L’ingrediente verrà eliminato definitivamente dal catalogo.",
+    "ingredientDeleted": "Ingrediente eliminato.",
     "nutritionOptional": "Valori nutrizionali per 100 g (facoltativo)",
     "nutritionOptionalHint": "Senza un valore energetico questo ingrediente non conta nei totali della ricetta — viene segnalato come mancante.",
     "nutritionSourceUser": "Fonte: inserita da te",
@@ -790,7 +795,8 @@
     "unavailable": "Il servizio non è disponibile al momento. Riprova più tardi.",
     "server": "Si è verificato un errore sul server. Riprova più tardi.",
     "unknown": "Si è verificato un errore. Riprova.",
-    "emailNotVerified": "Conferma il tuo indirizzo e-mail prima di pubblicare. Trovi il link di conferma nella tua casella di posta."
+    "emailNotVerified": "Conferma il tuo indirizzo e-mail prima di pubblicare. Trovi il link di conferma nella tua casella di posta.",
+    "ingredientInUse": "Questo ingrediente è già utilizzato in una o più ricette e non può essere eliminato."
   },
   "passkey": {
     "title": "Passkey",

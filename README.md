@@ -24,8 +24,8 @@ A git-like recipe platform. Recipes are repositories — they have branches, com
 | Runtime    | Node 26                                          |
 | Deployment | Netcup Webhosting + Phusion Passenger (Apache)   |
 
-At a glance: **29 pages · 68 API endpoints · 28 tables · 704 i18n keys × 4
-locales · 304 unit tests · 79 Playwright specs · zero axe
+At a glance: **29 pages · 69 API endpoints · 28 tables · 710 i18n keys × 4
+locales · 304 unit tests · 85 Playwright specs · zero axe
 violations · `npm audit` at zero.**
 
 Fonts and icons are self-hosted — no Google Fonts, no Iconify API at runtime, so
@@ -82,7 +82,7 @@ and you cannot author a recipe, which is the core loop.
 
 | Step           | Provides                                                                         |
 | -------------- | -------------------------------------------------------------------------------- |
-| `db:migrate`   | Schema — 16 versioned migrations                                                 |
+| `db:migrate`   | Schema — 17 versioned migrations                                                 |
 | `seed:swiss`   | 1191 foods + per-100g nutrition, DE/EN/FR/IT names, from the committed seed file |
 | `db:seed`      | Curated ingredients absent from the Swiss dataset (e.g. Vanillezucker)           |
 | `db:seed:tags` | Base culinary tags                                                               |

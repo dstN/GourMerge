@@ -11,6 +11,8 @@ export interface IngredientRowData {
   unit: 'g' | 'ml' | 'piece' | 'pinch' | 'tsp' | 'tbsp'
   notes: string
   sortOrder: number
+  /** Whether the current viewer created this ingredient and may edit/delete it. */
+  canEdit?: boolean
 }
 
 const props = defineProps<{
@@ -27,6 +29,8 @@ const row = computed({
   get: () => props.modelValue,
   set: (val) => emit('update:modelValue', val),
 })
+
+const editOpen = ref(false)
 
 const unitOptions = [
   { label: 'g', value: 'g' },
@@ -66,9 +70,10 @@ function update(patch: Partial<IngredientRowData>) {
       <!-- Ingredient name autocomplete -->
       <div class="min-w-0 flex-1">
         <IngredientAutocomplete
-          :model-value="{ id: row.ingredientId, name: row.name }"
+          :model-value="{ id: row.ingredientId, name: row.name, canEdit: row.canEdit }"
           @update:model-value="
-            (val: { id: number | null; name: string }) => update({ ingredientId: val.id, name: val.name })
+            (val: { id: number | null; name: string; canEdit?: boolean }) =>
+              update({ ingredientId: val.id, name: val.name, canEdit: val.canEdit })
           "
         />
       </div>
@@ -107,6 +112,20 @@ function update(patch: Partial<IngredientRowData>) {
       />
     </div>
 
+    <!-- Only the row's own creator gets this — same reveal-on-hover treatment as remove,
+         since it is a secondary action on an otherwise plain ingredient list. -->
+    <UButton
+      v-if="row.canEdit && row.ingredientId !== null"
+      icon="i-lucide-pencil"
+      color="neutral"
+      variant="ghost"
+      size="sm"
+      class="mt-0.5 shrink-0 sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
+      :aria-label="t('common.edit')"
+      :title="t('common.edit')"
+      @click="editOpen = true"
+    />
+
     <!--
       Reveal-on-hover only from `sm` up. A touch device has no hover, so on a phone this
       button was permanently invisible and an ingredient could not be removed at all.
@@ -120,6 +139,15 @@ function update(patch: Partial<IngredientRowData>) {
       class="mt-0.5 shrink-0 sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
       :aria-label="t('common.delete')"
       @click="emit('remove')"
+    />
+
+    <RecipeEditIngredientModal
+      v-if="row.ingredientId !== null"
+      :open="editOpen"
+      :ingredient-id="row.ingredientId"
+      @update:open="editOpen = $event"
+      @saved="(updated) => update({ name: updated.name })"
+      @deleted="emit('remove')"
     />
   </div>
 </template>

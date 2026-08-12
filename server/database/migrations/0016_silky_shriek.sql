@@ -1,0 +1,1 @@
+ALTER TABLE `ingredients` ADD `manufacturer` varchar(200);

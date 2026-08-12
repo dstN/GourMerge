@@ -5,6 +5,74 @@ All notable changes to GourMerge are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versioning follows [Semantic Versioning](https://semver.org/).
 
+## [1.8.0] — 2026-08-12
+
+A bug report that turned out to be a client-side crash masquerading as a dead server, and
+everything that report's own follow-up questions asked for once the real cause was in view:
+an ingredient can now be deleted or edited wherever it appears, carries a manufacturer and
+the same micronutrient catalog the Swiss BLV import already fills in for its own foods, and
+every decimal field in that flow accepts a German comma the way it always should have.
+
+### Fixed — "Der Server ist nicht erreichbar" on the one field that mattered most
+
+Adding nutrition values to a new ingredient failed every time, with no error in the
+console and nothing in Sentry — because the request never left the browser.
+`NewIngredientModal.vue`'s nutrition inputs used `UInput type="number"`, and Nuxt UI
+coerces that to a JS `number` on every keystroke **regardless of a `.number` v-model
+modifier** (`Input.vue`'s `updateInput()` checks `props.type === 'number'` directly).
+`submit()` then filtered the six fields with `v.trim() !== ''` to drop the empty ones —
+`.trim()` on a number throws a `TypeError`, synchronously, before `$fetch` is even called.
+The local `catch` swallowed it and `useApiError()` maps any error with no HTTP status to
+"server unreachable", which is the correct read for a dropped connection and a
+misleading one for a client-side bug that never made a request. Fixed by binding those
+inputs explicitly and coercing back to a string on every update, the same pattern
+`IngredientRow.vue`'s quantity field already used. Caught no test until now: the only
+existing coverage for this endpoint (`tests/e2e/api/ingredients.spec.ts`) calls the API
+directly and never drives the actual dialog.
+
+### Added — an ingredient you created stops being a one-way trip
+
+The create dialog had no counterpart: once typed, a user-added ingredient could not be
+corrected or removed from anywhere in the app except through `PATCH /api/ingredients/:id`
+directly. Three gaps closed together, because they share the same surface:
+
+- **`DELETE /api/ingredients/:id`**, creator-only (404, not 403, for anyone else — same
+  rule as editing, no admin override). `recipe_commit_ingredients.ingredient_id` has no
+  `onDelete` clause, so MySQL's own FK RESTRICT blocks the delete outright the moment
+  _any_ commit, even a superseded one, has ever snapshotted the ingredient — turned into
+  a clean `409 { code: 'ingredient_in_use' }` instead of a raw driver error. This is the
+  typo-correction escape hatch: create it, notice the mistake, delete it before anyone
+  else ever sees it.
+- **The edit button now appears everywhere an owned ingredient shows up**, not only on a
+  published recipe's detail page. `IngredientRow.vue` (the recipe editor's ingredient
+  line) gained the same reveal-on-hover pencil the detail page already had, plus a
+  Delete action inside the edit modal with its own confirmation (`UModal`, never
+  `window.confirm` — DESIGNBOOK §6.4). Reaching it required threading `canEdit` through
+  every place an ingredient enters the page: the search endpoint, the branch snapshot
+  endpoint, and the "create X" flow, none of which carried it before.
+- **A manufacturer field** (`ingredients.manufacturer`, migration `0016`) for branded
+  products — "Barilla", not just "Pasta" — optional, on both the create and edit dialogs.
+
+### Added — the same micronutrient catalog the Swiss BLV import already had
+
+The create/edit dialogs only ever asked for the six macro fields `nutrition.ts` reads;
+`ingredient_nutrition.micros` has held vitamin and mineral data for every Swiss BLV food
+since v1.0, entirely unreachable for a self-reported ingredient. `shared/utils/ingredientMicros.ts`
+is now the one place the key list, display labels and units live — 13 vitamins + 10
+minerals, matched exactly to what `scripts/import-swiss-foods.mjs` writes, imported by
+both the input forms and `NutritionFacts.vue`'s display (which used to keep its own
+copy, missing `beta_carotene_mcg` — now shown too). A recipe's micronutrient totals
+already aggregate whatever sits in that column; entering a value here is enough to have
+it counted, no separate wiring needed.
+
+### Fixed — decimal fields silently rejected the comma every German label uses
+
+Every nutrition input — the pre-existing six macros and the new micronutrients — was
+`type="number"`, which most browsers refuse a comma decimal separator on outright,
+independent of the crash above. The server (`decimalSchema`) has accepted `,` or `.`
+since it was written; the field itself never let anyone type one. Switched to
+`type="text" inputmode="decimal"` everywhere a nutrition value is entered.
+
 ## [1.7.0] — 2026-08-09
 
 A moderation system the product had no answer for at all, a correctness sweep through

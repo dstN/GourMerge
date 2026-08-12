@@ -328,6 +328,8 @@ export const ingredients = mysqlTable(
     nameTranslations: json('name_translations').notNull().default({}),
     /** Category for grouping: "dairy", "spice", "vegetable", etc. */
     category: varchar('category', { length: 100 }),
+    /** Brand/manufacturer for a branded product ("Barilla"), NULL for generic ingredients. */
+    manufacturer: varchar('manufacturer', { length: 200 }),
     /** Per-locale synonyms from the Swiss BLV DB Synonyme field: { "de": ["Rüebli", "Möhre"] } */
     synonyms: json('synonyms').notNull().default({}),
     /**

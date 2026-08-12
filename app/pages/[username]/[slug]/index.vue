@@ -747,7 +747,7 @@ useHead(() => {
             if (!v) editingIngredientId = null
           }
         "
-        @saved="refresh"
+        @saved="() => refresh()"
       />
 
       <!-- Serving suggestion — deliberately between the ingredients and the steps.

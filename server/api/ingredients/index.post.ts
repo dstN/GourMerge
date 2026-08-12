@@ -17,6 +17,8 @@ const createIngredientSchema = z.object({
   /** Optional initial translations, e.g. { de: "Mehl", en: "Flour" } */
   nameTranslations: z.record(z.string(), z.string()).optional(),
   category: z.string().max(100).optional(),
+  /** Brand for a branded product, e.g. "Barilla". */
+  manufacturer: z.string().max(200).trim().optional(),
   /** Optional per-100 g values, stored with `source: 'user'`. */
   nutrition: ingredientNutritionSchema.optional(),
 })
@@ -40,7 +42,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const { name, nameTranslations, category, nutrition } = result.data
+  const { name, nameTranslations, category, manufacturer, nutrition } = result.data
   const normalizedName = name.toLowerCase().trim()
   const db = useDrizzle()
   if (!db) throw createError({ statusCode: 503, statusMessage: 'Database unavailable.' })
@@ -70,6 +72,7 @@ export default defineEventHandler(async (event) => {
       name: name.trim(),
       nameTranslations: nameTranslations ?? {},
       category: category ?? null,
+      manufacturer: manufacturer ?? null,
       createdBy: session.user.id,
     })
     .$returningId()
@@ -92,6 +95,7 @@ export default defineEventHandler(async (event) => {
       fat100g: nutrition!.fat100g ?? null,
       fiber100g: nutrition!.fiber100g ?? null,
       saturatedFat100g: nutrition!.saturatedFat100g ?? null,
+      micros: microsToStore(nutrition!.micros),
       // Distinguishable from the Swiss BLV import, so a future re-import knows not to
       // overwrite it and the UI can label it as self-reported.
       source: 'user',

@@ -67,15 +67,17 @@ GourMerge/
 │   ├── layouts/                # default.vue, dashboard.vue, auth.vue
 │   ├── middleware/             # validate-recipe-route.ts, auth.ts, guest.ts, shell.ts
 │   ├── pages/                  # 29 pages + 1 dev-only (see §5)
+│   ├── composables/             # useApiError, useAppToast, useIngredientNutrientFields,
+│   │                           # useOnboarding, useProductTour
 │   ├── utils/                  # markdown.ts (sanitizer), ui.ts (shared UI maps),
 │   │                           # imageResize.ts
 │   ├── app.vue                 # <UApp><NuxtLayout><NuxtPage />
 │   └── app.config.ts           # Nuxt UI theme + central component defaults
 ├── server/
-│   ├── api/                    # 68 REST endpoints (see §6)
+│   ├── api/                    # 69 REST endpoints (see §6)
 │   ├── database/
 │   │   ├── schema.ts           # Drizzle ORM schema (28 tables)
-│   │   └── migrations/         # 16 versioned SQL migrations (0000–0015)
+│   │   └── migrations/         # 17 versioned SQL migrations (0000–0016)
 │   ├── middleware/             # Nitro middleware
 │   ├── plugins/                # Nitro plugins (db, logger, sentry, error-handler)
 │   └── utils/                  # drizzle.ts, diff.ts, merge.ts, units.ts, slug.ts,
@@ -83,7 +85,9 @@ GourMerge/
 │                                # likeEscape.ts, ingredientValidation.ts, imageProbe.ts,
 │                                # imageEncode.ts, hardDeleteUser.ts
 ├── shared/types/               # TypeScript types shared app ↔ server
-├── i18n/locales/               # de.json, en.json, fr.json, it.json (704 keys, 4-way parity)
+├── shared/utils/                # ingredientMicros.ts — vitamin/mineral catalog shared by
+│                                # validation, input forms and NutritionFacts.vue
+├── i18n/locales/               # de.json, en.json, fr.json, it.json (710 keys, 4-way parity)
 ├── scripts/                    # Maintenance + setup scripts (see §8)
 ├── public/                     # PWA icons, favicon, apple-touch-icon
 ├── docs/RUNBOOK.md             # Production operations playbook
@@ -233,13 +237,14 @@ All routes: Zod-validated body/query, `requireUserSession()` where auth required
 
 ### Ingredients
 
-| Method | Route                         | Auth | Purpose                                                                                              |
-| ------ | ----------------------------- | ---- | ---------------------------------------------------------------------------------------------------- |
-| GET    | `/api/ingredients`            | No   | Search (q + locale) — Swiss BLV catalog + user-created ingredients                                   |
-| POST   | `/api/ingredients`            | Yes  | Create ingredient on-the-fly (deduped, rate-limited, sets `createdBy`)                               |
-| GET    | `/api/ingredients/categories` | No   | Distinct category list for the picker                                                                |
-| GET    | `/api/ingredients/[id]`       | No   | Detail (incl. `canEdit` for the viewer's session, never raw `createdBy`)                             |
-| PATCH  | `/api/ingredients/[id]`       | Yes  | Edit name/translations/category/nutrition — creator only, 404 (not 403) otherwise, no admin override |
+| Method | Route                         | Auth | Purpose                                                                                                                          |
+| ------ | ----------------------------- | ---- | -------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | `/api/ingredients`            | No   | Search (q + locale) — Swiss BLV catalog + user-created ingredients                                                               |
+| POST   | `/api/ingredients`            | Yes  | Create ingredient on-the-fly (deduped, rate-limited, sets `createdBy`)                                                           |
+| GET    | `/api/ingredients/categories` | No   | Distinct category list for the picker                                                                                            |
+| GET    | `/api/ingredients/[id]`       | No   | Detail (incl. `canEdit` for the viewer's session, never raw `createdBy`)                                                         |
+| PATCH  | `/api/ingredients/[id]`       | Yes  | Edit name/translations/category/manufacturer/nutrition (incl. micros) — creator only, 404 (not 403) otherwise, no admin override |
+| DELETE | `/api/ingredients/[id]`       | Yes  | Remove — creator only; 409 `ingredient_in_use` if any commit has ever snapshotted it (FK RESTRICT)                               |
 
 ### Recipes
 
@@ -346,7 +351,7 @@ link, because a user locked out of their account still holds both rights.
 
 - **4 locales**: `de` (default), `en`, `fr`, `it`
 - **Strategy**: `prefix_except_default` — German has no prefix; `/en/`, `/fr/`, `/it/` prefixed
-- **Key count**: 704 keys, 4-way parity (verified by `npm run i18n:check`)
+- **Key count**: 710 keys, 4-way parity (verified by `npm run i18n:check`)
 - **Locale files**: `i18n/locales/{de,en,fr,it}.json`
 - **CI gate**: `scripts/i18n-check.mjs` — fails if any locale has a missing key or empty value
 - **Translated**: all UI labels, navigation, errors, toasts, onboarding, glossary, legal pages, auth flows
@@ -382,6 +387,8 @@ The `ingredients` master table is populated from the **Swiss BLV Food Compositio
 - Locale-aware search: name + synonyms matched by user's locale (`GET /api/ingredients?q=&locale=`)
 - Curated entries (not in Swiss DB) can be added to `seed-ingredients.mjs` with `source = 'curated'`
 - **Vanilla Sugar** (`Vanillezucker`): not in Swiss BLV DB — added as a curated entry in `seed-ingredients.mjs` (apply with `npm run db:seed`)
+- **Manufacturer** (`ingredients.manufacturer`, migration `0016`): optional, for a branded product ("Barilla") — the Swiss BLV import never sets it, since its entries are generic foods
+- **Micronutrient catalog**: 13 vitamins + 10 minerals, the exact key set `import-swiss-foods.mjs` writes into `ingredient_nutrition.micros` for its own foods. Canonical list lives in `shared/utils/ingredientMicros.ts`, imported by the create/edit forms and by `NutritionFacts.vue`'s display — one source, so a self-reported value lands in the same field a recipe's micronutrient totals already read from
 
 ### Seeding (committed seed file, not the spreadsheets)
 
@@ -431,6 +438,27 @@ The `ingredients` master table is populated from the **Swiss BLV Food Compositio
 
 ### ✓ Complete
 
+- **Ingredient delete, edit-everywhere, manufacturer, and the full micronutrient catalog (2026-08-12)**: found
+  while chasing a bug report — creating an ingredient with nutrition values failed with a generic "server
+  unreachable" toast and nothing in the console or Sentry. Root cause was client-side, not network: Nuxt UI's
+  `UInput` coerces `type="number"` to a JS `number` on every keystroke regardless of a `.number` v-model
+  modifier, and `NewIngredientModal.vue`'s `submit()` called `.trim()` on that value to drop empty fields —
+  `.trim()` on a number throws before `$fetch` is ever called, and `useApiError()` maps any status-less error to
+  the network message. Fixed by coercing back to a string on every update (`IngredientRow.vue`'s quantity field
+  already did this). That investigation surfaced three real gaps, closed together: `DELETE
+/api/ingredients/:id` (creator-only, 404 not 403, blocked with a clean `409 ingredient_in_use` if any
+  commit — even a superseded one — has ever snapshotted it, since `recipe_commit_ingredients.ingredient_id` has
+  no `onDelete` clause); the edit button, which only ever existed on a published recipe's detail page, now
+  appears wherever an owned ingredient shows up, including the recipe editor itself (`IngredientRow.vue` gained
+  the same reveal-on-hover pencil, plus a Delete action with its own `UModal` confirmation); and an optional
+  `manufacturer` field (migration `0016`) for branded products. Also added: the same micronutrient catalog the
+  Swiss BLV import already writes into `ingredient_nutrition.micros` (13 vitamins + 10 minerals, canonical list
+  in `shared/utils/ingredientMicros.ts`, shared by the input forms and `NutritionFacts.vue`'s display — which
+  used to keep its own copy, missing `beta_carotene_mcg`). And, independent of the crash: every nutrition input
+  was `type="number"`, which rejects a comma decimal separator in most locales even though the server
+  (`decimalSchema`) has accepted `,` or `.` all along — switched to `type="text" inputmode="decimal"`
+  everywhere. 6 new e2e tests in `tests/e2e/api/ingredients.spec.ts` (delete success/blocked/authz, and a
+  manufacturer/comma-decimal-micros round-trip)
 - **Reporting / moderation (2026-08-09)**: flag a recipe, a user, a discussion comment, a recipe photo, or an
   ingredient. `reports` is one polymorphic table (`targetKind` + `targetId`, no real FK on the target) rather than five
   near-identical ones. Idempotent per (reporter, target) — resubmitting returns the existing row, guarded by a unique
@@ -535,7 +563,7 @@ The `ingredients` master table is populated from the **Swiss BLV Food Compositio
 
 ### ✓ Complete (test + delivery pipeline)
 
-- **Tests**: **unit** — 304 cases across 24 files (`tests/unit/`: diff, merge incl. resolution, units incl. the display read path, slug, uuid, nutrition, markdown-XSS, emailI18n, i18n-gate, totp, webauthn, seal/pendingTotp, dataRequest, inactivityEmails, ui, likeEscape, imageProbe, identiconAvatar), **86.9% line coverage** against a 75/75/70 gate in CI. **E2E/API/a11y** — 79 Playwright specs across 23 files (`tests/e2e/`): auth lifecycle + authz matrix, recipe CRUD/fork/star, merge conflict-detect → interactive resolve → verify → immutable, discussions, recipe photo + avatar upload, reporting + admin moderation, ingredient create/edit, branch viewing, private-recipe visibility, SSR render, register UI journey, passkey ceremonies over CDP, the guided tour, and axe scans (critical-gated). Run via `npm run test:e2e` + the `E2E` workflow on master
+- **Tests**: **unit** — 304 cases across 24 files (`tests/unit/`: diff, merge incl. resolution, units incl. the display read path, slug, uuid, nutrition, markdown-XSS, emailI18n, i18n-gate, totp, webauthn, seal/pendingTotp, dataRequest, inactivityEmails, ui, likeEscape, imageProbe, identiconAvatar), **86.9% line coverage** against a 75/75/70 gate in CI. **E2E/API/a11y** — 85 Playwright specs across 23 files (`tests/e2e/`): auth lifecycle + authz matrix, recipe CRUD/fork/star, merge conflict-detect → interactive resolve → verify → immutable, discussions, recipe photo + avatar upload, reporting + admin moderation, ingredient create/edit/delete, branch viewing, private-recipe visibility, SSR render, register UI journey, passkey ceremonies over CDP, the guided tour, and axe scans (critical-gated). Run via `npm run test:e2e` + the `E2E` workflow on master
   - `passkey.spec.ts` drives Chrome's **WebAuthn virtual authenticator** over CDP, because nothing weaker proves anything: the browser will not sign without an authenticator and a stubbed `navigator.credentials` would only test the stub — it is what caught both passkey bugs. Two constraints to know before touching it: navigating while an authenticator is attached crashes the renderer, so every ceremony runs on **one page load** via in-page fetches; and it needs `CI=1` (built artifact) like the rest of the suite
 - **CI** (`ci.yml`): lint → **design:check** → format:check → knip → typecheck → i18n → `npm audit` (critical) → migrate → test **with coverage gate** → build → upload artifact. Build stamps `NUXT_SENTRY_RELEASE` = commit SHA
 - **CD** (`deploy.yml`): preflight secrets → E2E gate → `production` environment gate → checkout of the CI-built SHA → migrate from the runner (fail-fast) → **tar-over-ssh** into `.output.new` → atomic rename swap (previous kept as `.output.prev`) → restart → polling smoke test → **auto-rollback on smoke-test failure**. Password auth via `sshpass` over plain `ssh` (Netcup offers no key auth; `rsync` and `gzip` do not exist in the chroot)
@@ -555,6 +583,7 @@ The `ingredients` master table is populated from the **Swiss BLV Food Compositio
 
 ## 13. Known Quirks and Non-Obvious Decisions
 
+- **`UInput type="number"` coerces to a JS `number` unconditionally** — `Input.vue`'s `updateInput()` checks `props.type === 'number'` directly, not the `.number` v-model modifier the name implies, so a plain `v-model` on a number-type field silently stops being a string the moment a real value is typed (empty stays a string: `looseToNumber('')` is `NaN`, which returns the input unchanged). Broke `NewIngredientModal.vue`'s nutrition fields in production — `.trim()` on the coerced number threw before the request was ever sent (2026-08-12, see CHANGELOG). Bind those fields explicitly with `:model-value` + `@update:model-value="(v) => (x = String(v))"`, same pattern `IngredientRow.vue`'s quantity used. For any decimal input (money, nutrition), also use `type="text" inputmode="decimal"` rather than `type="number"` — the native number input rejects a comma decimal separator in most locales, which matters in a German-first app.
 - **`window.confirm` is suppressed in Chromium dev environments** — always use `UModal` for async confirmations. Replaced in edit page (`onBeforeRouteLeave`).
 - **USelect in Nuxt UI v4** uses `:items` (not `:options`) and requires `value-key="value"` to bind object arrays correctly.
 - **TipTap SSR**: `@tiptap/vue-3` v3 `useEditor` has **no** `immediatelyRender` option (passing it fails typecheck) — SSR safety comes from wrapping `<StepEditor>` in `<ClientOnly>` plus the `v-if="editor"` guard. Empty-state mismatch (`''` vs `'<p></p>'`) causes constant `setContent()` resets — normalize via `isEmpty()` helper.

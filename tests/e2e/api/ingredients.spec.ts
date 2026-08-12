@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 import { resetRateLimits, dbQuery } from '../support/db'
-import { registerUser, uniqueUser } from '../support/api'
+import { registerUser, uniqueUser, createRecipe, commitSnapshot } from '../support/api'
 
 /**
  * The master-ingredient API, as the new-ingredient dialog uses it.
@@ -47,6 +47,39 @@ test('creating an ingredient stores translations, category and nutrition', async
   expect(hit.hasNutrition).toBe(true)
   expect(hit.nutrition.kcal).toBe(387)
   expect(hit.nutrition.fat, 'decimal comma must parse').toBeCloseTo(0.5, 2)
+})
+
+test('manufacturer and micronutrients round-trip, decimal comma included', async ({ request }) => {
+  await registerUser(request)
+  const created = await (
+    await request.post('/api/ingredients', {
+      data: {
+        name: `Spec Marke ${Date.now()}`,
+        manufacturer: 'Barilla',
+        // `12,5` on purpose, same reasoning as the macro fields: a German decimal comma
+        // must parse, not silently become NaN or get truncated to "12".
+        nutrition: { energyKcal100g: '250', micros: { vit_c_mg: '12,5', iron_mg: '2.4' } },
+      },
+    })
+  ).json()
+  expect(created.hasNutrition).toBe(true)
+
+  const detail = await (await request.get(`/api/ingredients/${created.id}`)).json()
+  expect(detail.manufacturer).toBe('Barilla')
+  expect(detail.micros.vit_c_mg).toBeCloseTo(12.5, 2)
+  expect(detail.micros.iron_mg).toBeCloseTo(2.4, 2)
+
+  // PATCH: an empty micro field clears it, same "empty means gone" rule as the macros.
+  await request.patch(`/api/ingredients/${created.id}`, {
+    data: {
+      manufacturer: 'Nestlé',
+      nutrition: { energyKcal100g: '250', micros: { vit_c_mg: '', calcium_mg: '33,7' } },
+    },
+  })
+  const afterPatch = await (await request.get(`/api/ingredients/${created.id}`)).json()
+  expect(afterPatch.manufacturer).toBe('Nestlé')
+  expect(afterPatch.micros.vit_c_mg).toBeUndefined()
+  expect(afterPatch.micros.calcium_mg).toBeCloseTo(33.7, 2)
 })
 
 test('nutrition is only stored when an energy value is given', async ({ request }) => {
@@ -184,6 +217,79 @@ test.describe('editing', () => {
 
   test('editing requires a session', async ({ request }) => {
     const res = await request.patch('/api/ingredients/1', { data: { name: 'x' } })
+    expect(res.status()).toBe(401)
+  })
+})
+
+/**
+ * Deleting: the typo-correction escape hatch — create, mistype, delete before anyone else
+ * ever sees it. Same ownership rule as editing, plus the one deleting doesn't share: a
+ * commit's ingredient reference has no `onDelete` clause (schema.ts), so once ANY commit —
+ * even a superseded one — has snapshotted the ingredient, MySQL's own FK RESTRICT blocks the
+ * delete outright. That is turned into a clean 409 rather than surfacing as a raw 500.
+ */
+test.describe('deleting', () => {
+  test('the creator can delete an ingredient that is not used in any recipe', async ({ request }) => {
+    await registerUser(request)
+    const created = await (
+      await request.post('/api/ingredients', { data: { name: `Spec Delete ${Date.now()}` } })
+    ).json()
+
+    const res = await request.delete(`/api/ingredients/${created.id}`)
+    expect(res.status()).toBe(200)
+
+    const after = await request.get(`/api/ingredients/${created.id}`)
+    expect(after.status()).toBe(404)
+  })
+
+  test('deleting an ingredient used in a recipe commit is blocked with a specific code', async ({ request }) => {
+    await registerUser(request)
+    const used = await (
+      await request.post('/api/ingredients', { data: { name: `Spec Delete Used ${Date.now()}` } })
+    ).json()
+    const recipe = await createRecipe(request)
+    await commitSnapshot(request, recipe.id, recipe.branchId, {
+      message: 'base',
+      ingredients: [{ ingredientId: used.id, quantity: '10', unit: 'g', notes: null, sortOrder: 0 }],
+    })
+
+    const res = await request.delete(`/api/ingredients/${used.id}`)
+    expect(res.status()).toBe(409)
+    expect((await res.json()).data?.code).toBe('ingredient_in_use')
+
+    // Still there, untouched, after the rejected delete.
+    expect((await request.get(`/api/ingredients/${used.id}`)).status()).toBe(200)
+  })
+
+  test('a stranger cannot delete someone else’s ingredient — 404, not 403', async ({ request }) => {
+    await registerUser(request, uniqueUser('ingowner'))
+    const created = await (
+      await request.post('/api/ingredients', { data: { name: `Spec Owned Delete ${Date.now()}` } })
+    ).json()
+
+    await registerUser(request, uniqueUser('ingstranger'))
+    const res = await request.delete(`/api/ingredients/${created.id}`)
+    expect(res.status()).toBe(404)
+
+    expect((await request.get(`/api/ingredients/${created.id}`)).status()).toBe(200)
+  })
+
+  test('a Swiss BLV ingredient (no creator) cannot be deleted by anyone', async ({ request }) => {
+    await registerUser(request)
+    const seededName = `Seeded No-Creator Delete ${Date.now()}`
+    await dbQuery('INSERT INTO ingredients (name, name_translations, synonyms) VALUES (?, ?, ?)', [
+      seededName,
+      '{}',
+      '{}',
+    ])
+    const [seeded] = await dbQuery<{ id: number }>('SELECT id FROM ingredients WHERE name = ?', [seededName])
+
+    const res = await request.delete(`/api/ingredients/${seeded!.id}`)
+    expect(res.status()).toBe(404)
+  })
+
+  test('deleting requires a session', async ({ request }) => {
+    const res = await request.delete('/api/ingredients/1')
     expect(res.status()).toBe(401)
   })
 })

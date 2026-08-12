@@ -4,6 +4,7 @@
  * same DECIMAL-safe parsing (a JS float would quietly round a value on the way in).
  */
 import { z } from 'zod'
+import { MICRO_KEYS } from '~~/shared/utils/ingredientMicros'
 
 export const decimalSchema = z
   .union([z.string(), z.number()])
@@ -15,6 +16,9 @@ export const decimalSchema = z
   .nullable()
   .optional()
 
+/** Same six-decimal-fields shape, keyed by the vitamin/mineral catalog in `MICRO_KEYS`. */
+export const ingredientMicrosSchema = z.object(Object.fromEntries(MICRO_KEYS.map((key) => [key, decimalSchema])))
+
 export const ingredientNutritionSchema = z.object({
   energyKcal100g: decimalSchema,
   protein100g: decimalSchema,
@@ -22,4 +26,21 @@ export const ingredientNutritionSchema = z.object({
   fat100g: decimalSchema,
   fiber100g: decimalSchema,
   saturatedFat100g: decimalSchema,
+  micros: ingredientMicrosSchema.optional(),
 })
+
+/**
+ * `micros` is a plain JSON blob, not DECIMAL columns, and `computeNutrition` already does
+ * float arithmetic on it (`val * factor`) — so unlike the macro fields there is no
+ * DB-precision reason to keep these as strings. Stored as numbers to match the shape the
+ * Swiss BLV import already writes (`scripts/import-swiss-foods.mjs`), so a recipe's micro
+ * totals never mix string and number entries depending on which import created them.
+ */
+export function microsToStore(micros: Record<string, string | null | undefined> | undefined): Record<string, number> {
+  if (!micros) return {}
+  return Object.fromEntries(
+    Object.entries(micros)
+      .filter(([, v]) => v != null)
+      .map(([k, v]) => [k, Number(v)])
+  )
+}

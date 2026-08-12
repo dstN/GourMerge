@@ -198,6 +198,7 @@ async function loadBranchSnapshot(branchId: number) {
         unit: CanonicalUnit
         notes: string | null
         sortOrder: number
+        canEdit: boolean
       }>
       steps: Array<{ content: string; contentTranslations: Record<string, string> | null }>
     }>(`/api/recipes/${recipe.value!.id}/branches/${branchId}/snapshot`, {
@@ -211,6 +212,7 @@ async function loadBranchSnapshot(branchId: number) {
       unit: ing.unit,
       notes: ing.notes ?? '',
       sortOrder: ing.sortOrder,
+      canEdit: ing.canEdit,
     }))
     steps.value = snapshot.steps.map((s) => ({
       content: s.content,

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { NutritionTotals } from '~~/shared/types/recipe'
+import { VITAMIN_KEYS, MINERAL_KEYS, MICRO_LABELS, unitFromMicroKey } from '~~/shared/utils/ingredientMicros'
 
 const { t } = useI18n()
 
@@ -49,70 +50,17 @@ const macroKcal = computed(() => {
   return { protein: (p / total) * 100, carbs: (c / total) * 100, fat: (f / total) * 100 }
 })
 
-const VITAMIN_KEYS = [
-  'vit_a_re_mcg',
-  'retinol_mcg',
-  'vit_b1_mg',
-  'vit_b2_mg',
-  'vit_b6_mg',
-  'vit_b12_mcg',
-  'niacin_mg',
-  'folate_mcg',
-  'pantothenic_mg',
-  'vit_c_mg',
-  'vit_d_mcg',
-  'vit_e_mg',
-]
-const MINERAL_KEYS = [
-  'potassium_mg',
-  'sodium_mg',
-  'chloride_mg',
-  'calcium_mg',
-  'magnesium_mg',
-  'phosphorus_mg',
-  'iron_mg',
-  'iodine_mcg',
-  'zinc_mg',
-  'selenium_mcg',
-]
-
-const MICRO_LABELS: Record<string, string> = {
-  vit_a_re_mcg: 'Vit. A',
-  retinol_mcg: 'Retinol',
-  vit_b1_mg: 'Vit. B1',
-  vit_b2_mg: 'Vit. B2',
-  vit_b6_mg: 'Vit. B6',
-  vit_b12_mcg: 'Vit. B12',
-  niacin_mg: 'Niacin',
-  folate_mcg: 'Folat',
-  pantothenic_mg: 'Vit. B5',
-  vit_c_mg: 'Vit. C',
-  vit_d_mcg: 'Vit. D',
-  vit_e_mg: 'Vit. E',
-  potassium_mg: 'Kalium',
-  sodium_mg: 'Natrium',
-  chloride_mg: 'Chlorid',
-  calcium_mg: 'Calcium',
-  magnesium_mg: 'Magnesium',
-  phosphorus_mg: 'Phosphor',
-  iron_mg: 'Eisen',
-  iodine_mcg: 'Jod',
-  zinc_mg: 'Zink',
-  selenium_mcg: 'Selen',
-}
-
-function unitFromKey(key: string): string {
-  if (key.endsWith('_re_mcg')) return 'µg RE'
-  if (key.endsWith('_mcg')) return 'µg'
-  return 'mg'
-}
-
-function microItems(keys: string[]) {
+function microItems(keys: readonly string[]) {
   const m = current.value.micros
   if (!m) return []
   return keys
     .filter((k) => m[k] !== undefined && m[k] > 0)
-    .map((k) => ({ key: k, label: MICRO_LABELS[k] ?? k, value: m[k], unit: unitFromKey(k) }))
+    .map((k) => ({
+      key: k,
+      label: MICRO_LABELS[k as keyof typeof MICRO_LABELS] ?? k,
+      value: m[k],
+      unit: unitFromMicroKey(k),
+    }))
 }
 
 const vitamins = computed(() => microItems(VITAMIN_KEYS))

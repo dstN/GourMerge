@@ -54,6 +54,8 @@ const CODE_MESSAGES: Record<string, string> = {
    * problem and gives no hint that the fix is a link sitting in the user's inbox.
    */
   email_not_verified: 'errors.emailNotVerified',
+  /** Thrown by `DELETE /api/ingredients/:id` when a commit has ever snapshotted it. */
+  ingredient_in_use: 'errors.ingredientInUse',
 }
 
 export function useApiError() {

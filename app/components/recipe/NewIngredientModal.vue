@@ -14,24 +14,15 @@
  * ingredient a deliberate act instead of a side effect of saving — which is how a dev
  * database ends up with dozens of rows called `Butter 1785947886683`.
  */
+import type { MacroKey } from '~/composables/useIngredientNutrientFields'
+
 const { t, locale } = useI18n()
 const { apiError } = useApiError()
 const toast = useAppToast()
+const { labelFor, VITAMIN_KEYS, MINERAL_KEYS, MICRO_LABELS, unitFromMicroKey } = useIngredientNutrientFields()
 
 const LOCALES = ['de', 'en', 'fr', 'it'] as const
 type Locale = (typeof LOCALES)[number]
-
-/** The six fields `server/utils/nutrition.ts` actually reads. */
-const NUTRIENTS = [
-  { key: 'energyKcal100g', label: 'kcal', unit: '' },
-  { key: 'fat100g', labelKey: 'nutrition.fat', unit: 'g' },
-  { key: 'saturatedFat100g', labelKey: 'nutrition.saturatedFat', unit: 'g' },
-  { key: 'carbs100g', labelKey: 'nutrition.carbs', unit: 'g' },
-  { key: 'fiber100g', labelKey: 'nutrition.fiber', unit: 'g' },
-  { key: 'protein100g', labelKey: 'nutrition.protein', unit: 'g' },
-] as const
-
-type NutrientKey = (typeof NUTRIENTS)[number]['key']
 
 export interface CreatedIngredient {
   id: number
@@ -54,8 +45,10 @@ const emit = defineEmits<{
 const name = ref('')
 const translations = ref<Record<Locale, string>>({ de: '', en: '', fr: '', it: '' })
 const category = ref('')
+const manufacturer = ref('')
 const nutritionOpen = ref(false)
-const nutrition = ref<Record<NutrientKey, string>>({
+const microsOpen = ref(false)
+const nutrition = ref<Record<MacroKey, string>>({
   energyKcal100g: '',
   fat100g: '',
   saturatedFat100g: '',
@@ -63,6 +56,7 @@ const nutrition = ref<Record<NutrientKey, string>>({
   fiber100g: '',
   protein100g: '',
 })
+const micros = ref(emptyMicros())
 const saving = ref(false)
 
 const { data: categories } = await useFetch<string[]>('/api/ingredients/categories', { lazy: true, server: false })
@@ -79,15 +73,14 @@ watch(
     translations.value = { de: '', en: '', fr: '', it: '' }
     translations.value[locale.value as Locale] = props.initialName
     category.value = ''
+    manufacturer.value = ''
     nutritionOpen.value = false
-    for (const k of Object.keys(nutrition.value) as NutrientKey[]) nutrition.value[k] = ''
+    microsOpen.value = false
+    for (const k of Object.keys(nutrition.value) as MacroKey[]) nutrition.value[k] = ''
+    micros.value = emptyMicros()
   },
   { immediate: true }
 )
-
-function labelFor(n: (typeof NUTRIENTS)[number]): string {
-  return 'labelKey' in n ? t(n.labelKey) : n.label
-}
 
 async function submit() {
   if (!name.value.trim()) return
@@ -95,8 +88,13 @@ async function submit() {
   try {
     // Empty strings are dropped rather than sent: the API stores a nutrition row only
     // when an energy value is present, and `{}` would otherwise look like real data.
-    const nameTranslations = Object.fromEntries(Object.entries(translations.value).filter(([, v]) => v.trim() !== ''))
-    const nutritionPayload = Object.fromEntries(Object.entries(nutrition.value).filter(([, v]) => v.trim() !== ''))
+    const nameTranslations = droppedEmpty(translations.value)
+    const macroPayload = droppedEmpty(nutrition.value)
+    const microsPayload = droppedEmpty(micros.value)
+    const nutritionPayload = {
+      ...macroPayload,
+      ...(Object.keys(microsPayload).length ? { micros: microsPayload } : {}),
+    }
 
     const created = await $fetch<CreatedIngredient>('/api/ingredients', {
       method: 'POST',
@@ -104,6 +102,7 @@ async function submit() {
         name: name.value.trim(),
         ...(Object.keys(nameTranslations).length ? { nameTranslations } : {}),
         ...(category.value.trim() ? { category: category.value.trim() } : {}),
+        ...(manufacturer.value.trim() ? { manufacturer: manufacturer.value.trim() } : {}),
         ...(Object.keys(nutritionPayload).length ? { nutrition: nutritionPayload } : {}),
       },
     })
@@ -142,6 +141,10 @@ async function submit() {
           />
         </UFormField>
 
+        <UFormField :label="t('recipe.ingredientManufacturer')">
+          <UInput v-model="manufacturer" maxlength="200" :placeholder="t('recipe.ingredientManufacturerPlaceholder')" />
+        </UFormField>
+
         <div class="space-y-2">
           <p class="text-sm font-medium">{{ t('recipe.ingredientTranslations') }}</p>
           <div class="grid gap-2 sm:grid-cols-2">
@@ -152,7 +155,7 @@ async function submit() {
         </div>
 
         <!-- Collapsed by default: most people will not have these numbers to hand, and an
-             open block of six empty fields reads as required. -->
+             open block of empty fields reads as required. -->
         <div class="border-t border-default pt-3">
           <UButton
             :label="t('recipe.nutritionOptional')"
@@ -166,13 +169,66 @@ async function submit() {
           <div v-if="nutritionOpen" class="mt-2 space-y-3">
             <p class="text-xs text-muted">{{ t('recipe.nutritionOptionalHint') }}</p>
             <div class="grid gap-2 sm:grid-cols-2">
+              <!-- `type="text"` + `inputmode="decimal"`, not `type="number"`: a native number
+                   input rejects a comma in most locales, and German nutrition labels are
+                   written with one ("12,5"). The server (`decimalSchema`) already accepts
+                   either separator — the input just has to let people type it. -->
               <UFormField
-                v-for="n in NUTRIENTS"
+                v-for="n in MACRO_FIELDS"
                 :key="n.key"
                 :label="n.unit ? `${labelFor(n)} (${n.unit})` : labelFor(n)"
               >
-                <UInput v-model="nutrition[n.key]" type="number" min="0" step="any" inputmode="decimal" />
+                <UInput
+                  :model-value="nutrition[n.key]"
+                  type="text"
+                  inputmode="decimal"
+                  @update:model-value="(v: string | number) => (nutrition[n.key] = String(v))"
+                />
               </UFormField>
+            </div>
+            <p class="text-xs text-dimmed italic">{{ t('recipe.nutritionSourceUser') }}</p>
+          </div>
+        </div>
+
+        <!-- Same catalog the Swiss BLV import fills in for its own foods (see
+             `shared/utils/ingredientMicros.ts`), so a self-reported value lands in the exact
+             same field a recipe's micronutrient totals already read from. -->
+        <div class="border-t border-default pt-3">
+          <UButton
+            :label="t('nutrition.showMicros')"
+            :icon="microsOpen ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
+            color="neutral"
+            variant="ghost"
+            size="sm"
+            @click="microsOpen = !microsOpen"
+          />
+
+          <div v-if="microsOpen" class="mt-2 space-y-3">
+            <div>
+              <p class="text-xs font-medium text-muted">{{ t('nutrition.vitamins') }}</p>
+              <div class="mt-1 grid gap-2 sm:grid-cols-2">
+                <UFormField v-for="k in VITAMIN_KEYS" :key="k" :label="`${MICRO_LABELS[k]} (${unitFromMicroKey(k)})`">
+                  <UInput
+                    :model-value="micros[k]"
+                    type="text"
+                    inputmode="decimal"
+                    @update:model-value="(v: string | number) => (micros[k] = String(v))"
+                  />
+                </UFormField>
+              </div>
+            </div>
+            <div>
+              <p class="text-xs font-medium text-muted">{{ t('nutrition.minerals') }}</p>
+              <div class="mt-1 grid gap-2 sm:grid-cols-2">
+                <UFormField v-for="k in MINERAL_KEYS" :key="k" :label="`${MICRO_LABELS[k]} (${unitFromMicroKey(k)})`">
+                  <UInput
+                    :model-value="micros[k]"
+                    type="text"
+                    inputmode="decimal"
+                    @update:model-value="(v: string | number) => (micros[k] = String(v))"
+                  />
+                </UFormField>
+              </div>
             </div>
             <p class="text-xs text-dimmed italic">{{ t('recipe.nutritionSourceUser') }}</p>
           </div>
