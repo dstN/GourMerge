@@ -322,7 +322,26 @@ useSeoMeta({
   ogUrl: () => (recipe.value ? `${appUrl}/${recipe.value.owner.username}/${recipe.value.slug}` : appUrl),
   ogType: 'website',
   ogSiteName: 'GourMerge',
-  twitterCard: 'summary',
+  // A recipe with an uploaded photo uses it directly — it's already a served,
+  // content-addressed URL, so this is the only change needed, no new rendering. Only a
+  // recipe with NO photo falls back to the generated card at `/og-image`, which itself
+  // degrades to the site-wide static default if its rasterizer dependency can't run on
+  // this host (see `ogImageRender.ts`). Either way, `twitterCard` switches to
+  // `summary_large_image` — a wide 1200×630 (or a real photo) undersizes badly in the
+  // small square `summary` layout.
+  ogImage: () =>
+    recipe.value
+      ? recipe.value.image
+        ? `${appUrl}/api/recipes/${recipe.value.id}/image?v=${recipe.value.image.checksum}`
+        : `${appUrl}/api/recipes/${recipe.value.id}/og-image`
+      : `${appUrl}/pwa-512x512.png`,
+  twitterCard: 'summary_large_image',
+  twitterImage: () =>
+    recipe.value
+      ? recipe.value.image
+        ? `${appUrl}/api/recipes/${recipe.value.id}/image?v=${recipe.value.image.checksum}`
+        : `${appUrl}/api/recipes/${recipe.value.id}/og-image`
+      : `${appUrl}/pwa-512x512.png`,
   twitterTitle: () => (recipe.value ? `${recipe.value.title}: GourMerge` : 'GourMerge'),
   twitterDescription: () => recipe.value?.description || t('recipe.seoDescriptionFallback'),
   robots: () => (recipe.value?.visibility === 'private' ? 'noindex,nofollow' : 'index,follow'),

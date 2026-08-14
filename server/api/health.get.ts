@@ -88,6 +88,15 @@ export default defineEventHandler(async (event) => {
   if (!(await imageEncoderAvailable())) {
     warnings.push('sharp unavailable (uploads are stored as sent, without server-side WebP re-encoding)')
   }
+  /**
+   * Same fail-open reasoning as `sharp` above. A recipe with no uploaded photo falls back
+   * to a generated OG-image card; if the rasterizer's native binary can't load on this
+   * host, `og-image.get.ts` degrades to the site-wide static default instead of a broken
+   * image — invisible in the app, so this is the only place it becomes observable.
+   */
+  if (!(await ogImageRasterizerAvailable())) {
+    warnings.push('satori/@resvg/resvg-js unavailable (recipes without a photo fall back to the static OG image)')
+  }
 
   const healthy = problems.length === 0
   const body = {

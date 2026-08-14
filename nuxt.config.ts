@@ -413,7 +413,15 @@ export default defineNuxtConfig({
      * Nitro ships it as flat files, not as importable modules — so a server asset is the
      * supported way to read one at runtime. Read via `useStorage('assets:brand')`.
      */
-    serverAssets: [{ baseName: 'brand', dir: '../public' }],
+    serverAssets: [
+      { baseName: 'brand', dir: '../public' },
+      /**
+       * A static TTF weight for the OG-image rasterizer (`ogImageRender.ts`). `@nuxt/fonts`
+       * already ships WOFF2 for the browser, which `satori` cannot consume directly — a
+       * server-side rasterizer needs its own font bytes, read via `useStorage('assets:fonts')`.
+       */
+      { baseName: 'fonts', dir: '../server/assets/fonts' },
+    ],
   },
 
   // ── Dev Tools ───────────────────────────────────────────────
