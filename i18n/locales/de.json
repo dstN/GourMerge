@@ -867,5 +867,20 @@
       "issue": "Problem",
       "praise": "Lob"
     }
+  },
+  "collections": {
+    "title": "Sammlungen",
+    "subtitle": "Rezepte über Tags hinaus gruppieren — deine eigenen oder gemerkte von anderen.",
+    "create": "Sammlung erstellen",
+    "newTitleLabel": "Titel",
+    "newTitlePlaceholder": "z. B. Sonntagsfrühstück",
+    "empty": "Noch keine Sammlungen",
+    "emptyDesc": "Erstelle eine Sammlung, um Rezepte zu gruppieren.",
+    "emptyItems": "Diese Sammlung ist noch leer.",
+    "viewAll": "Sammlungen",
+    "saveTitle": "Zu Sammlung hinzufügen",
+    "noneYet": "Du hast noch keine Sammlung. Erstelle unten die erste.",
+    "notFound": "Sammlung nicht gefunden",
+    "recipeCount": "{count} Rezepte"
   }
 }

@@ -867,5 +867,20 @@
       "issue": "Problema",
       "praise": "Complimento"
     }
+  },
+  "collections": {
+    "title": "Raccolte",
+    "subtitle": "Raggruppa le ricette oltre i tag — le tue o quelle salvate da altri profili.",
+    "create": "Crea raccolta",
+    "newTitleLabel": "Titolo",
+    "newTitlePlaceholder": "es. Brunch della domenica",
+    "empty": "Ancora nessuna raccolta",
+    "emptyDesc": "Crea una raccolta per raggruppare le ricette.",
+    "emptyItems": "Questa raccolta è ancora vuota.",
+    "viewAll": "Raccolte",
+    "saveTitle": "Salva nella raccolta",
+    "noneYet": "Non hai ancora una raccolta. Creane una qui sotto.",
+    "notFound": "Raccolta non trovata",
+    "recipeCount": "{count} ricette"
   }
 }

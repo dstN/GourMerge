@@ -867,5 +867,20 @@
       "issue": "Problème",
       "praise": "Compliment"
     }
+  },
+  "collections": {
+    "title": "Collections",
+    "subtitle": "Regroupez des recettes au-delà des tags — les vôtres, ou celles enregistrées depuis d'autres profils.",
+    "create": "Créer une collection",
+    "newTitleLabel": "Titre",
+    "newTitlePlaceholder": "p. ex. Brunch du dimanche",
+    "empty": "Pas encore de collection",
+    "emptyDesc": "Créez une collection pour regrouper des recettes.",
+    "emptyItems": "Cette collection est vide pour l'instant.",
+    "viewAll": "Collections",
+    "saveTitle": "Enregistrer dans une collection",
+    "noneYet": "Vous n'avez pas encore de collection. Créez la première ci-dessous.",
+    "notFound": "Collection introuvable",
+    "recipeCount": "{count} recettes"
   }
 }

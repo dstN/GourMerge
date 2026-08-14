@@ -213,6 +213,9 @@ async function toggleStar() {
   }
 }
 
+// ── Save to collection ───────────────────────────────────────
+const showSaveModal = ref(false)
+
 // ── Fork ─────────────────────────────────────────────────────
 const forkPending = ref(false)
 
@@ -443,6 +446,16 @@ useHead(() => {
               @click="forkRecipe"
             />
             <CommonHelpHint v-if="loggedIn && !isOwner" i18n-key="glossary.fork.helpHint" size="sm" />
+            <UButton
+              v-if="loggedIn"
+              icon="i-lucide-bookmark"
+              size="sm"
+              color="neutral"
+              variant="outline"
+              :aria-label="t('collections.saveTitle')"
+              :title="t('collections.saveTitle')"
+              @click="showSaveModal = true"
+            />
             <!-- Carries the number of OPEN requests, the way GitHub does: a count of
                  closed ones is history, not something needing attention. Hidden at zero
                  rather than showing a `0`, so the badge only ever means "there is
@@ -797,6 +810,8 @@ useHead(() => {
       <div id="discussion" class="mt-6 scroll-mt-6">
         <RecipeDiscussionPanel :recipe-id="recipe.id" :is-recipe-owner="isOwner" />
       </div>
+
+      <CollectionSaveModal v-model:open="showSaveModal" :recipe-id="recipe.id" />
     </div>
   </CommonPageShell>
 </template>

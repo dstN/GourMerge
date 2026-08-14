@@ -1060,6 +1060,73 @@ export const reports = mysqlTable(
 )
 
 // ═══════════════════════════════════════════════════════════════
+// COLLECTIONS (curated recipe lists — a user's own recipes or anyone else's visible ones)
+// ═══════════════════════════════════════════════════════════════
+// `ownerId` is CASCADE, not the RESTRICT + ghost-reassignment pattern `recipes.ownerId`
+// uses: nothing else in the schema references a collection except its own join table
+// below, which itself cascades off the collection — unlike a recipe, a collection carries
+// no other user's history, so there is nothing to preserve past the owner's deletion.
+//
+// Deliberately NO denormalized recipe-count column, unlike `starCount`/`forkCount`. Those
+// counters are viewer-independent facts; a collection's visible item count is not — an
+// item added while public may have since gone private, and the count differs per viewer.
+// A stored total would either leak "there's one more you can't see" or need per-viewer
+// materialization. Computed live with a filtered COUNT(*) instead (see `by-slug` endpoint).
+export const collections = mysqlTable(
+  'collections',
+  {
+    id: int('id').primaryKey().autoincrement(),
+    /** External identifier, for parity with `recipes` and for the GDPR export — routing itself uses the slug. */
+    publicId: binary16('public_id').notNull(),
+    ownerId: int('owner_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    title: varchar('title', { length: 300 }).notNull(),
+    /** URL-safe slug, unique per owner — same scheme as `recipes.slug`. */
+    slug: varchar('slug', { length: 300 }).notNull(),
+    description: text('description'),
+    visibility: mysqlEnum('visibility', ['public', 'private']).notNull().default('public'),
+    createdAt: datetime('created_at')
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: timestamp('updated_at')
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`)
+      .onUpdateNow(),
+  },
+  (table) => [
+    uniqueIndex('idx_collections_public_id').on(table.publicId),
+    index('idx_collections_owner').on(table.ownerId),
+    index('idx_collections_visibility').on(table.visibility),
+    uniqueIndex('idx_collections_owner_slug').on(table.ownerId, table.slug),
+  ]
+)
+
+/**
+ * A recipe's membership in a collection. `recipeId` cascades so a hard-deleted recipe
+ * simply disappears from every collection with zero application code — the same
+ * reasoning `recipeStars`/`recipeTags` already rely on.
+ *
+ * No sort-order column: added-at order only, a stated v1 simplification.
+ */
+export const collectionRecipes = mysqlTable(
+  'collection_recipes',
+  {
+    id: int('id').primaryKey().autoincrement(),
+    collectionId: int('collection_id')
+      .notNull()
+      .references(() => collections.id, { onDelete: 'cascade' }),
+    recipeId: int('recipe_id')
+      .notNull()
+      .references(() => recipes.id, { onDelete: 'cascade' }),
+    addedAt: datetime('added_at')
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [uniqueIndex('idx_collection_recipes_unique').on(table.collectionId, table.recipeId)]
+)
+
+// ═══════════════════════════════════════════════════════════════
 // DRIZZLE RELATIONS
 // ═══════════════════════════════════════════════════════════════
 
@@ -1068,6 +1135,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   commits: many(recipeCommits),
   gourmergeRequests: many(gourmergeRequests),
   stars: many(recipeStars),
+  collections: many(collections),
 }))
 
 export const ingredientsRelations = relations(ingredients, ({ one, many }) => ({
@@ -1168,4 +1236,14 @@ export const recipeStarsRelations = relations(recipeStars, ({ one }) => ({
 
 export const reportsRelations = relations(reports, ({ one }) => ({
   reporter: one(users, { fields: [reports.reporterId], references: [users.id] }),
+}))
+
+export const collectionsRelations = relations(collections, ({ one, many }) => ({
+  owner: one(users, { fields: [collections.ownerId], references: [users.id] }),
+  recipes: many(collectionRecipes),
+}))
+
+export const collectionRecipesRelations = relations(collectionRecipes, ({ one }) => ({
+  collection: one(collections, { fields: [collectionRecipes.collectionId], references: [collections.id] }),
+  recipe: one(recipes, { fields: [collectionRecipes.recipeId], references: [recipes.id] }),
 }))

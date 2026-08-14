@@ -38,6 +38,18 @@ const charMap: Record<string, string> = {
 }
 
 /**
+ * Recipe slugs share the `/:username/:slug` URL space with other static routes nested
+ * under a username segment (e.g. `/:username/collections`). A recipe slug equal to one of
+ * these would make that recipe permanently unreachable — Nuxt's file-based routing
+ * prioritizes the static `collections` route over the dynamic `[slug]` one, so
+ * `/alice/collections` always resolves to the collections list page, never to a recipe
+ * whose slug happens to be "collections". Checked in the same uniqueness loop that already
+ * exists in `recipes/index.post.ts` and `recipes/[id]/fork.post.ts` — a reserved slug is
+ * treated exactly like an existing one, forcing the `-1`/`-2` suffix.
+ */
+export const RESERVED_RECIPE_SLUGS = new Set(['collections'])
+
+/**
  * Generate a URL-safe slug from a string.
  *
  * @param input - Raw string (e.g. recipe title)

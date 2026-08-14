@@ -83,11 +83,13 @@ export default defineEventHandler(async (event) => {
   let suffix = 0
   while (true) {
     const candidate = suffix === 0 ? slug : `${slug}-${suffix}`
-    const [existing] = await db
-      .select({ id: recipes.id })
-      .from(recipes)
-      .where(and(eq(recipes.ownerId, session.user.id), eq(recipes.slug, candidate)))
-      .limit(1)
+    const [existing] = RESERVED_RECIPE_SLUGS.has(candidate)
+      ? [{ id: -1 }]
+      : await db
+          .select({ id: recipes.id })
+          .from(recipes)
+          .where(and(eq(recipes.ownerId, session.user.id), eq(recipes.slug, candidate)))
+          .limit(1)
     if (!existing) {
       slug = candidate
       break

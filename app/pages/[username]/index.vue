@@ -77,25 +77,35 @@ useSeoMeta({
           <p class="text-muted text-sm mb-2">@{{ profile.user.username }}</p>
           <p v-if="profile.user.bio" class="text-muted">{{ profile.user.bio }}</p>
         </div>
-        <UButton
-          v-if="profile.isOwnProfile"
-          :label="t('profile.editSettings')"
-          icon="i-lucide-settings"
-          color="neutral"
-          variant="outline"
-          size="sm"
-          to="/settings"
-        />
-        <CommonReportButton v-else-if="loggedIn" v-slot="{ open }" target-kind="user" :target-id="profile.user.id">
+        <div class="flex items-center gap-2">
           <UButton
-            :label="t('report.user')"
-            icon="i-lucide-flag"
+            :label="t('collections.viewAll')"
+            icon="i-lucide-bookmark"
             color="neutral"
-            variant="ghost"
+            variant="outline"
             size="sm"
-            @click="open"
+            :to="`/${profile.user.username}/collections`"
           />
-        </CommonReportButton>
+          <UButton
+            v-if="profile.isOwnProfile"
+            :label="t('profile.editSettings')"
+            icon="i-lucide-settings"
+            color="neutral"
+            variant="outline"
+            size="sm"
+            to="/settings"
+          />
+          <CommonReportButton v-else-if="loggedIn" v-slot="{ open }" target-kind="user" :target-id="profile.user.id">
+            <UButton
+              :label="t('report.user')"
+              icon="i-lucide-flag"
+              color="neutral"
+              variant="ghost"
+              size="sm"
+              @click="open"
+            />
+          </CommonReportButton>
+        </div>
       </div>
 
       <UTabs

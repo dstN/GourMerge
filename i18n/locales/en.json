@@ -867,5 +867,20 @@
       "issue": "Issue",
       "praise": "Praise"
     }
+  },
+  "collections": {
+    "title": "Collections",
+    "subtitle": "Group recipes beyond tags — your own, or ones you've saved from others.",
+    "create": "Create collection",
+    "newTitleLabel": "Title",
+    "newTitlePlaceholder": "e.g. Sunday brunch",
+    "empty": "No collections yet",
+    "emptyDesc": "Create a collection to group recipes together.",
+    "emptyItems": "This collection is empty so far.",
+    "viewAll": "Collections",
+    "saveTitle": "Save to collection",
+    "noneYet": "You don't have a collection yet. Create the first one below.",
+    "notFound": "Collection not found",
+    "recipeCount": "{count} recipes"
   }
 }

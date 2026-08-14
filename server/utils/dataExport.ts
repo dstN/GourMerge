@@ -29,6 +29,8 @@ import {
   recipeImages,
   userAvatars,
   contactMessages,
+  collections,
+  collectionRecipes,
 } from '~~/server/database/schema'
 import { bufferToUuid } from '~~/server/utils/uuid'
 
@@ -48,6 +50,7 @@ export interface DataExport {
   discussions: unknown[]
   discussionComments: unknown[]
   contactMessages: unknown[]
+  collections: unknown[]
 }
 
 /**
@@ -163,6 +166,24 @@ export async function buildDataExport(
     }
   })
 
+  // Metadata about the recipes referenced, not their full body — the recipes themselves
+  // are already exported above if the user owns them, or are somebody else's content
+  // otherwise (a saved bookmark to a recipe you don't own isn't "data about you" beyond
+  // the fact that you saved it).
+  const ownCollections = await db.select().from(collections).where(eq(collections.ownerId, userId))
+  const collectionIds = ownCollections.map((c) => c.id)
+  const collectionRecipeRows = collectionIds.length
+    ? await db
+        .select({ collectionId: collectionRecipes.collectionId, recipeId: collectionRecipes.recipeId, addedAt: collectionRecipes.addedAt })
+        .from(collectionRecipes)
+        .where(inArray(collectionRecipes.collectionId, collectionIds))
+    : []
+  const collectionsOut = ownCollections.map((c) => ({
+    ...c,
+    publicId: c.publicId ? bufferToUuid(c.publicId) : null,
+    recipes: collectionRecipeRows.filter((r) => r.collectionId === c.id).map((r) => ({ recipeId: r.recipeId, addedAt: r.addedAt })),
+  }))
+
   const [starred, ownGmrs, ownComments, ownDiscussions, ownDiscussionComments, contacts] = await Promise.all([
     db
       .select({ recipeId: recipeStars.recipeId, createdAt: recipeStars.createdAt })
@@ -194,5 +215,6 @@ export async function buildDataExport(
     discussions: ownDiscussions,
     discussionComments: ownDiscussionComments,
     contactMessages: contacts,
+    collections: collectionsOut,
   }
 }
