@@ -431,7 +431,7 @@ useHead(() => {
             <span class="font-semibold text-default truncate">{{ recipe.slug }}</span>
           </div>
 
-          <div class="flex items-center gap-2 flex-wrap lg:justify-end" data-tour="tour-pointers">
+          <div class="no-print flex items-center gap-2 flex-wrap lg:justify-end" data-tour="tour-pointers">
             <UBadge
               v-if="recipe.visibility === 'private'"
               color="neutral"
@@ -557,6 +557,18 @@ useHead(() => {
               target-kind="image"
               :target-id="recipe.id"
             />
+            <!-- Visible to everyone, not gated on `loggedIn` — anonymous visitors already
+                 see the GMR/discussion buttons in this row, and printing a recipe needs no
+                 account. -->
+            <UButton
+              icon="i-lucide-printer"
+              size="sm"
+              color="neutral"
+              variant="outline"
+              :aria-label="t('recipe.print')"
+              :title="t('recipe.print')"
+              @click="() => window.print()"
+            />
           </div>
         </div>
 
@@ -629,7 +641,7 @@ useHead(() => {
 
            Until this existed the detail page ignored `?branch=` entirely and always
            rendered the default, so a variant could be created and edited but never read. -->
-      <div v-if="recipe.selectedBranch" class="mb-6 flex flex-wrap items-center gap-2">
+      <div v-if="recipe.selectedBranch" class="no-print mb-6 flex flex-wrap items-center gap-2">
         <USelectMenu
           :model-value="recipe.selectedBranch.id"
           :items="branchItems"
@@ -830,7 +842,7 @@ useHead(() => {
 
       <!-- Discussion — last, under the recipe. See RecipeDiscussionPanel for why under
            and not beside. -->
-      <div id="discussion" class="mt-6 scroll-mt-6">
+      <div id="discussion" class="no-print mt-6 scroll-mt-6">
         <RecipeDiscussionPanel :recipe-id="recipe.id" :is-recipe-owner="isOwner" />
       </div>
 

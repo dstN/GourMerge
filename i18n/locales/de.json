@@ -183,6 +183,7 @@
     "commitError": "Version konnte nicht gespeichert werden.",
     "ingredientIncomplete": "Jede Zutat benötigt einen Namen und eine Menge.",
     "fork": "Remixen",
+    "print": "Drucken",
     "forkSuccess": "Eigene Version erstellt.",
     "forkError": "Eigene Version konnte nicht erstellt werden.",
     "seoDescriptionFallback": "Entdecke und remixe dieses Rezept auf GourMerge — die Plattform für kollaborative Rezeptentwicklung.",

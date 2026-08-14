@@ -506,3 +506,45 @@ html.light {
 html.light {
   color-scheme: light;
 }
+
+/* ── Print (recipe pages) ──────────────────────────────────────────────────
+ * Both `default.vue` and `dashboard.vue` wrap the page in a `.print-shell` root
+ * (`h-dvh overflow-hidden`) around `#main-content` (`overflow-y-auto`) — the "only
+ * <main> scrolls" rule (DESIGNBOOK §4.1). Hiding the header/footer alone is NOT
+ * enough to print more than one page: the scroll container's box never exceeds one
+ * viewport height regardless of content, so without the height/overflow reset below,
+ * a long recipe would print clipped to a single page. */
+@media print {
+  .print-shell,
+  #main-content {
+    height: auto !important;
+    overflow: visible !important;
+  }
+  header,
+  footer,
+  .skip-link,
+  .no-print {
+    display: none !important;
+  }
+  /* Printing a dark theme wastes ink and, on some browsers/printers, prints
+   * backgrounds as solid black boxes — an easy-to-miss default worth forcing
+   * explicitly rather than leaving to whatever mode happened to be active. */
+  :root {
+    color-scheme: light;
+  }
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  img {
+    max-width: 100%;
+  }
+  h1,
+  h2,
+  h3 {
+    break-after: avoid;
+  }
+  @page {
+    margin: 1.5cm;
+  }
+}

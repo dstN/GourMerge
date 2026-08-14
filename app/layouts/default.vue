@@ -23,7 +23,7 @@ const localeSwitchItems = [
 </script>
 
 <template>
-  <div class="flex flex-col h-dvh overflow-hidden bg-default text-default">
+  <div class="print-shell flex flex-col h-dvh overflow-hidden bg-default text-default">
     <!-- Skip-to-content for keyboard/screen reader users -->
     <a href="#main-content" class="skip-link">{{ t('a11y.skipToContent') }}</a>
 

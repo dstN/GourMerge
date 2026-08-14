@@ -183,6 +183,7 @@
     "commitError": "Impossible de sauvegarder la version.",
     "ingredientIncomplete": "Chaque ingrédient nécessite un nom et une quantité.",
     "fork": "Remixer",
+    "print": "Imprimer",
     "forkSuccess": "Votre remix est prêt.",
     "forkError": "Impossible de créer votre remix.",
     "seoDescriptionFallback": "Découvrez et remixez cette recette sur GourMerge — la plateforme de développement collaboratif de recettes.",

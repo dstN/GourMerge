@@ -183,6 +183,7 @@
     "commitError": "Impossibile salvare la versione.",
     "ingredientIncomplete": "Ogni ingrediente richiede un nome e una quantità.",
     "fork": "Remixa",
+    "print": "Stampa",
     "forkSuccess": "Il tuo remix è pronto.",
     "forkError": "Impossibile creare il remix.",
     "seoDescriptionFallback": "Scopri e remixa questa ricetta su GourMerge — la piattaforma per lo sviluppo collaborativo di ricette.",
