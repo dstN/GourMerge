@@ -44,6 +44,7 @@ playwright-report
 !.claude/ARCHITECTURE.md
 !.claude/ROADMAP.md
 !.claude/current_state.md
+!.claude/feature_ingredient_voting.md
 
 # Local database dumps from `npm run db:backup` — personal data, never committed.
 backups/

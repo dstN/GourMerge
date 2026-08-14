@@ -313,7 +313,9 @@ not have to rediscover them. Nothing below is implemented yet.
 
 Not scoped, not scheduled. Roughly in the order they would earn their keep.
 
-0. **Community verification for user-added ingredients and nutrition** — the
+0. **Community verification for user-added ingredients and nutrition** — see
+   `feature_ingredient_voting.md` for the two designs considered (cheap admin-promotion
+   slice vs. full peer-voting) and why the cheap slice is recommended first. The
    Community-Notes-shaped idea. A user-added ingredient is immediately usable **in that
    user's own recipes**, but does not enter the public catalogue (autocomplete for
    everyone else, explore, nutrition aggregates) until _x_ other users have confirmed it.
