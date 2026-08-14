@@ -52,42 +52,47 @@ GourMerge/
 ├── app/                        # All frontend source (Nuxt 4 convention)
 │   ├── assets/css/main.css     # Tailwind v4 @theme + design tokens (see DESIGNBOOK.md)
 │   ├── components/             # Auto-imported Vue components
+│   │   ├── collection/         # CollectionCard, CollectionSaveModal
 │   │   ├── common/             # BrandLogo, PageShell, PageHeader, EmptyState, UserAvatar,
 │   │   │                       # ReportButton, AvatarUpload/AvatarCropper, TwoFactorCard,
 │   │   │                       # PasskeyCard, ChangeEmailCard, GlossaryTerm, HelpHint,
 │   │   │                       # ObfuscatedEmail  (design system)
 │   │   ├── layout/             # MainNav, UserDropdown, MobileMenu, FooterLinks,
-│   │   │                       # VerifyEmailBanner  (no dashboard sidebar — see §12)
+│   │   │                       # VerifyEmailBanner, NotificationBell  (no dashboard
+│   │   │                       # sidebar — see §12)
 │   │   ├── onboarding/         # ConceptIntro, HelpMenu, TourOverlay, TourStep
+│   │   ├── profile/            # ContributionGraph, ActivityStats
 │   │   └── recipe/             # IngredientAutocomplete, IngredientRow, NewIngredientModal,
 │   │                           # EditIngredientModal, StepEditor, RecipeCard,
 │   │                           # RecipeDiffViewer, DietaryBadge, DifficultyBadge,
 │   │                           # NutritionFacts, TagList, CoverImage, ImageUpload,
-│   │                           # DiscussionPanel
+│   │                           # DiscussionPanel, MentionAutocomplete
 │   ├── layouts/                # default.vue, dashboard.vue, auth.vue
 │   ├── middleware/             # validate-recipe-route.ts, auth.ts, guest.ts, shell.ts
-│   ├── pages/                  # 29 pages + 1 dev-only (see §5)
+│   ├── pages/                  # 33 pages + 1 dev-only (see §5)
 │   ├── composables/             # useApiError, useAppToast, useIngredientNutrientFields,
 │   │                           # useOnboarding, useProductTour
-│   ├── utils/                  # markdown.ts (sanitizer), ui.ts (shared UI maps),
-│   │                           # imageResize.ts
+│   ├── utils/                  # markdown.ts (sanitizer, incl. @mention linkification),
+│   │                           # ui.ts (shared UI maps), imageResize.ts
 │   ├── app.vue                 # <UApp><NuxtLayout><NuxtPage />
 │   └── app.config.ts           # Nuxt UI theme + central component defaults
 ├── server/
-│   ├── api/                    # 69 REST endpoints (see §6)
+│   ├── api/                    # 84 REST endpoints (see §6)
 │   ├── database/
-│   │   ├── schema.ts           # Drizzle ORM schema (28 tables)
-│   │   └── migrations/         # 17 versioned SQL migrations (0000–0016)
+│   │   ├── schema.ts           # Drizzle ORM schema (31 tables)
+│   │   └── migrations/         # 19 versioned SQL migrations (0000–0018)
 │   ├── middleware/             # Nitro middleware
 │   ├── plugins/                # Nitro plugins (db, logger, sentry, error-handler)
 │   └── utils/                  # drizzle.ts, diff.ts, merge.ts, units.ts, slug.ts,
 │                                # reports.ts, requireAdmin.ts, recipeAccess.ts,
-│                                # likeEscape.ts, ingredientValidation.ts, imageProbe.ts,
-│                                # imageEncode.ts, hardDeleteUser.ts
-├── shared/types/               # TypeScript types shared app ↔ server
+│                                # collectionAccess.ts, likeEscape.ts, ingredientValidation.ts,
+│                                # imageProbe.ts, imageEncode.ts, ogImageRender.ts,
+│                                # hardDeleteUser.ts, notifications.ts, notificationDigest.ts,
+│                                # notificationDigestMessages.ts, profileStats.ts
+├── shared/types/               # TypeScript types shared app ↔ server (incl. notification.ts)
 ├── shared/utils/                # ingredientMicros.ts — vitamin/mineral catalog shared by
 │                                # validation, input forms and NutritionFacts.vue
-├── i18n/locales/               # de.json, en.json, fr.json, it.json (714 keys, 4-way parity)
+├── i18n/locales/               # de.json, en.json, fr.json, it.json (758 keys, 4-way parity)
 ├── scripts/                    # Maintenance + setup scripts (see §8)
 ├── public/                     # PWA icons, favicon, apple-touch-icon
 ├── docs/RUNBOOK.md             # Production operations playbook
@@ -101,42 +106,43 @@ GourMerge/
 
 ---
 
-## 4. Database Schema (28 tables)
+## 4. Database Schema (31 tables)
 
 All migrations versioned in `server/database/migrations/`. **Never use `db:push` against production.**
 
-| Table                        | Purpose                                                                                                                               | Key Relations                                                              |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| `users`                      | Auth + profile (`is_admin` gates `/admin/*`)                                                                                          | —                                                                          |
-| `user_avatars`               | Profile picture, `MEDIUMBLOB` (WebP)                                                                                                  | CASCADE on user delete                                                     |
-| `ingredients`                | Global master catalog (Swiss BLV + user-created); `created_by` null for the BLV import                                                | 1:1 → `ingredient_nutrition`; creator → `users` (SET NULL)                 |
-| `ingredient_nutrition`       | Per-100g nutritional data (Swiss BLV V7.0 or user-supplied)                                                                           | —                                                                          |
-| `recipes`                    | Repository equivalent                                                                                                                 | owner → `users`; forkedFrom → self                                         |
-| `recipe_tags`                | Recipe ↔ tag M:M                                                                                                                      | CASCADE on recipe delete                                                   |
-| `tags`                       | Tag master list                                                                                                                       | —                                                                          |
-| `recipe_stars`               | Favorites (unique per user+recipe)                                                                                                    | CASCADE on recipe delete                                                   |
-| `recipe_branches`            | Lightweight branch pointer                                                                                                            | CASCADE on recipe delete                                                   |
-| `recipe_commits`             | Full snapshot per commit (not deltas)                                                                                                 | CASCADE on branch delete                                                   |
-| `recipe_commit_ingredients`  | Ingredient snapshot per commit                                                                                                        | CASCADE on commit delete                                                   |
-| `recipe_commit_steps`        | Step (Markdown) snapshot per commit                                                                                                   | CASCADE on commit delete                                                   |
-| `gourmerge_requests`         | GMR (cross-branch/fork proposals)                                                                                                     | CASCADE on recipe delete (recipe_id)                                       |
-| `gm_request_comments`        | Comments on GMRs                                                                                                                      | CASCADE on GMR delete                                                      |
-| `email_verification_tokens`  | CSPRNG tokens (bcrypt-hashed)                                                                                                         | CASCADE on user delete                                                     |
-| `email_change_tokens`        | CSPRNG tokens for changing a verified email                                                                                           | CASCADE on user delete                                                     |
-| `password_reset_tokens`      | CSPRNG tokens (bcrypt-hashed)                                                                                                         | CASCADE on user delete                                                     |
-| `rate_limit_hits`            | DB-backed rate limiter (multi-process safe)                                                                                           | —                                                                          |
-| `contact_messages`           | Contact form submissions                                                                                                              | —                                                                          |
-| `data_requests`              | GDPR self-service tokens (export/erasure)                                                                                             | CASCADE on user delete                                                     |
-| `user_totp`                  | Opt-in TOTP enrolment (secret encrypted)                                                                                              | CASCADE on user delete                                                     |
-| `user_recovery_codes`        | Single-use 2FA recovery codes (hashed)                                                                                                | CASCADE on user delete                                                     |
-| `recipe_images`              | The one serving-suggestion photo per recipe                                                                                           | CASCADE on recipe delete                                                   |
-| `recipe_discussions`         | Discussion threads (recipe- or commit-level)                                                                                          | CASCADE on recipe / commit delete                                          |
-| `recipe_discussion_comments` | Replies within a thread                                                                                                               | CASCADE on thread delete                                                   |
-| `user_passkeys`              | WebAuthn credentials (`credential_id` uniq)                                                                                           | CASCADE on user delete                                                     |
-| `webauthn_challenges`        | Single-use ceremony challenges, 5-min TTL                                                                                             | —                                                                          |
-| `reports`                    | Polymorphic moderation flag (`target_kind` + `target_id`, no real FK on the target) — recipe/user/discussion_comment/image/ingredient | reporter → `users` (CASCADE); unique on (reporter, target_kind, target_id) |
-| `user_passkeys`              | WebAuthn credentials (`credential_id` uniq)                                                                                           | CASCADE on user delete                                                     |
-| `webauthn_challenges`        | Single-use ceremony challenges, 5-min TTL                                                                                             | —                                                                          |
+| Table                        | Purpose                                                                                                                               | Key Relations                                                                           |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `users`                      | Auth + profile (`is_admin` gates `/admin/*`)                                                                                          | —                                                                                       |
+| `user_avatars`               | Profile picture, `MEDIUMBLOB` (WebP)                                                                                                  | CASCADE on user delete                                                                  |
+| `ingredients`                | Global master catalog (Swiss BLV + user-created); `created_by` null for the BLV import                                                | 1:1 → `ingredient_nutrition`; creator → `users` (SET NULL)                              |
+| `ingredient_nutrition`       | Per-100g nutritional data (Swiss BLV V7.0 or user-supplied)                                                                           | —                                                                                       |
+| `recipes`                    | Repository equivalent                                                                                                                 | owner → `users`; forkedFrom → self                                                      |
+| `recipe_tags`                | Recipe ↔ tag M:M                                                                                                                      | CASCADE on recipe delete                                                                |
+| `tags`                       | Tag master list                                                                                                                       | —                                                                                       |
+| `recipe_stars`               | Favorites (unique per user+recipe)                                                                                                    | CASCADE on recipe delete                                                                |
+| `recipe_branches`            | Lightweight branch pointer                                                                                                            | CASCADE on recipe delete                                                                |
+| `recipe_commits`             | Full snapshot per commit (not deltas)                                                                                                 | CASCADE on branch delete                                                                |
+| `recipe_commit_ingredients`  | Ingredient snapshot per commit                                                                                                        | CASCADE on commit delete                                                                |
+| `recipe_commit_steps`        | Step (Markdown) snapshot per commit                                                                                                   | CASCADE on commit delete                                                                |
+| `gourmerge_requests`         | GMR (cross-branch/fork proposals)                                                                                                     | CASCADE on recipe delete (recipe_id)                                                    |
+| `gm_request_comments`        | Comments on GMRs                                                                                                                      | CASCADE on GMR delete                                                                   |
+| `email_verification_tokens`  | CSPRNG tokens (bcrypt-hashed)                                                                                                         | CASCADE on user delete                                                                  |
+| `email_change_tokens`        | CSPRNG tokens for changing a verified email                                                                                           | CASCADE on user delete                                                                  |
+| `password_reset_tokens`      | CSPRNG tokens (bcrypt-hashed)                                                                                                         | CASCADE on user delete                                                                  |
+| `rate_limit_hits`            | DB-backed rate limiter (multi-process safe)                                                                                           | —                                                                                       |
+| `contact_messages`           | Contact form submissions                                                                                                              | —                                                                                       |
+| `data_requests`              | GDPR self-service tokens (export/erasure)                                                                                             | CASCADE on user delete                                                                  |
+| `user_totp`                  | Opt-in TOTP enrolment (secret encrypted)                                                                                              | CASCADE on user delete                                                                  |
+| `user_recovery_codes`        | Single-use 2FA recovery codes (hashed)                                                                                                | CASCADE on user delete                                                                  |
+| `recipe_images`              | The one serving-suggestion photo per recipe                                                                                           | CASCADE on recipe delete                                                                |
+| `recipe_discussions`         | Discussion threads (recipe- or commit-level)                                                                                          | CASCADE on recipe / commit delete                                                       |
+| `recipe_discussion_comments` | Replies within a thread                                                                                                               | CASCADE on thread delete                                                                |
+| `user_passkeys`              | WebAuthn credentials (`credential_id` uniq)                                                                                           | CASCADE on user delete                                                                  |
+| `webauthn_challenges`        | Single-use ceremony challenges, 5-min TTL                                                                                             | —                                                                                       |
+| `reports`                    | Polymorphic moderation flag (`target_kind` + `target_id`, no real FK on the target) — recipe/user/discussion_comment/image/ingredient | reporter → `users` (CASCADE); unique on (reporter, target_kind, target_id)              |
+| `collections`                | Curated recipe list, own or bookmarked; public/private                                                                                | owner → `users` (CASCADE)                                                               |
+| `collection_recipes`         | Collection ↔ recipe M:M (no ordering column — added-at order)                                                                         | CASCADE on collection delete; CASCADE on recipe delete                                  |
+| `notifications`              | Append-only event log (fork/GMR/discussion/mention)                                                                                   | recipient → `users` (CASCADE); actor → `users` (RESTRICT); recipe → `recipes` (CASCADE) |
 
 ### FK cascade gaps (manually handled in API)
 
@@ -147,9 +153,9 @@ Two FKs use NO ACTION (= RESTRICT in MySQL) and require pre-delete cleanup:
 
 This is handled in `server/api/recipes/[id].delete.ts`, and repeated in `server/api/privacy/delete.post.ts` for the "delete my recipes too" path.
 
-### Four RESTRICT FKs, and how a hard delete works anyway
+### Seven RESTRICT FKs, and how a hard delete works anyway
 
-`recipes.owner_id`, `recipe_commits.author_id`, `gourmerge_requests.author_id` and `gm_request_comments.author_id` are all **NOT NULL** and NO ACTION. On top of that `fork.post.ts` copies commits keeping the **original** `author_id`, so a stranger's fork legitimately contains commits authored by the departing user. A bare `DELETE FROM users` therefore either fails on the constraint or destroys rows inside another user's recipe history.
+`recipes.owner_id`, `recipe_commits.author_id`, `gourmerge_requests.author_id`, `gm_request_comments.author_id`, `recipe_discussions.author_id`, `recipe_discussion_comments.author_id` and (since the notifications feature) `notifications.actor_id` are all **NOT NULL** and NO ACTION. On top of that `fork.post.ts` copies commits keeping the **original** `author_id`, so a stranger's fork legitimately contains commits authored by the departing user. A bare `DELETE FROM users` therefore either fails on the constraint or destroys rows inside another user's recipe history. `notifications.recipient_id` is the opposite choice — CASCADE, since an inbox row is the recipient's own disposable data, not attribution that must survive them, the same reasoning `recipe_stars` already uses.
 
 **Account deletion is nonetheless a real `DELETE`** (changed 2026-08-05; it used to anonymise the row in place). A single shared tombstone account — `users.is_ghost`, username `ghost`, seeded by migration `0008` — inherits the orphaned attribution first, which is GitHub's pattern. The user's own content is deleted outright; only their fingerprints inside other people's forks and threads survive, and those read as the anonymous ghost. Git can orphan attribution for free because it stores the author as free text; our `author_id` is a real foreign key, hence the tombstone.
 
@@ -166,7 +172,7 @@ One implementation, `server/utils/hardDeleteUser.ts`, serves both callers — th
 
 ---
 
-## 5. Pages (29, + 1 dev-only)
+## 5. Pages (33, + 1 dev-only)
 
 | Route                                           | Page                                  | Auth        | Layout    |
 | ----------------------------------------------- | ------------------------------------- | ----------- | --------- |
@@ -185,6 +191,10 @@ One implementation, `server/utils/hardDeleteUser.ts`, serves both callers — th
 | `/[username]/[slug]/gourmerge-requests`         | GMR list                              | No          | dashboard |
 | `/[username]/[slug]/gourmerge-requests/new`     | Create GMR                            | Yes         | dashboard |
 | `/[username]/[slug]/gourmerge-requests/[gmrId]` | GMR detail + merge                    | No          | dashboard |
+| `/[username]/collections`                       | Collections list                      | No          | default   |
+| `/[username]/collections/[collectionSlug]`      | Single collection                     | No          | default   |
+| `/notifications`                                | Notification inbox                    | Yes         | dashboard |
+| `/offline`                                      | PWA offline navigation fallback       | No          | none\*\*  |
 | `/auth/login`                                   | Login                                 | No          | auth      |
 | `/auth/register`                                | Register                              | No          | auth      |
 | `/auth/verified`                                | Email verification confirmation       | No          | auth      |
@@ -204,9 +214,11 @@ Plus `/dev/skeletons`, a debugging surface that 404s outside `import.meta.dev` �
 
 \* `/explore` uses a **dynamic layout** (`definePageMeta({ layout: false })` + `<NuxtLayout :name="loggedIn ? 'dashboard' : 'default'">`): logged-in users get the dashboard shell with sidebar; guests get the public layout.
 
+\*\* `/offline` is `layout: false` with no manual layout set — genuinely chrome-less, since it must render from the PWA precache with zero network and is never linked to from anywhere in the app; it's only ever reached as `navigateFallback`.
+
 ---
 
-## 6. API Routes (68 endpoints)
+## 6. API Routes (84 endpoints)
 
 All routes: Zod-validated body/query, `requireUserSession()` where auth required, `createError()` for errors.
 
@@ -221,6 +233,9 @@ All routes: Zod-validated body/query, `requireUserSession()` where auth required
 | DELETE | `/api/users/me/avatar`               | Yes      | Remove avatar, full session replace so the header updates immediately              |
 | GET    | `/api/users/[username]/avatar`       | No       | Generated identicon-QR badge (no upload on file). `?variant=mark` small            |
 | GET    | `/api/users/[username]/avatar-image` | No       | Serve an uploaded avatar's bytes. 404 if none — never a placeholder                |
+| GET    | `/api/users/[username]/collections`  | No       | Own-vs-public split, same shape as the profile endpoint                            |
+| GET    | `/api/users/[username]/stats`        | No       | Contribution graph, most-forked recipe, activity counts — visibility-filtered      |
+| GET    | `/api/users/search`                  | Yes      | Username/display-name autocomplete for @mentions (rate-limited)                    |
 
 ### Auth — 2FA / Passkeys
 
@@ -291,14 +306,38 @@ All routes: Zod-validated body/query, `requireUserSession()` where auth required
 
 ### Recipe photo (one per recipe)
 
-| Method | Route                     | Auth        | Purpose                                                    |
-| ------ | ------------------------- | ----------- | ---------------------------------------------------------- |
-| GET    | `/api/recipes/[id]/image` | No\*        | Serve the bytes. ETag + `?v=<sha256>` + `immutable`        |
-| PUT    | `/api/recipes/[id]/image` | Yes (owner) | Upsert (multipart). Type sniffed from magic bytes          |
-| DELETE | `/api/recipes/[id]/image` | Yes (owner) | Remove (rate-limited); closes any open report on the photo |
+| Method | Route                        | Auth        | Purpose                                                                                                                                               |
+| ------ | ---------------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | `/api/recipes/[id]/image`    | No\*        | Serve the bytes. ETag + `?v=<sha256>` + `immutable`                                                                                                   |
+| PUT    | `/api/recipes/[id]/image`    | Yes (owner) | Upsert (multipart). Type sniffed from magic bytes                                                                                                     |
+| DELETE | `/api/recipes/[id]/image`    | Yes (owner) | Remove (rate-limited); closes any open report on the photo                                                                                            |
+| GET    | `/api/recipes/[id]/og-image` | No\*        | Generated 1200×630 fallback card for a recipe with no photo (IP rate-limited, degrades to the static default on any failure — see `ogImageRender.ts`) |
 
 \* Same 404-not-403 visibility rule as the recipe itself; a private recipe's photo
 is `Cache-Control: private`.
+
+### Collections
+
+| Method | Route                                        | Auth        | Purpose                                                                  |
+| ------ | -------------------------------------------- | ----------- | ------------------------------------------------------------------------ |
+| POST   | `/api/collections`                           | Yes         | Create (rate-limited, reserved-slug guard against `"collections"`)       |
+| GET    | `/api/collections/by-slug/[username]/[slug]` | No\*        | Resolve + its recipes, filtered `visibility='public' OR ownerId=viewer`  |
+| GET    | `/api/collections/mine`                      | Yes         | Own collections, `?recipeId=` adds `containsRecipe` per row (save modal) |
+| PATCH  | `/api/collections/[id]`                      | Yes (owner) | Update metadata (rate-limited)                                           |
+| DELETE | `/api/collections/[id]`                      | Yes (owner) | Delete (join rows cascade; the referenced recipes are untouched)         |
+| POST   | `/api/collections/[id]/recipes`              | Yes (owner) | Add a recipe — re-validates `requireVisibleRecipe` on it every time      |
+| DELETE | `/api/collections/[id]/recipes/[recipeId]`   | Yes (owner) | Remove a recipe                                                          |
+
+\* Same 404-not-403 visibility rule as a recipe — see `collectionAccess.ts`.
+
+### Notifications
+
+| Method | Route                             | Auth | Purpose                                                                      |
+| ------ | --------------------------------- | ---- | ---------------------------------------------------------------------------- |
+| GET    | `/api/notifications`              | Yes  | `?filter=unread\|all&page&pageSize` — chronological, batched per target kind |
+| GET    | `/api/notifications/unread-count` | Yes  | Lightweight poll target for the header bell                                  |
+| PATCH  | `/api/notifications/[id]/read`    | Yes  | Mark one read (idempotent, rate-limited)                                     |
+| PATCH  | `/api/notifications/read-all`     | Yes  | Mark every unread notification read (rate-limited)                           |
 
 ### Discussions
 
@@ -575,6 +614,13 @@ The `ingredients` master table is populated from the **Swiss BLV Food Compositio
 - **One canonical host, enforced in the app**: `server/middleware/canonical-host.ts` folds `www.` into the apex (301 for GET/HEAD, 308 otherwise so a POST keeps its body), skipping `/.well-known/`. It lives in the app rather than in Apache config because there is **no `.htaccess` on this host** — Netcup's Node.js panel configures Passenger and every environment variable directly — and because an nginx proxy sits in front of Apache, so a rewrite rule there is not guaranteed to run. Only a leading `www.` is stripped: redirecting any host that disagrees with `NUXT_PUBLIC_APP_URL` could loop if that variable were itself wrong, whereas this cannot, and `/api/health` surfaces every other mismatch as a 503. It matters beyond tidiness — the WebAuthn RP ID **is** the hostname, so a passkey enrolled on `www` does not exist on the apex
 - **Maintenance tasks run over HTTP, not cron**: `GET /tasks/retention` and `GET /tasks/inactive-accounts`, guarded by `CRON_SECRET` (constant-time compare; unset means refuse everything). A shell cron cannot work on this host — the deploy ships only `.output/` + `app.js`, so there is no `scripts/`, no `package.json` and no `.env`, and a Plesk scheduled task does not inherit the **Node.js custom environment variables** Passenger injects into the app process. Plesk's **"Fetch a URL"** task type runs the job inside the app instead. Sweep logic in `server/utils/{retention,inactivity}Sweep.ts`; the CLI scripts stay for local use and share `maintenanceConfig.json` so the paths cannot drift
 - **The inactivity sweep refuses to run without SMTP**: `sendMail()` falls back to a `streamTransport` that succeeds while delivering nothing (deliberate, so local dev is not blocked), which for this job would stamp the notice column and hard-delete the account 24h later unwarned. Both the endpoint and the CLI now stop; dry runs still work
+- **Collections (2026-08-14)**: curated recipe lists, public or private, that can hold recipes the owner doesn't own themselves — a bookmark-style list across the whole catalogue, not just a folder of your own work. Two-sided visibility check: `requireVisibleRecipe` at add-time, `visibility='public' OR ownerId=viewer` at read-time — either alone reopens the hole the other closes. No denormalized recipe-count column: unlike `starCount`, the visible count differs per viewer, so a stored total would leak "there's one more you can't see." A new `RESERVED_RECIPE_SLUGS` guard stops a recipe from ever claiming the slug `collections`, which the new static `/:username/collections` route would otherwise make permanently unreachable
+- **Notifications, @mentions, and a weekly digest (2026-08-14)**: six event kinds (fork, GMR opened, discussion started/replied-to, GMR comment, mention) in one append-only `notifications` table, a header bell with an unread count, an inbox page, per-kind mute prefs, and a weekly digest email (`/tasks/notification-digest`, same Plesk cron mechanism as retention/inactive-accounts — **owner still needs to add the scheduled task**, see RUNBOOK). The mention case is the real risk: `requireVisibleRecipe` proves the _commenter_ can see a recipe, not an arbitrary `@mentioned` user, so a mention inside a private recipe's discussion only notifies the recipe's owner, every other mention silently dropped. `@username` is linkified at render time in `app/utils/markdown.ts` (never pre-injected as HTML into the stored body), and the sanitizer's forced `target="_blank" rel="nofollow"` now only applies to external links so a mention behaves like any other internal link. Live autocomplete is `MentionAutocomplete.vue` wrapping `UTextarea`, anchored below the field rather than tracking the caret
+- **Print stylesheet (2026-08-14)**: a `.print-shell` class + `@media print` block resets both layouts' `h-dvh overflow-hidden` root and the `overflow-y-auto` main region to `height: auto`/`overflow: visible` — without it, hiding just the header/footer would still clip a long recipe to one printed page, since the scroll container's box never exceeds one viewport height regardless of content
+- **Profile stats (2026-08-14)**: a 12-month contribution heatmap, most-forked recipe, and activity counts, computed live (no schema change). Every commit query filters on `recipes.owner_id = profileUserId`, not just the commit's own `author_id` — `fork.post.ts` preserves the original author on every copied commit, so author-only counting would inflate the graph every time someone else forks your recipe
+- **Per-recipe OG images (2026-08-14)**: a recipe with a photo uses it directly as its social card; one with none falls back to a generated 1200×630 card via `satori` + `@resvg/resvg-js` (the one native-binary dependency besides `sharp`, same lazy-import/fail-open pattern, surfaced on `/api/health`). **Not yet functional**: `server/assets/fonts/DMSans-Bold.ttf` still needs to be added by hand, and `npm install` has not been run for the two new deps — until both happen, every recipe without a photo safely falls back to the static default image
+- **Offline PWA shell (2026-08-14)**: `/offline` is now prerendered and `navigateFallback` points at it, replacing the `null` placeholder. Deliberately not run through `useI18n()` — `navigateFallback` is a single URL, so it's hardcoded DE+EN rather than pretending to integrate with the locale-prefixed routing every other page uses
+- **Ingredient community-verification** — scoped, **not built**. See `.claude/feature_ingredient_voting.md` for the decision record (cheap admin-promotion slice vs. full peer-voting) and why it stays parked
 
 ### ✓ Complete (test + delivery pipeline)
 

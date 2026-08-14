@@ -5,6 +5,135 @@ All notable changes to GourMerge are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versioning follows [Semantic Versioning](https://semver.org/).
 
+## [1.10.0] — 2026-08-14
+
+Six items from the post-v1 backlog, scoped and built in one pass: collections, a
+notifications inbox with @mentions and a weekly digest, a print stylesheet, richer profile
+stats, per-recipe OG images, and a real offline PWA shell. A seventh backlog item
+(ingredient community-verification) was deliberately **not** built — see
+`.claude/feature_ingredient_voting.md` for the decision record instead.
+
+**Not yet verified against a real build or a running app** — this pass was code-only
+(no dev server, no test run), per a RAM constraint at the time. See "Before this ships"
+at the end of this entry for what to check first.
+
+### Added — collections, public and bookmark-style
+
+Recipes have only ever been grouped by tags, which are global and not a personal "read
+later" or "Sunday brunch" list. A collection has a title, optional description, and
+public/private visibility, and can hold recipes the owner doesn't own themselves — as
+long as they can see them — so it works as a curated bookmark list across the whole
+catalogue, not just a folder of your own work.
+
+The design has to get one thing right twice: a private recipe added to a collection while
+public must disappear from that collection's public view the moment it goes private
+(read-time filter), and adding a recipe you can't already see must 404 rather than confirm
+it exists (add-time check via `requireVisibleRecipe`). Either alone reopens the hole the
+other closes. No denormalized recipe-count column, on purpose — unlike `starCount`, a
+collection's visible item count differs per viewer, so a stored total would leak "there's
+one more you can't see."
+
+New `collections` + `collection_recipes` tables, a `collectionAccess.ts` visibility gate
+mirroring `recipeAccess.ts`, create/read/update/delete/add-recipe/remove-recipe endpoints,
+list and single-collection pages, a save-to-collection modal on the recipe page, and a
+"Collections" link on the profile page. A new reserved-slug guard stops a recipe from ever
+claiming the slug `collections`, which would otherwise make it permanently unreachable at
+its own URL the moment the new static route exists.
+
+### Added — mentions, a notifications inbox, and a weekly digest
+
+The highest-value gap the last audit named by name: someone forks your recipe, opens a
+GourMerge Request, starts a discussion, replies to yours, or @mentions you, and nothing
+told you. Six event kinds, one append-only `notifications` table, a header bell with an
+unread count, an inbox page, per-kind mute preferences, and a weekly digest email.
+
+The actual risk this has to get right is the mention case: `requireVisibleRecipe` proves
+the _commenter_ can see a recipe, not an arbitrary `@mentioned` user. If the recipe is
+private, a mention notification is created only when the mentioned user is the recipe's
+owner — every other mention inside a private discussion is silently dropped, never
+partially notified. The same two-sided check (create-time + read-time re-check) applies to
+every kind, since a recipe's visibility can change after a notification already exists.
+
+Mentions render through the existing Markdown sanitizer rather than by pre-injecting HTML
+into the stored body — `@username` becomes a Markdown link immediately before
+`marked.parse()` runs, so storage stays plain text. Bundled in: the sanitizer's forced
+`target="_blank" rel="nofollow"` now only applies to external links, so a mention behaves
+like every other internal link in the app. Live @mention autocomplete is a new
+`MentionAutocomplete.vue` wrapping `UTextarea`, backed by a new (rate-limited)
+`GET /api/users/search`.
+
+The weekly digest reuses the existing Plesk "Fetch a URL" cron mechanism
+(`/tasks/notification-digest`) — activating it needs one new scheduled task the owner has
+to add by hand, documented in `docs/RUNBOOK.md`. It refuses to run without real SMTP
+configured, but skips-and-logs rather than throwing like the inactivity sweep does: a
+missed digest costs a delayed email, not an unwarned deletion.
+
+### Added — print a recipe via the browser's own Print to PDF
+
+A "Print" button plus an `@media print` stylesheet — no server-rendered PDF, which would
+need either headless Chromium or a JS PDF library reimplementing what the browser already
+gives for free. The one real risk, designed around explicitly: both layouts wrap the page
+in a `h-dvh overflow-hidden` shell around a `overflow-y-auto` main region (the "only
+`<main>` scrolls" rule), and hiding the header/footer alone is not enough — the scroll
+container's box never exceeds one viewport height regardless of content, so a naive print
+stylesheet would have clipped every recipe to a single page. Fixed with a `.print-shell`
+class reset to `height: auto` / `overflow: visible` under `@media print`. Also forces light
+mode and a white background when printing.
+
+### Added — a contribution graph, most-forked recipe, and activity counts on profiles
+
+A GitHub-style profile stats section, computed live from existing tables — no schema
+change, no new counter. The bug the obvious query would have shipped: `fork.post.ts`
+copies a recipe's commit history into a fork while preserving the _original_ `author_id`,
+so "commits authored by X" alone re-counts every one of X's commits again for every fork
+someone else makes of X's recipe. Every query here also filters on `recipes.owner_id`, not
+just the commit's author, so a fork of your recipe never inflates your own graph. Every
+query is additionally filtered so a stranger viewing the profile can't learn "this person
+touched a private recipe" even as an aggregate count.
+
+### Added — per-recipe OG images, photo-first with a rendered fallback
+
+A recipe with an uploaded photo now uses it directly as its social-card image — zero new
+rendering, it's already a served URL. A recipe with no photo falls back to a generated
+1200×630 card via a new `/api/recipes/:id/og-image` route, built on `satori` +
+`@resvg/resvg-js` — the one native-binary dependency in the app besides `sharp`, added with
+the same lazy-import-inside-a-try-catch, fail-open pattern `imageEncode.ts` established,
+surfaced as a warning (never an error) on `/api/health`. `requireVisibleRecipe()` gates the
+route, and any failure — including the font not being in place yet, see below — 302s to
+the static default image rather than 500ing.
+
+**Two things still needed before this renders anything, both already degrading safely:**
+`server/assets/fonts/DMSans-Bold.ttf` does not exist yet (needs to be added by hand — see
+the comment in `ogImageRender.ts`), and `npm install` has not been run for the two new
+dependencies, so `package-lock.json` is not yet in sync with `package.json`.
+
+### Added — a real offline navigation fallback for the PWA
+
+`navigateFallback` has been the literal `null` since the PWA shipped, because there was no
+prerendered shell for it to point at. `/offline` is now prerendered and pointed at from
+`navigateFallback`. The page is deliberately static and deliberately not run through
+`useI18n()` — Workbox has no way to serve a different precached page per locale, so it's
+hardcoded DE + EN rather than pretending to integrate with the locale-prefixed routing
+every other page uses.
+
+### Not built — ingredient community-verification
+
+Scoped and deliberately parked rather than built: see `.claude/feature_ingredient_voting.md`
+for the two designs considered (a cheap admin-promotion slice vs. full peer-voting) and why
+the cheap slice is recommended first, if/when this is picked up.
+
+### Before this ships
+
+- `npm install` (syncs `package-lock.json` for `satori`/`@resvg/resvg-js`)
+- Add `server/assets/fonts/DMSans-Bold.ttf` (OG-image fallback card; degrades safely
+  without it, just renders the static default for every photo-less recipe)
+- Run the full verification suite (`lint`, `typecheck`, `knip`, `i18n:check`, `test`,
+  `build`) — none of it ran during this pass
+- One-time, pre-deploy, can't be checked from code: `SELECT id, owner_id FROM recipes
+WHERE slug = 'collections'` against production, before the Collections route ships
+- Owner action, not automatic: add the weekly `notification-digest` Plesk scheduled task
+  (`docs/RUNBOOK.md` has the exact URL/cadence)
+
 ## [1.9.0] — 2026-08-12
 
 Follow-up feedback on 1.8.0's ingredient work, from actually using it: a layout bug in the one
