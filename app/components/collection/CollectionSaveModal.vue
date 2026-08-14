@@ -88,7 +88,12 @@ async function createAndAdd() {
               @update:model-value="() => toggle(c)"
             />
             <span class="flex-1 text-sm">{{ c.title }}</span>
-            <UIcon v-if="c.visibility === 'private'" name="i-lucide-lock" class="size-3.5 text-dimmed" aria-hidden="true" />
+            <UIcon
+              v-if="c.visibility === 'private'"
+              name="i-lucide-lock"
+              class="size-3.5 text-dimmed"
+              aria-hidden="true"
+            />
           </li>
         </ul>
         <p v-else class="text-sm text-muted">{{ t('collections.noneYet') }}</p>

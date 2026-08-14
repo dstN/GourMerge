@@ -6,7 +6,7 @@
  */
 import { z } from 'zod'
 import { eq, and } from 'drizzle-orm'
-import { recipes, recipeBranches, gourmergeRequests } from '~~/server/database/schema'
+import { recipes, recipeBranches, gourmergeRequests, users } from '~~/server/database/schema'
 import { generatePublicId } from '~~/server/utils/uuid'
 
 const createSchema = z.object({
@@ -76,23 +76,43 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 422, statusMessage: 'Source and target branch cannot be the same' })
   }
 
-  const [inserted] = await db
-    .insert(gourmergeRequests)
-    .values({
-      publicId: generatePublicId(),
-      recipeId: targetRecipeId,
-      authorId: session.user.id,
-      title,
-      description,
-      status: 'open',
-      sourceBranchId,
-      targetBranchId,
-      sourceRecipeId: sourceRecipeId ?? null,
-    })
-    .$returningId()
+  const [targetOwner] = await db
+    .select({ notificationMutes: users.notificationMutes })
+    .from(users)
+    .where(eq(users.id, targetRecipe.ownerId))
+    .limit(1)
 
-  if (!inserted) throw createError({ statusCode: 500, statusMessage: 'Insert failed.' })
+  const insertedId = await db.transaction(async (tx) => {
+    const [inserted] = await tx
+      .insert(gourmergeRequests)
+      .values({
+        publicId: generatePublicId(),
+        recipeId: targetRecipeId,
+        authorId: session.user.id,
+        title,
+        description,
+        status: 'open',
+        sourceBranchId,
+        targetBranchId,
+        sourceRecipeId: sourceRecipeId ?? null,
+      })
+      .$returningId()
+
+    if (!inserted) throw createError({ statusCode: 500, statusMessage: 'Insert failed.' })
+
+    await createNotification(tx, {
+      recipientId: targetRecipe.ownerId,
+      actorId: session.user.id,
+      kind: 'gmr_opened',
+      recipeId: targetRecipeId,
+      targetKind: 'gmr',
+      targetId: inserted.id,
+      recipientMutes: targetOwner?.notificationMutes,
+    })
+
+    return inserted.id
+  })
 
   setResponseStatus(event, 201)
-  return { id: inserted.id }
+  return { id: insertedId }
 })

@@ -323,12 +323,15 @@ against these numbers, not against local.
 
 ## Scheduled maintenance (required — the privacy policy promises it)
 
-Two nightly jobs, both **triggered over HTTP** rather than run as shell commands:
+Three jobs, all **triggered over HTTP** rather than run as shell commands. The first two
+are nightly and required; the third is weekly and purely a UX nicety — nothing breaks if
+it is never scheduled, unread notifications just stay inbox-only.
 
-| Job               | URL                        | What it does                                           |
-| ----------------- | -------------------------- | ------------------------------------------------------ |
-| Retention cleanup | `/tasks/retention`         | Enforces the windows named in §7 of the privacy policy |
-| Inactive accounts | `/tasks/inactive-accounts` | Warns, then deletes, accounts dormant for three years  |
+| Job                 | URL                          | What it does                                                   |
+| ------------------- | ---------------------------- | -------------------------------------------------------------- |
+| Retention cleanup   | `/tasks/retention`           | Enforces the windows named in §7 of the privacy policy         |
+| Inactive accounts   | `/tasks/inactive-accounts`   | Warns, then deletes, accounts dormant for three years          |
+| Notification digest | `/tasks/notification-digest` | Emails each recipient a weekly summary of unread notifications |
 
 ### Why a URL and not `npm run …`
 
@@ -373,20 +376,26 @@ useful **locally**, where `.env` is present. They are not the production path.
 
 ### Creating the scheduled tasks
 
-**Plesk → Websites & Domains → Scheduled Tasks → Add Task**, twice:
+**Plesk → Websites & Domains → Scheduled Tasks → Add Task**, three times:
 
-| Field         | Retention cleanup                                        | Inactive accounts                                                |
-| ------------- | -------------------------------------------------------- | ---------------------------------------------------------------- |
-| **Task type** | **Fetch a URL**                                          | **Fetch a URL**                                                  |
-| **URL**       | `https://gourmerge.de/tasks/retention?key=<CRON_SECRET>` | `https://gourmerge.de/tasks/inactive-accounts?key=<CRON_SECRET>` |
-| **Run**       | Daily at `04:30`                                         | Daily at `04:45`                                                 |
-| **Notify**    | Errors only                                              | Errors only                                                      |
+| Field         | Retention cleanup                                        | Inactive accounts                                                | Notification digest                                                |
+| ------------- | -------------------------------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------ |
+| **Task type** | **Fetch a URL**                                          | **Fetch a URL**                                                  | **Fetch a URL**                                                    |
+| **URL**       | `https://gourmerge.de/tasks/retention?key=<CRON_SECRET>` | `https://gourmerge.de/tasks/inactive-accounts?key=<CRON_SECRET>` | `https://gourmerge.de/tasks/notification-digest?key=<CRON_SECRET>` |
+| **Run**       | Daily at `04:30`                                         | Daily at `04:45`                                                 | Weekly, Monday `08:00`                                             |
+| **Notify**    | Errors only                                              | Errors only                                                      | Errors only                                                        |
 
 Notes:
 
 - **"Fetch a URL", not "Run a command"** — see above.
 - Plesk's task timezone is shown on the form (Europe/Berlin). It does not need to
-  match anything; both jobs are idempotent and time-of-day is only about load.
+  match anything; the two nightly jobs are idempotent and time-of-day is only about
+  load. The digest's "Monday 08:00" is a deliberate cadence choice, not a load concern —
+  it is not required for the app to function; nothing breaks if this third task is never
+  added, unread notifications just stay inbox-only with no email echo.
+- Verify with the same `dryRun=1` pattern before scheduling it:
+  `curl -s "https://gourmerge.de/tasks/notification-digest?key=<CRON_SECRET>&dryRun=1"`
+  — sends no mail, reports how many recipients would have been mailed.
 - Stagger them. Running the retention cleanup first keeps the `rate_limit_hits`
   table small before the inactivity sweep scans `users`.
 - **"Errors only"** means you get an email if the job fails and silence when it

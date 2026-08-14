@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { UserProfile } from '~~/shared/types/recipe'
+import { NOTIFICATION_KINDS, type NotificationKind } from '~~/shared/types/notification'
 
 /**
  * `auth: true` was dead metadata — nothing reads `route.meta.auth` (there is no
@@ -24,6 +25,12 @@ const form = reactive({
   preferredMeasurementSystem: 'metric' as MeasurementSystem,
 })
 
+// `true` = "notify me" — the inverse of the stored muted-kinds array, since a switch that
+// reads as "muted" and defaults to off (i.e. notifications on) is backwards to look at.
+const notifyPrefs = reactive<Record<NotificationKind, boolean>>(
+  Object.fromEntries(NOTIFICATION_KINDS.map((k) => [k, true])) as Record<NotificationKind, boolean>
+)
+
 // Fetch current settings
 const { data: profile } = useFetch<UserProfile>(() => `/api/users/${user.value?.username}`, {
   headers: useRequestHeaders(['cookie']),
@@ -41,6 +48,8 @@ watch(
       // reset your language and measurement preference.
       form.preferredLocale = (p.user.preferredLocale as typeof form.preferredLocale) || 'de'
       form.preferredMeasurementSystem = (p.user.preferredMeasurementSystem as MeasurementSystem) || 'metric'
+      const muted = new Set(p.user.notificationMutes ?? [])
+      for (const kind of NOTIFICATION_KINDS) notifyPrefs[kind] = !muted.has(kind)
     }
   },
   { immediate: true }
@@ -58,6 +67,7 @@ async function save() {
         bio: form.bio || null,
         preferredLocale: form.preferredLocale,
         preferredMeasurementSystem: form.preferredMeasurementSystem,
+        notificationMutes: NOTIFICATION_KINDS.filter((k) => !notifyPrefs[k]),
       },
     })
     await refreshSession()
@@ -115,6 +125,23 @@ useSeoMeta({ title: `${t('settings.title')}: GourMerge` })
         </UFormField>
       </div>
 
+      <template #footer>
+        <div class="flex justify-end">
+          <UButton :label="t('common.save')" icon="i-lucide-save" :loading="saving" @click="save" />
+        </div>
+      </template>
+    </UCard>
+
+    <UCard class="mt-6">
+      <template #header>
+        <h2 class="font-semibold">{{ t('notification.prefsTitle') }}</h2>
+      </template>
+      <div class="space-y-3">
+        <div v-for="kind in NOTIFICATION_KINDS" :key="kind" class="flex items-center justify-between gap-4">
+          <span class="text-sm">{{ t(`notification.kindLabel.${kind}`) }}</span>
+          <USwitch v-model="notifyPrefs[kind]" />
+        </div>
+      </div>
       <template #footer>
         <div class="flex justify-end">
           <UButton :label="t('common.save')" icon="i-lucide-save" :loading="saving" @click="save" />

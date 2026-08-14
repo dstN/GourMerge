@@ -30,6 +30,7 @@ import {
   contactMessages,
   gourmergeRequestComments,
   gourmergeRequests,
+  notifications,
   recipeBranches,
   recipeCommits,
   recipeDiscussionComments,
@@ -72,6 +73,7 @@ export interface HardDeleteResult {
   commentsReassigned: number
   /** Discussion threads + replies handed to the ghost, summed. */
   discussionsReassigned: number
+  notificationsReassigned: number
 }
 
 /**
@@ -89,6 +91,7 @@ export async function hardDeleteUser(db: Db, userId: number, deleteOwnedRecipes:
     requestsReassigned: 0,
     commentsReassigned: 0,
     discussionsReassigned: 0,
+    notificationsReassigned: 0,
   }
 
   await db.transaction(async (tx) => {
@@ -167,10 +170,18 @@ export async function hardDeleteUser(db: Db, userId: number, deleteOwnedRecipes:
       .set({ authorId: ghostId })
       .where(eq(recipeDiscussionComments.authorId, userId))
 
+    // `notifications.actor_id` is RESTRICT for the same reason as the columns above — a
+    // notification's meaning depends on who did the thing, so it must survive the actor's
+    // deletion rather than cascade away. `recipient_id` needs no line here: it's
+    // `onDelete: cascade`, so the user's own inbox rows vanish automatically when the
+    // final `tx.delete(users)` below runs.
+    const notifs = await tx.update(notifications).set({ actorId: ghostId }).where(eq(notifications.actorId, userId))
+
     result.commitsReassigned = readAffected(commits)
     result.requestsReassigned = readAffected(requests)
     result.commentsReassigned = readAffected(comments)
     result.discussionsReassigned = readAffected(threads) + readAffected(threadReplies)
+    result.notificationsReassigned = readAffected(notifs)
 
     // Contact-form messages are linked only by address, so they are matched here
     // and removed regardless of the recipe choice — purely personal data of no

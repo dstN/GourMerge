@@ -31,6 +31,7 @@ import {
   contactMessages,
   collections,
   collectionRecipes,
+  notifications,
 } from '~~/server/database/schema'
 import { bufferToUuid } from '~~/server/utils/uuid'
 
@@ -51,6 +52,8 @@ export interface DataExport {
   discussionComments: unknown[]
   contactMessages: unknown[]
   collections: unknown[]
+  /** Recipient-side only — see the query below for why the actor side is excluded. */
+  notifications: unknown[]
 }
 
 /**
@@ -174,15 +177,35 @@ export async function buildDataExport(
   const collectionIds = ownCollections.map((c) => c.id)
   const collectionRecipeRows = collectionIds.length
     ? await db
-        .select({ collectionId: collectionRecipes.collectionId, recipeId: collectionRecipes.recipeId, addedAt: collectionRecipes.addedAt })
+        .select({
+          collectionId: collectionRecipes.collectionId,
+          recipeId: collectionRecipes.recipeId,
+          addedAt: collectionRecipes.addedAt,
+        })
         .from(collectionRecipes)
         .where(inArray(collectionRecipes.collectionId, collectionIds))
     : []
   const collectionsOut = ownCollections.map((c) => ({
     ...c,
     publicId: c.publicId ? bufferToUuid(c.publicId) : null,
-    recipes: collectionRecipeRows.filter((r) => r.collectionId === c.id).map((r) => ({ recipeId: r.recipeId, addedAt: r.addedAt })),
+    recipes: collectionRecipeRows
+      .filter((r) => r.collectionId === c.id)
+      .map((r) => ({ recipeId: r.recipeId, addedAt: r.addedAt })),
   }))
+
+  // Recipient-side only: an actor-side row (a fork you made, a comment you wrote) would
+  // just duplicate data already exported above under `recipes`/`comments`/`discussions` —
+  // including it would pad the export with redundant rows rather than surfacing anything
+  // new.
+  const ownNotifications = await db
+    .select({
+      kind: notifications.kind,
+      recipeId: notifications.recipeId,
+      readAt: notifications.readAt,
+      createdAt: notifications.createdAt,
+    })
+    .from(notifications)
+    .where(eq(notifications.recipientId, userId))
 
   const [starred, ownGmrs, ownComments, ownDiscussions, ownDiscussionComments, contacts] = await Promise.all([
     db
@@ -216,5 +239,6 @@ export async function buildDataExport(
     discussionComments: ownDiscussionComments,
     contactMessages: contacts,
     collections: collectionsOut,
+    notifications: ownNotifications,
   }
 }

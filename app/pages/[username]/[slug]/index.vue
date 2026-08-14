@@ -279,6 +279,29 @@ function scrollToDiscussion() {
   target.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' })
 }
 
+/**
+ * A notification linking to a specific thread (`#discussion-123`) needs to land on that
+ * thread, not just the panel — the browser's own hash scroll has nothing to move against
+ * (see the comment above `scrollToDiscussion`), and until now this only ever fired from a
+ * button click, never from a page-load hash. `nextTick` covers the initial render; the
+ * data itself may still be loading, so this also waits for `recipe` to be non-null.
+ */
+watch(
+  recipe,
+  (r) => {
+    if (!r || !route.hash) return
+    const hash = route.hash.slice(1)
+    if (hash !== 'discussion' && !hash.startsWith('discussion-')) return
+    nextTick(() => {
+      const target = document.getElementById(hash)
+      if (!target) return
+      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      target.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' })
+    })
+  },
+  { immediate: true }
+)
+
 const appUrl = useRuntimeConfig().public.appUrl as string
 
 useSeoMeta({

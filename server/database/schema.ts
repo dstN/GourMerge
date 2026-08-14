@@ -89,6 +89,17 @@ export const users = mysqlTable('users', {
   /** JSON array of sub-tour names the user has completed (e.g. ['branches', 'gmr']) */
   completedTours: json('completed_tours').$type<string[]>(),
   /**
+   * JSON array of notification `kind` values this user has opted out of. NULL (not `[]`)
+   * means nothing muted — same nullable-JSON-default-null style as `completedTours`.
+   */
+  notificationMutes: json('notification_mutes').$type<string[]>(),
+  /**
+   * Drives the weekly digest's window: rows created since this timestamp (falling back to
+   * 7 days ago when NULL). Set only after a successful send — an SMTP outage delays the
+   * next window rather than marking a failed send as done, so nothing is silently skipped.
+   */
+  lastNotificationDigestAt: datetime('last_notification_digest_at'),
+  /**
    * Set when the account was erased under Art. 17. The row deliberately
    * SURVIVES: four FKs into `users` are NOT NULL and RESTRICT
    * (recipes.owner_id, recipe_commits.author_id, gourmerge_requests.author_id,
@@ -1127,6 +1138,65 @@ export const collectionRecipes = mysqlTable(
 )
 
 // ═══════════════════════════════════════════════════════════════
+// NOTIFICATIONS (append-only event log — a fork, a GMR, a discussion reply, a mention)
+// ═══════════════════════════════════════════════════════════════
+// `recipientId` is CASCADE — an inbox row is the recipient's own disposable data, like
+// `recipeStars`. `actorId` is RESTRICT + a ghost-reassignment line in `hardDeleteUser.ts`
+// (mirroring its six existing lines) — a notification's meaning depends on who did the
+// thing, so unlike the recipient side it must survive the actor's deletion.
+//
+// No unique index: this is an append-only event log, not a vote table — forking the same
+// recipe twice is two legitimate events, not a duplicate to collapse.
+//
+// No denormalized unread-count column, unlike `starCount`/`forkCount`. An unread count
+// would need incrementing from every notification-creation call site (six of them) and
+// decrementing from two mark-read endpoints — six chances to drift against two, versus a
+// `starCount`-style counter's clean one-increment-one-decrement shape. An indexed
+// `COUNT(*)` is cheap enough at this scale and needs no reconciliation script entry.
+//
+// `recipeId` is the read-time visibility gate for every kind, including `recipe_forked`
+// (where it points at the FORK's id, not the original's — see `server/utils/notifications.ts`
+// for why). `targetKind`/`targetId` are polymorphic, no FK, same shape as
+// `reports.targetKind`/`targetId` — they say what the notification is ABOUT (a discussion,
+// a GMR, or the recipe itself), while `recipeId` says what to re-check visibility against.
+export const notifications = mysqlTable(
+  'notifications',
+  {
+    id: int('id').primaryKey().autoincrement(),
+    recipientId: int('recipient_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    actorId: int('actor_id')
+      .notNull()
+      .references(() => users.id),
+    kind: mysqlEnum('kind', [
+      'recipe_forked',
+      'gmr_opened',
+      'discussion_started',
+      'discussion_reply',
+      'gmr_comment',
+      'mention',
+    ]).notNull(),
+    recipeId: int('recipe_id')
+      .notNull()
+      .references(() => recipes.id, { onDelete: 'cascade' }),
+    targetKind: mysqlEnum('target_kind', ['recipe', 'discussion', 'gmr']).notNull(),
+    targetId: int('target_id').notNull(),
+    /** NULL = unread. */
+    readAt: datetime('read_at'),
+    createdAt: datetime('created_at')
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    index('idx_notifications_recipient_created').on(table.recipientId, table.createdAt),
+    index('idx_notifications_recipient_unread').on(table.recipientId, table.readAt),
+    index('idx_notifications_recipe').on(table.recipeId),
+    index('idx_notifications_target').on(table.targetKind, table.targetId),
+  ]
+)
+
+// ═══════════════════════════════════════════════════════════════
 // DRIZZLE RELATIONS
 // ═══════════════════════════════════════════════════════════════
 
@@ -1246,4 +1316,10 @@ export const collectionsRelations = relations(collections, ({ one, many }) => ({
 export const collectionRecipesRelations = relations(collectionRecipes, ({ one }) => ({
   collection: one(collections, { fields: [collectionRecipes.collectionId], references: [collections.id] }),
   recipe: one(recipes, { fields: [collectionRecipes.recipeId], references: [recipes.id] }),
+}))
+
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  recipient: one(users, { fields: [notifications.recipientId], references: [users.id] }),
+  actor: one(users, { fields: [notifications.actorId], references: [users.id] }),
+  recipe: one(recipes, { fields: [notifications.recipeId], references: [recipes.id] }),
 }))

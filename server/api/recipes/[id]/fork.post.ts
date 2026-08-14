@@ -78,6 +78,15 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 401, statusMessage: 'User not found' })
   }
 
+  // Loaded once here rather than inside the transaction below: `createNotification`
+  // needs the original owner's mute list, and this is the same "extend the existing
+  // lookup" trick used at every other notification call site.
+  const [originalOwner] = await db
+    .select({ notificationMutes: users.notificationMutes })
+    .from(users)
+    .where(eq(users.id, original.ownerId))
+    .limit(1)
+
   // ── Resolve unique slug for the fork ────────────────────────
   let slug = generateSlug(original.title)
   let suffix = 0
@@ -233,6 +242,20 @@ export default defineEventHandler(async (event) => {
       .update(recipes)
       .set({ forkCount: sql`${recipes.forkCount} + 1` })
       .where(eq(recipes.id, recipeId))
+
+    // 6. Notify the original owner. `recipeId` here is the FORK's id, not the
+    // original's — that's the read-time visibility gate: if the forker later makes
+    // their fork private, this notification must disappear for the original owner,
+    // who never had a claim to see inside someone else's private fork.
+    await createNotification(tx, {
+      recipientId: original.ownerId,
+      actorId: session.user.id,
+      kind: 'recipe_forked',
+      recipeId: fork.id,
+      targetKind: 'recipe',
+      targetId: fork.id,
+      recipientMutes: originalOwner?.notificationMutes,
+    })
 
     return { id: fork.id, slug, branchId: forkBranch.id, commitsCopied: orderedCommits.length }
   })

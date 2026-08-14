@@ -68,5 +68,10 @@ const { loggedIn } = useUserSession()
     <!-- The one emphasised action in the cluster — DESIGNBOOK §2: idle nav is
          neutral/ghost, the primary action is soft. -->
     <UButton v-if="loggedIn" :label="t('nav.newRecipe')" variant="soft" icon="i-lucide-plus" to="/recipes/new" />
+    <!-- Icon-only, deliberately: every other item in this row already carries a label per
+         the width-budget history above, and a bell reads unambiguously without one. Adding
+         a fifth labelled item here would reopen exactly the header-width problem this file's
+         own docblock documents fixing once already. -->
+    <LayoutNotificationBell v-if="loggedIn" />
   </nav>
 </template>

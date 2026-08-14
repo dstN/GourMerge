@@ -13,7 +13,8 @@
  *   punishing a shared NAT.
  */
 import { z } from 'zod'
-import { recipeDiscussions } from '~~/server/database/schema'
+import { eq } from 'drizzle-orm'
+import { recipeDiscussions, users } from '~~/server/database/schema'
 
 const createSchema = z
   .object({
@@ -49,20 +50,50 @@ export default defineEventHandler(async (event) => {
   const db = useDrizzle()
   if (!db) throw createError({ statusCode: 503, statusMessage: 'Database unavailable.' })
 
-  const [inserted] = await db
-    .insert(recipeDiscussions)
-    .values({
-      recipeId: recipe.id,
-      commitId,
-      authorId: session.user.id,
-      title: parsed.data.title,
-      body: parsed.data.body,
-      category: parsed.data.category,
-    })
-    .$returningId()
+  const [owner] = await db
+    .select({ notificationMutes: users.notificationMutes })
+    .from(users)
+    .where(eq(users.id, recipe.ownerId))
+    .limit(1)
 
-  if (!inserted) throw createError({ statusCode: 500, statusMessage: 'Insert failed.' })
+  const insertedId = await db.transaction(async (tx) => {
+    const [inserted] = await tx
+      .insert(recipeDiscussions)
+      .values({
+        recipeId: recipe.id,
+        commitId,
+        authorId: session.user.id,
+        title: parsed.data.title,
+        body: parsed.data.body,
+        category: parsed.data.category,
+      })
+      .$returningId()
+
+    if (!inserted) throw createError({ statusCode: 500, statusMessage: 'Insert failed.' })
+
+    await createNotification(tx, {
+      recipientId: recipe.ownerId,
+      actorId: session.user.id,
+      kind: 'discussion_started',
+      recipeId: recipe.id,
+      targetKind: 'discussion',
+      targetId: inserted.id,
+      recipientMutes: owner?.notificationMutes,
+    })
+
+    await notifyMentions(tx, {
+      body: parsed.data.body,
+      authorId: session.user.id,
+      recipeId: recipe.id,
+      recipeOwnerId: recipe.ownerId,
+      recipeVisibility: recipe.visibility,
+      targetKind: 'discussion',
+      targetId: inserted.id,
+    })
+
+    return inserted.id
+  })
 
   setResponseStatus(event, 201)
-  return { id: inserted.id }
+  return { id: insertedId }
 })

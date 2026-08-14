@@ -14,12 +14,7 @@ const { t } = useI18n()
 const route = useRoute()
 const username = computed(() => route.params.username as string)
 
-const {
-  data,
-  pending,
-  error,
-  refresh,
-} = useFetch<{ collections: CollectionListItem[]; isOwnProfile: boolean }>(
+const { data, pending, error, refresh } = useFetch<{ collections: CollectionListItem[]; isOwnProfile: boolean }>(
   () => `/api/users/${username.value}/collections`,
   { headers: useRequestHeaders(['cookie']) }
 )
@@ -54,12 +49,7 @@ async function createCollection() {
   <CommonPageShell width="wide">
     <CommonPageHeader :title="t('collections.title')" :subtitle="t('collections.subtitle')" icon="i-lucide-bookmark">
       <template v-if="data?.isOwnProfile" #actions>
-        <UButton
-          :label="t('collections.create')"
-          icon="i-lucide-plus"
-          size="sm"
-          @click="showCreate = !showCreate"
-        />
+        <UButton :label="t('collections.create')" icon="i-lucide-plus" size="sm" @click="showCreate = !showCreate" />
       </template>
     </CommonPageHeader>
 

@@ -31,6 +31,7 @@ export default defineEventHandler(async (event) => {
       email: users.email,
       preferredLocale: users.preferredLocale,
       preferredMeasurementSystem: users.preferredMeasurementSystem,
+      notificationMutes: users.notificationMutes,
     })
     .from(users)
     .where(eq(users.username, username))
@@ -96,6 +97,7 @@ export default defineEventHandler(async (event) => {
             email: user.email,
             preferredLocale: user.preferredLocale,
             preferredMeasurementSystem: user.preferredMeasurementSystem,
+            notificationMutes: user.notificationMutes ?? [],
           }
         : {}),
     },

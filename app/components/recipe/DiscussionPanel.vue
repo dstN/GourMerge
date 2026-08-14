@@ -240,7 +240,12 @@ function formatDate(value: string): string {
         <UInput v-model="draft.title" :placeholder="t('discussion.titlePlaceholder')" :maxlength="200" />
       </UFormField>
       <UFormField :label="t('discussion.bodyLabel')" :hint="t('discussion.markdownHint')" required>
-        <UTextarea v-model="draft.body" :placeholder="t('discussion.bodyPlaceholder')" :rows="4" :maxlength="10000" />
+        <RecipeMentionAutocomplete
+          v-model="draft.body"
+          :placeholder="t('discussion.bodyPlaceholder')"
+          :rows="4"
+          :maxlength="10000"
+        />
       </UFormField>
       <div class="flex justify-end">
         <UButton
@@ -279,9 +284,10 @@ function formatDate(value: string): string {
     <ul v-else class="space-y-4">
       <li
         v-for="thread in threads"
+        :id="`discussion-${thread.id}`"
         :key="thread.id"
         :class="[
-          'rounded-lg border p-4',
+          'rounded-lg border p-4 scroll-mt-6',
           thread.status === 'resolved' ? 'border-default bg-elevated' : 'border-default',
         ]"
       >
@@ -374,7 +380,7 @@ function formatDate(value: string): string {
 
             <!-- Reply box -->
             <div v-if="loggedIn && thread.status === 'open'" class="mt-4 space-y-2">
-              <UTextarea
+              <RecipeMentionAutocomplete
                 v-model="replyDrafts[thread.id]"
                 :placeholder="t('discussion.replyPlaceholder')"
                 :rows="2"

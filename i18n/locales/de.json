@@ -882,5 +882,29 @@
     "noneYet": "Du hast noch keine Sammlung. Erstelle unten die erste.",
     "notFound": "Sammlung nicht gefunden",
     "recipeCount": "{count} Rezepte"
+  },
+  "notification": {
+    "viewAll": "Benachrichtigungen",
+    "bellLabel": "Benachrichtigungen",
+    "markAllRead": "Alle als gelesen markieren",
+    "markRead": "Als gelesen markieren",
+    "unreadTab": "Ungelesen",
+    "allTab": "Alle",
+    "empty": "Keine Benachrichtigungen",
+    "prefsTitle": "Benachrichtigungen",
+    "recipeForked": "{actor} hat dein Rezept „{recipe}“ geforkt",
+    "gmrOpened": "{actor} hat eine GourMerge Request zu „{recipe}“ eröffnet",
+    "discussionStarted": "{actor} hat eine Diskussion zu „{recipe}“ gestartet",
+    "discussionReply": "{actor} hat auf deinen Beitrag zu „{recipe}“ geantwortet",
+    "gmrComment": "{actor} hat deine GourMerge Request zu „{recipe}“ kommentiert",
+    "mention": "{actor} hat dich in „{recipe}“ erwähnt",
+    "kindLabel": {
+      "recipe_forked": "Jemand forkt eines meiner Rezepte",
+      "gmr_opened": "Jemand eröffnet eine GourMerge Request",
+      "discussion_started": "Jemand startet eine Diskussion",
+      "discussion_reply": "Jemand antwortet auf meinen Diskussionsbeitrag",
+      "gmr_comment": "Jemand kommentiert meine GourMerge Request",
+      "mention": "Jemand erwähnt mich"
+    }
   }
 }

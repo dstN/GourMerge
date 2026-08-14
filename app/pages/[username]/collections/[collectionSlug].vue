@@ -43,12 +43,7 @@ useSeoMeta({
       <USkeleton class="h-64 w-full rounded-lg" />
     </div>
 
-    <CommonEmptyState
-      v-else-if="error"
-      tone="error"
-      icon="i-lucide-bookmark-x"
-      :title="t('collections.notFound')"
-    />
+    <CommonEmptyState v-else-if="error" tone="error" icon="i-lucide-bookmark-x" :title="t('collections.notFound')" />
 
     <template v-else-if="data">
       <div class="flex flex-col gap-2 mb-6">

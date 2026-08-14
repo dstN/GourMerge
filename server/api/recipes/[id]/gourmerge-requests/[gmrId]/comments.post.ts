@@ -3,7 +3,7 @@
  */
 import { z } from 'zod'
 import { eq, and } from 'drizzle-orm'
-import { recipes, gourmergeRequests, gourmergeRequestComments } from '~~/server/database/schema'
+import { recipes, gourmergeRequests, gourmergeRequestComments, users } from '~~/server/database/schema'
 
 const commentSchema = z.object({
   body: z.string().min(1).max(10000),
@@ -34,8 +34,14 @@ export default defineEventHandler(async (event) => {
   }
 
   const [gmr] = await db
-    .select({ id: gourmergeRequests.id, status: gourmergeRequests.status })
+    .select({
+      id: gourmergeRequests.id,
+      status: gourmergeRequests.status,
+      authorId: gourmergeRequests.authorId,
+      authorMutes: users.notificationMutes,
+    })
     .from(gourmergeRequests)
+    .innerJoin(users, eq(users.id, gourmergeRequests.authorId))
     .where(and(eq(gourmergeRequests.id, gmrId), eq(gourmergeRequests.recipeId, recipeId)))
     .limit(1)
 
@@ -46,17 +52,33 @@ export default defineEventHandler(async (event) => {
 
   await useRateLimit(`gmr:comment:${session.user.id}`, { max: 30, windowSeconds: 600 })
 
-  const [inserted] = await db
-    .insert(gourmergeRequestComments)
-    .values({
-      gourmergeRequestId: gmrId,
-      authorId: session.user.id,
-      body: result.data.body,
-    })
-    .$returningId()
+  const insertedId = await db.transaction(async (tx) => {
+    const [inserted] = await tx
+      .insert(gourmergeRequestComments)
+      .values({
+        gourmergeRequestId: gmrId,
+        authorId: session.user.id,
+        body: result.data.body,
+      })
+      .$returningId()
 
-  if (!inserted) throw createError({ statusCode: 500, statusMessage: 'Insert failed.' })
+    if (!inserted) throw createError({ statusCode: 500, statusMessage: 'Insert failed.' })
+
+    // Recipient is the GMR's author, not necessarily the recipe owner — same reasoning
+    // as a discussion reply's recipient.
+    await createNotification(tx, {
+      recipientId: gmr.authorId,
+      actorId: session.user.id,
+      kind: 'gmr_comment',
+      recipeId,
+      targetKind: 'gmr',
+      targetId: gmr.id,
+      recipientMutes: gmr.authorMutes,
+    })
+
+    return inserted.id
+  })
 
   setResponseStatus(event, 201)
-  return { id: inserted.id }
+  return { id: insertedId }
 })

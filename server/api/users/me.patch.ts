@@ -10,6 +10,7 @@
 import { z } from 'zod'
 import { eq } from 'drizzle-orm'
 import { users } from '~~/server/database/schema'
+import { NOTIFICATION_KINDS } from '~~/shared/types/notification'
 
 const updateSchema = z.object({
   displayName: z.string().min(1).max(100).optional(),
@@ -20,6 +21,7 @@ const updateSchema = z.object({
   tourDismissed: z.boolean().optional(),
   hasFinishedTour: z.boolean().optional(),
   completedTours: z.array(z.string()).optional(),
+  notificationMutes: z.array(z.enum(NOTIFICATION_KINDS)).max(NOTIFICATION_KINDS.length).optional(),
 })
 
 export default defineEventHandler(async (event) => {
@@ -54,6 +56,7 @@ export default defineEventHandler(async (event) => {
   if (result.data.tourDismissed !== undefined) updates.tourDismissed = result.data.tourDismissed
   if (result.data.hasFinishedTour !== undefined) updates.hasFinishedTour = result.data.hasFinishedTour
   if (result.data.completedTours !== undefined) updates.completedTours = result.data.completedTours
+  if (result.data.notificationMutes !== undefined) updates.notificationMutes = result.data.notificationMutes
 
   if (Object.keys(updates).length === 0) {
     return { success: true }

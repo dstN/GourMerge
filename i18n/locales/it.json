@@ -882,5 +882,29 @@
     "noneYet": "Non hai ancora una raccolta. Creane una qui sotto.",
     "notFound": "Raccolta non trovata",
     "recipeCount": "{count} ricette"
+  },
+  "notification": {
+    "viewAll": "Notifiche",
+    "bellLabel": "Notifiche",
+    "markAllRead": "Segna tutte come lette",
+    "markRead": "Segna come letta",
+    "unreadTab": "Non lette",
+    "allTab": "Tutte",
+    "empty": "Nessuna notifica",
+    "prefsTitle": "Notifiche",
+    "recipeForked": "{actor} ha forkato la tua ricetta \"{recipe}\"",
+    "gmrOpened": "{actor} ha aperto una GourMerge Request su \"{recipe}\"",
+    "discussionStarted": "{actor} ha avviato una discussione su \"{recipe}\"",
+    "discussionReply": "{actor} ha risposto al tuo messaggio su \"{recipe}\"",
+    "gmrComment": "{actor} ha commentato la tua GourMerge Request su \"{recipe}\"",
+    "mention": "{actor} ti ha menzionato in \"{recipe}\"",
+    "kindLabel": {
+      "recipe_forked": "Qualcuno forka una delle mie ricette",
+      "gmr_opened": "Qualcuno apre una GourMerge Request",
+      "discussion_started": "Qualcuno avvia una discussione",
+      "discussion_reply": "Qualcuno risponde al mio messaggio",
+      "gmr_comment": "Qualcuno commenta la mia GourMerge Request",
+      "mention": "Qualcuno mi menziona"
+    }
   }
 }

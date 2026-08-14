@@ -7,7 +7,7 @@
  */
 import { z } from 'zod'
 import { and, eq } from 'drizzle-orm'
-import { recipeDiscussions, recipeDiscussionComments } from '~~/server/database/schema'
+import { recipeDiscussions, recipeDiscussionComments, users } from '~~/server/database/schema'
 
 const commentSchema = z.object({ body: z.string().trim().min(1).max(10000) }).strict()
 
@@ -40,8 +40,14 @@ export default defineEventHandler(async (event) => {
   if (!db) throw createError({ statusCode: 503, statusMessage: 'Database unavailable.' })
 
   const [thread] = await db
-    .select({ id: recipeDiscussions.id, status: recipeDiscussions.status })
+    .select({
+      id: recipeDiscussions.id,
+      status: recipeDiscussions.status,
+      authorId: recipeDiscussions.authorId,
+      authorMutes: users.notificationMutes,
+    })
     .from(recipeDiscussions)
+    .innerJoin(users, eq(users.id, recipeDiscussions.authorId))
     .where(and(eq(recipeDiscussions.id, discussionId), eq(recipeDiscussions.recipeId, recipe.id)))
     .limit(1)
 
@@ -50,13 +56,41 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 422, statusMessage: 'Cannot reply to a resolved discussion' })
   }
 
-  const [inserted] = await db
-    .insert(recipeDiscussionComments)
-    .values({ discussionId: thread.id, authorId: session.user.id, body: parsed.data.body })
-    .$returningId()
+  const insertedId = await db.transaction(async (tx) => {
+    const [inserted] = await tx
+      .insert(recipeDiscussionComments)
+      .values({ discussionId: thread.id, authorId: session.user.id, body: parsed.data.body })
+      .$returningId()
 
-  if (!inserted) throw createError({ statusCode: 500, statusMessage: 'Insert failed.' })
+    if (!inserted) throw createError({ statusCode: 500, statusMessage: 'Insert failed.' })
+
+    // Recipient is the THREAD AUTHOR, who may not be the recipe owner — they could have
+    // posted while the recipe was still public. The read-time visibility filter (applied
+    // by every consumer of the notifications table) re-checks this on every read, since
+    // the recipe may have gone private after this notification is created.
+    await createNotification(tx, {
+      recipientId: thread.authorId,
+      actorId: session.user.id,
+      kind: 'discussion_reply',
+      recipeId: recipe.id,
+      targetKind: 'discussion',
+      targetId: thread.id,
+      recipientMutes: thread.authorMutes,
+    })
+
+    await notifyMentions(tx, {
+      body: parsed.data.body,
+      authorId: session.user.id,
+      recipeId: recipe.id,
+      recipeOwnerId: recipe.ownerId,
+      recipeVisibility: recipe.visibility,
+      targetKind: 'discussion',
+      targetId: thread.id,
+    })
+
+    return inserted.id
+  })
 
   setResponseStatus(event, 201)
-  return { id: inserted.id }
+  return { id: insertedId }
 })

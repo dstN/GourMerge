@@ -121,6 +121,8 @@ export interface UserProfile {
     preferredLocale?: string
     /** Own profile only. */
     preferredMeasurementSystem?: string
+    /** Own profile only. */
+    notificationMutes?: string[]
   }
   recipes: RecipeDetail[]
   /** Minimal card shape returned by GET /api/users/:username (not full RecipeDetail). */

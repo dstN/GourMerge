@@ -30,10 +30,11 @@
  *   https://gourmerge.de/tasks/retention?key=…
  *   https://gourmerge.de/tasks/inactive-accounts?key=…
  *   https://gourmerge.de/tasks/inactive-accounts?key=…&dryRun=1
+ *   https://gourmerge.de/tasks/notification-digest?key=…
  */
 import { timingSafeEqual } from 'node:crypto'
 
-const TASKS = ['retention', 'inactive-accounts'] as const
+const TASKS = ['retention', 'inactive-accounts', 'notification-digest'] as const
 type TaskName = (typeof TASKS)[number]
 
 function authorize(event: Parameters<typeof getQuery>[0]): void {
@@ -75,7 +76,9 @@ export default defineEventHandler(async (event) => {
       ? // Retention has no dry-run path: every rule is a bounded DELETE of rows the
         // policy already promises to remove, so there is nothing to preview.
         await runRetentionSweep()
-      : await runInactivitySweep({ dryRun })
+      : task === 'inactive-accounts'
+        ? await runInactivitySweep({ dryRun })
+        : await runNotificationDigest({ dryRun })
 
   const durationMs = Date.now() - startedAt
   logger.info('maintenance task finished', { task, dryRun, durationMs })

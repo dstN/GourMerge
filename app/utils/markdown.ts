@@ -44,10 +44,45 @@ const SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
   allowedTags: ALLOWED_TAGS,
   allowedAttributes: { a: ['href', 'title', 'target', 'rel'] },
   allowedSchemes: ['http', 'https', 'mailto'],
-  // Force external links to be safe and non-referring.
   transformTags: {
-    a: sanitizeHtml.simpleTransform('a', { rel: 'noopener noreferrer nofollow', target: '_blank' }),
+    // A relative href (our own `/username` mention links, or any future internal link) is
+    // left alone — same-tab, no `nofollow`, matching every other internal navigation in the
+    // app. Anything else (http/https/mailto, i.e. genuinely external) keeps the forced
+    // safe/non-referring transform. Checked on the href actually present, since a custom
+    // sanitize-html transform is the only way to make this conditional per link —
+    // `simpleTransform` applies unconditionally to every `<a>`.
+    a: (tagName, attribs) => {
+      if (attribs.href?.startsWith('/')) return { tagName, attribs }
+      return { tagName, attribs: { ...attribs, rel: 'noopener noreferrer nofollow', target: '_blank' } }
+    },
   },
+}
+
+/**
+ * Username charset matches `register.post.ts`'s own validation. Excludes a mention
+ * whose `@` is preceded by a word character or another `@`, so `user@example.com` is not
+ * read as a mention of `example`.
+ */
+const MENTION_PATTERN = /(?:^|[^\w@])@([a-zA-Z0-9_-]{1,50})/g
+
+/**
+ * Turn `@username` into a Markdown link before `marked.parse()` runs, so it flows through
+ * the exact same sanitize path as any other link — no HTML is ever pre-injected into the
+ * stored body. Split on fenced/inline code first so a literal `@decorator` inside a pasted
+ * code sample is never linkified.
+ */
+export function linkifyMentions(markdown: string): string {
+  const segments = markdown.split(/(```[\s\S]*?```|`[^`]*`)/)
+  return segments
+    .map((segment, i) => {
+      // Odd indices are the code spans captured by the split's own capture group.
+      if (i % 2 === 1) return segment
+      return segment.replace(MENTION_PATTERN, (match, username: string) => {
+        const prefix = match.slice(0, match.length - username.length - 1)
+        return `${prefix}[@${username}](/${username})`
+      })
+    })
+    .join('')
 }
 
 /**
@@ -56,7 +91,10 @@ const SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
  */
 export function renderMarkdownSafe(content: string): string {
   if (!content) return ''
-  // New saves already store HTML (TipTap getHTML); legacy saves store Markdown.
-  const html = content.trimStart().startsWith('<') ? content : (marked.parse(content, { async: false }) as string)
+  // New saves already store HTML (TipTap getHTML); legacy saves store Markdown. Mentions
+  // are linkified only on the Markdown branch — rewriting text nodes inside already-generated
+  // HTML without a real parser is much higher risk for a discussion-only feature.
+  const isHtml = content.trimStart().startsWith('<')
+  const html = isHtml ? content : (marked.parse(linkifyMentions(content), { async: false }) as string)
   return sanitizeHtml(html, SANITIZE_OPTIONS)
 }

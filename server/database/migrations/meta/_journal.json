@@ -127,6 +127,13 @@
       "when": 1786692386693,
       "tag": "0017_collections",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "5",
+      "when": 1786698859165,
+      "tag": "0018_notifications",
+      "breakpoints": true
     }
   ]
 }

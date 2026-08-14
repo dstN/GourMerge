@@ -882,5 +882,29 @@
     "noneYet": "You don't have a collection yet. Create the first one below.",
     "notFound": "Collection not found",
     "recipeCount": "{count} recipes"
+  },
+  "notification": {
+    "viewAll": "Notifications",
+    "bellLabel": "Notifications",
+    "markAllRead": "Mark all as read",
+    "markRead": "Mark as read",
+    "unreadTab": "Unread",
+    "allTab": "All",
+    "empty": "No notifications",
+    "prefsTitle": "Notifications",
+    "recipeForked": "{actor} forked your recipe \"{recipe}\"",
+    "gmrOpened": "{actor} opened a GourMerge Request on \"{recipe}\"",
+    "discussionStarted": "{actor} started a discussion on \"{recipe}\"",
+    "discussionReply": "{actor} replied to your discussion on \"{recipe}\"",
+    "gmrComment": "{actor} commented on your GourMerge Request on \"{recipe}\"",
+    "mention": "{actor} mentioned you in \"{recipe}\"",
+    "kindLabel": {
+      "recipe_forked": "Someone forks one of my recipes",
+      "gmr_opened": "Someone opens a GourMerge Request",
+      "discussion_started": "Someone starts a discussion",
+      "discussion_reply": "Someone replies to my discussion post",
+      "gmr_comment": "Someone comments on my GourMerge Request",
+      "mention": "Someone mentions me"
+    }
   }
 }
