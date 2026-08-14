@@ -187,12 +187,20 @@ export default defineNuxtConfig({
       // options.workbox` check, so its own default-injection never fires either. Verified
       // against the built `.output/public/sw.js` — no `NavigationRoute` call in the output.
       //
-      // Costs nothing that worked: offline navigation was never functioning; asset and API
-      // caching below are unaffected, since they are runtime caching and do not touch the
-      // precache. Doing this properly needs a real precached shell — a prerendered `/offline`
-      // route added via `additionalManifestEntries` and pointed at here — which is a feature,
-      // not a one-line config fix. Recorded in ROADMAP.
-      navigateFallback: null,
+      // `/offline` is different from `/` in exactly the way that made the above fail:
+      // `routeRules['/offline'] = { prerender: true }` (see the `routeRules` block above)
+      // gives it a real static `index.html`, so it CAN exist in the precache manifest
+      // `globPatterns` builds from files on disk — `/` never could, being server-rendered.
+      //
+      // `globPatterns` already includes `html`, so the prerendered file may already land in
+      // the manifest without an explicit `additionalManifestEntries` entry — VERIFY this
+      // against a real build: inspect `.output/public/sw.js` for a precache entry whose URL
+      // matches `/offline` (or `/offline/index.html` — the exact shape depends on how Nitro
+      // names a prerendered route's output file). Add an explicit
+      // `additionalManifestEntries: [{ url: '/offline', revision: '<build-id>' }]` only if
+      // it's missing or the URL shape doesn't match what's below. This is the same
+      // build-and-inspect method the `null` fix above already used to confirm itself.
+      navigateFallback: '/offline',
       globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
       runtimeCaching: [
         {
@@ -396,6 +404,10 @@ export default defineNuxtConfig({
     '/api/health': {
       headers: { 'cache-control': 'no-store, max-age=0' },
     },
+    // Prerendered so the PWA's `navigateFallback` (below) has an actual precached shell
+    // to serve when a navigation can't reach the network — an SSR app otherwise has no
+    // `index.html` for any route, `/offline` included, to fall back to.
+    '/offline': { prerender: true },
   },
 
   // ── Nitro server preset (Passenger uses node-server) ────────
