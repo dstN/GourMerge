@@ -15,6 +15,34 @@ const {
   error,
 } = useFetch<UserProfile>(() => `/api/users/${username.value}`, { headers: useRequestHeaders(['cookie']) })
 
+interface MostForkedRecipe {
+  id: number
+  title: string
+  slug: string
+  description: string | null
+  difficulty: string
+  dietaryType: string | null
+  servings: number
+  prepTimeMinutes: number | null
+  cookTimeMinutes: number | null
+  visibility: string
+  starCount: number
+  forkCount: number
+  createdAt: string
+}
+
+interface ProfileStats {
+  contributionGraph: Array<{ day: string; commits: number }>
+  mostForkedRecipe: MostForkedRecipe | null
+  activity: { recipesPublished: number; commitsMade: number; gmrsOpened: number; gmrsMerged: number }
+}
+
+// A separate fetch, deliberately: this is new, heavier aggregate data the "recipes"/
+// "starred" tabs above never needed, not a case of re-fetching something already in hand.
+const { data: stats } = useFetch<ProfileStats>(() => `/api/users/${username.value}/stats`, {
+  headers: useRequestHeaders(['cookie']),
+})
+
 /**
  * A profile that does not exist must answer 404, not 200 with a friendly page.
  *
@@ -148,6 +176,31 @@ useSeoMeta({
           </div>
         </template>
       </UTabs>
+
+      <div v-if="stats" class="mt-8 space-y-8">
+        <div v-if="stats.contributionGraph.length > 0 || stats.activity.commitsMade > 0">
+          <h2 class="mb-3 text-sm font-semibold uppercase tracking-wider text-dimmed">
+            {{ t('profile.contributionGraphTitle') }}
+          </h2>
+          <ProfileContributionGraph :days="stats.contributionGraph" />
+        </div>
+
+        <div>
+          <h2 class="mb-3 text-sm font-semibold uppercase tracking-wider text-dimmed">
+            {{ t('profile.activityTitle') }}
+          </h2>
+          <ProfileActivityStats :activity="stats.activity" />
+        </div>
+
+        <div v-if="stats.mostForkedRecipe">
+          <h2 class="mb-3 text-sm font-semibold uppercase tracking-wider text-dimmed">
+            {{ t('profile.mostForkedTitle') }}
+          </h2>
+          <div :class="[CARD_GRID, 'sm:grid-cols-2 lg:grid-cols-3']">
+            <RecipeCard :recipe="{ ...stats.mostForkedRecipe, owner: { username: profile.user.username } }" />
+          </div>
+        </div>
+      </div>
     </template>
   </CommonPageShell>
 </template>

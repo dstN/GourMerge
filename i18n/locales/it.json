@@ -422,7 +422,17 @@
     "editSettings": "Modifica impostazioni",
     "qrAvatarAlt": "Avatar QR generato per {name}",
     "qrAvatarTitle": "{name} — scansiona il QR code per aprire il profilo",
-    "qrAvatarScanHint": "Scansiona per aprire questo profilo"
+    "qrAvatarScanHint": "Scansiona per aprire questo profilo",
+    "contributionGraphTitle": "Attività dell'ultimo anno",
+    "contributionLess": "Meno",
+    "contributionMore": "Più",
+    "contributionCellLabel": "{count} commit il {date}",
+    "activityTitle": "Attività",
+    "statRecipesPublished": "Ricette pubblicate",
+    "statCommitsMade": "Commit",
+    "statGmrsOpened": "GourMerge Request aperte",
+    "statGmrsMerged": "GourMerge Request unite",
+    "mostForkedTitle": "Più forkata"
   },
   "settings": {
     "title": "Impostazioni",
