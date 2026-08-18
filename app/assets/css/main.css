@@ -498,6 +498,19 @@ html {
   }
 }
 
+/* ── Cookie banner: reserve room so it never covers content ────
+ * The banner is fixed to the viewport bottom, outside every layout's own
+ * `#main-content` scroll flow (`app/components/legal/CookieConsent.vue`
+ * measures it and sets `--cookie-banner-height`). Without this, a short
+ * page's last interactive element can be scrolled fully into its container's
+ * view yet still sit physically under the banner — all three layouts
+ * (`default.vue`, `dashboard.vue`, `auth.vue`) share this one id, so a single
+ * rule covers all of them. */
+html.has-cookie-banner #main-content {
+  padding-bottom: var(--cookie-banner-height, 0px);
+  transition: padding-bottom 200ms ease-out;
+}
+
 /* ── Color mode transition (prevents flash) ────────────────── */
 html.dark,
 html.light {
