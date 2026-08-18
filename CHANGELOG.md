@@ -28,6 +28,16 @@ genuinely broken login flow, so the toggle came back out and the row went inform
 A "Cookie settings" link in the footer reopens the modal at any time (`useCookieConsent.ts`
 persists the choice as `gm_cookie_consent`, one year, `sameSite=lax`).
 
+Caught by CI before this ever shipped: the banner is `position: fixed` at the viewport
+bottom, painted on top of whichever layout is showing rather than inside its scroll flow, so
+a page whose last interactive element lands near the true bottom of the scrollable area (a
+short form, e.g. a first-time visitor's recipe-creation dialog) could have it scrolled fully
+into view yet still physically covered by the banner — `tests/e2e/tour.spec.ts` failed twice
+with the banner's own content div reported as intercepting the recipe form's submit button.
+Fixed by measuring the banner's rendered height (`ResizeObserver`, so it tracks text wrapping
+across locales/viewports) and reserving that much `padding-bottom` on `#main-content`, the one
+scroll container all three layouts share, only while the banner is showing.
+
 ### Fixed — the privacy policy undersold what the session cookie actually holds
 
 `legal.privacy.dataSessionDesc` said only "HttpOnly, 14-day lifetime, set only when you log
@@ -40,8 +50,11 @@ same wording made it into the new consent banner's "necessary" description. The 
 cookie (`gm_totp_pending`) got the same treatment — it carries only a user ID, 5-minute
 lifetime.
 
-i18n parity verified (`npm run i18n:check`, 731 keys × 4 locales), ESLint and Prettier clean
-on every touched file. No unit/e2e run locally this round — deferred to CI.
+i18n parity verified (`npm run i18n:check`, 731 keys × 4 locales), ESLint, Prettier and
+`design:check` clean on every touched file. No unit/e2e run locally this round (RAM-constrained)
+— CI caught the overlap bug above on the first push; the avatar-upload cropper failure in that
+same run is very likely the same root cause (the upload trigger on `/settings` sits within the
+initial viewport, no scroll needed to reach it), unconfirmed pending a re-run.
 
 ## [1.9.0] — 2026-08-12
 
