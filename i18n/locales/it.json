@@ -665,7 +665,7 @@
       "dataAccount": "Dati account:",
       "dataAccountDesc": "indirizzo e-mail, nome utente, nome visualizzato",
       "dataSession": "Cookie di sessione:",
-      "dataSessionDesc": "HttpOnly, durata 14 giorni, impostato solo al momento del login",
+      "dataSessionDesc": "HttpOnly, durata 14 giorni, impostato solo al momento del login. Contiene in forma cifrata i tuoi dati account (nome utente, nome visualizzato, indirizzo e-mail, avatar, stato di verifica) — leggibili solo dal nostro server, mai dal browser o da terzi.",
       "dataPrefs": "Cookie funzionali:",
       "dataPrefsDesc": "scelta della lingua, schema di colori (chiaro/scuro) e se l’introduzione è già stata vista. Questi cookie memorizzano solo le sue preferenze — nessun identificativo e nessun dato personale — e sono necessari per il funzionamento del sito.",
       "dataContact": "Modulo di contatto:",
@@ -867,5 +867,24 @@
       "issue": "Problema",
       "praise": "Complimento"
     }
+  },
+  "cookieConsent": {
+    "bannerTitle": "Utilizziamo i cookie",
+    "bannerBody": "Utilizziamo cookie tecnicamente necessari per il login, la preferenza della lingua e alcune funzioni di comodità. Al momento non utilizziamo categorie come statistiche o marketing — maggiori dettagli nella nostra",
+    "privacyLinkText": "informativa sulla privacy",
+    "acceptAll": "Accetta tutti",
+    "acceptNecessary": "Solo necessari",
+    "openSettings": "Impostazioni",
+    "settingsTitle": "Impostazioni cookie",
+    "settingsIntro": "Scegli quali categorie di cookie possiamo impostare. Maggiori dettagli nella nostra",
+    "categoryNecessaryTitle": "Tecnicamente necessari",
+    "categoryNecessaryAlwaysOn": "Sempre attivi",
+    "categoryNecessaryDesc": "Il cookie di sessione per il login (cifrato, contiene i tuoi dati account — nome utente, nome visualizzato, indirizzo e-mail, avatar, stato di verifica — leggibile solo dal nostro server), un cookie di breve durata per il passaggio intermedio dell'autenticazione a due fattori (contiene solo il tuo ID utente, valido 5 minuti), la tua scelta della lingua e l'indicazione che hai già visto l'introduzione. Questi cookie sono indispensabili per il funzionamento del sito e non possono essere disattivati.",
+    "categoryStatisticsTitle": "Statistiche",
+    "categoryStatisticsDesc": "Non utilizzate al momento. Riservate nel caso in cui in futuro introducessimo statistiche di utilizzo anonime.",
+    "categoryMarketingTitle": "Marketing",
+    "categoryMarketingDesc": "Non utilizzati al momento. Riservati a eventuali futuri cookie di marketing.",
+    "save": "Salva selezione",
+    "manageLink": "Impostazioni cookie"
   }
 }

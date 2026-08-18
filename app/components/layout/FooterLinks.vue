@@ -7,6 +7,7 @@
  * two different button sizes.
  */
 const { t } = useI18n()
+const { openSettings } = useCookieConsent()
 </script>
 
 <template>
@@ -24,5 +25,6 @@ const { t } = useI18n()
     <UButton :label="t('legal.impressum')" color="neutral" variant="ghost" size="xs" to="/legal/impressum" />
     <UButton :label="t('legal.datenschutz')" color="neutral" variant="ghost" size="xs" to="/legal/datenschutz" />
     <UButton :label="t('legal.contact')" color="neutral" variant="ghost" size="xs" to="/legal/contact" />
+    <UButton :label="t('cookieConsent.manageLink')" color="neutral" variant="ghost" size="xs" @click="openSettings" />
   </div>
 </template>

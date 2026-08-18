@@ -665,7 +665,7 @@
       "dataAccount": "Données de compte :",
       "dataAccountDesc": "adresse e-mail, nom d’utilisateur, nom affiché",
       "dataSession": "Cookie de session :",
-      "dataSessionDesc": "HttpOnly, durée de 14 jours, défini uniquement lors de la connexion",
+      "dataSessionDesc": "HttpOnly, durée de 14 jours, défini uniquement lors de la connexion. Contient vos données de compte (nom d'utilisateur, nom affiché, adresse e-mail, avatar, statut de vérification) sous forme chiffrée — lisible uniquement par notre serveur, jamais par votre navigateur ni par un tiers.",
       "dataPrefs": "Cookies fonctionnels :",
       "dataPrefsDesc": "choix de la langue, thème de couleur (clair/sombre) et le fait que l’introduction a déjà été vue. Ces cookies ne stockent que vos préférences — aucun identifiant ni donnée personnelle — et sont nécessaires au fonctionnement du site.",
       "dataContact": "Formulaire de contact :",
@@ -867,5 +867,24 @@
       "issue": "Problème",
       "praise": "Compliment"
     }
+  },
+  "cookieConsent": {
+    "bannerTitle": "Nous utilisons des cookies",
+    "bannerBody": "Nous utilisons des cookies techniquement nécessaires pour la connexion, la préférence de langue et quelques fonctions de confort. Nous n'utilisons pas actuellement de catégories comme les statistiques ou le marketing — voir notre",
+    "privacyLinkText": "politique de confidentialité",
+    "acceptAll": "Tout accepter",
+    "acceptNecessary": "Nécessaires uniquement",
+    "openSettings": "Paramètres",
+    "settingsTitle": "Paramètres des cookies",
+    "settingsIntro": "Choisissez les catégories de cookies que nous sommes autorisés à définir. Plus de détails dans notre",
+    "categoryNecessaryTitle": "Techniquement nécessaires",
+    "categoryNecessaryAlwaysOn": "Toujours actif",
+    "categoryNecessaryDesc": "Le cookie de session pour la connexion (chiffré, il contient vos données de compte — nom d'utilisateur, nom affiché, adresse e-mail, avatar, statut de vérification — lisible uniquement par notre serveur), un cookie de courte durée pour l'étape intermédiaire de la double authentification (contient uniquement votre identifiant utilisateur, valable 5 minutes), votre choix de langue et l'indication que vous avez déjà vu la présentation. Ces cookies sont indispensables au fonctionnement du site et ne peuvent pas être désactivés.",
+    "categoryStatisticsTitle": "Statistiques",
+    "categoryStatisticsDesc": "Pas utilisé actuellement. Réservé au cas où nous introduirions plus tard des statistiques d'utilisation anonymes.",
+    "categoryMarketingTitle": "Marketing",
+    "categoryMarketingDesc": "Pas utilisé actuellement. Réservé à d'éventuels futurs cookies marketing.",
+    "save": "Enregistrer la sélection",
+    "manageLink": "Paramètres des cookies"
   }
 }

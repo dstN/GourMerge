@@ -103,5 +103,10 @@ useSeoMeta({
       <OnboardingConceptIntro />
       <OnboardingTourOverlay />
     </ClientOnly>
+
+    <!-- Cookie banner — mounted globally, outside NuxtLayout, so it also covers auth pages -->
+    <ClientOnly>
+      <LegalCookieConsent />
+    </ClientOnly>
   </UApp>
 </template>

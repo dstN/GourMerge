@@ -665,7 +665,7 @@
       "dataAccount": "Account data:",
       "dataAccountDesc": "email address, username, display name",
       "dataSession": "Session cookie:",
-      "dataSessionDesc": "HttpOnly, 14-day lifetime, set only when you log in",
+      "dataSessionDesc": "HttpOnly, 14-day lifetime, set only when you log in. Holds your account data (username, display name, email address, avatar, verification status) encrypted — readable only by our server, never by your browser or a third party.",
       "dataPrefs": "Functional cookies:",
       "dataPrefsDesc": "language selection, colour scheme (light/dark) and whether the introduction has already been seen. These cookies store only your preferences — no identifier and no personal data — and are necessary to operate the site.",
       "dataContact": "Contact form:",
@@ -867,5 +867,24 @@
       "issue": "Issue",
       "praise": "Praise"
     }
+  },
+  "cookieConsent": {
+    "bannerTitle": "We use cookies",
+    "bannerBody": "We set technically necessary cookies for login, your language preference, and a few convenience features. We don't currently use categories like statistics or marketing — see our",
+    "privacyLinkText": "privacy policy",
+    "acceptAll": "Accept all",
+    "acceptNecessary": "Necessary only",
+    "openSettings": "Settings",
+    "settingsTitle": "Cookie settings",
+    "settingsIntro": "Choose which cookie categories we're allowed to set. More details in our",
+    "categoryNecessaryTitle": "Technically necessary",
+    "categoryNecessaryAlwaysOn": "Always on",
+    "categoryNecessaryDesc": "The session cookie for login (encrypted, it holds your account data — username, display name, email address, avatar, verification status — readable only by our server), a short-lived cookie for the two-factor in-between step (holds only your user ID, valid for 5 minutes), your language choice, and the note that you've already seen the intro. These cookies are required for the site to work and can't be turned off.",
+    "categoryStatisticsTitle": "Statistics",
+    "categoryStatisticsDesc": "Not currently in use. Reserved in case we introduce anonymous usage statistics later.",
+    "categoryMarketingTitle": "Marketing",
+    "categoryMarketingDesc": "Not currently in use. Reserved for any future marketing cookies.",
+    "save": "Save selection",
+    "manageLink": "Cookie settings"
   }
 }

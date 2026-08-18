@@ -665,7 +665,7 @@
       "dataAccount": "Konto-Daten:",
       "dataAccountDesc": "E-Mail-Adresse, Benutzername, Anzeigename",
       "dataSession": "Session-Cookie:",
-      "dataSessionDesc": "HttpOnly, Laufzeit 14 Tage, wird ausschließlich beim Anmelden gesetzt",
+      "dataSessionDesc": "HttpOnly, Laufzeit 14 Tage, wird ausschließlich beim Anmelden gesetzt. Enthält verschlüsselt deine Kontodaten (Benutzername, Anzeigename, E-Mail-Adresse, Profilbild, Bestätigungsstatus) — lesbar ausschließlich für unseren Server, nicht für deinen Browser oder Dritte.",
       "dataPrefs": "Funktionale Cookies:",
       "dataPrefsDesc": "Sprachauswahl, Farbschema (hell/dunkel) und der Hinweis, dass die Einführung bereits gesehen wurde. Diese Cookies speichern nur Ihre Einstellungen, keine Kennung und keine personenbezogenen Daten, und sind für den Betrieb der Website erforderlich.",
       "dataContact": "Kontaktformular:",
@@ -867,5 +867,24 @@
       "issue": "Problem",
       "praise": "Lob"
     }
+  },
+  "cookieConsent": {
+    "bannerTitle": "Wir verwenden Cookies",
+    "bannerBody": "Für Login, Spracheinstellung und ein paar Komfortfunktionen setzen wir technisch notwendige Cookies. Kategorien wie Statistik oder Marketing nutzen wir aktuell nicht — mehr Details in unserer",
+    "privacyLinkText": "Datenschutzerklärung",
+    "acceptAll": "Alle akzeptieren",
+    "acceptNecessary": "Nur technisch notwendige",
+    "openSettings": "Einstellungen",
+    "settingsTitle": "Cookie-Einstellungen",
+    "settingsIntro": "Wähle, welche Cookie-Kategorien wir setzen dürfen. Details dazu findest du in unserer",
+    "categoryNecessaryTitle": "Technisch notwendig",
+    "categoryNecessaryAlwaysOn": "Immer aktiv",
+    "categoryNecessaryDesc": "Session-Cookie für den Login (enthält verschlüsselt deine Kontodaten — Benutzername, Anzeigename, E-Mail-Adresse, Profilbild, Bestätigungsstatus — lesbar ausschließlich für unseren Server), ein kurzlebiges Cookie für den Zwei-Faktor-Zwischenschritt (enthält nur deine Nutzer-ID, 5 Minuten gültig), deine Sprachauswahl und der Hinweis, dass du die Einführung schon gesehen hast. Diese Cookies sind für den Betrieb der Seite zwingend erforderlich und lassen sich nicht abwählen.",
+    "categoryStatisticsTitle": "Statistik",
+    "categoryStatisticsDesc": "Aktuell nicht im Einsatz. Reserviert für den Fall, dass wir später anonyme Nutzungsstatistiken einführen.",
+    "categoryMarketingTitle": "Marketing",
+    "categoryMarketingDesc": "Aktuell nicht im Einsatz. Reserviert für eventuelle künftige Marketing-Cookies.",
+    "save": "Auswahl speichern",
+    "manageLink": "Cookie-Einstellungen"
   }
 }
