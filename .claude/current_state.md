@@ -351,7 +351,7 @@ link, because a user locked out of their account still holds both rights.
 
 - **4 locales**: `de` (default), `en`, `fr`, `it`
 - **Strategy**: `prefix_except_default` — German has no prefix; `/en/`, `/fr/`, `/it/` prefixed
-- **Key count**: 710 keys, 4-way parity (verified by `npm run i18n:check`)
+- **Key count**: 731 keys, 4-way parity (verified by `npm run i18n:check`)
 - **Locale files**: `i18n/locales/{de,en,fr,it}.json`
 - **CI gate**: `scripts/i18n-check.mjs` — fails if any locale has a missing key or empty value
 - **Translated**: all UI labels, navigation, errors, toasts, onboarding, glossary, legal pages, auth flows
@@ -408,6 +408,7 @@ The `ingredients` master table is populated from the **Swiss BLV Food Compositio
 | CSRF                      | ✓ Done | nuxt-auth-utils / Nitro                                                                                                                                                                                                                                                                                                        |
 | Session rotation          | ✓ Done | Post-login session regeneration                                                                                                                                                                                                                                                                                                |
 | Secure cookies            | ✓ Done | `httpOnly`, `sameSite=lax`, 14-day maxAge                                                                                                                                                                                                                                                                                      |
+| Cookie consent            | ✓ Done | Banner + settings modal (`app/components/legal/CookieConsent.vue`, `useCookieConsent.ts`); `statistics`/`marketing` are real opt-in toggles (off by default, unused so far); necessary cookies (session, 2FA-pending, locale, onboarding-seen) are always on, not user-togglable — exempt from consent under TTDSG §25(2)      |
 | Email verification        | ✓ Done | CSPRNG token + bcrypt hash + SMTP send                                                                                                                                                                                                                                                                                         |
 | Password reset            | ✓ Done | CSPRNG token + bcrypt hash + expiry + no-enumeration response                                                                                                                                                                                                                                                                  |
 | Zod validation            | ✓ Done | All endpoint bodies + query params                                                                                                                                                                                                                                                                                             |

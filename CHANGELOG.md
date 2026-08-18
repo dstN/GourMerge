@@ -5,6 +5,44 @@ All notable changes to GourMerge are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versioning follows [Semantic Versioning](https://semver.org/).
 
+## [1.10.0] — 2026-08-18
+
+A cookie banner was simply missing — the site had been setting cookies since v1.0 with no
+notice and no way to opt in or out of anything beyond "necessary." Closing that also meant
+finally answering a question nobody had asked out loud yet: of the cookies GourMerge sets,
+which ones actually carry personal data?
+
+### Added — cookie consent banner and settings
+
+A bottom banner (Accept all / Necessary only / Settings) plus a settings modal, mounted once
+in `app.vue` so it covers every layout including the auth pages. Two categories are real
+choices: `statistics` and `marketing` — both off by default and not wired to anything yet
+(GourMerge runs no analytics or marketing scripts today), existing purely so a future script
+has a `hasConsent()` check to gate on instead of a second consent-manager rewrite later.
+"Technically necessary" (session cookie, the 2FA-pending cookie, locale, onboarding-seen) is
+shown as an always-on, non-togglable row rather than a switch — an early version let it be
+switched off too, deliberately logging the visitor out and blocking login/registration when
+it was, but that was walked back: it bought a compliance property TTDSG §25(2) already grants
+for free (strictly necessary cookies are exempt from consent by definition) at the cost of a
+genuinely broken login flow, so the toggle came back out and the row went informational-only.
+A "Cookie settings" link in the footer reopens the modal at any time (`useCookieConsent.ts`
+persists the choice as `gm_cookie_consent`, one year, `sameSite=lax`).
+
+### Fixed — the privacy policy undersold what the session cookie actually holds
+
+`legal.privacy.dataSessionDesc` said only "HttpOnly, 14-day lifetime, set only when you log
+in" — true, but silent on the fact that `nuxt-auth-utils`' sealed session payload
+(`server/utils/completeLogin.ts`) carries your username, display name, email address, avatar
+URL, and email-verification status. Encrypted and unreadable by the browser or any third
+party, but still personal data under the GDPR's broad definition, and the existing wording
+read as if the cookie were an opaque token. All four locales now say so explicitly, and the
+same wording made it into the new consent banner's "necessary" description. The 2FA-pending
+cookie (`gm_totp_pending`) got the same treatment — it carries only a user ID, 5-minute
+lifetime.
+
+i18n parity verified (`npm run i18n:check`, 731 keys × 4 locales), ESLint and Prettier clean
+on every touched file. No unit/e2e run locally this round — deferred to CI.
+
 ## [1.9.0] — 2026-08-12
 
 Follow-up feedback on 1.8.0's ingredient work, from actually using it: a layout bug in the one
