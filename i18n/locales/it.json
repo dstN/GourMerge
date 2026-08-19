@@ -182,6 +182,7 @@
     "commitSuccess": "Versione salvata con successo.",
     "commitError": "Impossibile salvare la versione.",
     "ingredientIncomplete": "Ogni ingrediente richiede un nome e una quantità.",
+    "ingredientNotCreated": "Crea prima i nuovi ingredienti prima di salvare la ricetta.",
     "fork": "Remixa",
     "forkSuccess": "Il tuo remix è pronto.",
     "forkError": "Impossibile creare il remix.",

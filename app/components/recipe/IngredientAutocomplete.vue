@@ -73,7 +73,8 @@ watch(query, (q) => {
 })
 
 // Opens a dialog to create the master ingredient row with a real id (translations, category,
-// nutrition) instead of a bare-name id:null row resolved later at commit time.
+// nutrition). Required before the row can be committed — a recipe can't be saved with an
+// ingredient that only has a typed name and no id (see edit.vue's commitChanges validation).
 const createOpen = ref(false)
 const pendingName = ref('')
 
@@ -99,12 +100,14 @@ function onCreated(created: CreatedIngredient) {
   query.value = created.name
 }
 
+// Keyed on id+name (not the modelValue object itself) so this only resyncs `query` when the
+// committed ingredient actually changes — e.g. row reset or a different ingredient selected —
+// not on every sibling-field edit (quantity/unit/notes), which recreates the object but leaves
+// id/name untouched and would otherwise stomp an in-progress, not-yet-created ingredient name.
 watch(
-  () => props.modelValue,
-  (val) => {
-    if (val && query.value !== (val.name ?? '')) {
-      query.value = val.name ?? ''
-    }
+  () => (props.modelValue ? `${props.modelValue.id ?? ''} ${props.modelValue.name ?? ''}` : null),
+  () => {
+    if (props.modelValue) query.value = props.modelValue.name ?? ''
   },
   { immediate: true }
 )

@@ -371,34 +371,23 @@ async function commitChanges() {
     return
   }
 
+  // Every ingredient must be a real, created master-table row before the recipe can be saved —
+  // a typed-but-not-yet-created name (ingredientId still null) is not enough.
+  const uncreated = ingredients.value.some((ing) => ing.ingredientId === null)
+  if (uncreated) {
+    toast.error(t('recipe.ingredientNotCreated'))
+    return
+  }
+
   committing.value = true
   try {
-    // Resolve any new ingredients (create-on-write)
-    const resolvedIngredients = await Promise.all(
-      ingredients.value.map(async (ing, i) => {
-        if (ing.ingredientId !== null) {
-          return {
-            ingredientId: ing.ingredientId,
-            quantity: ing.quantity,
-            unit: ing.unit,
-            notes: ing.notes || null,
-            sortOrder: i,
-          }
-        }
-        // Create the new ingredient
-        const created = await $fetch<{ id: number }>('/api/ingredients', {
-          method: 'POST',
-          body: { name: ing.name },
-        })
-        return {
-          ingredientId: created.id,
-          quantity: ing.quantity,
-          unit: ing.unit,
-          notes: ing.notes || null,
-          sortOrder: i,
-        }
-      })
-    )
+    const resolvedIngredients = ingredients.value.map((ing, i) => ({
+      ingredientId: ing.ingredientId as number,
+      quantity: ing.quantity,
+      unit: ing.unit,
+      notes: ing.notes || null,
+      sortOrder: i,
+    }))
 
     await $fetch(`/api/recipes/${recipe.value.id}/commits`, {
       method: 'POST',

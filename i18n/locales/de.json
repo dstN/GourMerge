@@ -182,6 +182,7 @@
     "commitSuccess": "Version erfolgreich gespeichert.",
     "commitError": "Version konnte nicht gespeichert werden.",
     "ingredientIncomplete": "Jede Zutat benötigt einen Namen und eine Menge.",
+    "ingredientNotCreated": "Bitte lege neue Zutaten zuerst an, bevor du das Rezept speicherst.",
     "fork": "Remixen",
     "forkSuccess": "Eigene Version erstellt.",
     "forkError": "Eigene Version konnte nicht erstellt werden.",
