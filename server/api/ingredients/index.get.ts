@@ -58,14 +58,18 @@ export default defineEventHandler(async (event) => {
     .where(
       or(
         like(ingredients.name, qLike),
-        // Match any locale name in nameTranslations JSON
-        sql`JSON_UNQUOTE(JSON_EXTRACT(${ingredients.nameTranslations}, ${`$.${locale}`})) LIKE ${qLike}`,
-        sql`JSON_UNQUOTE(JSON_EXTRACT(${ingredients.nameTranslations}, '$.de')) LIKE ${qLike}`,
-        sql`JSON_UNQUOTE(JSON_EXTRACT(${ingredients.nameTranslations}, '$.en')) LIKE ${qLike}`,
-        sql`JSON_UNQUOTE(JSON_EXTRACT(${ingredients.nameTranslations}, '$.fr')) LIKE ${qLike}`,
-        sql`JSON_UNQUOTE(JSON_EXTRACT(${ingredients.nameTranslations}, '$.it')) LIKE ${qLike}`,
-        // Match synonyms for the current locale
-        sql`JSON_SEARCH(${ingredients.synonyms}, 'one', ${qLike}, NULL, ${`$.${locale}[*]`}) IS NOT NULL`
+        // JSON_EXTRACT/JSON_UNQUOTE always return utf8mb4_bin (case-sensitive) regardless of
+        // the source column's collation, unlike the plain column `like()` above — so these
+        // need an explicit LOWER() on both sides to match case-insensitively.
+        sql`LOWER(JSON_UNQUOTE(JSON_EXTRACT(${ingredients.nameTranslations}, ${`$.${locale}`}))) LIKE LOWER(${qLike})`,
+        sql`LOWER(JSON_UNQUOTE(JSON_EXTRACT(${ingredients.nameTranslations}, '$.de'))) LIKE LOWER(${qLike})`,
+        sql`LOWER(JSON_UNQUOTE(JSON_EXTRACT(${ingredients.nameTranslations}, '$.en'))) LIKE LOWER(${qLike})`,
+        sql`LOWER(JSON_UNQUOTE(JSON_EXTRACT(${ingredients.nameTranslations}, '$.fr'))) LIKE LOWER(${qLike})`,
+        sql`LOWER(JSON_UNQUOTE(JSON_EXTRACT(${ingredients.nameTranslations}, '$.it'))) LIKE LOWER(${qLike})`,
+        // Match synonyms for the current locale — same case-sensitivity issue, worked around by
+        // round-tripping the JSON document through CHAR so LOWER() can act on it, then back to
+        // JSON for JSON_SEARCH (JSON structural characters aren't letters, so this is lossless).
+        sql`JSON_SEARCH(CAST(LOWER(CAST(${ingredients.synonyms} AS CHAR)) AS JSON), 'one', LOWER(${qLike}), NULL, ${`$.${locale}[*]`}) IS NOT NULL`
       )
     )
     .limit(limit)
