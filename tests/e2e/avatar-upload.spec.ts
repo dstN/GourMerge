@@ -43,7 +43,18 @@ test('picking a photo opens the cropper, and confirming stores a square WebP ava
   // clicking through it, same as `startTourAtNewRecipeStep` avoids doing in `tour.spec.ts`.
   await request.patch('/api/users/me', { data: { onboardingCompletedAt: new Date().toISOString() } })
 
-  await page.goto('/settings')
+  await page.goto('/settings', { waitUntil: 'load' })
+  // Wait for Vue hydration so @change="onPick" is attached before setInputFiles fires the
+  // native event below — a raw goto outruns it (see tour.spec.ts/journey.spec.ts). Settings
+  // mounts enough cards (profile, avatar, email, passkeys, 2FA, the cookie banner) that this
+  // page was the one where the race finally surfaced: the click always landed, but the
+  // dispatched change event had no listener yet, so the cropper never opened.
+  await page
+    .waitForFunction(() => !!(document.querySelector('#__nuxt') as unknown as { __vnode?: unknown })?.__vnode, null, {
+      timeout: 30_000,
+    })
+    .catch(() => {})
+
   await page
     .locator('button')
     .filter({ hasText: /foto hochladen|upload photo/i })
