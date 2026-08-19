@@ -14,29 +14,40 @@ which ones actually carry personal data?
 
 ### Added — cookie consent banner and settings
 
-A bottom banner (Accept all / Necessary only / Settings) plus a settings modal, mounted once
-in `app.vue` so it covers every layout including the auth pages. Two categories are real
-choices: `statistics` and `marketing` — both off by default and not wired to anything yet
-(GourMerge runs no analytics or marketing scripts today), existing purely so a future script
-has a `hasConsent()` check to gate on instead of a second consent-manager rewrite later.
-"Technically necessary" (session cookie, the 2FA-pending cookie, locale, onboarding-seen) is
-shown as an always-on, non-togglable row rather than a switch — an early version let it be
-switched off too, deliberately logging the visitor out and blocking login/registration when
-it was, but that was walked back: it bought a compliance property TTDSG §25(2) already grants
-for free (strictly necessary cookies are exempt from consent by definition) at the cost of a
-genuinely broken login flow, so the toggle came back out and the row went informational-only.
-A "Cookie settings" link in the footer reopens the modal at any time (`useCookieConsent.ts`
-persists the choice as `gm_cookie_consent`, one year, `sameSite=lax`).
+A bottom banner (Accept all / Necessary only / Settings) plus a settings modal, included at
+the end of `#main-content` in all three layouts (default/dashboard/auth) — the same pattern
+`<LayoutFooterLinks>` already uses for shared shell UI — so it covers every page including
+the auth ones. Two categories are real choices: `statistics` and `marketing` — both off by
+default and not wired to anything yet (GourMerge runs no analytics or marketing scripts
+today), existing purely so a future script has a `hasConsent()` check to gate on instead of a
+second consent-manager rewrite later. "Technically necessary" (session cookie, the
+2FA-pending cookie, locale, onboarding-seen) is shown as an always-on, non-togglable row
+rather than a switch — an early version let it be switched off too, deliberately logging the
+visitor out and blocking login/registration when it was, but that was walked back: it bought
+a compliance property TTDSG §25(2) already grants for free (strictly necessary cookies are
+exempt from consent by definition) at the cost of a genuinely broken login flow, so the toggle
+came back out and the row went informational-only. A "Cookie settings" link in the footer
+reopens the modal at any time (`useCookieConsent.ts` persists the choice as
+`gm_cookie_consent`, one year, `sameSite=lax`).
 
-Caught by CI before this ever shipped: the banner is `position: fixed` at the viewport
-bottom, painted on top of whichever layout is showing rather than inside its scroll flow, so
-a page whose last interactive element lands near the true bottom of the scrollable area (a
-short form, e.g. a first-time visitor's recipe-creation dialog) could have it scrolled fully
-into view yet still physically covered by the banner — `tests/e2e/tour.spec.ts` failed twice
-with the banner's own content div reported as intercepting the recipe form's submit button.
-Fixed by measuring the banner's rendered height (`ResizeObserver`, so it tracks text wrapping
-across locales/viewports) and reserving that much `padding-bottom` on `#main-content`, the one
-scroll container all three layouts share, only while the banner is showing.
+Caught by CI before this ever shipped, in two rounds. First symptom: a `position: fixed`
+banner at the viewport bottom painted on top of whichever layout was showing, so a page whose
+last interactive element scrolled into view near the true bottom of the page could still end
+up physically covered — `tests/e2e/tour.spec.ts` failed twice with the banner's own content
+div reported as intercepting the recipe form's submit button. First attempt fixed that by
+measuring the banner's height and reserving it as `padding-bottom` on `#main-content` — which
+worked for that case but missed a second one, caught by `tests/e2e/avatar-upload.spec.ts`
+failing on the exact same commit: the `/settings` avatar-upload trigger sits well within the
+initial viewport, needs no scrolling to reach, and padding at the _end_ of a scroll container
+does nothing to reposition content that was already on-screen. The actual fix was the
+positioning strategy itself — `position: sticky; bottom: 0` as the last child of
+`#main-content` reserves its own space in normal document flow, the way a sticky footer
+always has, so nothing can render behind it regardless of where on the page it lands. No
+measuring, no `ResizeObserver`, no race between paint and JS, and less code than the padding
+version it replaced. The one wrinkle was `auth.vue`'s centred-card wrapper, sized with
+`min-h-full` against `<main>` itself with no room left for a second flex child — switched to
+`flex-1` inside a `flex-col` `<main>` so the banner gets its own reserved row instead of being
+squeezed out.
 
 ### Fixed — the privacy policy undersold what the session cookie actually holds
 
@@ -52,9 +63,9 @@ lifetime.
 
 i18n parity verified (`npm run i18n:check`, 731 keys × 4 locales), ESLint, Prettier and
 `design:check` clean on every touched file. No unit/e2e run locally this round (RAM-constrained)
-— CI caught the overlap bug above on the first push; the avatar-upload cropper failure in that
-same run is very likely the same root cause (the upload trigger on `/settings` sits within the
-initial viewport, no scroll needed to reach it), unconfirmed pending a re-run.
+— both rounds of the overlap bug were caught and confirmed fixed by CI instead, the second
+round via re-reading the actual Playwright failure log rather than assuming a "1 flaky" retry
+pass meant an unrelated pre-existing flake.
 
 ## [1.9.0] — 2026-08-12
 
