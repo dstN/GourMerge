@@ -9,11 +9,16 @@ import { eq, and } from 'drizzle-orm'
 import { recipes, recipeBranches } from '~~/server/database/schema'
 
 const createBranchSchema = z.object({
-  name: z
-    .string()
-    .min(1)
-    .max(100)
-    .regex(/^[a-zA-Z0-9_-]+$/, 'Branch name can only contain letters, numbers, underscores, and hyphens'),
+  // Spaces are a common, reasonable way to type a branch name — auto-convert them to hyphens
+  // instead of rejecting the request, so the UI doesn't have to bounce the user with an error.
+  name: z.preprocess(
+    (val) => (typeof val === 'string' ? val.trim().replace(/\s+/g, '-') : val),
+    z
+      .string()
+      .min(1)
+      .max(100)
+      .regex(/^[a-zA-Z0-9_-]+$/, 'Branch name can only contain letters, numbers, underscores, and hyphens')
+  ),
   /** Branch to fork from (defaults to the default branch) */
   fromBranchId: z.number().int().optional(),
 })
