@@ -30,24 +30,33 @@ came back out and the row went informational-only. A "Cookie settings" link in t
 reopens the modal at any time (`useCookieConsent.ts` persists the choice as
 `gm_cookie_consent`, one year, `sameSite=lax`).
 
-Caught by CI before this ever shipped, in two rounds. First symptom: a `position: fixed`
-banner at the viewport bottom painted on top of whichever layout was showing, so a page whose
-last interactive element scrolled into view near the true bottom of the page could still end
-up physically covered — `tests/e2e/tour.spec.ts` failed twice with the banner's own content
-div reported as intercepting the recipe form's submit button. First attempt fixed that by
-measuring the banner's height and reserving it as `padding-bottom` on `#main-content` — which
-worked for that case but missed a second one, caught by `tests/e2e/avatar-upload.spec.ts`
-failing on the exact same commit: the `/settings` avatar-upload trigger sits well within the
-initial viewport, needs no scrolling to reach, and padding at the _end_ of a scroll container
-does nothing to reposition content that was already on-screen. The actual fix was the
-positioning strategy itself — `position: sticky; bottom: 0` as the last child of
-`#main-content` reserves its own space in normal document flow, the way a sticky footer
-always has, so nothing can render behind it regardless of where on the page it lands. No
-measuring, no `ResizeObserver`, no race between paint and JS, and less code than the padding
-version it replaced. The one wrinkle was `auth.vue`'s centred-card wrapper, sized with
-`min-h-full` against `<main>` itself with no room left for a second flex child — switched to
-`flex-1` inside a `flex-col` `<main>` so the banner gets its own reserved row instead of being
-squeezed out.
+Caught by CI before this ever shipped — two unrelated bugs that happened to surface in the
+same runs. First: a `position: fixed` banner at the viewport bottom painted on top of
+whichever layout was showing, so a page whose last interactive element scrolled into view near
+the true bottom of the page could still end up physically covered — `tests/e2e/tour.spec.ts`
+failed twice with the banner's own content div reported as intercepting the recipe form's
+submit button. A first attempt fixed that by measuring the banner's height and reserving it as
+`padding-bottom` on `#main-content`, which worked but was the wrong shape of fix — it only ever
+helps content that needs _more scroll room to reach_, and does nothing for content already
+on-screen without scrolling. The actual fix was the positioning strategy itself: `position:
+sticky; bottom: 0` as the last child of `#main-content` reserves its own space in normal
+document flow, the way a sticky footer always has, so nothing can render behind it regardless
+of where on the page it lands. No measuring, no `ResizeObserver`, no race between paint and JS,
+and less code than the padding version it replaced. The one wrinkle was `auth.vue`'s
+centred-card wrapper, sized with `min-h-full` against `<main>` itself with no room left for a
+second flex child — switched to `flex-1` inside a `flex-col` `<main>` so the banner gets its
+own reserved row instead of squeezing the card down to nothing.
+
+Second, and genuinely unrelated despite looking identical at first (a Playwright timeout
+waiting for a dialog that never opens): `tests/e2e/avatar-upload.spec.ts` kept failing even
+after the sticky fix, with a perfectly normal-looking page in the accessibility snapshot —
+nothing covered, nothing overlapping. `page.goto('/settings')` followed immediately by a click
+and `setInputFiles()` outruns Vue hydration on a page mounting this many cards (profile,
+avatar, email, passkeys, 2FA, and now the cookie banner); three other spec files already carry
+a `#__nuxt.__vnode` wait for exactly this reason, this one never needed it before. The click
+always landed — a plain DOM click doesn't need a listener — but `setInputFiles`'s dispatched
+`change` event had nothing wired up to catch it yet, so the cropper never opened. Same
+hydration wait, fourth file.
 
 ### Fixed — the privacy policy undersold what the session cookie actually holds
 
@@ -63,9 +72,11 @@ lifetime.
 
 i18n parity verified (`npm run i18n:check`, 731 keys × 4 locales), ESLint, Prettier and
 `design:check` clean on every touched file. No unit/e2e run locally this round (RAM-constrained)
-— both rounds of the overlap bug were caught and confirmed fixed by CI instead, the second
-round via re-reading the actual Playwright failure log rather than assuming a "1 flaky" retry
-pass meant an unrelated pre-existing flake.
+— every round above was diagnosed and confirmed from CI's own logs and artifacts instead
+(failure output, a downloaded screenshot, and the Playwright `error-context.md` accessibility
+snapshot for the one that turned out not to be a visual bug at all), including one wrong guess
+along the way: a "1 flaky" retry-pass was read as an unrelated pre-existing flake before a
+repeat failure on the next push forced an actual look at what the accessibility tree showed.
 
 ## [1.9.0] — 2026-08-12
 
