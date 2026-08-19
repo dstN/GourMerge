@@ -104,6 +104,7 @@ const localeSwitchItems = [
          nothing unless the gate is on. `tests/e2e/shell.spec.ts` asserts against this. -->
     <main id="main-content" data-shell="app" tabindex="0" class="flex-1 overflow-y-auto">
       <slot />
+      <LegalCookieConsent />
     </main>
 
     <!-- ── Footer (fixed) ──────────────────────────────────── -->

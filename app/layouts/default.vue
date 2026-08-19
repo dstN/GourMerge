@@ -87,6 +87,7 @@ const localeSwitchItems = [
          shells apart in the DOM, for `tests/e2e/shell.spec.ts`. -->
     <main id="main-content" data-shell="public" tabindex="0" class="flex-1 overflow-y-auto">
       <slot />
+      <LegalCookieConsent />
     </main>
 
     <!-- ── Footer (fixed) ──────────────────────────────────── -->

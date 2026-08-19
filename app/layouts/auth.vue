@@ -5,9 +5,9 @@
  * Uses the same app shell as `default`/`dashboard` (DESIGNBOOK §4.1): `h-dvh`,
  * `overflow-hidden`, and only `<main>` scrolls. It previously used `min-h-screen`
  * on the outer div, which double-scrolls on mobile once the browser chrome is
- * counted. `min-h-full` on the inner flex row keeps the card centred when it fits
- * and lets it scroll when it doesn't (the register form is taller than a short
- * viewport).
+ * counted. The inner flex row keeps the card centred when it fits and lets it
+ * scroll when it doesn't (the register form is taller than a short viewport) —
+ * see the note at `<main>` for why that row is `flex-1` rather than `min-h-full`.
  *
  * The `max-w-md` cap lives HERE, not on the pages — see the note in
  * `forgot-password.vue`'s history: two pages used to cap and offset their own
@@ -20,8 +20,13 @@ const { t } = useI18n()
   <div class="flex flex-col h-dvh overflow-hidden bg-default text-default">
     <a href="#main-content" class="skip-link">{{ t('a11y.skipToContent') }}</a>
 
-    <main id="main-content" tabindex="0" class="flex-1 overflow-y-auto">
-      <div class="flex min-h-full items-center justify-center px-4 py-10">
+    <!-- `flex flex-col` so the cookie banner below can claim its own space as a
+         `shrink-0` sibling instead of overlapping the centred card — see the note
+         in `LegalCookieConsent`. The card wrapper takes whatever is left via
+         `flex-1` (replacing the old `min-h-full`, which sized against `<main>`
+         itself and left no room for a second flex child). -->
+    <main id="main-content" tabindex="0" class="flex flex-1 flex-col overflow-y-auto">
+      <div class="flex flex-1 items-center justify-center px-4 py-10">
         <div class="w-full max-w-md">
           <!-- Brand -->
           <div class="text-center mb-8">
@@ -40,6 +45,7 @@ const { t } = useI18n()
           </div>
         </div>
       </div>
+      <LegalCookieConsent />
     </main>
   </div>
 </template>

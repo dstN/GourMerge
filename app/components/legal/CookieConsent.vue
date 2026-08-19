@@ -1,11 +1,28 @@
 <script setup lang="ts">
 /**
- * Cookie banner + settings modal, mounted once globally in app.vue so it
- * covers every layout (public, dashboard, auth).
+ * Cookie banner + settings modal. Included explicitly at the end of `#main-content` in
+ * each of the three layouts (`default.vue`, `dashboard.vue`, `auth.vue`) — the same
+ * pattern `<LayoutFooterLinks>` already uses for shared shell UI — rather than mounted
+ * once globally in app.vue.
  *
- * "Necessary" cannot be opted out of — it is not a toggle, just an
- * informational row — the site cannot function without those cookies.
- * Only `statistics`/`marketing` are real choices here.
+ * That placement is the fix for a real bug, not a style choice: a `position: fixed`
+ * version of this banner sat on top of the viewport regardless of scroll position, so
+ * any interactive element rendered near the visual bottom of a page — the recipe
+ * form's submit button, the avatar-upload trigger on a short /settings page — could be
+ * scrolled fully into view (or already visible with no scroll needed) yet still
+ * physically covered by the banner. `tests/e2e/tour.spec.ts` caught the first case,
+ * `tests/e2e/avatar-upload.spec.ts` the second, and no amount of reserving trailing
+ * scroll space fixes the second: that button was never off-screen to begin with.
+ *
+ * `position: sticky; bottom: 0` as the LAST child of `#main-content` instead reserves
+ * its own space in that container's normal document flow — nothing can ever render
+ * behind it, because the browser lays out every earlier sibling first and only then
+ * places this one, the same way it always has for a sticky footer. No measuring, no
+ * `ResizeObserver`, no race between paint and JS.
+ *
+ * "Necessary" cannot be opted out of — it is not a toggle, just an informational row —
+ * the site cannot function without those cookies. Only `statistics`/`marketing` are
+ * real choices here.
  */
 const { t } = useI18n()
 const { hasDecided, isSettingsOpen, consent, acceptAll, acceptNecessaryOnly, apply } = useCookieConsent()
@@ -24,60 +41,17 @@ watch(isSettingsOpen, (open) => {
 function saveSettings() {
   apply({ statistics: draft.statistics, marketing: draft.marketing })
 }
-
-/**
- * The banner is `position: fixed` at the viewport bottom, painted on top of
- * whichever layout is showing rather than inside its scroll flow. A short
- * page's last interactive element (e.g. a form's submit button) can end up
- * scrolled fully into view yet still physically covered — real for a visitor
- * filling out a short form, and exactly what broke `tests/e2e/tour.spec.ts`
- * (the button reported "intercepting pointer events" was this banner).
- * Reserving the banner's measured height as bottom padding on `#main-content`
- * (the one scroll container every layout shares — see `main.css`) fixes it
- * for all three layouts at once.
- */
-const bannerVisible = computed(() => !hasDecided.value && !isSettingsOpen.value)
-const bannerEl = ref<HTMLElement | null>(null)
-let resizeObserver: ResizeObserver | null = null
-
-function reserveSpace(height: number) {
-  document.documentElement.style.setProperty('--cookie-banner-height', height ? `${height + 12}px` : '0px')
-}
-
-watch(
-  bannerVisible,
-  async (visible) => {
-    if (visible) {
-      document.documentElement.classList.add('has-cookie-banner')
-      await nextTick()
-      if (!bannerEl.value) return
-      resizeObserver ??= new ResizeObserver(() => reserveSpace(bannerEl.value?.offsetHeight ?? 0))
-      resizeObserver.observe(bannerEl.value)
-      reserveSpace(bannerEl.value.offsetHeight)
-    } else {
-      resizeObserver?.disconnect()
-      document.documentElement.classList.remove('has-cookie-banner')
-      reserveSpace(0)
-    }
-  },
-  { immediate: true }
-)
-
-onBeforeUnmount(() => {
-  resizeObserver?.disconnect()
-  document.documentElement.classList.remove('has-cookie-banner')
-})
 </script>
 
 <template>
-  <div>
+  <ClientOnly>
     <Transition
       enter-active-class="transition duration-200 ease-out"
-      enter-from-class="translate-y-full opacity-0"
+      enter-from-class="translate-y-4 opacity-0"
       leave-active-class="transition duration-150 ease-in"
-      leave-to-class="translate-y-full opacity-0"
+      leave-to-class="translate-y-4 opacity-0"
     >
-      <div v-if="bannerVisible" ref="bannerEl" class="fixed inset-x-0 bottom-0 z-50 p-4 sm:p-6">
+      <div v-if="!hasDecided && !isSettingsOpen" class="sticky bottom-0 z-40 p-4 sm:p-6">
         <UCard class="mx-auto max-w-3xl shadow-lg ring ring-default" :ui="{ body: 'sm:py-4' }">
           <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -156,5 +130,5 @@ onBeforeUnmount(() => {
         </div>
       </template>
     </UModal>
-  </div>
+  </ClientOnly>
 </template>
