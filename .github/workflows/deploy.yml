@@ -11,6 +11,13 @@ jobs:
     name: Deploy to Netcup
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    # The repository default for the workflow token is `read`, which grants
+    # contents only. Two steps here read the Actions API and fail with a 403
+    # without an explicit grant: the E2E gate calls listWorkflowRuns, and the
+    # artifact download passes a `run-id`, so it reads a different run.
+    permissions:
+      contents: read
+      actions: read
     # The environment must exist in repo Settings → Environments for its protection
     # rules to apply. If it does not, GitHub silently auto-creates an UNPROTECTED one
     # on first run — so an absent `production` environment means no approval gate.
