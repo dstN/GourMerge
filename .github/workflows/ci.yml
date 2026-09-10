@@ -3,6 +3,15 @@ name: CI
 on:
   push:
     branches: ['**']
+    # Documentation-only pushes do not need a 3½-minute pipeline. The filter is on
+    # `push` alone and deliberately not on `pull_request`: a skipped required check
+    # stays Pending forever and would block the merge instead of speeding it up.
+    # paths-ignore only skips when EVERY changed file matches, so a commit touching
+    # code and docs together still runs in full.
+    paths-ignore:
+      - '**/*.md'
+      - 'LICENSE'
+      - '.vscode/**'
   pull_request:
     branches: [master]
 

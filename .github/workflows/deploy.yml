@@ -5,12 +5,26 @@ on:
     workflows: [CI]
     branches: [master]
     types: [completed]
+  # Manual escape hatch for hotfixes. The automatic path above is unchanged and
+  # still requires a green CI and a green E2E; this only adds a second, deliberate
+  # way in. `skip_e2e` is a named choice recorded in the run, not a default.
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: 'Commit to deploy (blank = newest master commit with a green CI)'
+        required: false
+        type: string
+      skip_e2e:
+        description: 'Hotfix: deploy without requiring the E2E suite'
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   deploy:
     name: Deploy to Netcup
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     # The repository default for the workflow token is `read`, which grants
     # contents only. Two steps here read the Actions API and fail with a 403
     # without an explicit grant: the E2E gate calls listWorkflowRuns, and the
@@ -63,6 +77,51 @@ jobs:
           fi
           echo "All required deploy secrets are present."
 
+      # Both entry points have to end up with the same two facts: which commit to
+      # deploy, and which CI run holds its build artifact. On `workflow_run` the
+      # event carries both. On a manual run neither exists, so the newest
+      # successful CI run for the requested commit (or for master) is looked up.
+      - name: Resolve the commit and the CI run holding its artifact
+        id: target
+        uses: actions/github-script@v9
+        with:
+          script: |
+            if (context.eventName === 'workflow_run') {
+              core.setOutput('sha', context.payload.workflow_run.head_sha)
+              core.setOutput('run_id', String(context.payload.workflow_run.id))
+              return
+            }
+
+            const wanted = (process.env.REQUESTED_SHA || '').trim()
+            const { data } = await github.rest.actions.listWorkflowRuns({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'ci.yml',
+              branch: 'master',
+              status: 'success',
+              per_page: 50,
+            })
+
+            const runs = [...data.workflow_runs].sort(
+              (a, b) => new Date(b.created_at) - new Date(a.created_at)
+            )
+            const run = wanted ? runs.find((r) => r.head_sha.startsWith(wanted)) : runs[0]
+
+            if (!run) {
+              core.setFailed(
+                wanted
+                  ? `No successful CI run found for ${wanted}. The artifact it would deploy does not exist.`
+                  : 'No successful CI run found on master.'
+              )
+              return
+            }
+
+            core.info(`Deploying ${run.head_sha} from CI run ${run.id}.`)
+            core.setOutput('sha', run.head_sha)
+            core.setOutput('run_id', String(run.id))
+        env:
+          REQUESTED_SHA: ${{ inputs.sha }}
+
       # CI and E2E start together on a master push, and this job is triggered by
       # CI alone — so without this wait a green CI would deploy while E2E (the
       # only end-to-end coverage of fork → GourMerge Request → merge) is still
@@ -70,11 +129,14 @@ jobs:
       # database or the live release. actions/github-script is GitHub-owned and
       # never sees the SSH password.
       - name: Require the E2E suite to have passed for this commit
+        # Skipped only on a manual run that explicitly asked for it. The automatic
+        # path cannot reach this condition, so the normal gate stays mandatory.
+        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.skip_e2e) }}
         timeout-minutes: 35
         uses: actions/github-script@v9
         with:
           script: |
-            const sha = context.payload.workflow_run.head_sha
+            const sha = '${{ steps.target.outputs.sha }}'
             const deadlineMs = Date.now() + 30 * 60 * 1000
             const terminalFailures = ['failure', 'cancelled', 'timed_out', 'action_required', 'stale']
 
@@ -128,7 +190,7 @@ jobs:
       - name: Checkout the built commit
         uses: actions/checkout@v7
         with:
-          ref: ${{ github.event.workflow_run.head_sha }}
+          ref: ${{ steps.target.outputs.sha }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v7
@@ -144,11 +206,11 @@ jobs:
       - name: Download build artifact
         uses: actions/download-artifact@v8
         with:
-          name: gourmerge-output-${{ github.event.workflow_run.head_sha }}
+          name: gourmerge-output-${{ steps.target.outputs.sha }}
           path: .output/
           # artifact is uploaded by the CI workflow for the same commit
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          run-id: ${{ github.event.workflow_run.id }}
+          run-id: ${{ steps.target.outputs.run_id }}
 
       # Migrations run BEFORE the new artifact goes live: our migrations are
       # additive, so the currently-running (old) code tolerates the new schema,

@@ -21,6 +21,12 @@ name: E2E
 on:
   push:
     branches: [master]
+    # See the same filter in ci.yml. A README push cost ~14 minutes of runner time
+    # across both workflows before this existed, and could not have broken a test.
+    paths-ignore:
+      - '**/*.md'
+      - 'LICENSE'
+      - '.vscode/**'
   pull_request:
     paths:
       - package.json
