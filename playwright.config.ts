@@ -33,7 +33,13 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  // The E2E job spends 410s of its ~10 minutes in here, on a 4-vCPU runner that
+  // was using one core. Two workers, not four: every spec shares one MySQL
+  // database, so parallelism is bounded by data collisions rather than by CPU.
+  // The 8 describe blocks that genuinely depend on ordering already declare
+  // `mode: 'serial'` themselves and stay serial regardless of this number.
+  // If flakiness appears in the gate, put this back to 1 first.
+  workers: process.env.CI ? 2 : undefined,
   reporter: process.env.CI ? 'github' : 'list',
   // Generous timeouts: against `npm run dev` the first hit to a route triggers
   // on-demand Vite compilation, which can take well over the 30s default.
