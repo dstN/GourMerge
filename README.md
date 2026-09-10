@@ -16,8 +16,8 @@ A git-like recipe platform. Recipes are repositories — they have branches, com
 | UI         | Nuxt UI v4 (Reka UI + Tailwind CSS v4)           |
 | Database   | MySQL 8.4 via Drizzle ORM (mysql2)               |
 | Validation | Zod 4                                            |
-| Auth       | nuxt-auth-utils — session, opt-in TOTP, passkeys |
-| i18n       | @nuxtjs/i18n 10 — DE (default), EN, FR, IT       |
+| Auth       | nuxt-auth-utils, session, opt-in TOTP, passkeys |
+| i18n       | @nuxtjs/i18n 10, DE (default), EN, FR, IT       |
 | Editor     | TipTap 3 (Markdown output, no images)            |
 | Diff       | diff-match-patch-es 2                            |
 | PWA        | @vite-pwa/nuxt                                   |
@@ -39,7 +39,7 @@ full v1.0.0 scope.
 ### Prerequisites
 
 - **Node.js 26** (matches CI and the production host)
-- **MySQL 8.4** — a native install, or the optional `docker-compose.yml`. Match
+- **MySQL 8.4**: a native install, or the optional `docker-compose.yml`. Match
   production's major version, and **do not use MariaDB**: the app issues
   MySQL-specific JSON and FULLTEXT SQL that behaves differently there.
 
@@ -82,7 +82,7 @@ and you cannot author a recipe, which is the core loop.
 
 | Step           | Provides                                                                         |
 | -------------- | -------------------------------------------------------------------------------- |
-| `db:migrate`   | Schema — 17 versioned migrations                                                 |
+| `db:migrate`   | Schema, 17 versioned migrations                                                 |
 | `seed:swiss`   | 1191 foods + per-100g nutrition, DE/EN/FR/IT names, from the committed seed file |
 | `db:seed`      | Curated ingredients absent from the Swiss dataset (e.g. Vanillezucker)           |
 | `db:seed:tags` | Base culinary tags                                                               |
@@ -112,7 +112,7 @@ dependency. See [Swiss ingredient data](#swiss-ingredient-data) for regenerating
 | `npm run db:migrate`       | Apply pending migrations                               |
 | `npm run db:setup`         | Migrate + all seeds (first-run convenience)            |
 | `npm run db:cleanup`       | Retention windows, locally (production: /tasks/*)      |
-| `npm run db:inactive`      | Same, locally (production uses /tasks/* — see runbook) |
+| `npm run db:inactive`      | Same, locally (production uses /tasks/*, see runbook) |
 | `npm run db:studio`        | Drizzle Studio (visual DB explorer)                    |
 | `npm run seed:swiss`       | Load the committed Swiss BLV seed file into the DB     |
 | `npm run seed:swiss:regen` | Regenerate that seed file from the BLV spreadsheets    |
