@@ -105,6 +105,7 @@ useSeoMeta({
             <p>76185 Karlsruhe</p>
             <p>Deutschland</p>
           </address>
+          <p class="text-sm text-muted mt-2">{{ t('legal.privacy.hostingProcessing') }}</p>
         </section>
 
         <!-- 7. Retention (Art. 13(2)(a)) -->
