@@ -19,6 +19,13 @@ on:
         required: false
         default: false
         type: boolean
+      # Content only (texts, legal pages; Dustin, 20 October 2026): build here instead of taking the CI artifact, so
+      # no CI run is needed; implies skipping the E2E gate. Migrations, seeding, upload and swap run as always.
+      ohne_ci:
+        description: 'Content only: build in this job, without a CI run (implies skip_e2e)'
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   deploy:
@@ -93,6 +100,14 @@ jobs:
             }
 
             const wanted = (process.env.REQUESTED_SHA || '').trim()
+            // content only: the commit asked for, or the tip this run was started on; it is built below
+            if (process.env.OHNE_CI === 'true') {
+              const sha = wanted || context.sha
+              core.info(`Content-only deploy of ${sha}, built in this job.`)
+              core.setOutput('sha', sha)
+              core.setOutput('run_id', '')
+              return
+            }
             const { data } = await github.rest.actions.listWorkflowRuns({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -121,6 +136,7 @@ jobs:
             core.setOutput('run_id', String(run.id))
         env:
           REQUESTED_SHA: ${{ inputs.sha }}
+          OHNE_CI: ${{ inputs.ohne_ci }}
 
       # CI and E2E start together on a master push, and this job is triggered by
       # CI alone — so without this wait a green CI would deploy while E2E (the
@@ -131,7 +147,7 @@ jobs:
       - name: Require the E2E suite to have passed for this commit
         # Skipped only on a manual run that explicitly asked for it. The automatic
         # path cannot reach this condition, so the normal gate stays mandatory.
-        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.skip_e2e) }}
+        if: ${{ !(github.event_name == 'workflow_dispatch' && (inputs.skip_e2e || inputs.ohne_ci)) }}
         timeout-minutes: 35
         uses: actions/github-script@v9
         with:
@@ -204,6 +220,7 @@ jobs:
         run: npm ci
 
       - name: Download build artifact
+        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.ohne_ci) }}
         uses: actions/download-artifact@v8
         with:
           name: gourmerge-output-${{ steps.target.outputs.sha }}
@@ -211,6 +228,14 @@ jobs:
           # artifact is uploaded by the CI workflow for the same commit
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ steps.target.outputs.run_id }}
+
+      # Content only: the build of ci.yml, made here instead of downloaded. No Sentry token in this job (it holds
+      # the SSH password), so the source-map upload is skipped; the release is still stamped.
+      - name: Build (content only, no CI artifact)
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.ohne_ci }}
+        env:
+          NUXT_SENTRY_RELEASE: ${{ steps.target.outputs.sha }}
+        run: npm run build
 
       # Migrations run BEFORE the new artifact goes live: our migrations are
       # additive, so the currently-running (old) code tolerates the new schema,
