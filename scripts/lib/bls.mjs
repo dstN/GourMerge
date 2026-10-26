@@ -106,7 +106,7 @@ function round(n, decimals) {
 }
 
 /** Macro columns (DECIMAL(8,2) in `ingredient_nutrition`) ← BLS component codes. */
-export const MACROS = {
+const MACROS = {
   energyKcal: 'ENERCC',
   energyKj: 'ENERCJ',
   fat: 'FAT',
@@ -127,7 +127,7 @@ export const MACROS = {
  * Selenium has no BLS component at all. Vitamin A is the retinol equivalent (RE), as in the
  * Swiss data, not the RAE.
  */
-export const MICROS = {
+const MICROS = {
   vit_a_re_mcg: ['VITA', 1],
   retinol_mcg: ['RETOL', 1],
   beta_carotene_mcg: ['CARTB', 1],
@@ -194,7 +194,7 @@ export function mapNutrition(values, erratum) {
 }
 
 /** The decision file's own grammar — one row per BLS code that is not the default. */
-export const DECISIONS = new Set(['same', 'new', 'skip'])
+const DECISIONS = new Set(['same', 'new', 'skip'])
 
 /**
  * Parse `bls-map.csv`. Columns: bls_code,decision,target,note. Quotes are not supported —

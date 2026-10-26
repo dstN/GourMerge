@@ -235,6 +235,7 @@ H230100,same,swiss:272,high: Edelkastanie/Marone; numbers identical
 H250100,same,swiss:274,high: Pistazie; numbers agree
 H310100,same,swiss:276,high: Kuerbiskern; numbers agree
 H320100,same,swiss:283,high: Pinienkern; numbers agree
+H410100,same,swiss:277,ok: Leinsamen; kcal 533 vs 470 fat 42 vs 37 within what seed lots vary
 H480100,same,swiss:13457,high: chia seeds; 482 vs 479 kcal
 H510802,same,swiss:492,medium: Oliven grün gesäuert abgetropft; 154 vs 132 kcal; water 76 vs 68
 H725100,same,swiss:370,high: Linse getrocknet = Linse reif; numbers identical
@@ -340,6 +341,7 @@ Q683000,same,swiss:50,high: Bratbutter = Butterschmalz; numbers agree
 Q860000,same,swiss:594,high: Schweineschmalz = Schweinefett
 R112000,same,swiss:14086,high: plain sea salt
 R114000,same,swiss:762,high: Kochsalz mit Jod = Speisesalz jodiert
+R125000,same,swiss:13455,ok: same product; kcal 128 vs 95 is label variance
 R132000,same,swiss:13464,medium: generic mustard = medium hot; 124 vs 111 kcal
 R141100,same,swiss:635,high: Ketchup = Tomatenketchup; values agree
 R143000,same,swiss:13456,high: soy sauce; 56 vs 66 kcal
@@ -349,6 +351,7 @@ R381100,same,swiss:855,high: candied orange peel; kcal within 20 %
 R381200,same,swiss:856,high: candied lemon peel; kcal within 30
 S111000,same,swiss:470,high: Zucker weiss
 S112000,same,swiss:471,high: Zucker braun
+S114000,same,curated:Vanilla Sugar,high: the curated Vanillezucker row from seed-ingredients.mjs
 S115100,same,swiss:768,high: identical; values identical
 S121000,same,swiss:472,high: Blütenhonig
 S132000,same,swiss:696,high: Konfitüre = Konfitüre extra; values agree
@@ -357,6 +360,7 @@ S151100,same,swiss:14093,high: same syrup; kcal 271 vs 240 within 12 %
 S152000,same,swiss:732,medium: same food; kcal within 20 % but carbs differ
 S201000,same,swiss:892,high: fruit sorbet; numbers agree
 S361000,same,swiss:951,high: fruit gums; numbers agree
+S420000,same,swiss:496,ok: Marzipan is Marzipan; almond share differs between the two datasets (fat 17.6 vs 12.4)
 S530000,same,swiss:195,high: Milchschokolade; numbers agree
 S535000,same,swiss:642,medium: Branchli = milk chocolate with nut cream filling; values within tolerance
 S539700,same,swiss:641,medium: raisin-nut milk chocolate; Swiss also with almonds; values agree

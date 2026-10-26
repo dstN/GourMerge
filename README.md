@@ -118,6 +118,8 @@ dependency. See [Swiss ingredient data](#swiss-ingredient-data) for regenerating
 | `npm run db:studio`        | Drizzle Studio (visual DB explorer)                   |
 | `npm run seed:swiss`       | Load the committed Swiss BLV seed file into the DB    |
 | `npm run seed:swiss:regen` | Regenerate that seed file from the BLV spreadsheets   |
+| `npm run seed:bls`         | Load the committed BLS 4.0 seed file into the DB      |
+| `npm run seed:bls:regen`   | Regenerate that seed from the MRI spreadsheet + map   |
 | `npm run search:rebuild`   | Rebuild the ingredient search terms from the catalog  |
 | `npm run db:seed`          | Curated ingredients not in the Swiss dataset          |
 | `npm run db:seed:tags`     | Base culinary tags                                    |
@@ -127,10 +129,19 @@ dependency. See [Swiss ingredient data](#swiss-ingredient-data) for regenerating
 
 ---
 
-## Swiss ingredient data
+## Ingredient data
 
-Ingredients and their per-100g nutrition come from the **Swiss BLV Food Composition
-Database V7.0** ([naehrwertdaten.ch](https://www.naehrwertdaten.ch)).
+Ingredients and their per-100g nutrition come from two public datasets: the **Swiss BLV
+Food Composition Database V7.0** ([naehrwertdaten.ch](https://www.naehrwertdaten.ch),
+1190 foods, DE/EN/FR/IT) and the German **Bundeslebensmittelschlüssel BLS 4.0** of the
+Max Rubner-Institut ([blsdb.de](https://blsdb.de), 5325 foods imported, DE/EN; FR/IT
+names are ours). Where both describe the same food (442 cases, decided by hand in
+`server/database/seeds/bls-map.csv`) there is one ingredient with two
+`ingredient_sources` rows: it shows the German BLS name, keeps the Swiss nutrition
+values and FR/IT names, and answers to both names in the search. Everything else is
+its own ingredient, so the catalog holds about 6100 reference ingredients.
+
+### Swiss BLV
 
 `server/database/seeds/swiss-foods.jsonl` (1190 foods, ~1 MB) is **committed**, so
 `npm run seed:swiss` works on a fresh clone with no downloads and no `xlsx`
@@ -159,6 +170,29 @@ npm run seed:swiss
 The spreadsheets themselves are **not** in the repo — `.claude/` is gitignored, which
 also sidesteps any question about redistributing them. Only the derived seed is
 tracked.
+
+### BLS 4.0
+
+`server/database/seeds/bls-foods.jsonl` (~4 MB, committed) is built from the MRI's
+spreadsheet plus three hand-maintained files next to it: `bls-map.csv` (which codes are
+the same ingredient as a Swiss food, which dish-group codes are ingredients after all —
+stocks, sauces, doughs — and which are skipped), `bls-i18n.jsonl` (FR/IT names for
+every imported code) and `bls-4.0-errata.json` (the MRI's published corrections, applied
+on the way in; the OLSAC energy double count is a rule in `scripts/lib/bls.mjs`).
+`npm run seed:bls` runs after `seed:swiss`, because the pairs attach to Swiss rows.
+
+To regenerate after the MRI publishes 4.1:
+
+```bash
+# 1. Download the German ZIP from https://blsdb.de/bls (the English one is the same
+#    data with English headers) and put BLS_4_0_Daten_2025_DE.xlsx into .claude/data/bls/
+# 2. Add FR/IT names for new codes to bls-i18n.jsonl, decisions for new codes to
+#    bls-map.csv, bump DATASET_VERSION in scripts/lib/bls.mjs
+# 3. Rebuild the seed — it refuses to write when a decision or a translation is missing
+npm run seed:bls:regen
+# 4. Review the diff, then load it
+npm run seed:bls
+```
 
 ---
 

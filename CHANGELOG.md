@@ -7,10 +7,61 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-Groundwork for a second ingredient dataset (the German BLS 4.0, see
-`docs/BLS-INTEGRATION-PLAN.md`) — nothing BLS-specific ships yet, but the two things it
-needs first are in: an ingredient can now belong to more than one dataset without becoming
-two rows, and the autocomplete no longer depends on how a dataset happens to spell a name.
+A second ingredient dataset: the German **Bundeslebensmittelschlüssel 4.0** (Max
+Rubner-Institut, December 2025, free of licence barriers) joins the Swiss BLV catalog —
+next to it, not instead of it (`docs/BLS-INTEGRATION-PLAN.md`). The catalog grows from
+1190 to about 6100 reference ingredients, and the autocomplete learned to find them
+however a dataset or a region spells them.
+
+### Added — BLS 4.0 (`npm run seed:bls`)
+
+5325 of the BLS's 7140 foods are imported: all of groups B–W (foods one can buy, cooked
+variants included) plus 230 components pulled out of the dish groups X/Y — stocks,
+sauces and dressings, doughs — while the dishes themselves (Kalbsfrikassee, Gulaschsuppe)
+stay out, because a dish is what GourMerge makes out of ingredients. The BLS has names in
+German and English only; the FR and IT names for every imported code are ours
+(`server/database/seeds/bls-i18n.jsonl`, catalogue style of the Swiss database, glossary
+driven). The MRI's published errata are applied on the way in (`bls-4.0-errata.json`:
+skimmed-milk retinol, 1.5 % milk iodine, almond calcium; "Sardelle roh" comes without
+nutrition until 4.1), and the energy formula's OLSAC double count — up to +23 % on 411
+foods — is corrected by rule.
+
+**No duplicates, by decision rather than by algorithm.** There is no cross-reference
+between the two datasets, and a name-and-numbers heuristic both misses real pairs
+(Bratbutter ↔ Butterschmalz) and invents wrong ones (Cervelat ↔ Zervelatwurst, Swiss
+"Teilentrahmte Milch" at 2.8 % fat ↔ "Milch fettarm 1,5 %"). So every one of the 1190
+Swiss foods was judged against its BLS candidates — same food, same state, same cut, kcal
+within 20 % or 30 kcal, fat within 5 g — and the 442 pairs live in
+`server/database/seeds/bls-map.csv`, reviewed, one per line. A pair is one ingredient
+with two `ingredient_sources` rows: it shows the German BLS name ("Hähnchen Brust, ohne
+Haut, roh", decision E5), keeps the Swiss nutrition values and FR/IT names (E1), and keeps
+the Swiss name as a synonym, so "Poulet" still finds it. Everything else is its own
+ingredient. `tests/unit/blsSeed.test.ts` guards the invariants of the committed files;
+the seed generator refuses to write when a pair's numbers disagree, a Swiss food is paired
+twice, or a translation is missing.
+
+### Added — regional vocabulary in the search
+
+`shared/utils/ingredientVocabulary.ts`: Swiss ↔ German kitchen words (Poulet/Hähnchen,
+Rahm/Sahne, Peperoni/Paprika, Rüebli/Karotte, Gehacktes/Hackfleisch, Teigwaren/Nudeln,
+Hühnerei/Ei …). Every search term containing one side gets a variant with the other, in
+both directions, so a user in Hamburg and a user in Zürich find the same row from their own
+word. Ranking now scores each ingredient by its single best-matching term (tier, then the
+viewer's locale, then name before synonym, then length) — scoring those parts across
+different terms let a sauce whose Italian name merely contains "peperoni" outrank the
+pepper itself.
+
+### Fixed — a header row was an ingredient
+
+The Swiss seed carried the spreadsheet's second header line as food "ID" with the name
+"Name" / "Nom" / "Nome". Removed from the seed (1190 foods, not 1191); the parser now skips
+non-numeric ids and the importer's done-check counts only the ids the seed carries. The row
+still exists in a database that was seeded before this — see the runbook note in the
+pull request for the one-line cleanup.
+
+Groundwork that shipped first — an ingredient can belong to more than one dataset
+without becoming two rows, and the autocomplete no longer depends on how a dataset
+happens to spell a name:
 
 ### Added — `ingredient_sources` and `ingredient_search_terms` (migration `0017`)
 

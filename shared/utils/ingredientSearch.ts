@@ -122,7 +122,7 @@ export function searchTermsForIngredient(names: IngredientNames): IngredientSear
       for (const [from, to] of [
         [a, b],
         [b, a],
-      ]) {
+      ] as const) {
         if (!words.includes(from)) continue
         push(locale, 'synonym', words.map((w) => (w === from ? to : w)).join(' '))
       }

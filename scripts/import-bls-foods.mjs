@@ -512,8 +512,11 @@ async function applyPairs(conn, pairs, idByCode) {
         if (list.some((s) => normalizeSearchTerm(s) === norm)) return
         synonyms[locale] = [...list, value]
       }
-      if (translations.de && translations.de !== row.names.de) addSyn('de', translations.de)
+      // Display name first, then the previous German name as a synonym — `addSyn` skips a
+      // value that equals the current display name, so the other order would drop it.
+      const previousDe = translations.de
       translations.de = row.names.de
+      if (previousDe) addSyn('de', previousDe)
       addSyn('en', row.names.en)
       // Only when the row had none: a curated row with no FR/IT gets the BLS translations.
       for (const l of ['fr', 'it']) if (!translations[l] && row.names[l]) translations[l] = row.names[l]

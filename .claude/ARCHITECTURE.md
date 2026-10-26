@@ -324,8 +324,8 @@ The database stores **only metric canonical values**:
 
 ## 10. Ingredient Data
 
-- The global `ingredients` master table is populated from the **Swiss BLV Food Composition Database V7.0**; the BLS 4.0 is planned as a second dataset (`docs/BLS-INTEGRATION-PLAN.md`).
-- Nutrition stored in `ingredient_nutrition` (per 100g/100ml, edible portion). It holds the _effective_ values; `source` identifies where they came from: `'swiss-blv-v7'`, `'user'` or `'curated'`.
+- The global `ingredients` master table is populated from two datasets: the **Swiss BLV Food Composition Database V7.0** (`seed:swiss`) and the German **BLS 4.0** (`seed:bls`, after the Swiss one). A food both describe is ONE ingredient with two `ingredient_sources` rows (`server/database/seeds/bls-map.csv` decides; the German BLS name is displayed, the Swiss values are kept, the Swiss name stays as a synonym). Dish groups X/Y of the BLS stay out except for listed components. See `docs/BLS-INTEGRATION-PLAN.md`.
+- Nutrition stored in `ingredient_nutrition` (per 100g/100ml, edible portion). It holds the _effective_ values; `source` identifies where they came from: `'swiss-blv-v7'`, `'bls-4.0'`, `'user'` or `'curated'`.
 - `ingredient_sources` records which datasets know an ingredient, one row per `(dataset, external_id)` — **unique**, so a dataset row can never become two ingredients. `dataset` is the family without a version (`swiss-blv`, `bls`); the version is informational. Importers look foods up here, never by a versioned source string.
 - Search via `GET /api/ingredients?q=&locale=` matches `ingredient_search_terms` — normalised names and synonyms, see `shared/utils/ingredientSearch.ts` — never the raw name columns. Anything that writes `ingredients` in bulk is followed by `npm run search:rebuild`; the API handlers maintain the rows for user-created ingredients.
 - Ingredients missing from Swiss BLV can be added to `scripts/seed-ingredients.mjs` with `source = 'curated'`.

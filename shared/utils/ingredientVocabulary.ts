@@ -22,6 +22,9 @@ export const INGREDIENT_VOCABULARY: ReadonlyArray<readonly [string, string]> = [
   ['plätzli', 'schnitzel'],
   ['platzli', 'schnitzel'],
   ['speck', 'bacon'],
+  // eggs — "Ei" alone must find "Hühnerei roh"; two characters never reach the substring tiers
+  ['huhnerei', 'ei'],
+  ['eier', 'ei'],
   // dairy
   ['rahm', 'sahne'],
   ['vollrahm', 'schlagsahne'],

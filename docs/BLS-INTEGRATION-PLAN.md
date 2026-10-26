@@ -1,6 +1,6 @@
 # Plan: BLS 4.0 als zweite Lebensmittelquelle
 
-Stand: 2026-10-26 · Status: **Phasen 1 und 2 umgesetzt** (Migration `0017`, Importer, Suche, Impressum), Phasen 3–6 offen · Entscheidungen E1–E5 getroffen (§12)
+Stand: 2026-10-26 · Status: **Phasen 1–5 umgesetzt** (Migration `0017`, Suche, Impressum, BLS-Seed mit 5.325 Lebensmitteln, 442 Paare), Phase 6 (Nutzerzutaten, §8) offen · Entscheidungen E1–E5 getroffen (§12)
 
 Ziel: den Bundeslebensmittelschlüssel (BLS) 4.0 des Max Rubner-Instituts neben der
 Schweizer BLV-Datenbank V7.0 in den Zutatenkatalog aufnehmen, **ohne doppelte

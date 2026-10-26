@@ -255,7 +255,9 @@ jobs:
       # twice against a populated database and diffing the row counts (no change:
       # "Imported 0 new + updated 1191 existing", "skipped 1", "skipped 12"). The
       # mechanisms are ON DUPLICATE KEY UPDATE keyed by (dataset, external_id), a
-      # LOWER(name) existence check, and INSERT IGNORE respectively.
+      # LOWER(name) existence check, and INSERT IGNORE respectively. seed:bls comes
+      # right after seed:swiss because its `same` rows attach BLS codes to Swiss
+      # ingredients, which therefore have to exist first.
       #
       # A side effect worth knowing: seed:swiss re-UPDATES all 1191 Swiss rows whenever the
       # dataset version or row count differs, so the committed JSONL is the source of truth
@@ -275,6 +277,7 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
           npm run seed:swiss
+          npm run seed:bls
           npm run db:seed
           npm run db:seed:tags
           npm run search:rebuild

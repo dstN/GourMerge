@@ -19,9 +19,10 @@
  *   4  the compact query appears anywhere in the compact term ("mehl" → "Buchweizenmehl")
  *   5  every query word appears somewhere in the compact term ("mehl weizen" → "Weizenmehl")
  * The last two need three characters per word, below which they match most of the table.
- * Ties: a term in the viewer's locale beats one in another, a name beats a synonym, and a
- * shorter matched term beats a longer one — which is what puts "Tomate, roh" above "Tomate,
- * gekocht" and both above "Tomatensuppe", without the data having to say which is "raw".
+ * Ties, judged on the one best-matching term of the ingredient: a term in the viewer's
+ * locale beats one in another, a name beats a synonym, and a shorter matched term beats a
+ * longer one — which is what puts "Tomate, roh" above "Tomate, gekocht" and both above
+ * "Tomatensuppe", without the data having to say which is "raw".
  *
  * Locale-aware: if a matching translation exists in the requested locale, it's returned as
  * `localeName` for display; the canonical English `name` is always included for dedup/ID
@@ -115,22 +116,29 @@ export default defineEventHandler(async (event) => {
 
   // Exact ⊂ word-start ⊂ prefix ⊂ compact-prefix ⊂ substring, so the WHERE only needs the
   // outermost conditions; the CASE above re-derives the finer tiers.
+  // One score per matching term — tier first, then the viewer's locale, then name before
+  // synonym, then length — and the ingredient ranks by its single best term. Scoring the
+  // parts across different terms (best tier from one, "is a name" from another) let a
+  // sauce whose Italian name merely contains "peperoni" outrank the pepper itself.
+  // The name/synonym step is small on purpose: a paired Swiss food keeps its old German
+  // name as a synonym, and "Zwiebel, roh" should still beat "Zwiebel, geröstet (ohne …)".
+  const score = sql`${tier} * 100000
+    + CASE WHEN t.locale = ${locale} THEN 0 ELSE 10000 END
+    + CASE WHEN t.kind = 'name' THEN 0 ELSE 10 END
+    + CHAR_LENGTH(t.term)`
+
   const rows = (await db.execute(sql`
     SELECT i.id, i.name, i.name_translations, i.category, i.manufacturer, i.created_by,
            n.energy_kcal_100g, n.protein_100g, n.carbs_100g, n.fat_100g, n.fiber_100g, n.density_g_per_ml
       FROM (
-        SELECT t.ingredient_id,
-               MIN(${tier}) AS tier,
-               MAX(CASE WHEN t.locale = ${locale} THEN 1 ELSE 0 END) AS locale_hit,
-               MAX(CASE WHEN t.kind = 'name' THEN 1 ELSE 0 END) AS name_hit,
-               MIN(CHAR_LENGTH(t.term)) AS term_length
+        SELECT t.ingredient_id, MIN(${score}) AS score
           FROM ingredient_search_terms t
          WHERE ${compactPrefix} OR (${wordPrefix}) OR ${substring} OR (${allWordsSubstring})
          GROUP BY t.ingredient_id
       ) m
       JOIN ingredients i ON i.id = m.ingredient_id
       LEFT JOIN ingredient_nutrition n ON n.ingredient_id = i.id
-     ORDER BY m.tier ASC, m.locale_hit DESC, m.name_hit DESC, m.term_length ASC, i.id ASC
+     ORDER BY m.score ASC, i.id ASC
      LIMIT ${limit}
   `)) as unknown as SearchRow[][]
 
