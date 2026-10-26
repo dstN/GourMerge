@@ -25,7 +25,7 @@ export interface SweepRule {
  * 7 of `datenschutz.vue` has to change with it — they are two statements of the
  * same fact.
  */
-export const RETENTION_RULES: SweepRule[] = [
+const RETENTION_RULES: SweepRule[] = [
   {
     label: 'contact_messages older than 12 months',
     statement: 'DELETE FROM contact_messages WHERE created_at < (NOW() - INTERVAL 12 MONTH)',

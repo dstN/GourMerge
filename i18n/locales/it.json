@@ -658,7 +658,11 @@
       "contactHeading": "Contatto",
       "emailLabel": "E-mail",
       "formHint": "In alternativa può contattarci tramite il nostro",
-      "formLink": "modulo di contatto"
+      "formLink": "modulo di contatto",
+      "dataSourcesHeading": "Fonti dei dati",
+      "dataSourcesIntro": "Gli ingredienti e i loro valori nutrizionali provengono da queste banche dati:",
+      "dataSourceBls": "Max Rubner-Institut (2025): Banca dati tedesca dei nutrienti (Bundeslebensmittelschlüssel, BLS), versione 4.0. Karlsruhe.",
+      "dataSourceSwiss": "Ufficio federale della sicurezza alimentare e di veterinaria USAV: Banca dati svizzera dei valori nutritivi, versione 7.0."
     },
     "privacy": {
       "controllerTitle": "1. Titolare del trattamento",

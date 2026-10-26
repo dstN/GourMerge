@@ -39,7 +39,7 @@ interface Strings {
 
 export const INACTIVITY_MESSAGES = messages as Record<EmailLocale, Record<InactivityStage, Strings>>
 
-export const DATE_LOCALE: Record<EmailLocale, string> = {
+const DATE_LOCALE: Record<EmailLocale, string> = {
   de: 'de-DE',
   en: 'en-GB',
   fr: 'fr-FR',

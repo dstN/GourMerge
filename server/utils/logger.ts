@@ -52,7 +52,7 @@ export function resolveLevel(fallback: string): string {
   return fallback
 }
 
-export function getLogger(): Logger {
+function getLogger(): Logger {
   if (_logger) return _logger
 
   const isProd = process.env.NODE_ENV === 'production'

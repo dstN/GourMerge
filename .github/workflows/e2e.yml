@@ -84,6 +84,11 @@ jobs:
         # the Swiss-BLV catalog isn't seeded), so this is the only seed step this job needs.
         run: npm run db:seed:tour
 
+      # The ingredients the tour seed just inserted by hand have no search terms yet, and
+      # the autocomplete reads nothing else — same sweep the deploy runs after its seeds.
+      - name: Build the ingredient search terms
+        run: npm run search:rebuild
+
       - name: Build
         run: npm run build
 

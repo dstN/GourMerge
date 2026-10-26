@@ -59,6 +59,28 @@ export default defineEventHandler(async (event) => {
     await db.update(ingredients).set(updates).where(eq(ingredients.id, id))
   }
 
+  // A renamed or retranslated ingredient must be findable under its new names, and must stop
+  // answering to the old ones. Rebuilt from the row rather than from `updates`, so a partial
+  // PATCH (name only) keeps the translations it did not touch.
+  if (name !== undefined || nameTranslations !== undefined) {
+    const [current] = await db
+      .select({
+        name: ingredients.name,
+        nameTranslations: ingredients.nameTranslations,
+        synonyms: ingredients.synonyms,
+      })
+      .from(ingredients)
+      .where(eq(ingredients.id, id))
+      .limit(1)
+    if (current) {
+      await syncIngredientSearchTerms(db, id, {
+        name: current.name,
+        nameTranslations: current.nameTranslations as Record<string, string>,
+        synonyms: current.synonyms as Record<string, string[]>,
+      })
+    }
+  }
+
   if (nutrition !== undefined) {
     const hasNutrition = nutrition.energyKcal100g != null && nutrition.energyKcal100g !== ''
     if (hasNutrition) {

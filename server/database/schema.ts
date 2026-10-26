@@ -409,6 +409,78 @@ export const ingredientNutrition = mysqlTable(
 )
 
 // ═══════════════════════════════════════════════════════════════
+// INGREDIENT SOURCES (n:1 — which reference datasets an ingredient came from)
+// ═══════════════════════════════════════════════════════════════
+// `ingredient_nutrition.source` + `external_id` can only name ONE origin per ingredient,
+// which stops working the moment a second dataset (BLS 4.0) describes a food the Swiss
+// catalog already has: the ingredient must stay one row, with two external ids behind it.
+// This table carries those ids. `ingredient_nutrition` keeps the *effective* values and
+// says which dataset they came from; this table says which datasets know the ingredient.
+
+export const ingredientSources = mysqlTable(
+  'ingredient_sources',
+  {
+    id: int('id').primaryKey().autoincrement(),
+    ingredientId: int('ingredient_id')
+      .notNull()
+      .references(() => ingredients.id, { onDelete: 'cascade' }),
+    /**
+     * Dataset family WITHOUT a version: `swiss-blv`, `bls`. The version goes in
+     * `dataset_version`. Keyed this way on purpose — the importers look an incoming food
+     * up by (dataset, external_id), so a new release of the same dataset updates the rows
+     * it already created instead of inserting every food a second time under a new name.
+     */
+    dataset: varchar('dataset', { length: 20 }).notNull(),
+    /** The dataset's own id: the Swiss BLV numeric ID, or a BLS code such as `C214100`. */
+    externalId: varchar('external_id', { length: 50 }).notNull(),
+    /** Informational only (`7.0`, `4.0`): never part of a key, so re-imports can bump it. */
+    datasetVersion: varchar('dataset_version', { length: 20 }),
+    createdAt: datetime('created_at')
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    // The duplicate guard: one source record can only ever become one ingredient.
+    uniqueIndex('uq_ingredient_sources_dataset_ext').on(table.dataset, table.externalId),
+    index('idx_ingredient_sources_ingredient').on(table.ingredientId),
+  ]
+)
+
+// ═══════════════════════════════════════════════════════════════
+// INGREDIENT SEARCH TERMS (denormalised, what the autocomplete matches on)
+// ═══════════════════════════════════════════════════════════════
+// One row per searchable string of an ingredient: every locale's name plus every synonym,
+// normalised by `normalizeSearchTerm()` (shared/utils/ingredientSearch.ts) — lower-case,
+// umlauts and accents folded, punctuation gone — so "Möhre", "moehre" and "mohre" are the
+// same thing, and `compact` (the same without spaces) lets "Weizenmehl" find a dataset
+// name written as "Weizen Mehl, Type 405". Rebuilt from `ingredients` by
+// `scripts/rebuild-search-terms.mjs` after every seed; kept current for user-created rows
+// by the POST/PATCH handlers. Never displayed — the display name still comes from
+// `ingredients.name_translations`.
+
+export const ingredientSearchTerms = mysqlTable(
+  'ingredient_search_terms',
+  {
+    id: int('id').primaryKey().autoincrement(),
+    ingredientId: int('ingredient_id')
+      .notNull()
+      .references(() => ingredients.id, { onDelete: 'cascade' }),
+    /** `de` / `en` / `fr` / `it`; NULL for the canonical `name` when it is not a translation. */
+    locale: varchar('locale', { length: 5 }),
+    kind: mysqlEnum('kind', ['name', 'synonym']).notNull(),
+    /** Normalised, words separated by single spaces. */
+    term: varchar('term', { length: 200 }).notNull(),
+    /** `term` with the spaces removed. */
+    compact: varchar('compact', { length: 200 }).notNull(),
+  },
+  (table) => [
+    index('idx_ingredient_search_terms_ingredient').on(table.ingredientId),
+    index('idx_ingredient_search_terms_term').on(table.term),
+    index('idx_ingredient_search_terms_compact').on(table.compact),
+  ]
+)
+
+// ═══════════════════════════════════════════════════════════════
 // RECIPES (Repositories)
 // ═══════════════════════════════════════════════════════════════
 
@@ -1072,12 +1144,22 @@ export const usersRelations = relations(users, ({ many }) => ({
 
 export const ingredientsRelations = relations(ingredients, ({ one, many }) => ({
   nutrition: one(ingredientNutrition, { fields: [ingredients.id], references: [ingredientNutrition.ingredientId] }),
+  sources: many(ingredientSources),
+  searchTerms: many(ingredientSearchTerms),
   commitIngredients: many(recipeCommitIngredients),
   creator: one(users, { fields: [ingredients.createdBy], references: [users.id] }),
 }))
 
 export const ingredientNutritionRelations = relations(ingredientNutrition, ({ one }) => ({
   ingredient: one(ingredients, { fields: [ingredientNutrition.ingredientId], references: [ingredients.id] }),
+}))
+
+export const ingredientSourcesRelations = relations(ingredientSources, ({ one }) => ({
+  ingredient: one(ingredients, { fields: [ingredientSources.ingredientId], references: [ingredients.id] }),
+}))
+
+export const ingredientSearchTermsRelations = relations(ingredientSearchTerms, ({ one }) => ({
+  ingredient: one(ingredients, { fields: [ingredientSearchTerms.ingredientId], references: [ingredients.id] }),
 }))
 
 export const recipesRelations = relations(recipes, ({ one, many }) => ({

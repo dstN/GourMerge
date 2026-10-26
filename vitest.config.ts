@@ -43,6 +43,10 @@ export default defineVitestConfig({
         // 403) is only observable end to end — the authz matrix in the E2E API specs is
         // where it is proved.
         'server/utils/recipeAccess.ts',
+        // A DELETE and an INSERT. The rule — which strings an ingredient answers to — lives
+        // in shared/utils/ingredientSearch.ts and is unit-tested there; the write itself is
+        // proved by the ingredient API specs, which search for what they just created.
+        'server/utils/ingredientSearchTerms.ts',
         // `createImageBitmap` + `<canvas>`, neither of which happy-dom implements. Mocking
         // them would test the mock; the real path is exercised by the upload journey.
         'app/utils/imageResize.ts',

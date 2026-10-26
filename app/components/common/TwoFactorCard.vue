@@ -29,7 +29,12 @@ const { data: status, refresh } = await useFetch<Status>('/api/auth/totp', {
 
 // ── Enrolment ────────────────────────────────────────────────
 const setupOpen = ref(false)
-const setup = ref<{ secret: string; uri: string; qrDataUri: string } | null>(null)
+interface SetupResponse {
+  secret: string
+  uri: string
+  qrDataUri: string
+}
+const setup = ref<SetupResponse | null>(null)
 const setupCode = ref('')
 const busy = ref(false)
 
@@ -40,7 +45,10 @@ const copied = ref(false)
 async function beginSetup() {
   busy.value = true
   try {
-    setup.value = await $fetch('/api/auth/totp/setup', { method: 'POST' })
+    // The path is passed as a plain string on purpose: with Nuxt 4.6's typed routes the
+    // route-matching conditional type for this literal exceeds the compiler's stack depth
+    // (TS2321), so the response is typed explicitly instead of inferred from the route.
+    setup.value = await $fetch<SetupResponse>('/api/auth/totp/setup' as string, { method: 'POST' })
     setupCode.value = ''
     setupOpen.value = true
   } catch (e: unknown) {

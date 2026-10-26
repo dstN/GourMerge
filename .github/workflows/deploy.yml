@@ -251,16 +251,24 @@ jobs:
       # autocomplete returns nothing and nobody can author a recipe, which is the core
       # loop. That gap bit us once already, on the very first production database.
       #
-      # Runs on every deploy because all three are idempotent, verified by running them
+      # Runs on every deploy because all of them are idempotent, verified by running them
       # twice against a populated database and diffing the row counts (no change:
       # "Imported 0 new + updated 1191 existing", "skipped 1", "skipped 12"). The
-      # mechanisms are ON DUPLICATE KEY UPDATE, a LOWER(name) existence check, and
-      # INSERT IGNORE respectively.
+      # mechanisms are ON DUPLICATE KEY UPDATE keyed by (dataset, external_id), a
+      # LOWER(name) existence check, and INSERT IGNORE respectively. seed:bls comes
+      # right after seed:swiss because its `same` rows attach BLS codes to Swiss
+      # ingredients, which therefore have to exist first.
       #
-      # A side effect worth knowing: seed:swiss re-UPDATES all 1191 Swiss rows each time,
-      # so the committed JSONL is the source of truth for ingredient names and any
-      # hand-edit made directly in production is reverted on the next deploy. That is the
-      # intended direction for BLV reference data.
+      # A side effect worth knowing: seed:swiss re-UPDATES all 1191 Swiss rows whenever the
+      # dataset version or row count differs, so the committed JSONL is the source of truth
+      # for ingredient names and any hand-edit made directly in production is reverted on
+      # the next deploy. That is the intended direction for BLV reference data.
+      #
+      # search:rebuild goes last: the autocomplete reads `ingredient_search_terms`, which is
+      # derived from whatever the seeds above just wrote (and from user-created rows). It
+      # is a full, idempotent rebuild — a few batched statements, seconds even against the
+      # remote host — so a seed that predates the table or a changed normalisation rule is
+      # healed here rather than needing its own migration.
       #
       # Placed before the artifact swap for the same reason as the migrations: if seeding
       # fails, the deploy stops and the previous release stays live.
@@ -269,8 +277,10 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
           npm run seed:swiss
+          npm run seed:bls
           npm run db:seed
           npm run db:seed:tags
+          npm run search:rebuild
 
       # Everything remote is done with plain ssh + sshpass rather than a
       # marketplace action: the webspace login is a password (Netcup exposes no

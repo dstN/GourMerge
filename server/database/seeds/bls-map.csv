@@ -1,0 +1,679 @@
+# Decisions for BLS 4.0 codes that are not the default (groups B–W: new; X/Y dishes: skip).
+# same   → the BLS food is the same ingredient as a Swiss food (swiss:<id>) or a curated row (curated:<EN name>);
+#          the Swiss values are kept, the BLS German name becomes the display name.
+# new    → imported as its own ingredient (used here to pull components out of the dish groups X/Y).
+# skip   → not imported.
+# note   → free text, no commas. "ok: …" on a same row waives the nutrient plausibility check.
+bls_code,decision,target,note
+B111000,same,swiss:821,high: same bread; kcal within 20 %
+B122000,same,swiss:846,medium: coarse rye bread; Schrotbrot vs Vollkornschrotbrot; numbers within limits
+B221000,same,swiss:830,high: rye bread is sourdough by default; numbers agree
+B311000,same,swiss:823,high: white bread; kcal within 30
+B6A2100,same,swiss:918,medium: wholemeal crispbread; Swiss grain unspecified; rye assumed
+B6A2900,same,swiss:920,medium: wholemeal crispbread with linseed; BLS also has wheat germ; numbers agree
+B6A3100,same,swiss:919,medium: wholemeal crispbread with sesame; grain unspecified; numbers agree
+B781200,same,swiss:845,high: baguette; numbers agree
+C111000,same,swiss:734,high: identical; values agree
+C113000,same,swiss:939,high: wheat flakes; numbers agree
+C114000,same,swiss:430,high: Weizen Keim; 375 vs 324 kcal within 20 %
+C118000,same,swiss:13394,medium: generic quinoa = white; 362 vs 361 kcal
+C119232,same,swiss:14191,high: boiled couscous; kcal 158 vs 156
+C133000,same,swiss:198,high: Haferflocken; numbers agree
+C138000,same,swiss:769,high: identical; values agree
+C143000,same,swiss:739,high: identical; values agree
+C148000,same,swiss:429,high: Gerste Graupen = Rollgerste; 337 vs 313 kcal
+C211000,same,swiss:206,high: Weizenvollkornmehl; numbers agree
+C214100,same,swiss:205,medium: Swiss Typ 400 corresponds to German Type 405; numbers agree
+C214200,same,swiss:204,high: Weizenmehl Type 550; numbers agree
+C216000,same,swiss:897,high: wheat starch; numbers agree
+C217000,same,swiss:431,high: Weizen Kleie
+C219300,same,swiss:423,high: Hartweizen Griess
+C222000,same,swiss:749,high: Roggenschrot Typ 1800 = Backschrot Type 1800; values agree
+C223100,same,swiss:748,high: identical type; values agree
+C234000,same,swiss:1043,medium: Swiss Dinkel Typ 550 corresponds to German Type 630; macros match
+C234200,same,swiss:1041,medium: Ruchmehl Typ 1100 closest to Type 1050; macros near identical
+C235000,same,swiss:1042,high: Dinkel Vollkornmehl; kcal 345 vs 335
+C322000,same,swiss:421,high: Buchweizen roh (hulled grain)
+C332000,same,swiss:422,high: Hirse roh (hulled grain)
+C333100,same,swiss:938,high: millet flakes; numbers agree
+C335000,same,swiss:13397,high: amaranth raw; 376 vs 377 kcal
+C351000,same,swiss:428,high: Reis unpoliert roh
+C351032,same,swiss:1067,high: brown rice boiled; kcal 126 vs 128
+C352000,same,swiss:427,high: Reis poliert roh
+C352032,same,swiss:1066,high: white rice boiled; kcal 116 vs 117
+C359000,same,swiss:419,high: Reis parboiled roh; 356 vs 333 kcal
+C359032,same,swiss:1065,high: parboiled rice boiled; kcal 120 vs 110
+C424000,same,swiss:420,high: Buchweizen Mehl
+C446000,same,swiss:426,high: Mais Stärke
+C512600,same,swiss:943,medium: unsweetened muesli with dried fruit and nuts; numbers agree
+C514200,same,swiss:944,medium: crunchy muesli with nuts and seeds vs classic crunchy muesli; numbers agree
+C514400,same,swiss:945,high: crunchy muesli with dried fruit sweetened; numbers agree
+C514600,same,swiss:948,high: crunchy chocolate muesli; numbers agree
+C515400,same,swiss:940,medium: cornflakes; sugar not stated; carbs match unsweetened
+C522600,same,swiss:14153,medium: sweetened cereal flakes with chocolate; kcal 408 vs 376; fat 6.6 vs 5.8
+C532700,same,swiss:802,medium: rice waffles; salt level not specified in Swiss name; values nearly identical either way
+C533000,same,swiss:424,medium: Popcorn ungesüsst; Swiss generic Popcorn but numbers match plain (4.2 g fat)
+C650000,same,swiss:13450,high: unsweetened rice drink; 54 vs 59 kcal
+C650200,same,swiss:14133,high: plain fortified rice drink; kcal 54 vs 59
+D026000,same,swiss:929,medium: wholemeal rusk; sweetening not stated; numbers agree
+D038000,same,swiss:930,medium: plain rusk; only egg-free variant offered; numbers nearly identical
+D079000,same,swiss:907,high: raw yeast pizza dough; numbers agree
+D0A6000,same,swiss:14045,medium: simple baked shortcrust base; kcal 494 vs 480; fat 24.9 vs 24.7
+D300600,same,swiss:883,high: same named cake; numbers agree
+D312500,same,swiss:882,high: same named cake; numbers agree
+D312700,same,swiss:916,medium: same named carrot cake; fat gap just under 5 g
+D431100,same,swiss:898,medium: marble cake; kcal within 20 %; water differs
+D433300,same,swiss:889,high: homemade chocolate cake = Schokoladenkuchen Ruehrmasse; numbers agree
+D610200,same,swiss:854,high: meringue = Baiser; numbers agree
+D610300,same,swiss:14035,medium: Schuemli = Schokoladenbaiser; kcal 444 vs 406; fat 9.9 vs 10.8
+D6A1000,same,swiss:1248,high: Basler Leckerli; kcal 412 vs 383 within 30
+D734900,same,swiss:871,medium: hazelnut sticks vs Nussstangen; numbers agree; pastry type not confirmable
+D7A5600,same,swiss:14038,high: Schoggibroetli = Schokobroetchen; kcal 366 vs 370; fat equal
+D9A2500,same,swiss:1460,medium: Butterzopf Vollkorn = Vollkornhefezopf; kcal 272 vs 273; fat 6.4 vs 8.3; butter share not confirmable
+D9A4900,same,swiss:834,medium: wholemeal croissant; kcal and fat within limits; water differs
+E111100,same,swiss:290,high: Huehnerei roh; numbers agree
+E111132,same,swiss:1070,high: hard boiled egg; kcal 156 vs 144
+E112100,same,swiss:410,high: Eigelb roh; numbers identical
+E113100,same,swiss:411,high: Eiklar roh
+E401000,same,swiss:800,high: dry egg-free pasta = Teigwaren eifrei roh; numbers agree
+E401032,same,swiss:1063,high: egg-free pasta boiled; kcal 158 vs 146
+E432000,same,swiss:799,high: dry egg pasta = Eierteigwaren roh; numbers agree
+E500032,same,swiss:1064,medium: wholemeal egg-free pasta boiled; kcal 152 vs 130 within 30
+E510000,same,swiss:801,high: dry wholemeal egg-free pasta; numbers agree
+F081100,same,swiss:362,high: Rhabarber roh
+F090902,same,swiss:775,high: gezuckert Konserve = in Sirup; drained; values agree
+F092902,same,swiss:777,high: same sweetener-canned fruit cocktail; values agree
+F110100,same,swiss:378,high: Apfel roh
+F110152,same,swiss:1049,medium: Apfel geduenstet; abgetropft detail only; kcal 56 vs 60
+F110600,same,swiss:568,high: Apfelsaft
+F120400,same,swiss:435,high: Apfel geschält getrocknet
+F130100,same,swiss:382,high: Birne roh
+F130152,same,swiss:1050,medium: Birne geduenstet; abgetropft detail only; kcal 57 vs 60
+F130600,same,swiss:562,high: Birnensaft; 50 vs 64 kcal
+F130902,same,swiss:620,high: gezuckert Konserve = in Sirup; drained; values agree
+F140100,same,swiss:476,high: Quitte roh
+F140132,same,swiss:1055,high: Quitte gekocht; kcal 49 vs 44
+F201100,same,swiss:379,high: Aprikose roh
+F201152,same,swiss:1051,medium: Aprikose geduenstet; abgetropft detail only; kcal 45 vs 47
+F201400,same,swiss:469,high: Aprikose getrocknet; 239 vs 216 kcal
+F201902,same,swiss:621,high: gezuckert Konserve = in Sirup; drained; values agree
+F202100,same,swiss:404,high: Nektarine roh
+F203100,same,swiss:401,high: Pfirsich roh; yellow peach is the standard peach
+F203902,same,swiss:624,high: gezuckert Konserve = in Sirup; drained; values agree
+F207902,same,swiss:625,high: same sweetener-canned peach; values identical
+F211100,same,swiss:394,medium: Kirsche unqualified taken as Suesskirsche; numbers agree
+F220100,same,swiss:474,high: Pflaume roh
+F220152,same,swiss:1054,medium: Pflaume geduenstet; kcal 48 vs 57
+F220400,same,swiss:475,high: Pflaume getrocknet; 227 vs 205 kcal
+F223100,same,swiss:479,high: Zwetschge roh
+F224100,same,swiss:403,high: Mirabelle roh
+F224152,same,swiss:1053,medium: Mirabelle geduenstet; kcal 70 vs 85 within 30
+F301100,same,swiss:385,high: Erdbeere roh
+F302100,same,swiss:390,high: Himbeere roh
+F303100,same,swiss:383,high: Brombeere roh
+F304100,same,swiss:389,high: Heidelbeere roh
+F305100,same,swiss:400,high: Stachelbeere roh; 39 vs 50 kcal
+F310600,same,swiss:573,high: Traubensaft
+F312100,same,swiss:478,high: Weintraube weiss roh
+F321100,same,swiss:391,high: Johannisbeere rot roh
+F323100,same,swiss:392,high: Johannisbeere schwarz roh
+F401100,same,swiss:987,high: Preiselbeere = lingonberry; numbers agree
+F406100,same,swiss:436,high: Holunderbeere roh
+F501100,same,swiss:377,high: Ananas roh
+F501600,same,swiss:13880,high: same juice; kcal 51 vs 47
+F501902,same,swiss:617,high: gezuckert Konserve = in Sirup; drained; values agree
+F502100,same,swiss:380,high: Avocado roh; numbers within tolerance
+F503100,same,swiss:381,high: Banane roh
+F503400,same,swiss:741,high: identical; values agree
+F505100,same,swiss:386,high: Feige roh
+F505400,same,swiss:387,high: Feige getrocknet
+F506100,same,swiss:13882,high: same fruit raw; kcal 81 vs 79
+F507100,same,swiss:393,high: Kaki roh
+F514100,same,swiss:395,high: Kiwi roh
+F516100,same,swiss:396,high: Mango roh
+F516400,same,swiss:13884,high: same dried fruit; kcal 293 vs 322 within 10 %
+F517100,same,swiss:13440,high: papaya raw; 44 vs 46 kcal
+F533100,same,swiss:399,medium: Honigmelone roh; Swiss 62 vs 46 kcal and water 84 vs 91 differ somewhat
+F535100,same,swiss:402,high: Wassermelone roh
+F601100,same,swiss:398,high: Zitrone roh; 24 vs 40 kcal within 30
+F601600,same,swiss:605,high: identical food; values agree
+F603100,same,swiss:405,high: Orange roh
+F603600,same,swiss:576,high: Orangensaft
+F603700,same,swiss:572,high: Orangennektar
+F606100,same,swiss:397,high: Mandarine roh; 45 vs 53 kcal
+F840100,same,swiss:477,high: Rosine/Sultanine; 321 vs 288 kcal within 20 %
+F921900,same,swiss:627,high: identical product; values agree
+G012902,same,swiss:14282,medium: pickled capers drained; kcal 38 vs 22 (16 kcal); fat ok
+G061000,same,swiss:464,high: Basilikum roh; 46 vs 23 kcal within 30 kcal; carb definition differs
+G081100,same,swiss:374,high: Schnittlauch roh
+G101100,same,swiss:447,high: Chicoree roh
+G101152,same,swiss:1006,medium: steamed vs stewed; numbers agree
+G102100,same,swiss:467,high: Endivie roh
+G103100,same,swiss:459,high: Eisbergsalat roh
+G104100,same,swiss:372,high: Nuesslisalat = Feldsalat roh
+G105100,same,swiss:448,high: Kopfsalat roh
+G106100,same,swiss:458,high: Radicchio roh = Cicorino rosso
+G107100,same,swiss:441,high: Römischer Salat = Lattich
+G109100,same,swiss:465,high: Zuckerhutsalat roh
+G130100,same,swiss:468,high: Rucola roh
+G211100,same,swiss:365,high: Spinat roh
+G211152,same,swiss:1025,medium: gedaempft vs geduenstet; kcal 31 vs 22 within 30
+G220100,same,swiss:366,high: Stangensellerie = Bleichsellerie roh
+G230100,same,swiss:450,high: Mangold roh
+G230152,same,swiss:1016,medium: steamed vs stewed; numbers agree
+G250100,same,swiss:373,high: Petersilie = Petersilienblatt roh; kcal within 30
+G311100,same,swiss:350,high: Blumenkohl roh
+G311142,same,swiss:1004,high: steamed cauliflower; numbers agree
+G312100,same,swiss:351,high: Broccoli roh
+G321100,same,swiss:437,high: Chinakohl roh
+G321152,same,swiss:1007,high: stewed Chinese cabbage; same preparation
+G322100,same,swiss:13400,high: Federkohl = Gruenkohl raw; 44 vs 53 kcal
+G322152,same,swiss:13401,high: Federkohl = Gruenkohl stewed; 44 vs 46 kcal
+G331100,same,swiss:449,high: Kohlrabi roh
+G332100,same,swiss:363,high: Rosenkohl roh
+G332152,same,swiss:1021,medium: steamed vs stewed; numbers agree
+G341100,same,swiss:364,high: Rotkohl roh
+G341152,same,swiss:1022,high: same food same prep; kcal 25 vs 27
+G342100,same,swiss:453,high: Weisskohl roh
+G342152,same,swiss:1029,high: same food same prep; kcal 37 vs 35
+G343100,same,swiss:454,high: Wirsing roh = Wirz
+G343152,same,swiss:1030,medium: Wirz = Wirsing; gedaempft vs geduenstet; kcal 26 vs 37
+G345100,same,swiss:647,medium: raw sauerkraut; Swiss unclear whether canned; values agree
+G430100,same,swiss:352,high: Fenchel = Gemuesefenchel roh
+G450100,same,swiss:443,high: Spargel roh
+G470100,same,swiss:358,high: Lauch = Porree roh
+G470152,same,swiss:1015,high: stewed leek; same preparation
+G480100,same,swiss:368,high: Zwiebel = Speisezwiebel roh
+G488802,same,swiss:494,medium: Silberzwiebel gesäuert abgetropft; 28 vs 45 kcal within 30
+G490100,same,swiss:356,high: Knoblauch roh
+G510100,same,swiss:349,high: Aubergine roh
+G520100,same,swiss:354,high: Gurke roh
+G520802,same,swiss:491,medium: Gewürzgurke gesäuert abgetropft; 14 vs 33 kcal within 30; German pickles sweeter
+G541100,same,swiss:359,high: Peperoni gruen = Gemuesepaprika gruen roh
+G541152,same,swiss:1017,high: Peperoni = Gemuesepaprika; same preparation; kcal within 30
+G543100,same,swiss:360,high: Peperoni rot = Gemuesepaprika rot roh
+G543152,same,swiss:1018,high: Peperoni = Gemuesepaprika; same preparation; numbers agree
+G560400,same,swiss:13463,high: dried tomato; 282 vs 276 kcal
+G560600,same,swiss:564,high: Tomatensaft mit Salz
+G561100,same,swiss:348,high: Tomate roh
+G561152,same,swiss:1027,high: same food same prep; kcal 26 vs 24
+G568900,same,swiss:637,high: Pelati; values agree
+G581100,same,swiss:480,medium: Generic Kürbis roh vs BLS Pumpkin (C. pepo) roh; numbers close; Hokkaido entry is a specific variety
+G582100,same,swiss:367,high: Zucchetti = Zucchini roh
+G582152,same,swiss:1031,high: Zucchetti = Zucchini; same prep; kcal 20 vs 23
+G613100,same,swiss:451,high: Rote Bete roh = Rande
+G620100,same,swiss:355,high: Karotte/Moehre roh
+G620152,same,swiss:1002,medium: steamed vs stewed without fat; numbers agree
+G620600,same,swiss:566,high: Karottensaft; 30 vs 22 kcal
+G640100,same,swiss:13439,high: parsnip raw; 62 vs 59 kcal
+G640132,same,swiss:13443,high: parsnip boiled; 58 vs 72 kcal
+G650100,same,swiss:452,high: Schwarzwurzel roh
+G650152,same,swiss:1023,medium: gedaempft vs geduenstet; kcal and fat match; Swiss carbs lower by definition (inulin)
+G660100,same,swiss:357,high: Knollensellerie roh
+G660152,same,swiss:1013,medium: steamed vs stewed; numbers agree
+G680100,same,swiss:361,high: Rettich roh
+G691100,same,swiss:456,high: Radieschen roh
+G710100,same,swiss:353,high: Bohne gruen roh
+G710152,same,swiss:1009,medium: steamed vs stewed; numbers agree
+G760100,same,swiss:369,high: Erbse gruen roh
+G760152,same,swiss:1010,medium: steamed vs stewed; numbers agree
+G760200,same,swiss:14219,high: frozen green peas; kcal 81 vs 77
+G760400,same,swiss:13389,medium: dried mature pea; 331 vs 311 kcal; split vs whole not confirmable
+G760432,same,swiss:13390,medium: boiled dried pea; 137 vs 117 kcal
+G761100,same,swiss:438,high: Zuckererbse roh = Kefe
+G761152,same,swiss:1012,medium: Kefe = Zuckererbse; steamed vs stewed; numbers agree
+G992902,same,swiss:815,medium: canned peas and carrots drained; same state; Swiss protein and carbs somewhat higher
+H110600,same,swiss:14238,high: roasted unsalted peanut; kcal 637 vs 620
+H110700,same,swiss:14092,high: same; kcal 631 vs 614; fat 50 vs 49
+H120100,same,swiss:271,high: Baumnuss = Walnuss; numbers agree
+H130100,same,swiss:270,high: Haselnuss; numbers agree
+H150100,same,swiss:284,high: Kokosnuss = Kokos Fruchtfleisch roh; numbers agree
+H154000,same,swiss:13458,high: coconut milk; 214 vs 227 kcal
+H170100,same,swiss:275,high: Cashewkern; numbers agree
+H180100,same,swiss:279,high: Paranuss; numbers agree
+H230100,same,swiss:272,high: Edelkastanie/Marone; numbers identical
+H250100,same,swiss:274,high: Pistazie; numbers agree
+H310100,same,swiss:276,high: Kuerbiskern; numbers agree
+H320100,same,swiss:283,high: Pinienkern; numbers agree
+H410100,same,swiss:277,ok: Leinsamen; kcal 533 vs 470 fat 42 vs 37 within what seed lots vary
+H480100,same,swiss:13457,high: chia seeds; 482 vs 479 kcal
+H510802,same,swiss:492,medium: Oliven grün gesäuert abgetropft; 154 vs 132 kcal; water 76 vs 68
+H725100,same,swiss:370,high: Linse getrocknet = Linse reif; numbers identical
+H730000,same,swiss:13385,medium: hulled dried lentil = red lentil; 334 vs 334 kcal; colour not stated
+H764400,same,swiss:995,high: full-fat soya flour; kcal within 20 %
+H800000,same,swiss:14113,high: plain almond drink; kcal 33 vs 24
+H800100,same,swiss:14131,high: plain fortified almond drink; kcal 33 vs 24
+H841100,same,swiss:72,medium: Sojadrink nature = ungesuesst; numbers within tolerance
+H841400,same,swiss:14129,high: plain fortified soya drink; kcal 40 vs 30; fat 2.1 vs 1.3
+H844000,same,swiss:13451,high: plain soy yogurt alternative; 43 vs 44 kcal
+H844100,same,swiss:13452,high: plain soy yogurt alternative fortified; 40 vs 44 kcal
+H861100,same,swiss:13438,high: silken tofu; 53 vs 46 kcal
+H880200,same,swiss:751,high: identical; values agree
+H882000,same,swiss:14152,high: cashew cheese alternative; kcal 442 vs 440; fat 35 vs 34
+K110100,same,swiss:813,high: peeled raw potato; numbers agree
+K110132,same,swiss:1057,medium: peeled potato steamed vs boiled; macros identical
+K120134,same,swiss:14259,medium: unpeeled boiled potato; Swiss is new potato; kcal 66 vs 71
+K120164,same,swiss:14258,high: unpeeled baked potato; identical values
+K230000,same,swiss:497,high: Kartoffelstärke
+K290100,same,swiss:12983,high: fat-reduced potato chips; 468 vs 464 kcal fat 22 vs 21.5
+K410100,same,swiss:13918,high: same tuber raw; kcal 157 vs 146
+K410432,same,swiss:14054,high: same tuber boiled; kcal 147 vs 146
+K420132,same,swiss:13407,medium: steamed vs boiled sweet potato; 81 vs 65 kcal
+K430100,same,swiss:13441,high: Jerusalem artichoke raw; 54 vs 55 kcal
+K430132,same,swiss:13442,high: Jerusalem artichoke boiled; 52 vs 52 kcal
+K701100,same,swiss:375,high: Champignon roh
+K701152,same,swiss:1037,medium: same food same prep; kcal 29 vs 41 within 30; water 93 vs 87
+K703100,same,swiss:457,high: Morchel roh
+K703152,same,swiss:1039,high: same food same prep; kcal 34 vs 41
+K713100,same,swiss:376,high: Eierschwamm = Pfifferling roh
+M011000,same,swiss:13384,high: sheep milk; 105 vs 92 kcal fat 7.1 vs 6.0
+M012100,same,swiss:484,high: Roquefort 50 % Fett i. Tr.; 382 vs 363 kcal
+M021000,same,swiss:528,high: Ziegenmilch; 57 vs 67 kcal
+M032100,same,swiss:82,high: Mozzarella 45 % F.i.T.; numbers agree
+M111300,same,swiss:62,high: Vollmilch pasteurisiert; numbers agree
+M113300,same,swiss:63,high: Vollmilch UHT = H-Vollmilch; numbers agree
+M141300,same,swiss:52,medium: Joghurt nature 3.6 % = Joghurt mind. 3.5 % Fett; numbers identical; mild culture detail
+M150000,same,swiss:529,high: Buttermilch
+M161000,same,swiss:602,high: Süssmolke; values identical
+M173800,same,swiss:65,medium: Vollrahm = Schlagsahne; 35 % lies between the two BLS grades; numbers within tolerance
+M181400,same,swiss:526,high: Kondensmilch 8 % Fett gezuckert
+M182400,same,swiss:527,high: Kondensmilch 7.5 % Fett ungezuckert; numbers identical
+M246000,same,swiss:54,medium: Schokoladenjoghurt; numbers agree
+M248000,same,swiss:57,medium: Mokka = Kaffeezubereitung; numbers agree
+M2R8300,same,swiss:56,medium: Vanillejoghurt; numbers agree
+M2R9300,same,swiss:55,medium: Haselnussjoghurt = Joghurt mit Nusszubereitung; numbers agree
+M304600,same,swiss:555,high: Emmentaler 45 % Fett i. Tr.; 408 vs 374 kcal within 20 %; fat 32.6 vs 29.2
+M306400,same,swiss:482,medium: Parmesan; BLS labelled min 30 % Fett i. Tr.; fat 31 vs 27.4 within limit
+M307700,same,swiss:532,high: Raclettekäse 45 % Fett i. Tr.
+M5B1600,same,swiss:483,high: Gorgonzola 48 % Fett i. Tr.; 357 vs 329 kcal
+M600600,same,swiss:13391,medium: vollfett = mind. 45% F.i.Tr.; 296 vs 257 kcal fat 23.7 vs 19.8
+M600800,same,swiss:631,medium: generic Weichkäse 60 % both; protein differs
+M601600,same,swiss:613,high: vollfett = 45 % F.i.T.; kcal within 20 % fat within 5 g
+M601700,same,swiss:616,high: Rahmstufe = 50 % F.i.T.; values agree
+M602600,same,swiss:614,high: vollfett = 45 % F.i.T.; kcal within 20 % fat within 5 g
+M604600,same,swiss:531,medium: Swiss Limburger (Münster) ~48 % fidm; Münster 45 % fits numbers best; Limburger 40 % also close
+M6A9600,same,swiss:13924,high: soft goat cheese; kcal 283 vs 285; fat 23.3 vs 22.7
+M711300,same,swiss:505,high: Körniger Frischkäse 20 % Fett i. Tr. = Hüttenkäse; 4.5 vs 4.3 g fat
+M713100,same,swiss:71,high: Magerquark; numbers agree
+M771600,same,swiss:559,high: Schmelzkäse schnittfest 45 % Fett i. Tr.
+M771700,same,swiss:563,high: Schmelzkäse schnittfest 50 % Fett i. Tr.
+M772800,same,swiss:565,medium: Schmelzkäse streichfähig; Swiss Rahm computes to ~59 % fidm so BLS 60 % fits; numbers identical
+M882000,same,swiss:585,high: identical food; values identical
+M884000,same,swiss:578,high: Magermilchpulver
+N019000,same,swiss:804,medium: sweetened ice tea; Swiss entry does not state flavour; numbers agree
+N110000,same,swiss:47,high: Trinkwasser
+N330000,same,swiss:498,high: Colagetränk koffeinhaltig gezuckert
+N331000,same,swiss:499,high: Colagetränk mit Süssungsmitteln
+N410100,same,swiss:994,high: black coffee; numbers agree
+N418000,same,swiss:1184,medium: Latte macchiato unsweetened; kcal 54 vs 50; milk fat level not stated in Swiss
+P163000,same,swiss:816,medium: lager vs Pilsner; both pale lager beers; numbers agree
+P163100,same,swiss:13420,medium: generic alcohol-free beer vs Pilsner type; 23 vs 18 kcal
+P210000,same,swiss:511,medium: Weisswein trocken; 71 vs 64 kcal; 12.5 vol% with 0.1 g carbs = dry
+P285000,same,swiss:10478,high: sauer gespritzt = Schorle mit Mineralwasser; 36 vs 33 kcal
+P285100,same,swiss:10479,high: suess gespritzt = Schorle mit Zitronenlimonade; 55 vs 51 kcal
+P2A3000,same,swiss:509,high: Rotwein trocken; 69 vs 70 kcal; 12 vol% is standard strength
+P2A6000,same,swiss:551,medium: Generic Schaumwein; Sekt trocken 75 vs 71 kcal; carbs 1.5 between brut and trocken
+P353100,same,swiss:513,medium: Apfelwein; 6.2 vol% is the usual strength; 64 vs 44 kcal within 30
+P431000,same,swiss:516,high: Portwein
+P462000,same,swiss:515,medium: Sherry medium dry; generic Swiss sherry; 118 vs 119 kcal; carbs 3.6 vs 5.9
+P546000,same,swiss:517,high: Eierlikör
+Q120000,same,swiss:591,high: identical food
+Q140000,same,swiss:14108,high: same oil
+Q150000,same,swiss:708,high: identical food
+Q160000,same,swiss:13405,high: linseed oil; cold-pressed is the standard food grade
+Q170000,same,swiss:14091,high: same oil
+Q180000,same,swiss:600,high: Rapsöl = Rüböl
+Q210000,same,swiss:596,high: identical food
+Q220000,same,swiss:593,high: identical food
+Q230000,same,swiss:14107,high: same oil
+Q250000,same,swiss:13404,high: pumpkin seed oil
+Q260000,same,swiss:412,high: Maiskeimöl
+Q270000,same,swiss:603,high: identical food
+Q310000,same,swiss:13402,high: Baumnussoel = Walnussoel
+Q320000,same,swiss:598,high: identical food
+Q330000,same,swiss:592,high: identical food
+Q340000,same,swiss:589,high: Distelöl = Safloröl; values identical
+Q530000,same,swiss:583,high: identical food; values identical
+Q550000,same,swiss:601,medium: Kokosfett = Kokosöl; ungehärtet angenommen; values identical
+Q620000,same,swiss:49,low: Vorzugsbutter = Butter; numbers identical; sweet vs cultured cream not confirmable
+Q640000,same,swiss:191,high: Halbfettbutter; numbers agree
+Q683000,same,swiss:50,high: Bratbutter = Butterschmalz; numbers agree
+Q860000,same,swiss:594,high: Schweineschmalz = Schweinefett
+R112000,same,swiss:14086,high: plain sea salt
+R114000,same,swiss:762,high: Kochsalz mit Jod = Speisesalz jodiert
+R125000,same,swiss:13455,ok: same product; kcal 128 vs 95 is label variance
+R132000,same,swiss:13464,medium: generic mustard = medium hot; 124 vs 111 kcal
+R141100,same,swiss:635,high: Ketchup = Tomatenketchup; values agree
+R143000,same,swiss:13456,high: soy sauce; 56 vs 66 kcal
+R160000,same,swiss:636,high: Swiss Tomatenpüree = Tomatenmark (concentrate); values agree
+R211200,same,swiss:14239,medium: raw ginger root; kcal 33 vs 48 (15 kcal); carbs differ
+R381100,same,swiss:855,high: candied orange peel; kcal within 20 %
+R381200,same,swiss:856,high: candied lemon peel; kcal within 30
+S111000,same,swiss:470,high: Zucker weiss
+S112000,same,swiss:471,high: Zucker braun
+S114000,same,curated:Vanilla Sugar,high: the curated Vanillezucker row from seed-ingredients.mjs
+S115100,same,swiss:768,high: identical; values identical
+S121000,same,swiss:472,high: Blütenhonig
+S132000,same,swiss:696,high: Konfitüre = Konfitüre extra; values agree
+S132100,same,swiss:697,medium: reduced-sugar jam; BLS uses fructose plus sweeteners; kcal within 30
+S151100,same,swiss:14093,high: same syrup; kcal 271 vs 240 within 12 %
+S152000,same,swiss:732,medium: same food; kcal within 20 % but carbs differ
+S201000,same,swiss:892,high: fruit sorbet; numbers agree
+S361000,same,swiss:951,high: fruit gums; numbers agree
+S420000,same,swiss:496,ok: Marzipan is Marzipan; almond share differs between the two datasets (fat 17.6 vs 12.4)
+S530000,same,swiss:195,high: Milchschokolade; numbers agree
+S535000,same,swiss:642,medium: Branchli = milk chocolate with nut cream filling; values within tolerance
+S539700,same,swiss:641,medium: raisin-nut milk chocolate; Swiss also with almonds; values agree
+S580000,same,swiss:197,high: Weisse Schokolade; numbers agree
+S582300,same,swiss:643,medium: almond nougat milk chocolate; honey not named in BLS; values agree
+S711000,same,swiss:581,high: Kakaopulver schwach entölt; 380 vs 365 kcal; fat 20.6 vs 19.8
+S713000,same,swiss:978,high: 12 % fat matches strongly deoiled cocoa; numbers agree
+S730000,same,swiss:13434,high: fortified malt-cocoa drink powder; 372 vs 363 kcal
+S740000,same,swiss:960,medium: chocolate drink powder; numbers agree
+T064100,same,swiss:416,high: Hecht roh
+T105100,same,swiss:757,high: identical; values agree
+T105702,same,swiss:413,high: Sardine in Öl Konserve abgetropft; 204 vs 222 kcal
+T121702,same,swiss:418,high: Thunfisch in Öl abgetropft
+T121902,same,swiss:417,high: Thunfisch im eigenen Saft abgetropft = Thon im Wasser; 109 vs 95 kcal
+T204100,same,swiss:285,high: Dorsch/Kabeljau roh; numbers agree
+T204152,same,swiss:13350,medium: steamed vs stewed cod; 74 vs 74 kcal
+T207100,same,swiss:754,high: Seelachs = Köhler; values agree
+T209100,same,swiss:760,high: identical; values agree
+T305100,same,swiss:415,high: Goldbutt/Scholle roh
+T306100,same,swiss:753,high: identical; values agree
+T309100,same,swiss:755,high: identical; values agree
+T311100,same,swiss:481,high: Flunder roh
+T311152,same,swiss:13351,medium: steamed vs stewed flounder; 78 vs 79 kcal
+T410100,same,swiss:210,medium: Lachs roh; BLS does not state wild; numbers agree with wild not farmed
+T410132,same,swiss:13354,medium: steamed vs poached salmon; 200 vs 187 kcal fat 13.9 vs 11.9
+T410600,same,swiss:193,high: Raeucherlachs; numbers agree
+T420132,same,swiss:13349,medium: boiled vs poached trout; 115 vs 134 kcal
+T422100,same,swiss:289,high: Forelle roh; numbers within tolerance
+T792100,same,swiss:761,high: identical; kcal within 30
+T860100,same,swiss:10532,medium: same product; fat 21.3 vs 26.3 at tolerance edge
+T930162,same,swiss:1169,medium: fish fingers oven no fat; kcal 251 vs 206 (18 %); fat diff 3
+U010100,same,swiss:14237,high: regular beef mince raw; kcal 208 vs 224; fat 14.6 vs 16.4
+U013182,same,swiss:14250,high: beef patty pan-fried without fat; kcal 208 vs 216; fat 12 vs 13.7
+U131100,same,swiss:30,medium: Entrecote = Steak aus dem Ruecken; numbers agree; exact cut not confirmable
+U131182,same,swiss:13258,medium: Entrecote = loin steak pan-fried; 162 vs 166 kcal; exact cut not stated in BLS
+U184100,same,swiss:36,medium: Siedfleisch mager = Kochfleisch; numbers agree; BLS specifies Bug cut
+U184132,same,swiss:13292,low: lean boiling beef; Swiss cut unspecified; BLS shoulder; 190 vs 170 kcal
+U211100,same,swiss:639,high: identical cut; values agree
+U211162,same,swiss:13262,high: beef filet oven-fried no fat; 147 vs 136 kcal fat 4.0 vs 4.0
+U231100,same,swiss:648,high: Hals = Hals/Kamm/Nacken; values identical
+U235100,same,swiss:32,high: Hohruecken = Hochrippe roh; numbers agree
+U261100,same,swiss:638,high: Schulterbraten = Bug/Schulter roh; values agree
+U261162,same,swiss:1075,medium: generic oven roast taken as medium doneness; kcal 146 vs 161
+U287100,same,swiss:640,medium: Swiss Eckstück corresponds to Oberschale; values agree
+U331100,same,swiss:3,medium: Nierstueck Steak = Steak aus dem Ruecken; numbers agree; cut naming not fully confirmable
+U331182,same,swiss:13324,high: Nierstueck = Ruecken; veal loin steak pan-fried; 144 vs 142 kcal
+U342100,same,swiss:662,high: Plätzli = Schnitzel from Keule; values agree
+U342182,same,swiss:13316,high: veal schnitzel pan-fried no fat; 128 vs 126 kcal
+U351100,same,swiss:15,medium: Voressen = Gulasch; numbers agree; BLS specifies Bug cut
+U411100,same,swiss:660,high: identical cut; values agree
+U452100,same,swiss:1,high: Kalb Brust roh; same cut and state; numbers agree
+U452132,same,swiss:1071,high: Kalb Brust gekocht; macros identical
+U461100,same,swiss:658,high: Schulterbraten = Bug/Schulter roh; kcal within 30
+U471100,same,swiss:661,high: identical cut; values agree
+U471142,same,swiss:13377,high: veal shank braised no fat; 158 vs 140 kcal
+U511182,same,swiss:13269,high: pork filet pan-fried no fat; 153 vs 144 kcal
+U522100,same,swiss:8,high: Schweinskotelett = Stielkotelett roh; numbers agree
+U522182,same,swiss:13283,medium: pork chop pan-fried; 240 vs 206 kcal fat 12.8 vs 10.9; Kotelett vs Stielkotelett
+U532100,same,swiss:41,medium: Hals Steak = Kammsteak roh; numbers within tolerance; fat slightly lower in BLS
+U541082,same,swiss:13270,medium: Eckstueck = Oberschale; pan-fried schnitzel; 162 vs 144 kcal
+U541100,same,swiss:679,high: Plätzli = Schnitzel Oberschale; values agree
+U554100,same,swiss:9,medium: Voressen = Gulasch; numbers agree; BLS specifies Restbug cut
+U611100,same,swiss:677,high: identical cut; values agree
+V112100,same,swiss:685,medium: BLS only generic horse muscle meat; values identical to filet
+V122100,same,swiss:687,medium: Swiss average vs BLS generic goat meat; values agree
+V132100,same,swiss:686,medium: Swiss average vs BLS generic rabbit meat; values agree
+V232100,same,swiss:486,medium: Hase Fleisch roh; Swiss average hare vs BLS hare meat; 105 vs 113 kcal
+V414100,same,swiss:711,high: Poulet ganz mit Haut = Hähnchen ganz mit Haut roh; values agree
+V414162,same,swiss:13309,high: whole chicken with skin oven-roasted; 193 vs 208 kcal
+V486100,same,swiss:713,high: Truthahnbrust = Putenbrust ohne Haut roh; values agree
+V4A6100,same,swiss:22,high: Pouletbrust ohne Haut = Haehnchenbrust ohne Haut roh; numbers agree
+V4A6182,same,swiss:13276,high: chicken breast skinless pan-fried; 128 vs 136 kcal
+V531100,same,swiss:657,high: identical; values agree
+V533100,same,swiss:689,high: identical; values identical
+V582100,same,swiss:672,high: Milken = Bries; values identical
+V591100,same,swiss:656,high: identical; values agree
+V592100,same,swiss:674,high: identical; values agree
+W140000,same,swiss:1091,high: Salami; macros identical
+W231100,same,swiss:1083,medium: same sausage type; kcal 244 vs 281 (15 %); fat diff 3.7
+W255400,same,swiss:789,high: same sausage type; kcal and fat agree
+W327000,same,swiss:776,medium: generic Leberwurst vs Leberwurst einfach; values agree
+X320053,new,,component: sauce/dressing/dip
+X320063,new,,component: sauce/dressing/dip
+X320243,new,,component: sauce/dressing/dip
+X320253,same,swiss:12981,medium: homemade bechamel vs BLS with 3.5% milk; kcal 147 vs 119 fat 9.9 vs 8.0
+X320363,new,,component: sauce/dressing/dip
+X320712,new,,component: sauce/dressing/dip
+X321153,new,,component: sauce/dressing/dip
+X321163,new,,component: sauce/dressing/dip
+X321211,new,,component: sauce/dressing/dip
+X321242,new,,component: sauce/dressing/dip
+X321263,new,,component: sauce/dressing/dip
+X321813,new,,component: sauce/dressing/dip
+X322053,new,,component: sauce/dressing/dip
+X322163,new,,component: sauce/dressing/dip
+X322243,new,,component: sauce/dressing/dip
+X323053,new,,component: sauce/dressing/dip
+X323243,new,,component: sauce/dressing/dip
+X323253,new,,component: sauce/dressing/dip
+X323353,new,,component: sauce/dressing/dip
+X324253,new,,component: sauce/dressing/dip
+X324263,new,,component: sauce/dressing/dip
+X325053,new,,component: sauce/dressing/dip
+X325143,new,,component: sauce/dressing/dip
+X326112,new,,component: sauce/dressing/dip
+X326143,new,,component: sauce/dressing/dip
+X326153,new,,component: sauce/dressing/dip
+X326353,new,,component: sauce/dressing/dip
+X326453,new,,component: sauce/dressing/dip
+X326513,new,,component: sauce/dressing/dip
+X326653,new,,component: sauce/dressing/dip
+X327143,new,,component: sauce/dressing/dip
+X327312,new,,component: sauce/dressing/dip
+X327463,new,,component: sauce/dressing/dip
+X327563,new,,component: sauce/dressing/dip
+X327613,new,,component: sauce/dressing/dip
+X328112,new,,component: sauce/dressing/dip
+X328143,new,,component: sauce/dressing/dip
+X328312,new,,component: sauce/dressing/dip
+X328453,new,,component: sauce/dressing/dip
+X328563,new,,component: sauce/dressing/dip
+X328663,new,,component: sauce/dressing/dip
+X328763,new,,component: sauce/dressing/dip
+X329153,new,,component: sauce/dressing/dip
+X329263,new,,component: sauce/dressing/dip
+X330043,new,,component: sauce/dressing/dip
+X330053,new,,component: sauce/dressing/dip
+X330363,new,,component: sauce/dressing/dip
+X330563,new,,component: sauce/dressing/dip
+X330653,new,,component: sauce/dressing/dip
+X331143,new,,component: sauce/dressing/dip
+X331353,same,swiss:667,medium: generic Tomatensauce vs italienische Art recipe; kcal and fat agree
+X331463,new,,component: sauce/dressing/dip
+X332053,new,,component: sauce/dressing/dip
+X332163,new,,component: sauce/dressing/dip
+X332263,new,,component: sauce/dressing/dip
+X336363,new,,component: sauce/dressing/dip
+X336443,new,,component: sauce/dressing/dip
+X336661,new,,component: sauce/dressing/dip
+X336753,new,,component: sauce/dressing/dip
+X338353,new,,component: sauce/dressing/dip
+X338443,new,,component: sauce/dressing/dip
+X338553,new,,component: sauce/dressing/dip
+X338653,new,,component: sauce/dressing/dip
+X339153,new,,component: sauce/dressing/dip
+X339243,new,,component: sauce/dressing/dip
+X341040,same,swiss:771,medium: plain mayonnaise; BLS recipe entry; kcal and fat agree
+X341060,new,,component: sauce/dressing/dip
+X344060,new,,component: sauce/dressing/dip
+X344260,new,,component: sauce/dressing/dip
+X344360,new,,component: sauce/dressing/dip
+X346150,new,,component: sauce/dressing/dip
+X346250,new,,component: sauce/dressing/dip
+X346360,new,,component: sauce/dressing/dip
+X347160,new,,component: sauce/dressing/dip
+X347350,new,,component: sauce/dressing/dip
+X348140,new,,component: sauce/dressing/dip
+X348360,new,,component: sauce/dressing/dip
+X351040,new,,component: sauce/dressing/dip
+X351140,new,,component: sauce/dressing/dip
+X351440,new,,component: sauce/dressing/dip
+X354040,new,,component: sauce/dressing/dip
+X354060,new,,component: sauce/dressing/dip
+X356050,new,,component: sauce/dressing/dip
+X356250,new,,component: sauce/dressing/dip
+X356360,new,,component: sauce/dressing/dip
+X357112,new,,component: sauce/dressing/dip
+X357160,new,,component: sauce/dressing/dip
+X357260,new,,component: sauce/dressing/dip
+X357312,new,,component: sauce/dressing/dip
+X357340,new,,component: sauce/dressing/dip
+X357413,new,,component: sauce/dressing/dip
+X357613,new,,component: sauce/dressing/dip
+X358140,new,,component: sauce/dressing/dip
+X358240,new,,component: sauce/dressing/dip
+X358453,new,,component: sauce/dressing/dip
+X359253,new,,component: sauce/dressing/dip
+X359440,new,,component: sauce/dressing/dip
+X359540,new,,component: sauce/dressing/dip
+X359640,new,,component: sauce/dressing/dip
+X359712,new,,component: sauce/dressing/dip
+X359912,new,,component: sauce/dressing/dip
+X360040,new,,component: sauce/dressing/dip
+X361163,new,,component: sauce/dressing/dip
+X362143,new,,component: sauce/dressing/dip
+X363143,new,,component: sauce/dressing/dip
+X364003,new,,component: sauce/dressing/dip
+X364043,new,,component: sauce/dressing/dip
+X365062,new,,component: sauce/dressing/dip
+X365443,new,,component: sauce/dressing/dip
+X365543,new,,component: sauce/dressing/dip
+X365563,new,,component: sauce/dressing/dip
+X365643,new,,component: sauce/dressing/dip
+X365743,new,,component: sauce/dressing/dip
+X366143,new,,component: sauce/dressing/dip
+X369243,new,,component: sauce/dressing/dip
+X369343,new,,component: sauce/dressing/dip
+X371043,new,,component: sauce/dressing/dip
+X371053,new,,component: sauce/dressing/dip
+X371143,new,,component: sauce/dressing/dip
+X371243,new,,component: sauce/dressing/dip
+X372012,new,,component: sauce/dressing/dip
+X378243,new,,component: sauce/dressing/dip
+X379343,new,,component: sauce/dressing/dip
+X381063,new,,component: sauce/dressing/dip
+X382040,new,,component: sauce/dressing/dip
+X382160,new,,component: sauce/dressing/dip
+X384143,new,,component: sauce/dressing/dip
+X384243,new,,component: sauce/dressing/dip
+X389000,new,,component: sauce/dressing/dip
+X3A1000,new,,component: sauce/dressing/dip
+X3A2000,new,,component: sauce/dressing/dip
+X3A2010,new,,component: sauce/dressing/dip
+X3A3000,new,,component: sauce/dressing/dip
+X3A3010,new,,component: sauce/dressing/dip
+X3A3020,new,,component: sauce/dressing/dip
+X3A4000,new,,component: sauce/dressing/dip
+X3A4010,new,,component: sauce/dressing/dip
+X3A5000,new,,component: sauce/dressing/dip
+X3A6000,new,,component: sauce/dressing/dip
+X3A6010,new,,component: sauce/dressing/dip
+X3A6020,new,,component: sauce/dressing/dip
+X3A6030,new,,component: sauce/dressing/dip
+X3A6040,new,,component: sauce/dressing/dip
+X3A7000,new,,component: sauce/dressing/dip
+X3A7010,new,,component: sauce/dressing/dip
+X3A7020,new,,component: sauce/dressing/dip
+X3A7030,new,,component: sauce/dressing/dip
+X3A7040,new,,component: sauce/dressing/dip
+X3A7050,new,,component: sauce/dressing/dip
+X3A7060,new,,component: sauce/dressing/dip
+X3A7070,new,,component: sauce/dressing/dip
+X3A8000,new,,component: sauce/dressing/dip
+X3A8010,new,,component: sauce/dressing/dip
+X3A8020,new,,component: sauce/dressing/dip
+X3A9000,new,,component: sauce/dressing/dip
+X3A9010,new,,component: sauce/dressing/dip
+X3A9020,new,,component: sauce/dressing/dip
+X3A9030,new,,component: sauce/dressing/dip
+X3A9040,new,,component: sauce/dressing/dip
+X411243,new,,component: stock
+X411363,new,,component: stock
+X411563,new,,component: stock
+X411613,new,,component: stock
+X411713,new,,component: stock
+X411813,new,,component: stock
+X412053,new,,component: stock
+X412113,new,,component: stock
+X412263,new,,component: stock
+X412363,new,,component: stock
+X412463,new,,component: stock
+X412513,new,,component: stock
+X412613,new,,component: stock
+X416243,new,,component: stock
+X416313,new,,component: stock
+X416513,new,,component: stock
+X416813,new,,component: stock
+X420163,new,,component: stock
+X420363,new,,component: stock
+X421143,new,,component: stock
+X421363,new,,component: stock
+X422163,new,,component: stock
+X422253,new,,component: stock
+X422363,new,,component: stock
+X422643,new,,component: stock
+X423053,new,,component: stock
+X423153,new,,component: stock
+X423363,new,,component: stock
+X423462,new,,component: stock
+X423553,new,,component: stock
+X423753,new,,component: stock
+X424553,new,,component: stock
+X425363,new,,component: stock
+X427153,new,,component: stock
+X443812,new,,component: dough
+X4A1000,new,,component: stock
+X4A1030,new,,component: stock
+X511812,new,,component: dough
+X531812,new,,component: dough
+X532812,new,,component: dough
+X548812,new,,component: dough
+X551812,new,,component: dough
+X566142,new,,component: dough
+X678112,new,,component: dough
+X6A5000,new,,component: dough
+X700062,new,,component: dough
+X700212,new,,component: dough
+X700242,new,,component: dough
+X701142,new,,component: dough
+X702042,new,,component: dough
+X711242,new,,component: dough
+X711512,new,,component: dough
+X985212,new,,component: dough
+X9A6000,new,,component: dough
+X9A6010,new,,component: dough
+X9A6020,new,,component: dough
+X9A6030,new,,component: dough
+X9A6040,new,,component: dough
+X9A6050,new,,component: dough
+X9A6060,new,,component: dough
+Y0A2060,new,,component: dough
+Y183013,new,,component: stock
+Y561422,new,,component: dough
+Y593112,new,,component: dough
+Y650812,new,,component: dough
+Y686132,new,,component: dough
+Y686612,new,,component: dough
+Y693723,new,,component: dough
+Y693752,new,,component: dough
+Y713152,new,,component: dough
+Y845242,new,,component: dough
+Y879812,new,,component: dough
+Y8A8000,new,,component: dough
+Y8A8010,same,swiss:910,medium: sweet raw yeast dough with milk; butter content not confirmable; numbers agree
+Y8A8020,new,,component: dough
+Y8A8030,same,swiss:14043,medium: Mürbeteig süss roh; kcal 424/432 fat 22.9/22.3

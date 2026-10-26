@@ -5,6 +5,145 @@ All notable changes to GourMerge are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versioning follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+A second ingredient dataset: the German **Bundeslebensmittelschlüssel 4.0** (Max
+Rubner-Institut, December 2025, free of licence barriers) joins the Swiss BLV catalog —
+next to it, not instead of it (`docs/BLS-INTEGRATION-PLAN.md`). The catalog grows from
+1190 to about 6100 reference ingredients, and the autocomplete learned to find them
+however a dataset or a region spells them.
+
+### Added — BLS 4.0 (`npm run seed:bls`)
+
+5325 of the BLS's 7140 foods are imported: all of groups B–W (foods one can buy, cooked
+variants included) plus 230 components pulled out of the dish groups X/Y — stocks,
+sauces and dressings, doughs — while the dishes themselves (Kalbsfrikassee, Gulaschsuppe)
+stay out, because a dish is what GourMerge makes out of ingredients. The BLS has names in
+German and English only; the FR and IT names for every imported code are ours
+(`server/database/seeds/bls-i18n.jsonl`, catalogue style of the Swiss database, glossary
+driven). The MRI's published errata are applied on the way in (`bls-4.0-errata.json`:
+skimmed-milk retinol, 1.5 % milk iodine, almond calcium; "Sardelle roh" comes without
+nutrition until 4.1), and the energy formula's OLSAC double count — up to +23 % on 411
+foods — is corrected by rule.
+
+**No duplicates, by decision rather than by algorithm.** There is no cross-reference
+between the two datasets, and a name-and-numbers heuristic both misses real pairs
+(Bratbutter ↔ Butterschmalz) and invents wrong ones (Cervelat ↔ Zervelatwurst, Swiss
+"Teilentrahmte Milch" at 2.8 % fat ↔ "Milch fettarm 1,5 %"). So every one of the 1190
+Swiss foods was judged against its BLS candidates — same food, same state, same cut, kcal
+within 20 % or 30 kcal, fat within 5 g — and the 442 pairs live in
+`server/database/seeds/bls-map.csv`, reviewed, one per line. A pair is one ingredient
+with two `ingredient_sources` rows: it shows the German BLS name ("Hähnchen Brust, ohne
+Haut, roh", decision E5), keeps the Swiss nutrition values and FR/IT names (E1), and keeps
+the Swiss name as a synonym, so "Poulet" still finds it. Everything else is its own
+ingredient. `tests/unit/blsSeed.test.ts` guards the invariants of the committed files;
+the seed generator refuses to write when a pair's numbers disagree, a Swiss food is paired
+twice, or a translation is missing.
+
+### Added — regional vocabulary in the search
+
+`shared/utils/ingredientVocabulary.ts`: Swiss ↔ German kitchen words (Poulet/Hähnchen,
+Rahm/Sahne, Peperoni/Paprika, Rüebli/Karotte, Gehacktes/Hackfleisch, Teigwaren/Nudeln,
+Hühnerei/Ei …). Every search term containing one side gets a variant with the other, in
+both directions, so a user in Hamburg and a user in Zürich find the same row from their own
+word. Ranking now scores each ingredient by its single best-matching term (tier, then the
+viewer's locale, then name before synonym, then length) — scoring those parts across
+different terms let a sauce whose Italian name merely contains "peperoni" outrank the
+pepper itself.
+
+### Fixed — a header row was an ingredient
+
+The Swiss seed carried the spreadsheet's second header line as food "ID" with the name
+"Name" / "Nom" / "Nome". Removed from the seed (1190 foods, not 1191); the parser now skips
+non-numeric ids and the importer's done-check counts only the ids the seed carries. The row
+still exists in a database that was seeded before this — see the runbook note in the
+pull request for the one-line cleanup.
+
+Groundwork that shipped first — an ingredient can belong to more than one dataset
+without becoming two rows, and the autocomplete no longer depends on how a dataset
+happens to spell a name:
+
+### Added — `ingredient_sources` and `ingredient_search_terms` (migration `0017`)
+
+`ingredient_nutrition.source` + `external_id` could only name _one_ origin per ingredient,
+which stops working the moment BLS describes a food the Swiss catalog already has: the
+ingredient must stay one row with two external ids behind it. `ingredient_sources` carries
+those ids — `(dataset, external_id)` **unique**, `dataset` deliberately versionless
+(`swiss-blv`, later `bls`) with the version in its own informational column — so the
+database itself refuses to turn one source record into two ingredients. The migration
+backfills it from the 1191 existing Swiss rows.
+
+`ingredient_search_terms` is what `GET /api/ingredients` now matches on instead of the raw
+JSON name columns: every locale's name and every synonym, normalised once at write time
+(`shared/utils/ingredientSearch.ts` — lower-case, umlauts/accents _and_ their two-letter
+spellings folded, punctuation dropped, plus a space-free `compact` form). "Möhre", "Moehre"
+and "mohre" are one string; "Weizenmehl" finds a row a dataset wrote as "Weizen Mehl, Type
+405"; "mehl weizen" finds "Weizenmehl". The result is **ranked** for the first time — the
+endpoint had no `ORDER BY` at all and a `limit=10`, which was survivable at 1191 rows and
+would not have been at several thousand: exact → whole-word start → prefix → compact/word
+prefix → substring, then the viewer's locale, then name before synonym, then the shorter
+matched term — which is what puts "Tomate, roh" above "Tomate, getrocknet" above
+"Tomatensaft" without the data having to say which one is "raw". The create/edit API
+handlers keep the rows for user ingredients; `npm run search:rebuild` (new, last step of
+`db:setup`, the deploy and the E2E workflow) rebuilds the whole table after every seed.
+
+### Changed — the Swiss importer is keyed by `(dataset, external_id)` and writes in batches
+
+It used to recognise its own rows by `ingredient_nutrition.source = 'swiss-blv-v7'`,
+version included — so a BLV V8 under a new source string would have inserted all 1191
+foods a second time. It now looks foods up in `ingredient_sources` without the version and
+bumps the version in place. It also writes multi-row statements inside one transaction
+instead of three round trips per food: the first production deploy spent a quarter of an
+hour in that loop against the remote MySQL host; the same import is now ~30 statements. The
+nutrition values themselves are unchanged. `cleanup-seed-ingredients.mjs` decides "no
+reference dataset" via `ingredient_sources` for the same reason, so a future BLS row is never
+a deletion candidate.
+
+### Added — data sources in the Impressum
+
+Both datasets ask for attribution and the app named neither. The Impressum now lists the
+BLS 4.0 (with its DOI) and the Swiss Food Composition Database V7.0, in all four locales.
+
+### Added — `scripts/merge-user-ingredients.mjs` (phase 6, decision E4)
+
+Before the BLS, a user who could not find "Backpulver" created it by hand; now the catalog
+has it and the autocomplete shows both. The script folds such rows into the reference one:
+`--report` lists every user-created ingredient with its best-matching reference rows by
+normalised name, `--apply <mapping.tsv> --dry-run` shows what a reviewed mapping would do,
+and `--apply` re-points every commit line (forks included — a fork copies ingredient ids,
+so leaving it out would make a diff disagree about one and the same food), closes open
+reports on the row, and deletes it, in one transaction. It validates the whole file before
+touching anything: the source must be user-created, the target must not be, and a branded
+product (manufacturer set) is never folded into a generic one. The mapping holds production
+ids and stays out of the repo. The run against production is still open.
+
+### Changed — dependencies (Dependabot's production and development groups), and why CI was red
+
+CI's `npm audit --audit-level=critical` turned red on advisories that arrived between
+pushes (`@simple-git/argv-parser` via `@nuxt/devtools`, `shell-quote`) — nothing in the
+diff, everything in the tree. Rather than pinning around them, both open Dependabot groups
+were taken in one go: Nuxt 4.6, `@nuxt/ui` 4.12, `@sentry/nuxt` 11, `@simplewebauthn` 14,
+`@vueuse/core` 15, nodemailer 10, zod 4.6, Vitest 5, Playwright 1.64, ESLint 10, knip 6,
+TypeScript 6 and the rest. The lockfile is from npm 12. What the upgrade touched:
+
+- **Sentry 11**: `sourceMapsUploadOptions` is flattened into the module options
+  (`org`/`project`/`authToken`/`telemetry` top-level); `autoInjectServerSentry` is gone
+  because the server config is bundled into the Nitro build by default now, which is what
+  `'top-level-import'` used to ask for; `sendDefaultPii` no longer exists — the SDK never
+  infers the user's IP on its own any more, so `false` is the only behaviour.
+- **Nuxt 4.6 typed routes**: two `$fetch` calls on a template-literal path hit TS2321
+  ("excessive stack depth") in the route-matching conditional type. They pass the path
+  `as string` and type the response explicitly (`TwoFactorCard.vue`, `history.vue`).
+- **ESLint 10 / eslint-plugin-vue**: `vue/no-multiple-template-root` now counts an HTML
+  comment before the root element; three pages had their file-header comment moved inside
+  the root.
+- **knip 6**: it cannot see Nuxt's auto-imported types and reported every one as unused,
+  so the `types` rule is off in `knip.json`; seven internal-only server-util exports it
+  flagged correctly are private now.
+- The E2E suite — passkey enrol-and-sign-in included, which is exactly what the
+  `@simplewebauthn` bump needs covering — was run locally against the built artifact before
+  this went to CI, on purpose: the month's included minutes are nearly spent.
+
 ## [1.10.0] — 2026-08-18
 
 A cookie banner was simply missing — the site had been setting cookies since v1.0 with no

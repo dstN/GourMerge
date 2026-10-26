@@ -658,7 +658,11 @@
       "contactHeading": "Kontakt",
       "emailLabel": "E-Mail",
       "formHint": "Alternativ erreichen Sie uns über unser",
-      "formLink": "Kontaktformular"
+      "formLink": "Kontaktformular",
+      "dataSourcesHeading": "Datenquellen",
+      "dataSourcesIntro": "Die Zutaten und ihre Nährwerte stammen aus diesen Datenbanken:",
+      "dataSourceBls": "Max Rubner-Institut (2025): Bundeslebensmittelschlüssel (BLS), Version 4.0. Karlsruhe.",
+      "dataSourceSwiss": "Bundesamt für Lebensmittelsicherheit und Veterinärwesen BLV: Schweizer Nährwertdatenbank, Version 7.0."
     },
     "privacy": {
       "controllerTitle": "1. Verantwortlicher",

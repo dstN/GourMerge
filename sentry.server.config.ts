@@ -32,7 +32,8 @@ try {
     // Server-side tracing: capture 10% of requests to limit overhead on shared hosting.
     tracesSampleRate: 0.1,
 
-    sendDefaultPii: false,
+    // No `sendDefaultPii` any more — removed in Sentry 11, which never infers the
+    // user's IP into events on its own; `false` is now the only behaviour.
 
     /**
      * Drop expected 4xx.

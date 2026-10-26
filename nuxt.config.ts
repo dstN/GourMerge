@@ -250,28 +250,29 @@ export default defineNuxtConfig({
 
   // ── Sentry ───────────────────────────────────────────────────
   sentry: {
-    sourceMapsUploadOptions: {
-      /**
-       * `|| undefined`, not `|| ''`. The token this expects is a Sentry
-       * **organization** token (scope `org:ci` — "Source Map Upload, Release
-       * Creation"), and those encode their own org, so `sentry-cli` infers it. An
-       * empty string is a *provided* value and overrides that inference, turning a
-       * correctly-configured build into "organization slug is required". Leaving the
-       * key undefined lets the token speak for itself, while still honouring
-       * SENTRY_ORG when it is set.
-       */
-      org: process.env.SENTRY_ORG || undefined,
-      project: process.env.SENTRY_PROJECT || 'gourmerge',
-      authToken: process.env.SENTRY_AUTH_TOKEN || undefined,
-      // Source-map UPLOAD only runs in CI where the auth token is set; the
-      // module skips upload when authToken is empty.
-      telemetry: false,
-    },
-    // Always inject the server SDK so unhandled Nitro errors are captured in
-    // production. This must NOT depend on SENTRY_AUTH_TOKEN (a build-time
-    // source-map concern) — otherwise the CI-built artifact ships without
-    // server-side capture. With an empty DSN, Sentry.init is a safe no-op.
-    autoInjectServerSentry: 'top-level-import',
+    // @sentry/nuxt 11 flattened `sourceMapsUploadOptions` into the module options
+    // (shared `BuildTimeOptionsBase`): org/project/authToken/telemetry are top-level,
+    // `sourcemaps` holds the upload details.
+    /**
+     * `|| undefined`, not `|| ''`. The token this expects is a Sentry
+     * **organization** token (scope `org:ci` — "Source Map Upload, Release
+     * Creation"), and those encode their own org, so `sentry-cli` infers it. An
+     * empty string is a *provided* value and overrides that inference, turning a
+     * correctly-configured build into "organization slug is required". Leaving the
+     * key undefined lets the token speak for itself, while still honouring
+     * SENTRY_ORG when it is set.
+     */
+    org: process.env.SENTRY_ORG || undefined,
+    project: process.env.SENTRY_PROJECT || 'gourmerge',
+    authToken: process.env.SENTRY_AUTH_TOKEN || undefined,
+    // Source-map UPLOAD only runs in CI where the auth token is set; the
+    // module skips upload when authToken is empty.
+    telemetry: false,
+    // No `autoInjectServerSentry` any more: since @sentry/nuxt 11 the server config is
+    // bundled into the Nitro build by default (the option is deprecated), which is what
+    // the former 'top-level-import' asked for — server-side capture of unhandled Nitro
+    // errors in production, independent of SENTRY_AUTH_TOKEN. With an empty DSN,
+    // Sentry.init stays a safe no-op.
   },
 
   // ── Head / Fonts ───────────────────────────────────────────

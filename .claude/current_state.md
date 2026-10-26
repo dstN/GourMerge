@@ -76,8 +76,8 @@ GourMerge/
 ├── server/
 │   ├── api/                    # 69 REST endpoints (see §6)
 │   ├── database/
-│   │   ├── schema.ts           # Drizzle ORM schema (28 tables)
-│   │   └── migrations/         # 17 versioned SQL migrations (0000–0016)
+│   │   ├── schema.ts           # Drizzle ORM schema (30 tables)
+│   │   └── migrations/         # 18 versioned SQL migrations (0000–0017)
 │   ├── middleware/             # Nitro middleware
 │   ├── plugins/                # Nitro plugins (db, logger, sentry, error-handler)
 │   └── utils/                  # drizzle.ts, diff.ts, merge.ts, units.ts, slug.ts,
@@ -101,7 +101,7 @@ GourMerge/
 
 ---
 
-## 4. Database Schema (28 tables)
+## 4. Database Schema (30 tables)
 
 All migrations versioned in `server/database/migrations/`. **Never use `db:push` against production.**
 
@@ -109,8 +109,10 @@ All migrations versioned in `server/database/migrations/`. **Never use `db:push`
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
 | `users`                      | Auth + profile (`is_admin` gates `/admin/*`)                                                                                          | —                                                                          |
 | `user_avatars`               | Profile picture, `MEDIUMBLOB` (WebP)                                                                                                  | CASCADE on user delete                                                     |
-| `ingredients`                | Global master catalog (Swiss BLV + user-created); `created_by` null for the BLV import                                                | 1:1 → `ingredient_nutrition`; creator → `users` (SET NULL)                 |
-| `ingredient_nutrition`       | Per-100g nutritional data (Swiss BLV V7.0 or user-supplied)                                                                           | —                                                                          |
+| `ingredients`                | Global master catalog (Swiss BLV + BLS 4.0 + user-created); `created_by` null for the imports                                         | 1:1 → `ingredient_nutrition`; creator → `users` (SET NULL)                 |
+| `ingredient_nutrition`       | Per-100g nutritional data (Swiss BLV V7.0 or user-supplied) — the _effective_ values; `source` names the dataset they came from       | —                                                                          |
+| `ingredient_sources`         | Which reference datasets know an ingredient: `(dataset, external_id)` unique, `dataset_version` informational (migration `0017`)      | n:1 → `ingredients` (CASCADE)                                              |
+| `ingredient_search_terms`    | Normalised names + synonyms per locale, what `GET /api/ingredients` matches and ranks on (migration `0017`)                           | n:1 → `ingredients` (CASCADE)                                              |
 | `recipes`                    | Repository equivalent                                                                                                                 | owner → `users`; forkedFrom → self                                         |
 | `recipe_tags`                | Recipe ↔ tag M:M                                                                                                                      | CASCADE on recipe delete                                                   |
 | `tags`                       | Tag master list                                                                                                                       | —                                                                          |
@@ -361,18 +363,20 @@ link, because a user locked out of their account still holds both rights.
 
 ## 8. Scripts
 
-| Script                         | NPM command                                 | Purpose                                                                                                                               |
-| ------------------------------ | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `i18n-check.mjs`               | `npm run i18n:check`                        | 4-way locale parity gate                                                                                                              |
-| `import-swiss-foods.mjs`       | `npm run seed:swiss`                        | Import Swiss BLV Food Composition DB V7.0                                                                                             |
-| `seed-ingredients.mjs`         | `npm run db:seed`                           | Curated ingredient entries (not in Swiss BLV)                                                                                         |
-| `cleanup-seed-ingredients.mjs` | `node scripts/cleanup-seed-ingredients.mjs` | Remove non-BLV ingredients not used in any recipe                                                                                     |
-| `seed-tags.mjs`                | —                                           | Seed default recipe tags                                                                                                              |
-| `reconcile-counters.mjs`       | —                                           | Repair denormalized star/fork counters (idempotent)                                                                                   |
-| `generate-icons.mjs`           | `npm run generate:icons`                    | Generate PWA/favicon assets from brand SVG                                                                                            |
-| `cleanup-retention.mjs`        | `npm run db:cleanup`                        | **Enforce the retention windows the privacy policy states.** Nightly cron in production — see `docs/RUNBOOK.md`. `--dry-run` previews |
+| Script                         | NPM command                                 | Purpose                                                                                                                                                                                           |
+| ------------------------------ | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `i18n-check.mjs`               | `npm run i18n:check`                        | 4-way locale parity gate                                                                                                                                                                          |
+| `import-swiss-foods.mjs`       | `npm run seed:swiss`                        | Import Swiss BLV Food Composition DB V7.0 — keyed by `ingredient_sources (dataset, external_id)`, batched, one transaction                                                                        |
+| `rebuild-search-terms.mjs`     | `npm run search:rebuild`                    | Rebuild `ingredient_search_terms` for every ingredient; runs after all seeds (`db:setup`, deploy, E2E)                                                                                            |
+| `seed-ingredients.mjs`         | `npm run db:seed`                           | Curated ingredient entries (not in Swiss BLV)                                                                                                                                                     |
+| `merge-user-ingredients.mjs`   | `node scripts/merge-user-ingredients.mjs`   | Fold user-created ingredients that duplicate a catalog row: `--report` lists them with candidates, `--apply <tsv>` re-points every commit line and deletes the row (dry-run first, backup before) |
+| `cleanup-seed-ingredients.mjs` | `node scripts/cleanup-seed-ingredients.mjs` | Remove ingredients from no reference dataset (`ingredient_sources`) that no recipe uses                                                                                                           |
+| `seed-tags.mjs`                | —                                           | Seed default recipe tags                                                                                                                                                                          |
+| `reconcile-counters.mjs`       | —                                           | Repair denormalized star/fork counters (idempotent)                                                                                                                                               |
+| `generate-icons.mjs`           | `npm run generate:icons`                    | Generate PWA/favicon assets from brand SVG                                                                                                                                                        |
+| `cleanup-retention.mjs`        | `npm run db:cleanup`                        | **Enforce the retention windows the privacy policy states.** Nightly cron in production — see `docs/RUNBOOK.md`. `--dry-run` previews                                                             |
 
-`npm run db:setup` chains migrate + all three seeds for a fresh clone.
+`npm run db:setup` chains migrate + all seeds + `search:rebuild` for a fresh clone.
 `npm run seed:swiss:regen` rebuilds the committed seed from the BLV spreadsheets.
 
 ---
@@ -381,18 +385,22 @@ link, because a user locked out of their account still holds both rights.
 
 The `ingredients` master table is populated from the **Swiss BLV Food Composition Database V7.0** (naehrwertdaten.ch).
 
-- **1191** Swiss food entries with DE/EN/FR/IT names and synonyms. (Previously documented as "~2300+" — wrong; the BLV generic-foods sheet is `A1:EK1193`, i.e. 1191 data rows after two header rows, and the importer merges all four language exports onto that same ID set.)
+- **1190** Swiss food entries with DE/EN/FR/IT names and synonyms. (Previously documented as "~2300+" — wrong; the BLV generic-foods sheet is `A1:EK1193`, i.e. 1190 data rows after its header rows — the second header line had slipped through as food "ID"/"Name" until 2026-10-26 — and the importer merges all four language exports onto that same ID set.)
 - Nutrition data per 100g (kcal, macros, fiber, micros) in `ingredient_nutrition`
-- Source marker: `ingredient_nutrition.source = 'swiss-blv-v7'`
-- Locale-aware search: name + synonyms matched by user's locale (`GET /api/ingredients?q=&locale=`)
+- Source marker: `ingredient_nutrition.source = 'swiss-blv-v7'` (the values), plus one `ingredient_sources` row per food: `dataset = 'swiss-blv'`, `external_id` = the BLV numeric ID, `dataset_version = '7.0'`. The importer looks foods up by `(dataset, external_id)` — the version is bumped in place, so a BLV V8 updates these rows instead of inserting 1191 duplicates (which is what matching on the versioned `source` string would have done). The same key is what a second dataset (BLS 4.0, see `docs/BLS-INTEGRATION-PLAN.md`) will attach to an existing ingredient.
+- Search (`GET /api/ingredients?q=&locale=`) matches `ingredient_search_terms`: every locale name and synonym, normalised by `shared/utils/ingredientSearch.ts` (lower-case, umlauts/accents and their digraph spellings folded, punctuation dropped, plus a space-free `compact` form), ranked exact → prefix → compact/word prefix → substring, then viewer locale, name before synonym, shorter term first. Written by the importer for its rows, by the POST/PATCH handlers for user rows, and rebuilt wholesale by `npm run search:rebuild` after every seed.
 - Curated entries (not in Swiss DB) can be added to `seed-ingredients.mjs` with `source = 'curated'`
 - **Vanilla Sugar** (`Vanillezucker`): not in Swiss BLV DB — added as a curated entry in `seed-ingredients.mjs` (apply with `npm run db:seed`)
 - **Manufacturer** (`ingredients.manufacturer`, migration `0016`): optional, for a branded product ("Barilla") — the Swiss BLV import never sets it, since its entries are generic foods
 - **Micronutrient catalog**: 13 vitamins + 10 minerals, the exact key set `import-swiss-foods.mjs` writes into `ingredient_nutrition.micros` for its own foods. Canonical list lives in `shared/utils/ingredientMicros.ts`, imported by the create/edit forms and by `NutritionFacts.vue`'s display — one source, so a self-reported value lands in the same field a recipe's micronutrient totals already read from
 
+### BLS 4.0 (2026-10-26)
+
+The German Bundeslebensmittelschlüssel 4.0 (Max Rubner-Institut, Dec 2025, free of licence barriers) is the second dataset. 5325 of its 7140 foods are imported: all of groups B–W (foods one can buy, cooked variants included) plus 230 components out of the dish groups X/Y (stocks, sauces/dressings, doughs); the remaining dishes are what GourMerge makes out of ingredients. 442 BLS codes are attached to an existing ingredient (438 Swiss foods, decided one by one with a strict rule — same food, same state, kcal within 20 %/30 kcal, fat within 5 g — plus Vanillezucker and three `ok:` pairs); 4883 become their own ingredients, so the catalog grows to ~6100. Files, all in `server/database/seeds/`: `bls-foods.jsonl` (generated, ~4 MB), `bls-map.csv` (decisions), `bls-i18n.jsonl` (FR/IT names for every imported code — the BLS itself has only DE/EN; the English ZIP is the same data with English headers), `bls-4.0-errata.json` (the MRI's corrections: skimmed-milk retinol, 1.5 % milk iodine, almond calcium; `T104100` Sardelle roh imported without nutrition; the OLSAC double count in the energy formula is corrected in `scripts/lib/bls.mjs`). Mapping: 12 macros + 22 micros (VITB6 µg→mg; no selenium, no density); `-` → NULL, `TR`/`<LOQ`/`<LOD` → 0. The importer is keyed by `(bls, code)`, writes in batches and applies the pairs on every run (the Swiss importer rewrites the names from its seed whenever it runs, this puts the German name back). `tests/unit/blsSeed.test.ts` guards the invariants of the committed files. One row needs a hand: the stray "ID"/"Name" food from the old Swiss seed still exists in any database seeded before 2026-10-26 (`created_by IS NULL`, no `ingredient_sources` row, category `kategorie`); `node scripts/cleanup-seed-ingredients.mjs --execute` removes it when no recipe uses it (it lists the curated Vanillezucker too — that one has a BLS source now and is not a candidate).
+
 ### Seeding (committed seed file, not the spreadsheets)
 
-`server/database/seeds/swiss-foods.jsonl` (1191 foods, ~1 MB, **tracked**) is the seed source, so a fresh clone can run `npm run db:setup` — migrate + all three seeds — with no downloads and without the `xlsx` dependency. JSON Lines, one food per line, so a dataset update is a reviewable diff rather than one rewritten mega-line.
+`server/database/seeds/swiss-foods.jsonl` (1190 foods, ~1 MB, **tracked**) is the seed source, so a fresh clone can run `npm run db:setup` — migrate + all three seeds — with no downloads and without the `xlsx` dependency. JSON Lines, one food per line, so a dataset update is a reviewable diff rather than one rewritten mega-line.
 
 `scripts/import-swiss-foods.mjs` reads that file by default; `--from-xlsx` re-parses the four BLV spreadsheets from `.claude/data/swiss/` (gitignored, not redistributed) and `--emit-seed` regenerates the seed. `xlsx` is a **lazy** import inside that path only, so the contributor path never loads the package carrying the unfixed advisory.
 

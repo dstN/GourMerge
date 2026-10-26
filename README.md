@@ -24,7 +24,7 @@ A git-like recipe platform. Recipes are repositories — they have branches, com
 | Runtime    | Node 26                                         |
 | Deployment | Netcup Webhosting + Phusion Passenger (Apache)  |
 
-At a glance: **29 pages · 69 API endpoints · 28 tables · 714 i18n keys × 4
+At a glance: **29 pages · 69 API endpoints · 30 tables · 714 i18n keys × 4
 locales · 304 unit tests · 88 Playwright specs · zero axe
 violations · `npm audit` at zero.**
 
@@ -76,16 +76,18 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ### What `db:setup` does
 
-It runs migrations then all three seeds, because an empty database gives you an
+It runs migrations, then every seed, then the search-term build, because an empty database gives you an
 app you cannot really use — with no ingredients, the autocomplete returns nothing
 and you cannot author a recipe, which is the core loop.
 
-| Step           | Provides                                                                         |
-| -------------- | -------------------------------------------------------------------------------- |
-| `db:migrate`   | Schema, 17 versioned migrations                                                  |
-| `seed:swiss`   | 1191 foods + per-100g nutrition, DE/EN/FR/IT names, from the committed seed file |
-| `db:seed`      | Curated ingredients absent from the Swiss dataset (e.g. Vanillezucker)           |
-| `db:seed:tags` | Base culinary tags                                                               |
+| Step             | Provides                                                                                |
+| ---------------- | --------------------------------------------------------------------------------------- |
+| `db:migrate`     | Schema, 18 versioned migrations                                                         |
+| `seed:swiss`     | 1190 foods + per-100g nutrition, DE/EN/FR/IT names, from the committed seed file        |
+| `db:seed`        | Curated ingredients absent from the Swiss dataset (e.g. Vanillezucker)                  |
+| `db:seed:tags`   | Base culinary tags                                                                      |
+| `db:seed:tour`   | The onboarding tour's system recipe                                                     |
+| `search:rebuild` | `ingredient_search_terms`, what the autocomplete matches on, derived from all the above |
 
 The Swiss data is read from `server/database/seeds/swiss-foods.jsonl`, which **is**
 committed — so seeding needs no spreadsheets, no downloads and no `xlsx`
@@ -95,41 +97,54 @@ dependency. See [Swiss ingredient data](#swiss-ingredient-data) for regenerating
 
 ## Scripts
 
-| Command                    | Description                                           |
-| -------------------------- | ----------------------------------------------------- |
-| `npm run dev`              | Start dev server                                      |
-| `npm run build`            | Build for production (Nitro node-server)              |
-| `npm run typecheck`        | TypeScript type check                                 |
-| `npm run lint`             | ESLint + design-system gate                           |
-| `npm run lint:fix`         | ESLint auto-fix                                       |
-| `npm run design:check`     | DESIGNBOOK.md conformance gate                        |
-| `npm run format`           | Prettier format                                       |
-| `npm test`                 | Vitest unit tests (coverage-gated)                    |
-| `npm run test:e2e`         | Playwright API + journey + axe a11y tests             |
-| `npm run knip`             | Dead-code check (unused files/exports/deps)           |
-| `npm run i18n:check`       | 4-way locale parity gate (DE/EN/FR/IT)                |
-| `npm run db:generate`      | Generate a new Drizzle migration                      |
-| `npm run db:migrate`       | Apply pending migrations                              |
-| `npm run db:setup`         | Migrate + all seeds (first-run convenience)           |
-| `npm run db:cleanup`       | Retention windows, locally (production: /tasks/*)     |
-| `npm run db:inactive`      | Same, locally (production uses /tasks/*, see runbook) |
-| `npm run db:studio`        | Drizzle Studio (visual DB explorer)                   |
-| `npm run seed:swiss`       | Load the committed Swiss BLV seed file into the DB    |
-| `npm run seed:swiss:regen` | Regenerate that seed file from the BLV spreadsheets   |
-| `npm run db:seed`          | Curated ingredients not in the Swiss dataset          |
-| `npm run db:seed:tags`     | Base culinary tags                                    |
-| `npm run generate:icons`   | Regenerate PWA/favicon assets from brand SVG          |
+| Command                                   | Description                                                           |
+| ----------------------------------------- | --------------------------------------------------------------------- |
+| `npm run dev`                             | Start dev server                                                      |
+| `npm run build`                           | Build for production (Nitro node-server)                              |
+| `npm run typecheck`                       | TypeScript type check                                                 |
+| `npm run lint`                            | ESLint + design-system gate                                           |
+| `npm run lint:fix`                        | ESLint auto-fix                                                       |
+| `npm run design:check`                    | DESIGNBOOK.md conformance gate                                        |
+| `npm run format`                          | Prettier format                                                       |
+| `npm test`                                | Vitest unit tests (coverage-gated)                                    |
+| `npm run test:e2e`                        | Playwright API + journey + axe a11y tests                             |
+| `npm run knip`                            | Dead-code check (unused files/exports/deps)                           |
+| `npm run i18n:check`                      | 4-way locale parity gate (DE/EN/FR/IT)                                |
+| `npm run db:generate`                     | Generate a new Drizzle migration                                      |
+| `npm run db:migrate`                      | Apply pending migrations                                              |
+| `npm run db:setup`                        | Migrate + all seeds (first-run convenience)                           |
+| `npm run db:cleanup`                      | Retention windows, locally (production: /tasks/*)                     |
+| `npm run db:inactive`                     | Same, locally (production uses /tasks/*, see runbook)                 |
+| `npm run db:studio`                       | Drizzle Studio (visual DB explorer)                                   |
+| `npm run seed:swiss`                      | Load the committed Swiss BLV seed file into the DB                    |
+| `npm run seed:swiss:regen`                | Regenerate that seed file from the BLV spreadsheets                   |
+| `npm run seed:bls`                        | Load the committed BLS 4.0 seed file into the DB                      |
+| `npm run seed:bls:regen`                  | Regenerate that seed from the MRI spreadsheet + map                   |
+| `npm run search:rebuild`                  | Rebuild the ingredient search terms from the catalog                  |
+| `node scripts/merge-user-ingredients.mjs` | Fold user-created duplicates into the catalog (`--report`, `--apply`) |
+| `npm run db:seed`                         | Curated ingredients not in the Swiss dataset                          |
+| `npm run db:seed:tags`                    | Base culinary tags                                                    |
+| `npm run generate:icons`                  | Regenerate PWA/favicon assets from brand SVG                          |
 
 > **Never run `npm run db:push` against production.** It mutates the DB directly without a migration file.
 
 ---
 
-## Swiss ingredient data
+## Ingredient data
 
-Ingredients and their per-100g nutrition come from the **Swiss BLV Food Composition
-Database V7.0** ([naehrwertdaten.ch](https://www.naehrwertdaten.ch)).
+Ingredients and their per-100g nutrition come from two public datasets: the **Swiss BLV
+Food Composition Database V7.0** ([naehrwertdaten.ch](https://www.naehrwertdaten.ch),
+1190 foods, DE/EN/FR/IT) and the German **Bundeslebensmittelschlüssel BLS 4.0** of the
+Max Rubner-Institut ([blsdb.de](https://blsdb.de), 5325 foods imported, DE/EN; FR/IT
+names are ours). Where both describe the same food (442 cases, decided by hand in
+`server/database/seeds/bls-map.csv`) there is one ingredient with two
+`ingredient_sources` rows: it shows the German BLS name, keeps the Swiss nutrition
+values and FR/IT names, and answers to both names in the search. Everything else is
+its own ingredient, so the catalog holds about 6100 reference ingredients.
 
-`server/database/seeds/swiss-foods.jsonl` (1191 foods, ~1 MB) is **committed**, so
+### Swiss BLV
+
+`server/database/seeds/swiss-foods.jsonl` (1190 foods, ~1 MB) is **committed**, so
 `npm run seed:swiss` works on a fresh clone with no downloads and no `xlsx`
 dependency. It is JSON Lines — one food per line — so updating the dataset produces
 a reviewable diff rather than rewriting a single enormous line.
@@ -156,6 +171,29 @@ npm run seed:swiss
 The spreadsheets themselves are **not** in the repo — `.claude/` is gitignored, which
 also sidesteps any question about redistributing them. Only the derived seed is
 tracked.
+
+### BLS 4.0
+
+`server/database/seeds/bls-foods.jsonl` (~4 MB, committed) is built from the MRI's
+spreadsheet plus three hand-maintained files next to it: `bls-map.csv` (which codes are
+the same ingredient as a Swiss food, which dish-group codes are ingredients after all —
+stocks, sauces, doughs — and which are skipped), `bls-i18n.jsonl` (FR/IT names for
+every imported code) and `bls-4.0-errata.json` (the MRI's published corrections, applied
+on the way in; the OLSAC energy double count is a rule in `scripts/lib/bls.mjs`).
+`npm run seed:bls` runs after `seed:swiss`, because the pairs attach to Swiss rows.
+
+To regenerate after the MRI publishes 4.1:
+
+```bash
+# 1. Download the German ZIP from https://blsdb.de/bls (the English one is the same
+#    data with English headers) and put BLS_4_0_Daten_2025_DE.xlsx into .claude/data/bls/
+# 2. Add FR/IT names for new codes to bls-i18n.jsonl, decisions for new codes to
+#    bls-map.csv, bump DATASET_VERSION in scripts/lib/bls.mjs
+# 3. Rebuild the seed — it refuses to write when a decision or a translation is missing
+npm run seed:bls:regen
+# 4. Review the diff, then load it
+npm run seed:bls
+```
 
 ---
 

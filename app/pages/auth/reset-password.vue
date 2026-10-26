@@ -31,8 +31,8 @@ async function submit() {
 </script>
 
 <template>
-  <!-- Cap + centring come from the auth layout (DESIGNBOOK §4.1). -->
   <UCard>
+    <!-- Cap + centring come from the auth layout (DESIGNBOOK §4.1). -->
     <template #header>
       <h1 class="text-2xl font-bold text-center">{{ t('auth.resetPassword') }}</h1>
     </template>
