@@ -1,24 +1,25 @@
 # Plan: BLS 4.0 als zweite Lebensmittelquelle
 
-Stand: 2026-10-26 · Status: **Entwurf, nichts umgesetzt**
+Stand: 2026-10-26 · Status: **Entwurf, nichts umgesetzt** · Entscheidungen E1–E4 getroffen (§11)
 
 Ziel: den Bundeslebensmittelschlüssel (BLS) 4.0 des Max Rubner-Instituts neben der
 Schweizer BLV-Datenbank V7.0 in den Zutatenkatalog aufnehmen, **ohne doppelte
-Zutaten zu erzeugen**. Alle Zahlen unten stammen aus einer Auswertung der
-Original-Downloads (Daten, Komponentenliste, Dokumentation, Erratum Stand August 2026)
-gegen `server/database/seeds/swiss-foods.jsonl`.
+Zutaten zu erzeugen**, und beide Quellen in allen vier Sprachen gleich gut auffindbar
+machen. Alle Zahlen unten stammen aus einer Auswertung der Original-Downloads (Daten,
+Komponentenliste, Dokumentation, Erratum Stand August 2026) gegen
+`server/database/seeds/swiss-foods.jsonl`.
 
 ---
 
 ## 1. Einschätzung: Swiss ersetzen oder ergänzen?
 
-**Empfehlung: ergänzen, nicht ersetzen.** Eine Zutat bleibt ein Begriff, mit dem
-gekocht wird; Swiss und BLS werden zu Quellen dieser Zutat. Wo beide dasselbe
-Lebensmittel beschreiben, entsteht **eine** Zeile.
+**Ergänzen, nicht ersetzen.** Eine Zutat bleibt ein Begriff, mit dem gekocht wird;
+Swiss und BLS werden zu Quellen dieser Zutat. Wo beide dasselbe Lebensmittel
+beschreiben, entsteht **eine** Zeile.
 
 | Kriterium                  | Swiss BLV V7.0                                    | BLS 4.0                                                                                  |
 | -------------------------- | ------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| Lebensmittel               | 1.191                                             | 7.140 gesamt, davon **3.327** kaufbare Einzellebensmittel (siehe §3)                     |
+| Lebensmittel               | 1.191                                             | 7.140 gesamt, davon ca. **5.325** im Umfang (siehe §3)                                   |
 | Sprachen der Namen         | **DE, EN, FR, IT** (offiziell)                    | **nur DE + EN**                                                                          |
 | Synonyme                   | ja, je Sprache                                    | nein (nur Alternativen im Namen, z. B. „Karotte/Möhre")                                  |
 | Wortschatz                 | Schweizerdeutsch (Rahm, Poulet, Peperoni)         | Deutsch (Sahne, Hähnchen, Gemüsepaprika)                                                 |
@@ -28,36 +29,28 @@ Lebensmittel beschreiben, entsteht **eine** Zeile.
 | Selen                      | 55 % der Zeilen                                   | **fehlt komplett**                                                                       |
 | Dichte (ml → g)            | 157 Zeilen                                        | **keine**                                                                                |
 | Herkunft je Datenpunkt     | ja                                                | ja (13 Kategorien, Referenz je Wert)                                                     |
-| Bekannte Fehler            | –                                                 | Erratum mit 6 Punkten, Korrektur erst in 4.1 (siehe §5)                                  |
+| Bekannte Fehler            | –                                                 | Erratum mit 6 Punkten, Korrektur erst in 4.1 (siehe §6)                                  |
 | Lizenz                     | frei nutzbar (Bedingungen hier nicht neu geprüft) | „kostenfrei und ohne Lizenzbarrieren", ausdrücklich auch App-Entwicklung; Quelle angeben |
 
-Warum Swiss nicht rausfliegen sollte:
+Warum Swiss bleibt:
 
-1. **Mehrsprachigkeit.** Das Frontend hat vier Sprachen. BLS liefert für kein einziges
-   Lebensmittel FR oder IT. Ohne Swiss fiele die FR/IT-Autovervollständigung für den
-   ganzen Katalog auf EN/DE zurück. Das englische ZIP hilft dabei nicht: Namen und Werte
-   sind identisch mit dem deutschen, nur Spaltenköpfe, Herkunftslabels und 4
-   Hinweistexte sind übersetzt. Es reicht also eine der beiden Dateien.
+1. **Mehrsprachigkeit.** BLS liefert für kein einziges Lebensmittel FR oder IT. Das
+   englische ZIP hilft dabei nicht: Namen und Werte sind identisch mit dem deutschen,
+   nur Spaltenköpfe, Herkunftslabels und 4 Hinweistexte sind übersetzt. Es reicht also
+   eine der beiden Dateien. Die offiziellen FR/IT-Namen von Swiss sind außerdem das
+   Glossar für die Übersetzung der BLS-Namen (§7).
 2. **Bestehende Rezepte.** `recipe_commit_ingredients.ingredient_id` verweist ohne
-   Cascade auf `ingredients.id`, und Commits sind unveränderliche Snapshots. Eine
-   benutzte Swiss-Zeile lässt sich nicht löschen, ohne Rezept-Historie umzuschreiben.
-   „Swiss rauswerfen" könnte also höchstens heißen, ihre Nährwerte zu ersetzen, und das
-   erlaubt das Design unten ohnehin.
+   Cascade auf `ingredients.id`. Eine benutzte Swiss-Zeile lässt sich nicht löschen,
+   ohne Commits umzuschreiben.
 3. **Sie ergänzen sich.** BLS hat viel, was Swiss fehlt: Vanillezucker (heute von Hand
    kuratiert), Puderzucker, Backpulver, Gelatine, Limette, Gouda, Tahin, deutsche
    Mehltypen 405/550/1050. Swiss hat dafür Zutaten, die im BLS fehlen: Thymian,
    Rosmarin, Paprika (Gewürz), Zimt, Schweizer Käse und Fleischstücke. Gewürze sind in
    **beiden** dünn: Muskat, Kreuzkümmel, Koriander, Oregano und Kurkuma fehlen überall.
-4. **Suche.** Die BLS-Namen allein würden die Autovervollständigung verschlechtern:
-   Bei der Präfixsuche findet „Weizenmehl" kein „Weizen Mehl, Type 405". Wo beide
-   Quellen dasselbe meinen, sind die Swiss-Namen die besseren Anzeigenamen. Der
-   deutsche BLS-Name wird dann Synonym, sodass „Sahne" die Zeile „Vollrahm" findet.
-   Für gourmerge.de mit Deutsch als Standardsprache ist gerade das ein großer Gewinn.
 
 Wo BLS inhaltlich klar besser ist: deutsche Marktprodukte, neuere Analysen
-(Dezember 2025), Ballaststoffe nach aktueller Codex-Definition, mehr Lebensmittel.
-Deshalb ist es sinnvoll, für doppelt vorhandene Zutaten später die BLS-Werte zu
-nehmen (siehe Entscheidung E1).
+(Dezember 2025), Ballaststoffe nach aktueller Codex-Definition, deutlich mehr
+Lebensmittel. Für Paare gelten trotzdem die Swiss-Werte (E1).
 
 ---
 
@@ -84,8 +77,7 @@ erneuten Import.
 
 `ingredient_nutrition` bleibt, wie es ist, und hält die **wirksamen** Werte. `source`
 sagt, aus welchem Datensatz sie stammen (`swiss-blv-v7`, `bls-4.0`, `curated`). Damit
-ändert sich an keinem Lesepfad etwas: `nutrition.ts`, die Such-API, NutritionFacts und
-der Datenexport bleiben unberührt.
+ändert sich an `nutrition.ts`, NutritionFacts und dem Datenexport nichts.
 
 Migration: Tabelle anlegen und aus `ingredient_nutrition WHERE source = 'swiss-blv-v7'`
 auffüllen.
@@ -97,84 +89,136 @@ Die Suche über `ingredient_sources (dataset, external_id)` behebt das gleich mi
 
 ---
 
-## 3. Umfang: welche BLS-Einträge überhaupt
+## 3. Umfang
 
 Der BLS-Code ist siebenstellig: 1. Stelle Hauptgruppe, 6. Stelle Garverfahren
 (0/1 = handelsüblich/roh, 2–9 = gegart, gekocht, gebraten …).
 
-| Teilmenge                                 | Anzahl | Vorschlag                                                                     |
-| ----------------------------------------- | -----: | ----------------------------------------------------------------------------- |
-| X, Y: Menükomponenten / Gerichte          |  2.050 | **nicht** importieren: Gerichte entstehen bei uns als Rezept                  |
-| B–W, 6. Stelle 2–9: gegarte Varianten     |  1.763 | **nicht** importieren: Zutaten werden roh erfasst, das Garen steht im Schritt |
-| B–W, 6. Stelle 0/1: kaufbare Lebensmittel |  3.327 | importieren, jeder Eintrag mit Entscheidung (§4)                              |
+| Teilmenge                                        | Anzahl | Umgang                                                            |
+| ------------------------------------------------ | -----: | ----------------------------------------------------------------- |
+| B–W, 6. Stelle 0/1: kaufbare Lebensmittel        |  3.327 | importieren                                                       |
+| B–W, 6. Stelle 2–9: gekochte/gebratene Varianten |  1.763 | importieren; in der Suche hinter der rohen Variante (§5)          |
+| X/Y: Komponenten, die als Zutat vorkommen        |   ~235 | importieren: 37 Brühen/Fonds, 159 Saucen/Dressings/Dips, 39 Teige |
+| X/Y: fertige Gerichte                            | ~1.815 | **nicht** importieren (Kalbsfrikassee, Gulaschsuppe, Eintöpfe …)  |
+
+In den ersten beiden Zeilen stecken auch die 466 Einträge der Gruppe D (Kuchen,
+Torten, Gebäck); die kommen nach E2 komplett mit.
+
+X und Y sind keine Fertigprodukte, sondern im Haushalt gekochte Gerichte, deren Werte
+das MRI per Rezeptberechnung ermittelt hat. Fertig- und Instantprodukte
+(Brühwürfel/-pulver, Instant-Kartoffelpüree, Ei- und Milchpulver, Kakaopulver) stehen
+in den normalen Gruppen R, K, E, M, S und sind damit ohnehin dabei. Markenprodukte wie
+„Fix für …" gibt es im BLS nicht.
 
 Innerhalb des BLS gibt es keine doppelten Namen (geprüft). Die Duplikatfrage stellt
 sich also nur zwischen BLS und Swiss, BLS und kuratierten Zutaten sowie BLS und von
 Nutzern angelegten Zutaten.
 
-Grenzfälle für das Review: Gruppe D (Kuchen, Torten, Gebäck, 459 Einträge) sowie
-Fertigprodukte. Einiges davon sind echte Zutaten (Löffelbiskuit, Butterkekse), anderes
-nicht (Orangencremetorte). Siehe Entscheidung E2.
-
 ---
 
-## 4. Duplikatvermeidung: Abgleich mit Entscheidungsdatei
+## 4. Abgleich durch die KI: Paare und Suchbegriffe
 
 Es gibt **keinen** Querverweis zwischen BLS und BLV (kein FoodEx2, kein LanguaL).
-Abgleichen lässt sich nur über Namen und Nährwerte. Ein Prototyp mit reiner
-Namens- und Nährwertähnlichkeit ergab für die 1.191 Swiss-Lebensmittel:
+Ein reiner Algorithmus reicht nicht: Ein Prototyp mit Namens- und
+Nährwertähnlichkeit fand für die 1.191 Swiss-Lebensmittel 131 eindeutige Treffer,
+271 unklare Fälle und 789 ohne Kandidat, darunter echte Paare wie Bratbutter ↔
+Butterschmalz. Er würde zudem Falsches zusammenlegen: Schweizer „Cervelat" ist
+nicht die deutsche Zervelatwurst.
 
-- **131** eindeutige Treffer (Tomate roh ↔ Tomate roh, Milchschokolade ↔ Milchschokolade)
-- **271** mehrdeutig (Kalb Kotelett ↔ Kalb Kotelett (Rücken), Vollmilch ↔ Vollmilch 3,5 %)
-- **789** ohne Kandidat, **darunter echte Paare**: Bratbutter ↔ Butterschmalz,
-  Teilentrahmte Milch ↔ Milch fettarm 1,5 %, Rind Gehacktes ↔ Rind Hackfleisch
+Deshalb macht den Abgleich die KI (Claude), gestützt auf Skripte, die Kandidaten
+liefern und das Ergebnis prüfen. Dabei entstehen **zwei getrennte Ergebnisse**, weil
+Zusammenlegen und Auffindbarkeit verschiedene Fragen sind:
 
-Ein vollautomatischer Abgleich würde also sowohl Duplikate durchlassen als auch Falsches
-zusammenlegen (Schweizer „Peperoni" sind deutsche Gemüsepaprika). Deshalb:
+### 4.1 Paare (streng)
 
-1. **Kandidaten per Skript** (offline, ohne DB):
-   - normalisierte DE- und EN-Namen (ß→ss, Umlaute, Satzzeichen)
-   - zusammengesetzte Wörter verbinden („Weizen Mehl" → „weizenmehl")
-   - Schrägstrich-Alternativen trennen („Karotte/Möhre")
-   - Swiss-Synonyme
-   - eine kleine Vokabeltabelle CH ↔ DE (Poulet/Hähnchen, Rahm/Sahne, Rüebli/Möhre,
-     Peperoni/Gemüsepaprika, Gehacktes/Hackfleisch, Voressen/Gulasch,
-     Nüsslisalat/Feldsalat, Baumnuss/Walnuss, Randen/Rote Bete, Kabis/Weißkohl …)
-   - Zubereitungszustand muss übereinstimmen (roh ≠ geräuchert ≠ Konserve)
-   - Nährwert-Plausibilität (kcal, Protein, Fett, KH, Wasser innerhalb einer Toleranz)
-   - verträgliche Kategorie
-2. **Entscheidungen in einer committeten Datei**
-   `server/database/seeds/bls-map.csv`: eine Zeile je BLS-Code im Umfang:
-   - `same:<swiss-id>`: gleiche Zutat. Der BLS-Code wird an die bestehende Zeile
-     gehängt, der deutsche BLS-Name wird DE-Synonym, die FR/IT-Namen bleiben.
-   - `same:curated:<name>`: dasselbe für kuratierte Zeilen (Vanillezucker).
-   - `new`: eigene, neue Zutat.
-   - `skip`: nicht importieren.
+Zusammengelegt wird nur, was ein Koch austauschbar verwenden würde **und** was
+nährwertseitig zusammenpasst. Beispiele aus dem Probelauf:
 
-   Das Skript füllt eindeutige Fälle vor, den Rest sichtet ein Mensch. Eine
-   KI-Vorsortierung ist möglich und unbedenklich, weil es Referenzdaten sind und keine
-   Nutzerdaten. Final entscheidet trotzdem ein Mensch.
+| Swiss                              | BLS                            | Entscheidung | Grund                                           |
+| ---------------------------------- | ------------------------------ | ------------ | ----------------------------------------------- |
+| Bratbutter                         | Butterschmalz                  | `same`       | gleiches Produkt, Fett 98,3 / 99,5 g            |
+| Peperoni, rot, roh                 | Gemüsepaprika rot, roh         | `same`       | Helvetismus, Werte passen                       |
+| Nüsslisalat, roh                   | Feldsalat/Rapunzel, roh        | `same`       | Helvetismus, Werte passen                       |
+| Baumnuss                           | Walnuss                        | `same`       | Helvetismus, Werte passen                       |
+| Rande, roh                         | Rote Rübe/Rote Bete, roh       | `same`       | Helvetismus, Werte passen                       |
+| Joghurt, nature                    | Joghurt mild, mind. 3,5 % Fett | `same`       | Werte passen                                    |
+| Teilentrahmte Milch, pasteurisiert | Milch fettarm 1,5 %            | getrennt     | 2,8 g gegen 1,5 g Fett: in DE gibt es das nicht |
+| Rind, Gehacktes, mager, roh        | Rind Hackfleisch, roh          | getrennt     | 7,5 g gegen 16,4 g Fett                         |
+| Poulet, Schenkel, mit Haut, roh    | Hähnchen Ober-/Unterschenkel   | getrennt     | ganzer Schenkel ≠ Teilstück                     |
+| Cervelat                           | Zervelatwurst                  | getrennt     | Brühwurst gegen Rohwurst                        |
 
-3. **Harte Regeln beim Erzeugen des Seeds:** Das Skript bricht ab, wenn
-   - ein BLS-Code im Umfang keine Entscheidung hat,
-   - eine Swiss-ID mehr als einmal `same` bekommt (nur 1:1; weitere Varianten werden
-     `new` oder `skip`),
-   - eine Ziel-ID nicht existiert.
+Ablauf:
 
-   So kann kein Duplikat still durchrutschen, und das Review ist im Diff sichtbar.
+1. Ein Skript erzeugt je Swiss-Lebensmittel die besten BLS-Kandidaten mit Namen und
+   den Kernwerten (kcal, Protein, Fett, KH, Wasser). Grundlage sind normalisierte DE-
+   und EN-Namen, Swiss-Synonyme, eine CH ↔ DE-Vokabeltabelle und der
+   Zubereitungszustand.
+2. Claude entscheidet je Swiss-Lebensmittel: `same:<BLS-Code>` oder kein Paar, mit
+   einem kurzen Grund. Unsichere Fälle bekommen das Flag `unsicher` und werden dir
+   gezeigt. Erwartet: wenige Dutzend.
+3. Alles landet in der committeten Datei `server/database/seeds/bls-map.csv`. Jeder
+   BLS-Code im Umfang, der dort nicht als `same` steht, wird `new`.
+4. Ein Prüfskript bricht ab, wenn
+   - eine Swiss-ID mehr als ein `same` hat (nur 1:1),
+   - ein Ziel nicht existiert,
+   - die Nährwerte eines `same`-Paares stark abweichen (etwa > 20 % kcal oder > 5 g
+     Fett), sofern das Paar nicht ausdrücklich begründet ist.
 
-4. **Von Nutzern angelegte Zutaten** (`created_by IS NOT NULL`) werden **nicht**
-   automatisch zusammengelegt. Referenzdaten müssen in jeder Umgebung identisch
-   ankommen und dürfen nicht vom Inhalt der Produktionsdatenbank abhängen. Stattdessen
-   listet ein Admin-Skript Nutzerzutaten auf, deren Name nach dem Import einer
-   Referenzzutat (fast) gleicht. Was dann passiert, entscheidet E4.
+Kuratierte Zeilen laufen genauso mit (`same:curated:Vanillezucker`).
 
-Aufwand Review: grob 400 bis 1.200 Paare mit Kandidat zu sichten, die übrigen BLS-Codes
-sind ohne Kandidat praktisch `new`. Realistisch ein bis zwei Tage.
+### 4.2 Suchbegriffe (großzügig)
+
+Unabhängig davon, ob ein Paar entsteht, bekommt jede Zeile die Begriffe, unter denen
+man sie in Deutschland, der Schweiz, Frankreich und Italien sucht. Beispiele:
+
+- „Poulet, Schenkel, mit Haut, roh" (Swiss, ohne Paar): zusätzlich „Hähnchenschenkel",
+  „Hühnerschenkel".
+- „Rind, Gehacktes, mager": zusätzlich „Rinderhackfleisch mager", „Tatar".
+- „Gemüsepaprika rot, roh" (BLS): zusätzlich „Paprika", „Peperoni".
+- „Vollrahm": zusätzlich „Sahne", „Schlagsahne".
+
+Diese Begriffe schreibt Claude im selben Durchgang wie die Paare und die
+Übersetzungen (§7). Sie liegen als committete Datei je Quelle vor (Schlüssel:
+Swiss-ID bzw. BLS-Code), sodass ein neues Datenbank-Release nur für neue oder
+geänderte Codes neue Arbeit erzeugt. So ist „Poulet" für deutsche Nutzer auffindbar,
+ohne den Swiss-Namen umzuschreiben.
 
 ---
 
-## 5. Nährwerte: Abbildung und Erratum
+## 5. Suche statt Umschreiben
+
+Formatprobleme löst die Suche, nicht die Daten. „Weizenmehl" muss „Weizen Mehl,
+Type 405" finden, „mehl weizen" ebenfalls, „hahnchen" ohne Umlaut auch.
+
+- **Normalisierte Suchbegriffe** in einer eigenen Tabelle
+  `ingredient_search_terms (ingredient_id, locale, term, compact, kind)`, befüllt
+  beim Import aus Namen aller Sprachen und Synonymen:
+  - `term`: kleingeschrieben, ß → ss, Umlaute zusätzlich gefaltet (ä → a und ae),
+    Satzzeichen weg
+  - `compact`: dasselbe ohne Leerzeichen, sodass aus „weizen mehl type 405" der Wert
+    „weizenmehltype405" wird
+- **Treffer**, wenn jedes Wort der Eingabe ein Wort-Präfix trifft, oder wenn die
+  kompakte Eingabe ein Präfix bzw. Teilstring des kompakten Begriffs ist.
+- **Ranking** (heute fehlt jedes `ORDER BY`, `limit = 10`):
+  1. exakter Treffer in der Nutzersprache
+  2. Präfix auf den Anzeigenamen
+  3. Wort-Präfix
+  4. Teilstring/kompakt
+  5. Synonym
+
+  Innerhalb einer Stufe zuerst roh/handelsüblich, dann gegarte Varianten, dann
+  kürzere Namen. Wer „Karotte" tippt, sieht zuerst „Karotte, roh", nicht
+  „Karotte/Möhre, gebraten".
+
+- **Last:** rund 6.000 Zutaten × ~6 Begriffe = ~36.000 kurze Zeilen. Ein Scan
+  dauert dafür Millisekunden. Für reine Präfixe gibt es zusätzlich einen Index auf
+  `term`.
+- E2E-Tests: „Poulet" und „Hähnchen" finden dieselbe Zeile; „Weizenmehl" findet die
+  Typen 405/550; „Sahne" findet „Vollrahm" genau einmal.
+
+---
+
+## 6. Nährwerte: Abbildung und Erratum
 
 Abbildung auf die heutigen Spalten:
 
@@ -196,7 +240,8 @@ Abbildung auf die heutigen Spalten:
 - Kennzeichen: `-` (fehlend) → `NULL`; `TR`, `<LOQ`, `<LOD` → `0`. Die Doku erlaubt das
   als Schätzung, und für Rezeptsummen ist es vernachlässigbar. 59 leere Zink-Zellen
   werden wie im Erratum zu `NULL`.
-- Dichte und Stückgewicht: keine im BLS. Bei `same` bleibt die Swiss-Dichte erhalten.
+- Bei `same`-Paaren gelten die Swiss-Werte (E1). Die Swiss-Dichte bleibt damit ebenfalls
+  erhalten. BLS-only-Zeilen haben keine Dichte und kein Stückgewicht.
 - Kategorie: Abbildung über den Anfangsbuchstaben auf unsere Schlüssel (G vegetable,
   F fruit, M dairy, T fish, U/V/W meat, Q oil, S sweet, N beverage, P alcohol, H nut/legume
   nach 2. Stelle …).
@@ -212,118 +257,127 @@ Datei `bls-4.0-errata.json`:
 | Calcium Mandel süß / blanchiert                     | ja (micros)              | Werte aus Tabelle 3 übernehmen             |
 | Zink: 59 leere Zellen                               | ja                       | ergibt ohnehin `NULL` bzw. 0 bei < LOQ/LOD |
 | Phenylalanin-Nullwerte                              | nein (nicht gespeichert) | –                                          |
-| Sardelle roh T104100: Fett zu hoch, kein Ersatzwert | ja                       | `skip` bis 4.1 (oder Swiss-Wert behalten)  |
+| Sardelle roh T104100: Fett zu hoch, kein Ersatzwert | ja                       | ohne Nährwerte importieren bis 4.1         |
 
 Abgeleitete Rezepturen, die laut Erratum ebenfalls betroffen sind, korrigiert das MRI
-erst mit 4.1. Bis dahin bleiben sie, wie sie sind. Der Importer muss 4.1 später
-einfach einspielen können: Der Schlüssel ist (`bls`, BLS-Code), die Version ist reine
-Information.
+erst mit 4.1. Der Importer muss 4.1 später einfach einspielen können: Der Schlüssel ist
+(`bls`, BLS-Code), die Version ist reine Information.
 
 ---
 
-## 6. Mehrsprachigkeit
+## 7. Mehrsprachigkeit
 
-| Fall                       | DE                      | EN    | FR / IT                                 |
-| -------------------------- | ----------------------- | ----- | --------------------------------------- |
-| Swiss allein               | Swiss                   | Swiss | Swiss                                   |
-| `same` (Swiss + BLS)       | Swiss + BLS als Synonym | Swiss | Swiss                                   |
-| `new` (nur BLS, ca. 2.900) | BLS + erzeugte Synonyme | BLS   | **fehlt** → Anzeige fällt auf EN zurück |
+| Fall                       | DE                              | EN    | FR / IT                  |
+| -------------------------- | ------------------------------- | ----- | ------------------------ |
+| Swiss allein               | Swiss + Suchbegriffe            | Swiss | Swiss                    |
+| `same` (Swiss + BLS)       | Swiss + BLS-Name + Suchbegriffe | Swiss | Swiss                    |
+| `new` (nur BLS, ca. 4.900) | BLS + Suchbegriffe              | BLS   | **von Claude übersetzt** |
 
-Die Such-API liefert heute schon `translations[locale] ?? translations.en ?? name`.
-Die Fallback-Stufe funktioniert also, ist für FR/IT-Nutzer aber nicht schön. Zwei
-Wege, siehe E3:
+Die Übersetzung passiert im selben Durchgang wie der Abgleich (E3):
 
-- vorerst mit dem EN-Fallback leben,
-- einmalige Offline-Übersetzung der BLS-Namen nach FR/IT, gespeichert in
-  `name_translations`. Das ist genau der „cheap slice" aus ROADMAP Punkt 8: nur
-  Zutatennamen, als Skript, ohne Laufzeitdienst, verletzt Locked Decision 6 nicht und
-  schickt keine Nutzerdaten irgendwohin. Stichprobe vor dem Commit prüfen.
+- Rund 4.900 Namen × 2 Sprachen, in Stapeln je BLS-Gruppe.
+- Ein Glossar aus den offiziellen Swiss-Übersetzungen sorgt für einheitliche Begriffe:
+  „roh" → cru/crudo, „gekocht" → cuit/cotto, Fleischstücke, „mind. 45 % Fett i. Tr." →
+  „min. 45 % MG/ES" bzw. „min. 45 % grasso s.s.".
+- Ergebnis als committete Datei `server/database/seeds/bls-i18n.jsonl` (BLS-Code →
+  fr, it, Suchbegriffe je Sprache). Ein späteres 4.1 braucht nur die neuen Codes.
+- Prüfskript: jede Zeile hat fr und it, keine leeren Werte, Glossarbegriffe
+  eingehalten, keine verbliebenen deutschen Wörter. Dazu eine Stichprobe für dich.
 
-Zusätzlich für DE, unabhängig davon: Synonyme aus dem BLS-Namensstil erzeugen
-(„Weizen Mehl" → „Weizenmehl", „Hafer Flocken" → „Haferflocken", „Karotte/Möhre" →
-beide), sonst greift die Präfixsuche nicht.
-
----
-
-## 7. Suche: muss mit ausgeliefert werden
-
-`GET /api/ingredients` hat heute **kein `ORDER BY`** und `limit = 10`. Bei 1.191
-Zeilen fällt das kaum auf, bei rund 4.300 schon: „Milch" trifft dann Dutzende Zeilen
-in zufälliger Reihenfolge, und „Vollmilch" kann aus den ersten zehn fallen. Ohne
-Ranking macht BLS die Autovervollständigung schlechter. Vorschlag:
-
-1. exakter Treffer auf den Namen in der Nutzersprache
-2. Präfix auf den Namen in der Nutzersprache
-3. Präfix auf andere Sprachen oder Synonyme
-4. innerhalb einer Stufe kürzere Namen zuerst
-
-Bei dieser Größe genügt das ohne neuen Index. Bei Bedarf später generierte Spalten.
+Das entspricht dem „cheap slice" aus ROADMAP Punkt 8: nur Zutatennamen, kein
+Laufzeitdienst, keine Nutzerdaten. Locked Decision 6 bleibt unberührt.
 
 ---
 
-## 8. Import und Deploy
+## 8. Von Nutzern angelegte Zutaten (E4)
 
-- Seed: `server/database/seeds/bls-foods.jsonl` (JSON Lines wie bei Swiss, ca.
-  3.000 Zeilen, nur die gemappten Felder, geschätzt 2–3 MB) plus `bls-map.csv` und
-  `bls-4.0-errata.json`, alles committet. Die Original-XLSX kommen nach
-  `.claude/data/bls/` (gitignored). Das Regenerieren nutzt wie beim Swiss-Import ein
-  lazy geladenes `xlsx`, der normale Seed-Pfad braucht es nicht.
+Wo eine Nutzerzutat nach dem Import einer Referenzzutat entspricht, wird sie ersetzt
+und gelöscht:
+
+1. `scripts/merge-user-ingredients.mjs --report` listet alle Zutaten mit
+   `created_by IS NOT NULL`, mit Namen, Nährwerten und Zahl der Commits, die sie
+   verwenden. Es läuft gegen Produktion, weil nur dort die Daten liegen.
+2. Claude ordnet jede Zeile einer Referenzzutat zu oder lässt sie stehen. Zutaten mit
+   `manufacturer` (Markenprodukte) werden nicht auf generische Zeilen gelegt.
+3. `--apply <datei> --dry-run`, danach `--apply <datei>`. Ablauf in einer
+   Transaktion, nach einem Backup (`scripts/backup-db.mjs`):
+   - `recipe_commit_ingredients.ingredient_id` umhängen (alle Commits inklusive
+     Forks, damit Diffs konsistent bleiben)
+   - die Nutzerzutat löschen
+4. Den Namen, unter dem der Nutzer gesucht hat, als Suchbegriff in die committete
+   Datei übernehmen. Direkt in Produktion würde ihn der nächste Deploy überschreiben,
+   weil die Seeds die Referenzdaten bei jedem Lauf neu schreiben.
+
+Das ist eine bewusste Ausnahme von „Commits sind unveränderliche Snapshots":
+Menge, Einheit und Reihenfolge bleiben gleich, nur der Verweis zeigt auf dieselbe
+Zutat in der Referenzfassung. Die Nährwerte dieser Rezepte ändern sich dabei auf die
+Referenzwerte. Die Mappingdatei enthält Produktions-IDs und kommt nicht ins Repo.
+Läuft erst, wenn der BLS-Import deployt ist.
+
+---
+
+## 9. Import und Deploy
+
+- Seed: `server/database/seeds/bls-foods.jsonl` (JSON Lines wie bei Swiss, ca. 5.300
+  Zeilen, nur die gemappten Felder, geschätzt 4–5 MB) plus `bls-map.csv`,
+  `bls-i18n.jsonl`, die Suchbegriff-Dateien und `bls-4.0-errata.json`, alles
+  committet. Die Original-XLSX kommen nach `.claude/data/bls/` (gitignored). Das
+  Regenerieren nutzt wie beim Swiss-Import ein lazy geladenes `xlsx`, der normale
+  Seed-Pfad braucht es nicht.
 - Die Download-Links enthalten ein Token, das die Seite pro Aufruf neu erzeugt.
   Deshalb im README nur auf <https://blsdb.de/bls> verlinken, nie einen Token-Link.
 - **Geschwindigkeit:** Der Swiss-Importer braucht drei Roundtrips je Lebensmittel.
-  1.191 Zeilen dauerten in Produktion etwa 15 Minuten. 3.000 weitere Zeilen auf diese
-  Art wären beim ersten Deploy weit über eine halbe Stunde. Der BLS-Importer
-  schreibt deshalb in Batches (mehrzeilige Upserts in einer Transaktion). Den
-  Swiss-Importer gleich mit umstellen.
+  1.191 Zeilen dauerten in Produktion etwa 15 Minuten. 5.300 weitere Zeilen auf diese
+  Art wären über eine Stunde. Der BLS-Importer schreibt deshalb in Batches
+  (mehrzeilige Upserts in einer Transaktion). Den Swiss-Importer gleich mit umstellen.
 - Die „schon importiert"-Prüfung zählt wie bisher, aber je `(dataset, dataset_version)`.
 - `deploy.yml`: `npm run seed:bls` **nach** `seed:swiss`, weil `same` auf
   Swiss-Zeilen zeigt. `db:setup` bekommt denselben Schritt.
 
 ---
 
-## 9. Quellenangabe
+## 10. Quellenangabe
 
-Heute nennt die Oberfläche **keine** Datenquelle, auch nicht die Schweizer
-Datenbank. Mit BLS sollte ein kurzer Abschnitt „Datenquellen" dazukommen (Hilfe-
-oder Rechtsseite, optional als Fußzeile unter den Nährwerten), in allen 4 Sprachen:
+Heute nennt die Oberfläche **keine** Datenquelle, auch nicht die Schweizer Datenbank.
+Neu ist ein Abschnitt „Datenquellen" im Impressum (`app/pages/legal/impressum.vue`,
+4 Sprachen), mit Links:
 
 > Max Rubner-Institut (2025): Bundeslebensmittelschlüssel (BLS), Version 4.0.
-> Karlsruhe. DOI: 10.25826/Data20251217-134202-0
+> Karlsruhe. DOI: 10.25826/Data20251217-134202-0 – https://blsdb.de
 > Bundesamt für Lebensmittelsicherheit und Veterinärwesen BLV: Schweizer
-> Nährwertdatenbank V7.0, naehrwertdaten.ch
+> Nährwertdatenbank V7.0 – https://naehrwertdaten.ch
 
 ---
 
-## 10. Phasen
+## 11. Phasen
 
 | #   | Inhalt                                                                                           | Ergebnis                                     |
 | --- | ------------------------------------------------------------------------------------------------ | -------------------------------------------- |
 | 1   | `ingredient_sources` + Migration + Backfill; Swiss-Importer auf Datensatz-ohne-Version + Batches | keine Verhaltensänderung, Bug aus §2 behoben |
-| 2   | BLS-Parser, Umfangsfilter, Feldabbildung, Erratum, Kandidaten-Generator                          | `bls-map.csv` mit Vorschlägen                |
-| 3   | Review der Entscheidungsdatei                                                                    | jede der 3.327 Zeilen entschieden            |
-| 4   | Seed erzeugen + Importer (merge/insert, Synonyme, Kategorien) + `seed:bls` in setup/deploy       | Katalog ca. 4.300 Zutaten, keine Duplikate   |
-| 5   | Such-Ranking, Quellenangabe, Doku (README, ARCHITECTURE §10, current_state)                      | auslieferbar                                 |
-| 6   | optional: FR/IT-Übersetzung, Umschalten auf BLS-Werte, Nutzerzutaten-Bericht, BLS 4.1            | je nach E1–E4                                |
+| 2   | Suchbegriff-Tabelle, Normalisierung, Ranking; Quellenangabe im Impressum                         | bessere Suche schon mit Swiss allein         |
+| 3   | BLS-Parser, Umfangsfilter, Feldabbildung, Erratum, Kandidaten-Generator                          | Eingaben für den Abgleich                    |
+| 4   | Abgleich, Suchbegriffe, Übersetzung durch Claude + Prüfskripte                                   | `bls-map.csv`, `bls-i18n.jsonl`, Synonyme    |
+| 5   | Seed erzeugen + Importer + `seed:bls` in setup/deploy; Doku (README, ARCHITECTURE §10)           | Katalog ca. 6.000 Zutaten, keine Duplikate   |
+| 6   | Nutzerzutaten zusammenführen (§8)                                                                | keine doppelten Nutzerzutaten                |
 
 Tests:
 
 - Parser: Kennzeichen, µg→mg bei VITB6, Erratum-Korrektur an einem OLSAC-Beispiel
-- Validierung der Entscheidungsdatei (vollständig, 1:1, Ziele existieren)
+- Prüfskripte für `bls-map.csv` und `bls-i18n.jsonl`
 - Importer idempotent: zweimal laufen lassen ergibt null neue Zeilen
-- E2E: „Sahne" liefert die Rahm-Zeile genau einmal
+- Suche: die E2E-Fälle aus §5
 
 ---
 
-## 11. Offene Entscheidungen
+## 12. Entscheidungen
 
-- **E1, Werte bei Überschneidung:** Für die `same`-Paare zunächst die Swiss-Werte
-  behalten (rein additiver Release, kein bestehendes Rezept ändert seine Nährwerte),
-  oder sofort BLS nehmen (neuer, deutscher Markt)? _Empfehlung:_ zuerst Swiss behalten,
-  mit dem 4.1-Import auf BLS umschalten, nachdem ein Diff-Bericht die Änderungen pro
-  Rezept zeigt.
-- **E2, Umfang Gruppe D / Fertigprodukte:** ganz raus, oder einzeln im Review
-  entscheiden? _Empfehlung:_ einzeln, mit Vorschlag `skip`.
-- **E3, FR/IT für BLS-only:** EN-Fallback beim Start, oder vor dem Launch übersetzen?
-- **E4, Nutzerzutaten, die nach dem Import doppelt wirken:** nur berichten, oder ein
-  `superseded_by`, das sie für neue Auswahl ausblendet, während alte Commits sie
-  weiter referenzieren?
+- **E1, Werte bei Paaren:** Swiss. Wichtig ist, dass beide Benennungen gleich gut
+  gefunden werden (§4.2, §5).
+- **E2, Gruppe D / Fertigprodukte:** alles mitnehmen.
+- **E2b, gegarte Varianten:** mitnehmen. Gerichte aus X/Y: nur die ~235 Komponenten
+  (Brühen, Saucen, Teige), die fertigen Gerichte nicht.
+- **E3, FR/IT:** im selben Durchgang wie der Abgleich übersetzen.
+- **E4, doppelte Nutzerzutaten:** ersetzen und löschen (§8).
+- **Offen, E5, Anzeigename bei Paaren:** Schweizer Name („Poulet, Brust …") oder
+  deutscher BLS-Name („Hähnchen Brust …") als DE-Anzeige? Der jeweils andere bleibt
+  Suchbegriff.
