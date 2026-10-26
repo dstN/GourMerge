@@ -49,7 +49,7 @@ describe('searchTermsForIngredient', () => {
       synonyms: { de: ['Rüebli', 'Möhre'] },
     })
 
-    expect(terms).toEqual([
+    expect(terms.slice(0, 6)).toEqual([
       { locale: 'de', kind: 'name', term: 'karotte roh', compact: 'karotteroh' },
       { locale: 'en', kind: 'name', term: 'carrot raw', compact: 'carrotraw' },
       { locale: 'fr', kind: 'name', term: 'carotte cru', compact: 'carottecru' },
@@ -57,6 +57,38 @@ describe('searchTermsForIngredient', () => {
       { locale: 'de', kind: 'synonym', term: 'rubli', compact: 'rubli' },
       { locale: 'de', kind: 'synonym', term: 'mohre', compact: 'mohre' },
     ])
+  })
+
+  it('adds regional variants from the vocabulary, in both directions, one substitution each', () => {
+    // Swiss name → German users: "Poulet, Brust" answers to "hahnchen brust".
+    const swiss = searchTermsForIngredient({
+      name: 'Chicken, breast, raw',
+      nameTranslations: { de: 'Poulet, Brust, roh' },
+    })
+    expect(swiss).toContainEqual({
+      locale: 'de',
+      kind: 'synonym',
+      term: 'hahnchen brust roh',
+      compact: 'hahnchenbrustroh',
+    })
+
+    // German (BLS) name → Swiss users: "Hähnchen Brust" answers to "poulet brust".
+    const german = searchTermsForIngredient({
+      name: 'Chicken breast, raw',
+      nameTranslations: { de: 'Hähnchen Brust, roh' },
+    })
+    expect(german.map((t) => t.term)).toContain('poulet brust roh')
+    // "hahnchen" → "huhn" is a pair too, but variants are not chained: no "poulet" → "huhn" via two hops.
+    expect(german.map((t) => t.term)).toContain('huhn brust roh')
+
+    // The carrot example: "Karotte" ↔ "Möhre" gives "mohre roh", and the synonym "Rüebli" gets "karotte".
+    const carrot = searchTermsForIngredient({
+      name: 'Carrot',
+      nameTranslations: { de: 'Karotte, roh' },
+      synonyms: { de: ['Rüebli'] },
+    })
+    const de = carrot.filter((t) => t.locale === 'de').map((t) => t.term)
+    expect(de).toEqual(expect.arrayContaining(['karotte roh', 'rubli', 'mohre roh', 'karotte']))
   })
 
   it('adds the canonical name with no locale only when no translation already normalises to it', () => {

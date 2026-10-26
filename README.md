@@ -83,7 +83,7 @@ and you cannot author a recipe, which is the core loop.
 | Step             | Provides                                                                                |
 | ---------------- | --------------------------------------------------------------------------------------- |
 | `db:migrate`     | Schema, 18 versioned migrations                                                         |
-| `seed:swiss`     | 1191 foods + per-100g nutrition, DE/EN/FR/IT names, from the committed seed file        |
+| `seed:swiss`     | 1190 foods + per-100g nutrition, DE/EN/FR/IT names, from the committed seed file        |
 | `db:seed`        | Curated ingredients absent from the Swiss dataset (e.g. Vanillezucker)                  |
 | `db:seed:tags`   | Base culinary tags                                                                      |
 | `db:seed:tour`   | The onboarding tour's system recipe                                                     |
@@ -132,7 +132,7 @@ dependency. See [Swiss ingredient data](#swiss-ingredient-data) for regenerating
 Ingredients and their per-100g nutrition come from the **Swiss BLV Food Composition
 Database V7.0** ([naehrwertdaten.ch](https://www.naehrwertdaten.ch)).
 
-`server/database/seeds/swiss-foods.jsonl` (1191 foods, ~1 MB) is **committed**, so
+`server/database/seeds/swiss-foods.jsonl` (1190 foods, ~1 MB) is **committed**, so
 `npm run seed:swiss` works on a fresh clone with no downloads and no `xlsx`
 dependency. It is JSON Lines — one food per line — so updating the dataset produces
 a reviewable diff rather than rewriting a single enormous line.

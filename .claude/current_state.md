@@ -384,7 +384,7 @@ link, because a user locked out of their account still holds both rights.
 
 The `ingredients` master table is populated from the **Swiss BLV Food Composition Database V7.0** (naehrwertdaten.ch).
 
-- **1191** Swiss food entries with DE/EN/FR/IT names and synonyms. (Previously documented as "~2300+" — wrong; the BLV generic-foods sheet is `A1:EK1193`, i.e. 1191 data rows after two header rows, and the importer merges all four language exports onto that same ID set.)
+- **1190** Swiss food entries with DE/EN/FR/IT names and synonyms. (Previously documented as "~2300+" — wrong; the BLV generic-foods sheet is `A1:EK1193`, i.e. 1190 data rows after its header rows — the second header line had slipped through as food "ID"/"Name" until 2026-10-26 — and the importer merges all four language exports onto that same ID set.)
 - Nutrition data per 100g (kcal, macros, fiber, micros) in `ingredient_nutrition`
 - Source marker: `ingredient_nutrition.source = 'swiss-blv-v7'` (the values), plus one `ingredient_sources` row per food: `dataset = 'swiss-blv'`, `external_id` = the BLV numeric ID, `dataset_version = '7.0'`. The importer looks foods up by `(dataset, external_id)` — the version is bumped in place, so a BLV V8 updates these rows instead of inserting 1191 duplicates (which is what matching on the versioned `source` string would have done). The same key is what a second dataset (BLS 4.0, see `docs/BLS-INTEGRATION-PLAN.md`) will attach to an existing ingredient.
 - Search (`GET /api/ingredients?q=&locale=`) matches `ingredient_search_terms`: every locale name and synonym, normalised by `shared/utils/ingredientSearch.ts` (lower-case, umlauts/accents and their digraph spellings folded, punctuation dropped, plus a space-free `compact` form), ranked exact → prefix → compact/word prefix → substring, then viewer locale, name before synonym, shorter term first. Written by the importer for its rows, by the POST/PATCH handlers for user rows, and rebuilt wholesale by `npm run search:rebuild` after every seed.
@@ -395,7 +395,7 @@ The `ingredients` master table is populated from the **Swiss BLV Food Compositio
 
 ### Seeding (committed seed file, not the spreadsheets)
 
-`server/database/seeds/swiss-foods.jsonl` (1191 foods, ~1 MB, **tracked**) is the seed source, so a fresh clone can run `npm run db:setup` — migrate + all three seeds — with no downloads and without the `xlsx` dependency. JSON Lines, one food per line, so a dataset update is a reviewable diff rather than one rewritten mega-line.
+`server/database/seeds/swiss-foods.jsonl` (1190 foods, ~1 MB, **tracked**) is the seed source, so a fresh clone can run `npm run db:setup` — migrate + all three seeds — with no downloads and without the `xlsx` dependency. JSON Lines, one food per line, so a dataset update is a reviewable diff rather than one rewritten mega-line.
 
 `scripts/import-swiss-foods.mjs` reads that file by default; `--from-xlsx` re-parses the four BLV spreadsheets from `.claude/data/swiss/` (gitignored, not redistributed) and `--emit-seed` regenerates the seed. `xlsx` is a **lazy** import inside that path only, so the contributor path never loads the package carrying the unfixed advisory.
 

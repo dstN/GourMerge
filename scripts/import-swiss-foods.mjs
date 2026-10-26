@@ -190,6 +190,9 @@ function parseXlsx(filePath, XLSX) {
 
     const id = get(COL.ID)
     if (!id) continue // skip blank rows
+    // The export carries a second header line ("ID", "Name", "Synonyme" …) that once slipped
+    // through as food "ID" with the name "Name" — a real ID is numeric.
+    if (!/^\d+$/.test(String(id).trim())) continue
 
     const name = get(COL.NAME)
     if (!name) continue
@@ -418,9 +421,11 @@ async function main() {
     // it, and the failure it would catch — someone editing the seed file in place without
     // bumping the version — is better solved by `--force`, which is right there.
     if (!FORCE && LIMIT === Infinity) {
-      const [[{ n }]] = await conn.execute(
-        `SELECT COUNT(*) AS n FROM ingredient_sources WHERE dataset = ? AND dataset_version = ?`,
-        [DATASET, DATASET_VERSION]
+      // Counted over the ids the seed carries, so a row that left the seed (the stray header
+      // line, once) does not keep this from matching forever.
+      const [[{ n }]] = await conn.query(
+        `SELECT COUNT(*) AS n FROM ingredient_sources WHERE dataset = ? AND dataset_version = ? AND external_id IN (?)`,
+        [DATASET, DATASET_VERSION, merged.map((row) => row.id)]
       )
       if (n === merged.length) {
         console.log(`✓ ${n} Swiss foods already imported (${DATASET} ${DATASET_VERSION}) — nothing to do.`)

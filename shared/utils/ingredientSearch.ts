@@ -13,6 +13,8 @@
  * syntax Node can strip without a build step (no enums, no parameter properties).
  */
 
+import { INGREDIENT_VOCABULARY } from './ingredientVocabulary.ts'
+
 export interface IngredientSearchTerm {
   /** `de` / `en` / `fr` / `it`, or null for a canonical name that is not one of the translations. */
   locale: string | null
@@ -111,5 +113,26 @@ export function searchTermsForIngredient(names: IngredientNames): IngredientSear
     for (const synonym of list) push(locale, 'synonym', synonym)
   }
 
+  // Regional variants: a term containing one side of a vocabulary pair gets a copy with the
+  // other side, so "Poulet, Brust" answers to "hahnchen" and "Hähnchen Brust" to "poulet".
+  // One substitution per variant, no chaining — the vocabulary is pairs, not a thesaurus.
+  for (const { locale, term } of [...out]) {
+    const words = term.split(' ')
+    for (const [a, b] of VOCABULARY_PAIRS) {
+      for (const [from, to] of [
+        [a, b],
+        [b, a],
+      ]) {
+        if (!words.includes(from)) continue
+        push(locale, 'synonym', words.map((w) => (w === from ? to : w)).join(' '))
+      }
+    }
+  }
+
   return out
 }
+
+/** The vocabulary in the same normalised form as the terms it is matched against. */
+const VOCABULARY_PAIRS: ReadonlyArray<readonly [string, string]> = INGREDIENT_VOCABULARY.map(
+  ([a, b]) => [normalizeSearchTerm(a), normalizeSearchTerm(b)] as const
+)
