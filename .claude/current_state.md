@@ -79,7 +79,7 @@ GourMerge/
 │   │   ├── schema.ts           # Drizzle ORM schema (30 tables)
 │   │   └── migrations/         # 18 versioned SQL migrations (0000–0017)
 │   ├── middleware/             # Nitro middleware
-│   ├── plugins/                # Nitro plugins (db, logger, sentry, error-handler)
+│   ├── plugins/                # Nitro plugins (db, csp, compress, error-handler)
 │   └── utils/                  # drizzle.ts, diff.ts, merge.ts, units.ts, slug.ts,
 │                                # reports.ts, requireAdmin.ts, recipeAccess.ts,
 │                                # likeEscape.ts, ingredientValidation.ts, imageProbe.ts,

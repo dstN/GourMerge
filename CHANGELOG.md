@@ -13,6 +13,63 @@ next to it, not instead of it (`docs/BLS-INTEGRATION-PLAN.md`). The catalog grow
 1190 to about 6100 reference ingredients, and the autocomplete learned to find them
 however a dataset or a region spells them.
 
+### Changed — Lighthouse: SEO and Agentic Browsing to full marks, the mobile hydration task cut in half
+
+Lighthouse 13.5 (CLI, local production build, 26 October 2026) on the start page. The
+Agentic Browsing category was **3/4**, SEO **92**, and mobile performance was carried by a
+hydration task that Lighthouse clocked at ~530 ms under its 4× CPU throttle. Now: Agentic
+**4/4**, SEO **100**, Accessibility **100**, Best Practices **100**, desktop performance
+**100**; the mobile figures and what still limits them are in `.claude/ROADMAP.md`.
+
+- **Agentic Browsing 4/4.** The one failing audit was `ard-schema`, and the cause was a soft
+  404: `/.well-known/ai-catalog.json` fell through to the `[username]/[slug]` recipe page,
+  which rendered "recipe not found" **with a 200**, so Lighthouse took the HTML for a catalog
+  and scored it 0 rather than "not applicable". Two fixes. `.well-known` joined the reserved
+  prefixes in `validate-recipe-route.ts`, so anything else under it is a real 404. And the
+  catalog now exists: `server/utils/agentCatalog.ts` builds an ARD 1.0 manifest (one entry,
+  an agent skill at `/.well-known/skills/gourmerge/SKILL.md` that explains the URL shapes,
+  the Recipe JSON-LD, the locales and the vocabulary), served by two Nitro routes, pinned by
+  `tests/unit/agentCatalog.test.ts` against the invariants the audit's conformance tester
+  checks. An `Agentmap:` line in `robots.txt` was tried first and withdrawn: Lighthouse's own
+  `robots-txt` audit does not know the directive and fails SEO with "Unknown directive".
+- **SEO 100.** `link-text` flagged the hero's "Learn More" as generic link text. The button
+  leads to the glossary and now says so in all four locales (`landing.learnMore`).
+- **The LCP element was the cookie banner, painted after hydration.** `LegalCookieConsent`
+  was `<ClientOnly>`, so on a phone the largest text block in the viewport appeared only once
+  the JavaScript had run — Lighthouse reported LCP at 12 s against a 4 s FCP on the local
+  build. Consent lives in a cookie, so the server can decide; the banner is server-rendered
+  now (as two root nodes, so `position: sticky` keeps its containing block) and hydrated in
+  an idle callback. LCP is back at the first paint.
+- **Compression in Nitro.** The `node-server` preset sends everything uncompressed; the host's
+  nginx gzips HTML on the fly, which hid that `nuxt preview`-style local runs were measuring a
+  226 KB stylesheet on a simulated 1.6 Mbit/s link. `nitro.compressPublicAssets` pre-builds
+  `.br`/`.gz` siblings for `/_nuxt` and `/_fonts`, and `server/plugins/compress.ts` brotli-
+  compresses the rendered HTML per request (quality 5, async, skipped under 1 KB). Behind
+  nginx the only visible change is gzip → brotli on the document; a proxy does not re-encode
+  a body that already carries `Content-Encoding`.
+- **Icons as inline SVG** (`icon.mode: 'svg'`). A CPU profile of the mobile load showed the
+  single most expensive function in hydration was `@nuxt/icon` walking every rule of every
+  stylesheet — ~230 KB of Tailwind and Nuxt UI — to learn which icon classes a build step
+  might already have emitted (none here), then inserting one `<style>` per icon while the page
+  was still hydrating. SVG mode renders the icon data on the server and hydrates it like any
+  element.
+- **Sentry initialised after hydration.** `sentry.client.config.ts` is gone; `app/plugins/
+sentry.client.ts` imports the SDK dynamically from `onNuxtReady`. The module's config plugin
+  used to `await` the SDK before any other plugin ran, which put its download, parse and
+  `init()` on the critical path. The trade (errors thrown during the first second are not
+  reported; server capture is untouched) and how the Vue integration and the Nuxt error hooks
+  are re-attached are documented in the plugin.
+- **Lazy hydration where nothing needs JavaScript in the first frame.** The feature grid and
+  the step list are `hydrate-never` components (`components/landing/`); the closing call to
+  action hydrates on visibility; the header's language select, colour-mode button and mobile
+  slideover (`LayoutHeaderActions`) hydrate on idle; the footer links on visibility. The page
+  is server-rendered in full either way — what changed is how much of it the browser walks
+  again inside the one task Lighthouse scores as Total Blocking Time. The onboarding overlays
+  mount only for a session (every tour entry point is behind one) and are code-split out of
+  the entry.
+- **Zod loads one locale.** `zod-locale.client.ts` imported `zod/locales`, the 210 KB barrel
+  of every language; it now imports `zod/v4/locales/<code>` for the active one.
+
 ### Added — BLS 4.0 (`npm run seed:bls`)
 
 5325 of the BLS's 7140 foods are imported: all of groups B–W (foods one can buy, cooked
