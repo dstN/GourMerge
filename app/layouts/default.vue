@@ -3,7 +3,7 @@
  * Default Layout — Public-facing app shell with conditional auth state
  */
 
-const { t, locale, setLocale } = useI18n()
+const { t } = useI18n()
 /**
  * The logo's target is a runtime expression, and that is exactly why it needs this.
  * i18n localises a NuxtLink whose `to` is a static literal (`to="/explore"` renders as
@@ -13,13 +13,6 @@ const { t, locale, setLocale } = useI18n()
  */
 const localePath = useLocalePath()
 const { loggedIn } = useUserSession()
-
-const localeSwitchItems = [
-  { label: 'Deutsch', value: 'de' },
-  { label: 'English', value: 'en' },
-  { label: 'Français', value: 'fr' },
-  { label: 'Italiano', value: 'it' },
-]
 </script>
 
 <template>
@@ -43,36 +36,8 @@ const localeSwitchItems = [
 
           <LayoutMainNav />
 
-          <!-- Right side -->
-          <div class="flex items-center gap-2">
-            <!-- Same breakpoint as <LayoutMainNav> and <LayoutMobileMenu>: below lg there is not
-                 room for the nav AND this cluster, and the shell clips rather than scrolls.
-                 See the note in MainNav.vue. -->
-            <div class="hidden lg:flex items-center gap-2">
-              <USelect
-                :model-value="locale"
-                :items="localeSwitchItems"
-                value-key="value"
-                class="w-28"
-                :aria-label="t('a11y.selectLanguage')"
-                @update:model-value="setLocale($event as 'de' | 'en' | 'fr' | 'it')"
-              />
-              <UColorModeButton />
-              <OnboardingHelpMenu />
-
-              <!-- Auth buttons for logged-out users -->
-              <template v-if="!loggedIn">
-                <UButton :label="t('auth.login')" color="neutral" variant="subtle" to="/auth/login" />
-                <UButton :label="t('auth.register')" to="/auth/register" />
-              </template>
-
-              <!-- User dropdown for logged-in users -->
-              <LayoutUserDropdown v-else />
-            </div>
-
-            <!-- Mobile: hamburger → offcanvas with everything -->
-            <LayoutMobileMenu />
-          </div>
+          <!-- Right side. Idle-hydrated: see the note in HeaderActions.vue. -->
+          <LazyLayoutHeaderActions hydrate-on-idle />
         </div>
       </div>
     </header>
@@ -87,7 +52,7 @@ const localeSwitchItems = [
          shells apart in the DOM, for `tests/e2e/shell.spec.ts`. -->
     <main id="main-content" data-shell="public" tabindex="0" class="flex-1 overflow-y-auto">
       <slot />
-      <LegalCookieConsent />
+      <LazyLegalCookieConsent hydrate-on-idle />
     </main>
 
     <!-- ── Footer (fixed) ──────────────────────────────────── -->
@@ -97,7 +62,9 @@ const localeSwitchItems = [
           <p class="text-sm text-muted text-center">
             © {{ new Date().getFullYear() }} GourMerge<span class="hidden sm:inline">: {{ t('app.slogan') }}</span>
           </p>
-          <LayoutFooterLinks />
+          <!-- Always on screen in this fixed shell, so `hydrate-on-visible` fires right after
+               mount — in its own task rather than inside the page's hydration task. -->
+          <LazyLayoutFooterLinks hydrate-on-visible />
         </div>
       </div>
     </footer>

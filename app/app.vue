@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const { locale, locales, t } = useI18n()
+const { loggedIn } = useUserSession()
 const switchLocalePath = useSwitchLocalePath()
 const route = useRoute()
 const appUrl = useRuntimeConfig().public.appUrl.replace(/\/$/, '')
@@ -98,10 +99,16 @@ useSeoMeta({
       <NuxtPage />
     </NuxtLayout>
 
-    <!-- Onboarding overlays — mounted globally so they work in every layout -->
-    <ClientOnly>
-      <OnboardingConceptIntro />
-      <OnboardingTourOverlay />
+    <!-- Onboarding overlays — mounted globally so they work in every layout.
+         Signed-in only: every tour entry point is behind a session (the concept intro,
+         the help menu, the mobile menu's "start tour", and the fork tour's first "Remix"
+         click, which `forkRecipe()` refuses for guests). For a visitor these two components
+         mounted a modal and the tour engine right after hydration — inside the same task,
+         since `ClientOnly` flips in the mount flush — for nothing to show. `Lazy`, so the
+         tour engine is its own chunk and no longer part of the entry every visitor parses. -->
+    <ClientOnly v-if="loggedIn">
+      <LazyOnboardingConceptIntro />
+      <LazyOnboardingTourOverlay />
     </ClientOnly>
   </UApp>
 </template>

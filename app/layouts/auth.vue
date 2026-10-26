@@ -41,11 +41,11 @@ const { t } = useI18n()
           <!-- Footer -->
           <div class="mt-8 flex flex-col items-center gap-2">
             <p class="text-center text-sm text-dimmed">© {{ new Date().getFullYear() }} GourMerge</p>
-            <LayoutFooterLinks />
+            <LazyLayoutFooterLinks hydrate-on-visible />
           </div>
         </div>
       </div>
-      <LegalCookieConsent />
+      <LazyLegalCookieConsent hydrate-on-idle />
     </main>
   </div>
 </template>

@@ -11,37 +11,15 @@ useSeoMeta({
   description: () => t('seo.description'),
 })
 
-const features = computed(() => [
-  {
-    icon: 'i-lucide-git-fork',
-    title: t('landing.featureFork'),
-    description: t('landing.featureForkDesc'),
-  },
-  {
-    icon: 'i-lucide-git-branch',
-    title: t('landing.featureBranch'),
-    description: t('landing.featureBranchDesc'),
-  },
-  {
-    icon: 'i-lucide-git-commit-horizontal',
-    title: t('landing.featureCommit'),
-    description: t('landing.featureCommitDesc'),
-  },
-  {
-    icon: 'i-lucide-git-merge',
-    title: t('landing.featureMerge'),
-    description: t('landing.featureMergeDesc'),
-  },
-])
-
-/** Hoisted out of the template: a `v-for` over an inline array literal rebuilt
- *  the whole list on every render and made the markup unreadable. */
-const steps = computed(() => [
-  { title: t('landing.step1Title'), desc: t('landing.step1Desc') },
-  { title: t('landing.step2Title'), desc: t('landing.step2Desc') },
-  { title: t('landing.step3Title'), desc: t('landing.step3Desc') },
-  { title: t('landing.step4Title'), desc: t('landing.step4Desc') },
-])
+/**
+ * Everything below the hero is a lazily hydrated component — see each one in
+ * `components/landing/`. The page is server-rendered in full either way; what changes is how
+ * much of it the browser walks again after the JavaScript arrives. Lighthouse mobile measured
+ * that walk as one ~530 ms task (4× CPU throttle), and Total Blocking Time carries 30 % of the
+ * performance score. The feature grid and the step list are static text, so they are never
+ * hydrated; the closing call to action has a button and hydrates when scrolled into view. The
+ * hero stays hydrated: it is on screen first and its two buttons should navigate client-side.
+ */
 </script>
 
 <template>
@@ -85,77 +63,8 @@ const steps = computed(() => [
       </CommonPageShell>
     </section>
 
-    <!-- ── Features Grid ─────────────────────────────────── -->
-    <section class="py-20">
-      <CommonPageShell width="wide" spacing="none">
-        <div class="text-center mb-16">
-          <h2 class="text-3xl sm:text-4xl font-bold mb-4">
-            {{ t('landing.featuresTitle') }}
-          </h2>
-          <p class="text-lg text-muted max-w-2xl mx-auto">
-            {{ t('landing.featuresSubtitle') }}
-          </p>
-        </div>
-
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <UCard
-            v-for="(feature, idx) in features"
-            :key="idx"
-            class="group hover:border-primary-500/50 transition-colors"
-          >
-            <div class="flex items-start gap-4">
-              <div
-                class="shrink-0 size-12 rounded-lg bg-primary-500/10 flex items-center justify-center transition-colors group-hover:bg-primary-500/20"
-              >
-                <UIcon :name="feature.icon" class="size-6 text-primary" aria-hidden="true" />
-              </div>
-              <div>
-                <h3 class="text-base font-semibold mb-2">{{ feature.title }}</h3>
-                <p class="text-muted text-sm leading-relaxed">{{ feature.description }}</p>
-              </div>
-            </div>
-          </UCard>
-        </div>
-      </CommonPageShell>
-    </section>
-
-    <!-- ── How It Works ──────────────────────────────────── -->
-    <section class="py-20 bg-elevated">
-      <CommonPageShell width="content" spacing="none">
-        <div class="text-center mb-16">
-          <h2 class="text-3xl sm:text-4xl font-bold mb-4">
-            {{ t('landing.howItWorks') }}
-          </h2>
-        </div>
-
-        <div class="space-y-8">
-          <div v-for="(step, idx) in steps" :key="idx" class="flex items-start gap-6">
-            <div
-              class="shrink-0 size-10 rounded-full bg-primary text-inverted flex items-center justify-center font-bold text-lg"
-            >
-              {{ idx + 1 }}
-            </div>
-            <div>
-              <h3 class="text-base font-semibold mb-1">{{ step.title }}</h3>
-              <p class="text-muted">{{ step.desc }}</p>
-            </div>
-          </div>
-        </div>
-      </CommonPageShell>
-    </section>
-
-    <!-- ── CTA Section ───────────────────────────────────── -->
-    <section class="py-20">
-      <CommonPageShell width="content" spacing="none" class="text-center">
-        <CommonBrandLogo class="size-16 text-primary mx-auto mb-6" />
-        <h2 class="text-3xl sm:text-4xl font-bold mb-4">
-          {{ t('landing.ctaTitle') }}
-        </h2>
-        <p class="text-lg text-muted mb-8">
-          {{ t('landing.ctaSubtitle') }}
-        </p>
-        <UButton :label="t('landing.getStarted')" icon="i-lucide-arrow-right" size="lg" to="/auth/register" />
-      </CommonPageShell>
-    </section>
+    <LazyLandingFeatures hydrate-never />
+    <LazyLandingSteps hydrate-never />
+    <LazyLandingCta hydrate-on-visible />
   </div>
 </template>

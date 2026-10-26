@@ -35,6 +35,12 @@
  * import Zod themselves, so it arrives with the page either way. This only removes
  * it from the pages that never needed it.
  *
+ * One locale at a time, too. `import('zod/locales')` is the barrel of every locale Zod
+ * ships — a 210 KB chunk on the wire, of which one visitor ever reads one language.
+ * Lighthouse listed it as the single largest piece of unused JavaScript on the
+ * homepage. `zod/v4/locales/<code>` is a public subpath export, so each language is
+ * its own few-KB chunk and the switcher fetches the next one only when it is picked.
+ *
  * ## The race, and why it is acceptable
  *
  * `z.config()` is read at PARSE time, not at schema construction, so the map only
@@ -49,6 +55,14 @@
  * `requestIdleCallback`.
  */
 type LocaleFactory = () => Parameters<typeof import('zod').z.config>[0]
+type LocaleModule = { default: LocaleFactory }
+
+const LOCALE_LOADERS: Record<string, () => Promise<LocaleModule>> = {
+  de: () => import('zod/v4/locales/de.js'),
+  en: () => import('zod/v4/locales/en.js'),
+  fr: () => import('zod/v4/locales/fr.js'),
+  it: () => import('zod/v4/locales/it.js'),
+}
 
 export default defineNuxtPlugin((nuxtApp) => {
   // `nuxtApp.$i18n`, NOT `useI18n()`: vue-i18n's composable throws
@@ -62,9 +76,14 @@ export default defineNuxtPlugin((nuxtApp) => {
 
   async function load() {
     if (apply) return
-    const [{ z }, { de, en, fr, it }] = await Promise.all([import('zod'), import('zod/locales')])
-    const locales: Record<string, LocaleFactory> = { de, en, fr, it }
-    apply = (value: string) => z.config((locales[value] ?? de)())
+    const { z } = await import('zod')
+    apply = (value: string) => {
+      const loader = LOCALE_LOADERS[value] ?? LOCALE_LOADERS.de!
+      // A switch that lands while an earlier locale is still in flight resolves in
+      // order of arrival; the watcher below re-applies the current one on every change,
+      // so the last pick always wins.
+      void loader().then((mod) => z.config(mod.default()))
+    }
     apply(i18n.locale.value)
   }
 
