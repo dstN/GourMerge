@@ -73,6 +73,24 @@ export default defineNuxtConfig({
       scan: true,
     },
     fallbackToApi: false,
+    /**
+     * Inline `<svg>` instead of the default CSS-mask mode.
+     *
+     * In CSS mode the icon component, on its FIRST client mount, walks every rule of every
+     * stylesheet on the page to learn which icon classes a build step may already have emitted
+     * (`getAllSelectors()` in `@nuxt/icon`'s `css.js`). This stylesheet is ~230 KB of Tailwind
+     * and Nuxt UI, so a CPU profile of the mobile load showed that one scan as the single most
+     * expensive function in hydration — ~100 ms at 4× throttle — followed by one `<style>`
+     * insertion per distinct icon, each of which invalidates style on the whole document while
+     * the page is still hydrating. None of it is needed: nothing here emits icon CSS at build
+     * time, so the scan always comes back empty-handed.
+     *
+     * SVG mode renders the icon data into the markup on the server (the collections are in
+     * the server bundle, see above) and hydrates it like any other element. The HTML grows by
+     * a few hundred bytes per icon before compression, which is cheaper than the scan by two
+     * orders of magnitude.
+     */
+    mode: 'svg',
   },
 
   // ── i18n ────────────────────────────────────────────────────
@@ -402,6 +420,15 @@ export default defineNuxtConfig({
   // ── Nitro server preset (Passenger uses node-server) ────────
   nitro: {
     preset: 'node-server',
+    /**
+     * Pre-compress everything in `.output/public` at build time (`.br` and `.gz` next to each
+     * file) so the static handler can answer `Accept-Encoding` without re-encoding per request.
+     * On the local production build Lighthouse saw the 226 KB entry stylesheet and 1.8 MB of
+     * script leave uncompressed; brotli brings the stylesheet to ~25 KB. The rendered HTML is
+     * compressed per request in `server/plugins/compress.ts`, which explains the production
+     * picture (nginx gzips on the fly; Plesk serves `/_nuxt` off disk) in detail.
+     */
+    compressPublicAssets: { gzip: true, brotli: true },
     /**
      * The brand mark, readable from server code.
      *
