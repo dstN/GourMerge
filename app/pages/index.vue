@@ -45,9 +45,9 @@ const steps = computed(() => [
 </script>
 
 <template>
-  <!-- DESIGNBOOK §1.4 exception: display hero for marketing copy. Sections are full-bleed
-       (background tints), each wrapped in a spacing="none" shell. -->
   <div>
+    <!-- DESIGNBOOK §1.4 exception: display hero for marketing copy. Sections are full-bleed
+         (background tints), each wrapped in a spacing="none" shell. -->
     <!-- ── Hero Section ──────────────────────────────────── -->
     <section class="relative overflow-hidden py-20 sm:py-32">
       <!-- Background gradient -->

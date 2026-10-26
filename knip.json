@@ -9,5 +9,8 @@
     "@iconify-json/lucide",
     "@iconify-json/simple-icons",
     "tw-shimmer"
-  ]
+  ],
+  "rules": {
+    "types": "off"
+  }
 }

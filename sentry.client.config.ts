@@ -26,8 +26,9 @@ Sentry.init({
    */
   integrations: (defaults) => defaults.filter((integration) => integration.name !== 'BrowserTracing'),
 
-  // Never send PII — strip user emails/IPs automatically.
-  sendDefaultPii: false,
+  // No `sendDefaultPii` any more: Sentry 11 removed the option, and nothing in the v11
+  // SDK sets `user.ip_address = '{{auto}}'` on events — the behaviour `sendDefaultPii:
+  // false` used to buy is now the only behaviour.
 
   // Ignore common browser noise that isn't actionable.
   ignoreErrors: [

@@ -6,7 +6,7 @@
 import { z } from 'zod'
 import { MICRO_KEYS } from '~~/shared/utils/ingredientMicros'
 
-export const decimalSchema = z
+const decimalSchema = z
   .union([z.string(), z.number()])
   .transform((v) => String(v).replace(',', '.'))
   .refine((v) => v === '' || (!Number.isNaN(Number(v)) && Number(v) >= 0 && Number(v) <= 100000), {
@@ -21,7 +21,7 @@ export const decimalSchema = z
  * a JS number, not a string, unlike every other field here. Same empty-string-clears-it shape
  * as `decimalSchema`, but whole numbers only: a fractional gram count is never real.
  */
-export const gramsPerPieceSchema = z
+const gramsPerPieceSchema = z
   .union([z.string(), z.number()])
   .transform((v) => String(v).trim())
   .refine((v) => v === '' || (/^\d+$/.test(v) && Number(v) > 0 && Number(v) <= 100000), {
@@ -32,7 +32,7 @@ export const gramsPerPieceSchema = z
   .optional()
 
 /** Same six-decimal-fields shape, keyed by the vitamin/mineral catalog in `MICRO_KEYS`. */
-export const ingredientMicrosSchema = z.object(Object.fromEntries(MICRO_KEYS.map((key) => [key, decimalSchema])))
+const ingredientMicrosSchema = z.object(Object.fromEntries(MICRO_KEYS.map((key) => [key, decimalSchema])))
 
 export const ingredientNutritionSchema = z.object({
   energyKcal100g: decimalSchema,

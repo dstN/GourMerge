@@ -47,7 +47,7 @@ type Tx = Parameters<Parameters<Db['transaction']>[0]>[0]
  * Resolve the singleton ghost id, creating the row if a deployment predates the
  * migration that seeds it. Idempotent.
  */
-export async function ensureGhostUser(db: Db | Tx): Promise<number> {
+async function ensureGhostUser(db: Db | Tx): Promise<number> {
   const [existing] = await db.select({ id: users.id }).from(users).where(eq(users.isGhost, true)).limit(1)
   if (existing) return existing.id
 

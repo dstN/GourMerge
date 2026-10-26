@@ -63,7 +63,10 @@ async function viewDiff(fromCommit: CommitListItem, toCommit: CommitListItem) {
   showDiff.value = true
 
   try {
-    diffData.value = await $fetch(`/api/recipes/${recipeId.value}/diff`, {
+    // Path passed as a plain string on purpose: with Nuxt 4.6's typed routes the
+    // route-matching conditional type for this template literal exceeds the compiler's
+    // stack depth (TS2321), so the response is typed explicitly instead of inferred.
+    diffData.value = await $fetch<CommitDiff>(`/api/recipes/${recipeId.value}/diff` as string, {
       query: { from: fromCommit.id, to: toCommit.id },
     })
   } catch (err) {

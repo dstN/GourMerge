@@ -97,33 +97,34 @@ dependency. See [Swiss ingredient data](#swiss-ingredient-data) for regenerating
 
 ## Scripts
 
-| Command                    | Description                                           |
-| -------------------------- | ----------------------------------------------------- |
-| `npm run dev`              | Start dev server                                      |
-| `npm run build`            | Build for production (Nitro node-server)              |
-| `npm run typecheck`        | TypeScript type check                                 |
-| `npm run lint`             | ESLint + design-system gate                           |
-| `npm run lint:fix`         | ESLint auto-fix                                       |
-| `npm run design:check`     | DESIGNBOOK.md conformance gate                        |
-| `npm run format`           | Prettier format                                       |
-| `npm test`                 | Vitest unit tests (coverage-gated)                    |
-| `npm run test:e2e`         | Playwright API + journey + axe a11y tests             |
-| `npm run knip`             | Dead-code check (unused files/exports/deps)           |
-| `npm run i18n:check`       | 4-way locale parity gate (DE/EN/FR/IT)                |
-| `npm run db:generate`      | Generate a new Drizzle migration                      |
-| `npm run db:migrate`       | Apply pending migrations                              |
-| `npm run db:setup`         | Migrate + all seeds (first-run convenience)           |
-| `npm run db:cleanup`       | Retention windows, locally (production: /tasks/*)     |
-| `npm run db:inactive`      | Same, locally (production uses /tasks/*, see runbook) |
-| `npm run db:studio`        | Drizzle Studio (visual DB explorer)                   |
-| `npm run seed:swiss`       | Load the committed Swiss BLV seed file into the DB    |
-| `npm run seed:swiss:regen` | Regenerate that seed file from the BLV spreadsheets   |
-| `npm run seed:bls`         | Load the committed BLS 4.0 seed file into the DB      |
-| `npm run seed:bls:regen`   | Regenerate that seed from the MRI spreadsheet + map   |
-| `npm run search:rebuild`   | Rebuild the ingredient search terms from the catalog  |
-| `npm run db:seed`          | Curated ingredients not in the Swiss dataset          |
-| `npm run db:seed:tags`     | Base culinary tags                                    |
-| `npm run generate:icons`   | Regenerate PWA/favicon assets from brand SVG          |
+| Command                                   | Description                                                           |
+| ----------------------------------------- | --------------------------------------------------------------------- |
+| `npm run dev`                             | Start dev server                                                      |
+| `npm run build`                           | Build for production (Nitro node-server)                              |
+| `npm run typecheck`                       | TypeScript type check                                                 |
+| `npm run lint`                            | ESLint + design-system gate                                           |
+| `npm run lint:fix`                        | ESLint auto-fix                                                       |
+| `npm run design:check`                    | DESIGNBOOK.md conformance gate                                        |
+| `npm run format`                          | Prettier format                                                       |
+| `npm test`                                | Vitest unit tests (coverage-gated)                                    |
+| `npm run test:e2e`                        | Playwright API + journey + axe a11y tests                             |
+| `npm run knip`                            | Dead-code check (unused files/exports/deps)                           |
+| `npm run i18n:check`                      | 4-way locale parity gate (DE/EN/FR/IT)                                |
+| `npm run db:generate`                     | Generate a new Drizzle migration                                      |
+| `npm run db:migrate`                      | Apply pending migrations                                              |
+| `npm run db:setup`                        | Migrate + all seeds (first-run convenience)                           |
+| `npm run db:cleanup`                      | Retention windows, locally (production: /tasks/*)                     |
+| `npm run db:inactive`                     | Same, locally (production uses /tasks/*, see runbook)                 |
+| `npm run db:studio`                       | Drizzle Studio (visual DB explorer)                                   |
+| `npm run seed:swiss`                      | Load the committed Swiss BLV seed file into the DB                    |
+| `npm run seed:swiss:regen`                | Regenerate that seed file from the BLV spreadsheets                   |
+| `npm run seed:bls`                        | Load the committed BLS 4.0 seed file into the DB                      |
+| `npm run seed:bls:regen`                  | Regenerate that seed from the MRI spreadsheet + map                   |
+| `npm run search:rebuild`                  | Rebuild the ingredient search terms from the catalog                  |
+| `node scripts/merge-user-ingredients.mjs` | Fold user-created duplicates into the catalog (`--report`, `--apply`) |
+| `npm run db:seed`                         | Curated ingredients not in the Swiss dataset                          |
+| `npm run db:seed:tags`                    | Base culinary tags                                                    |
+| `npm run generate:icons`                  | Regenerate PWA/favicon assets from brand SVG                          |
 
 > **Never run `npm run db:push` against production.** It mutates the DB directly without a migration file.
 

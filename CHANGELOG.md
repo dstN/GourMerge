@@ -104,6 +104,46 @@ a deletion candidate.
 Both datasets ask for attribution and the app named neither. The Impressum now lists the
 BLS 4.0 (with its DOI) and the Swiss Food Composition Database V7.0, in all four locales.
 
+### Added — `scripts/merge-user-ingredients.mjs` (phase 6, decision E4)
+
+Before the BLS, a user who could not find "Backpulver" created it by hand; now the catalog
+has it and the autocomplete shows both. The script folds such rows into the reference one:
+`--report` lists every user-created ingredient with its best-matching reference rows by
+normalised name, `--apply <mapping.tsv> --dry-run` shows what a reviewed mapping would do,
+and `--apply` re-points every commit line (forks included — a fork copies ingredient ids,
+so leaving it out would make a diff disagree about one and the same food), closes open
+reports on the row, and deletes it, in one transaction. It validates the whole file before
+touching anything: the source must be user-created, the target must not be, and a branded
+product (manufacturer set) is never folded into a generic one. The mapping holds production
+ids and stays out of the repo. The run against production is still open.
+
+### Changed — dependencies (Dependabot's production and development groups), and why CI was red
+
+CI's `npm audit --audit-level=critical` turned red on advisories that arrived between
+pushes (`@simple-git/argv-parser` via `@nuxt/devtools`, `shell-quote`) — nothing in the
+diff, everything in the tree. Rather than pinning around them, both open Dependabot groups
+were taken in one go: Nuxt 4.6, `@nuxt/ui` 4.12, `@sentry/nuxt` 11, `@simplewebauthn` 14,
+`@vueuse/core` 15, nodemailer 10, zod 4.6, Vitest 5, Playwright 1.64, ESLint 10, knip 6,
+TypeScript 6 and the rest. The lockfile is from npm 12. What the upgrade touched:
+
+- **Sentry 11**: `sourceMapsUploadOptions` is flattened into the module options
+  (`org`/`project`/`authToken`/`telemetry` top-level); `autoInjectServerSentry` is gone
+  because the server config is bundled into the Nitro build by default now, which is what
+  `'top-level-import'` used to ask for; `sendDefaultPii` no longer exists — the SDK never
+  infers the user's IP on its own any more, so `false` is the only behaviour.
+- **Nuxt 4.6 typed routes**: two `$fetch` calls on a template-literal path hit TS2321
+  ("excessive stack depth") in the route-matching conditional type. They pass the path
+  `as string` and type the response explicitly (`TwoFactorCard.vue`, `history.vue`).
+- **ESLint 10 / eslint-plugin-vue**: `vue/no-multiple-template-root` now counts an HTML
+  comment before the root element; three pages had their file-header comment moved inside
+  the root.
+- **knip 6**: it cannot see Nuxt's auto-imported types and reported every one as unused,
+  so the `types` rule is off in `knip.json`; seven internal-only server-util exports it
+  flagged correctly are private now.
+- The E2E suite — passkey enrol-and-sign-in included, which is exactly what the
+  `@simplewebauthn` bump needs covering — was run locally against the built artifact before
+  this went to CI, on purpose: the month's included minutes are nearly spent.
+
 ## [1.10.0] — 2026-08-18
 
 A cookie banner was simply missing — the site had been setting cookies since v1.0 with no
