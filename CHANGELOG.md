@@ -5,6 +5,54 @@ All notable changes to GourMerge are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versioning follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+Groundwork for a second ingredient dataset (the German BLS 4.0, see
+`docs/BLS-INTEGRATION-PLAN.md`) — nothing BLS-specific ships yet, but the two things it
+needs first are in: an ingredient can now belong to more than one dataset without becoming
+two rows, and the autocomplete no longer depends on how a dataset happens to spell a name.
+
+### Added — `ingredient_sources` and `ingredient_search_terms` (migration `0017`)
+
+`ingredient_nutrition.source` + `external_id` could only name _one_ origin per ingredient,
+which stops working the moment BLS describes a food the Swiss catalog already has: the
+ingredient must stay one row with two external ids behind it. `ingredient_sources` carries
+those ids — `(dataset, external_id)` **unique**, `dataset` deliberately versionless
+(`swiss-blv`, later `bls`) with the version in its own informational column — so the
+database itself refuses to turn one source record into two ingredients. The migration
+backfills it from the 1191 existing Swiss rows.
+
+`ingredient_search_terms` is what `GET /api/ingredients` now matches on instead of the raw
+JSON name columns: every locale's name and every synonym, normalised once at write time
+(`shared/utils/ingredientSearch.ts` — lower-case, umlauts/accents _and_ their two-letter
+spellings folded, punctuation dropped, plus a space-free `compact` form). "Möhre", "Moehre"
+and "mohre" are one string; "Weizenmehl" finds a row a dataset wrote as "Weizen Mehl, Type
+405"; "mehl weizen" finds "Weizenmehl". The result is **ranked** for the first time — the
+endpoint had no `ORDER BY` at all and a `limit=10`, which was survivable at 1191 rows and
+would not have been at several thousand: exact → whole-word start → prefix → compact/word
+prefix → substring, then the viewer's locale, then name before synonym, then the shorter
+matched term — which is what puts "Tomate, roh" above "Tomate, getrocknet" above
+"Tomatensaft" without the data having to say which one is "raw". The create/edit API
+handlers keep the rows for user ingredients; `npm run search:rebuild` (new, last step of
+`db:setup`, the deploy and the E2E workflow) rebuilds the whole table after every seed.
+
+### Changed — the Swiss importer is keyed by `(dataset, external_id)` and writes in batches
+
+It used to recognise its own rows by `ingredient_nutrition.source = 'swiss-blv-v7'`,
+version included — so a BLV V8 under a new source string would have inserted all 1191
+foods a second time. It now looks foods up in `ingredient_sources` without the version and
+bumps the version in place. It also writes multi-row statements inside one transaction
+instead of three round trips per food: the first production deploy spent a quarter of an
+hour in that loop against the remote MySQL host; the same import is now ~30 statements. The
+nutrition values themselves are unchanged. `cleanup-seed-ingredients.mjs` decides "no
+reference dataset" via `ingredient_sources` for the same reason, so a future BLS row is never
+a deletion candidate.
+
+### Added — data sources in the Impressum
+
+Both datasets ask for attribution and the app named neither. The Impressum now lists the
+BLS 4.0 (with its DOI) and the Swiss Food Composition Database V7.0, in all four locales.
+
 ## [1.10.0] — 2026-08-18
 
 A cookie banner was simply missing — the site had been setting cookies since v1.0 with no

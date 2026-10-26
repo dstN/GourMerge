@@ -26,14 +26,19 @@
  *   Base_de_donnees_suisse_des_valeurs_nutritives.xlsx   (fr)
  *   Banca_dati_svizzera_dei_valori_nutritivi.xlsx        (it)
  *
- * Upserts `ingredients` (canonical EN name when available, else DE) +
- * `ingredient_nutrition`. Idempotent: keyed by (source='swiss-blv-v7', externalId).
+ * Upserts `ingredients` (canonical EN name when available, else DE), `ingredient_nutrition`,
+ * `ingredient_sources` and the ingredient's search terms. Idempotent: a food is looked up by
+ * (dataset='swiss-blv', external_id) — the version lives in `ingredient_sources.dataset_version`
+ * and is bumped in place, so a new BLV release updates these rows rather than duplicating them.
+ * Writes in multi-row batches inside one transaction (three statements per food took a quarter
+ * of an hour against the production host).
  */
 
 import { createConnection } from 'mysql2/promise'
 import { readFileSync, readdirSync, writeFileSync, mkdirSync } from 'node:fs'
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { writeSearchTerms } from './lib/search-terms.mjs'
 
 // `xlsx` is imported lazily inside the --from-xlsx path only. It carries an
 // unfixed advisory and is needed solely to regenerate the seed, so the default
@@ -59,6 +64,15 @@ const emitSeed = process.argv.includes('--emit-seed')
 const FORCE = process.argv.includes('--force')
 const limitArg = process.argv.indexOf('--limit')
 const LIMIT = limitArg >= 0 ? parseInt(process.argv[limitArg + 1], 10) : Infinity
+
+/** `ingredient_sources.dataset` — the family, never versioned (see schema.ts). */
+const DATASET = 'swiss-blv'
+/** `ingredient_sources.dataset_version` — bump when BLV publishes a new revision. */
+const DATASET_VERSION = '7.0'
+/** `ingredient_nutrition.source` — the historical marker, kept for every reader of that column. */
+const NUTRITION_SOURCE = 'swiss-blv-v7'
+/** Foods per multi-row statement. */
+const BATCH = 200
 
 // ── Load .env ────────────────────────────────────────────────────────────────
 function loadEnv() {
@@ -390,127 +404,203 @@ async function main() {
   try {
     // ── Skip when the dataset is already in ────────────────────────────────
     //
-    // This runs on EVERY deploy, before the artifact swap, and the loop below costs three
-    // sequential round trips per food (SELECT on external_id, then the ingredient write,
-    // then the nutrition upsert). Against the production MySQL — a separate host, so every
-    // one of those is real network latency — ~1200 foods took a quarter of an hour, at
-    // roughly 100 foods per 60–90s. Measured on the first production deploy, which is a
-    // late place to find out.
+    // This runs on EVERY deploy, before the artifact swap, against the production MySQL — a
+    // separate host, so every statement is real network latency. Measured on the first
+    // production deploy: ~1200 foods took a quarter of an hour with one statement per food
+    // and column, which is a late place to find out.
     //
-    // Paying that to re-write rows that already match is the part worth removing. One
-    // COUNT is enough to know: `source` carries the dataset version (`swiss-blv-v7`), so a
-    // new BLV release changes the version string and this check stops matching by itself.
-    // Same version + same row count means the loop has nothing to do.
+    // One COUNT is enough to know there is nothing to do: `ingredient_sources` carries the
+    // dataset version per food, so a new BLV release changes `DATASET_VERSION` and this check
+    // stops matching by itself. Same version + same row count means the loop has nothing to
+    // do.
     //
-    // It is a count and not a content hash on purpose. A hash would need somewhere to
-    // store it, and the failure it would catch — someone editing the seed file in place
-    // without touching the version — is better solved by `--force`, which is right there.
+    // It is a count and not a content hash on purpose. A hash would need somewhere to store
+    // it, and the failure it would catch — someone editing the seed file in place without
+    // bumping the version — is better solved by `--force`, which is right there.
     if (!FORCE && LIMIT === Infinity) {
       const [[{ n }]] = await conn.execute(
-        `SELECT COUNT(*) AS n FROM ingredient_nutrition WHERE source = 'swiss-blv-v7'`
+        `SELECT COUNT(*) AS n FROM ingredient_sources WHERE dataset = ? AND dataset_version = ?`,
+        [DATASET, DATASET_VERSION]
       )
       if (n === merged.length) {
-        console.log(`✓ ${n} Swiss foods already imported (source swiss-blv-v7) — nothing to do.`)
+        console.log(`✓ ${n} Swiss foods already imported (${DATASET} ${DATASET_VERSION}) — nothing to do.`)
         console.log('  Re-import anyway with --force.')
         return
       }
-      if (n > 0) console.log(`… ${n} of ${merged.length} present — continuing (partial import).`)
+      if (n > 0) console.log(`… ${n} of ${merged.length} present at ${DATASET_VERSION} — continuing (partial import).`)
     }
 
-    let inserted = 0
-    let updated = 0
-    let count = 0
+    const foods = LIMIT === Infinity ? merged : merged.slice(0, LIMIT)
 
-    for (const row of merged) {
-      if (count >= LIMIT) break
-      count++
+    // ── Which foods are already ingredients ────────────────────────────────
+    //
+    // Looked up by (dataset, external_id) WITHOUT the version, in one round trip for the
+    // whole dataset. The previous importer matched on `ingredient_nutrition.source =
+    // 'swiss-blv-v7'`, version included — so a BLV V8 with a new source string would have
+    // re-inserted all 1191 foods as duplicates. The version is informational and gets bumped
+    // on the existing rows instead.
+    const [sourceRows] = await conn.execute(
+      `SELECT external_id, ingredient_id FROM ingredient_sources WHERE dataset = ?`,
+      [DATASET]
+    )
+    const idByExternal = new Map(sourceRows.map((r) => [String(r.external_id), r.ingredient_id]))
 
-      // Canonical name: EN when available, else DE
-      const canonicalName = row.names.en || row.names.de || `Swiss-${row.id}`
-      const category = mapCategory(row.kategorie)
-      const nameTranslations = JSON.stringify(row.names)
-      const synonyms = JSON.stringify(row.synonyms)
+    const toInsert = []
+    const toUpdate = []
+    for (const row of foods) (idByExternal.has(row.id) ? toUpdate : toInsert).push(row)
+    console.log(`${toInsert.length} new, ${toUpdate.length} existing — writing in batches of ${BATCH}…`)
 
-      // ── Upsert ingredient ──────────────────────────────────────
-      const [existing] = await conn.execute(
-        `SELECT i.id FROM ingredients i
-         LEFT JOIN ingredient_nutrition n ON n.ingredient_id = i.id
-         WHERE n.external_id = ? AND n.source = 'swiss-blv-v7'`,
-        [row.id]
-      )
+    // ── Write, batched, in one transaction ─────────────────────────────────
+    //
+    // Multi-row statements instead of three per food: 1191 foods become ~30 statements.
+    // Either everything lands or nothing does, so a failed deploy never leaves half a
+    // dataset behind for the next run to reason about.
+    await conn.beginTransaction()
+    try {
+      let written = 0
+      const progress = () => process.stdout.write(`  ${written}/${foods.length}...\r`)
 
-      let ingredientId
-      if (existing.length > 0) {
-        ingredientId = existing[0].id
-        await conn.execute(
-          `UPDATE ingredients SET name = ?, name_translations = ?, category = ?, synonyms = ?
-           WHERE id = ?`,
-          [canonicalName, nameTranslations, category, synonyms, ingredientId]
+      for (let i = 0; i < toInsert.length; i += BATCH) {
+        const batch = toInsert.slice(i, i + BATCH)
+        const [result] = await conn.query(
+          `INSERT INTO ingredients (name, name_translations, category, synonyms) VALUES ?`,
+          [batch.map((row) => ingredientValues(row))]
         )
-        updated++
-      } else {
-        const [result] = await conn.execute(
-          `INSERT INTO ingredients (name, name_translations, category, synonyms) VALUES (?, ?, ?, ?)`,
-          [canonicalName, nameTranslations, category, synonyms]
+        // InnoDB hands a multi-row VALUES insert its auto-increment block in one allocation,
+        // so the ids are `insertId … insertId + n - 1` — the same guarantee Drizzle's
+        // `$returningId()` is built on. The row count is checked rather than assumed.
+        if (result.affectedRows !== batch.length) {
+          throw new Error(`Expected ${batch.length} inserted ingredients, got ${result.affectedRows}`)
+        }
+        batch.forEach((row, k) => idByExternal.set(row.id, result.insertId + k))
+
+        await conn.query(
+          `INSERT INTO ingredient_sources (ingredient_id, dataset, external_id, dataset_version) VALUES ?`,
+          [batch.map((row) => [idByExternal.get(row.id), DATASET, row.id, DATASET_VERSION])]
         )
-        ingredientId = result.insertId
-        inserted++
+        await upsertNutrition(conn, batch, idByExternal)
+        await writeSearchTerms(
+          conn,
+          batch.map((row) => searchTermRow(row, idByExternal))
+        )
+        written += batch.length
+        progress()
       }
 
-      // ── Upsert ingredient_nutrition ────────────────────────────
-      const n = row.nutrition
-      const micros = JSON.stringify(Object.fromEntries(Object.entries(n.micros).filter(([, v]) => v !== null)))
+      for (let i = 0; i < toUpdate.length; i += BATCH) {
+        const batch = toUpdate.slice(i, i + BATCH)
+        // A bulk UPDATE keyed by primary key: every id already exists, so the "insert" half
+        // never fires and only the listed columns move. `created_by`, `manufacturer` and
+        // `created_at` are left alone — those are not the dataset's to overwrite.
+        await conn.query(
+          `INSERT INTO ingredients (id, name, name_translations, category, synonyms) VALUES ? AS incoming
+           ON DUPLICATE KEY UPDATE
+             name = incoming.name,
+             name_translations = incoming.name_translations,
+             category = incoming.category,
+             synonyms = incoming.synonyms`,
+          [batch.map((row) => [idByExternal.get(row.id), ...ingredientValues(row)])]
+        )
+        await upsertNutrition(conn, batch, idByExternal)
+        await writeSearchTerms(
+          conn,
+          batch.map((row) => searchTermRow(row, idByExternal))
+        )
+        written += batch.length
+        progress()
+      }
 
-      await conn.execute(
-        `INSERT INTO ingredient_nutrition
-           (ingredient_id, energy_kcal_100g, energy_kj_100g, fat_100g, saturated_fat_100g,
-            carbs_100g, sugars_100g, starch_100g, fiber_100g, protein_100g, salt_100g,
-            alcohol_100g, water_100g, density_g_per_ml, micros, source, external_id)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'swiss-blv-v7', ?)
-         ON DUPLICATE KEY UPDATE
-           energy_kcal_100g = VALUES(energy_kcal_100g),
-           energy_kj_100g   = VALUES(energy_kj_100g),
-           fat_100g         = VALUES(fat_100g),
-           saturated_fat_100g = VALUES(saturated_fat_100g),
-           carbs_100g       = VALUES(carbs_100g),
-           sugars_100g      = VALUES(sugars_100g),
-           starch_100g      = VALUES(starch_100g),
-           fiber_100g       = VALUES(fiber_100g),
-           protein_100g     = VALUES(protein_100g),
-           salt_100g        = VALUES(salt_100g),
-           alcohol_100g     = VALUES(alcohol_100g),
-           water_100g       = VALUES(water_100g),
-           density_g_per_ml = VALUES(density_g_per_ml),
-           micros           = VALUES(micros),
-           source           = 'swiss-blv-v7',
-           external_id      = VALUES(external_id)`,
-        [
-          ingredientId,
-          n.energyKcal,
-          n.energyKj,
-          n.fat,
-          n.saturatedFat,
-          n.carbs,
-          n.sugars,
-          n.starch,
-          n.fiber,
-          n.protein,
-          n.salt,
-          n.alcohol,
-          n.water,
-          row.dichte,
-          micros,
-          row.id,
-        ]
-      )
+      if (toUpdate.length > 0) {
+        await conn.query(`UPDATE ingredient_sources SET dataset_version = ? WHERE dataset = ? AND external_id IN (?)`, [
+          DATASET_VERSION,
+          DATASET,
+          toUpdate.map((row) => row.id),
+        ])
+      }
 
-      if (count % 100 === 0) process.stdout.write(`  ${count}/${merged.length}...\r`)
+      await conn.commit()
+    } catch (err) {
+      await conn.rollback()
+      throw err
     }
 
-    console.log(`\n✓ Imported ${inserted} new + updated ${updated} existing ingredients (${count} total processed).`)
+    console.log(
+      `\n✓ Imported ${toInsert.length} new + updated ${toUpdate.length} existing ingredients (${foods.length} total processed).`
+    )
   } finally {
     await conn.end()
   }
+}
+
+// ── Row builders ─────────────────────────────────────────────────────────────
+
+/** `ingredients` columns in the order (name, name_translations, category, synonyms). */
+function ingredientValues(row) {
+  // Canonical name: EN when available, else DE
+  const canonicalName = row.names.en || row.names.de || `Swiss-${row.id}`
+  return [canonicalName, JSON.stringify(row.names), mapCategory(row.kategorie), JSON.stringify(row.synonyms)]
+}
+
+/** The shape `writeSearchTerms()` reads — the same columns the DB row would have. */
+function searchTermRow(row, idByExternal) {
+  return {
+    id: idByExternal.get(row.id),
+    name: ingredientValues(row)[0],
+    name_translations: row.names,
+    synonyms: row.synonyms,
+  }
+}
+
+/** Upsert `ingredient_nutrition` for one batch. Keyed by the ingredient's primary key. */
+async function upsertNutrition(conn, batch, idByExternal) {
+  const values = batch.map((row) => {
+    const n = row.nutrition
+    const micros = JSON.stringify(Object.fromEntries(Object.entries(n.micros).filter(([, v]) => v !== null)))
+    return [
+      idByExternal.get(row.id),
+      n.energyKcal,
+      n.energyKj,
+      n.fat,
+      n.saturatedFat,
+      n.carbs,
+      n.sugars,
+      n.starch,
+      n.fiber,
+      n.protein,
+      n.salt,
+      n.alcohol,
+      n.water,
+      row.dichte,
+      micros,
+      NUTRITION_SOURCE,
+      row.id,
+    ]
+  })
+  await conn.query(
+    `INSERT INTO ingredient_nutrition
+       (ingredient_id, energy_kcal_100g, energy_kj_100g, fat_100g, saturated_fat_100g,
+        carbs_100g, sugars_100g, starch_100g, fiber_100g, protein_100g, salt_100g,
+        alcohol_100g, water_100g, density_g_per_ml, micros, source, external_id)
+     VALUES ? AS incoming
+     ON DUPLICATE KEY UPDATE
+       energy_kcal_100g   = incoming.energy_kcal_100g,
+       energy_kj_100g     = incoming.energy_kj_100g,
+       fat_100g           = incoming.fat_100g,
+       saturated_fat_100g = incoming.saturated_fat_100g,
+       carbs_100g         = incoming.carbs_100g,
+       sugars_100g        = incoming.sugars_100g,
+       starch_100g        = incoming.starch_100g,
+       fiber_100g         = incoming.fiber_100g,
+       protein_100g       = incoming.protein_100g,
+       salt_100g          = incoming.salt_100g,
+       alcohol_100g       = incoming.alcohol_100g,
+       water_100g         = incoming.water_100g,
+       density_g_per_ml   = incoming.density_g_per_ml,
+       micros             = incoming.micros,
+       source             = incoming.source,
+       external_id        = incoming.external_id`,
+    [values]
+  )
 }
 
 main().catch((e) => {

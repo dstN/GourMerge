@@ -24,7 +24,7 @@ A git-like recipe platform. Recipes are repositories — they have branches, com
 | Runtime    | Node 26                                         |
 | Deployment | Netcup Webhosting + Phusion Passenger (Apache)  |
 
-At a glance: **29 pages · 69 API endpoints · 28 tables · 714 i18n keys × 4
+At a glance: **29 pages · 69 API endpoints · 30 tables · 714 i18n keys × 4
 locales · 304 unit tests · 88 Playwright specs · zero axe
 violations · `npm audit` at zero.**
 
@@ -76,16 +76,18 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ### What `db:setup` does
 
-It runs migrations then all three seeds, because an empty database gives you an
+It runs migrations, then every seed, then the search-term build, because an empty database gives you an
 app you cannot really use — with no ingredients, the autocomplete returns nothing
 and you cannot author a recipe, which is the core loop.
 
-| Step           | Provides                                                                         |
-| -------------- | -------------------------------------------------------------------------------- |
-| `db:migrate`   | Schema, 17 versioned migrations                                                  |
-| `seed:swiss`   | 1191 foods + per-100g nutrition, DE/EN/FR/IT names, from the committed seed file |
-| `db:seed`      | Curated ingredients absent from the Swiss dataset (e.g. Vanillezucker)           |
-| `db:seed:tags` | Base culinary tags                                                               |
+| Step             | Provides                                                                                |
+| ---------------- | --------------------------------------------------------------------------------------- |
+| `db:migrate`     | Schema, 18 versioned migrations                                                         |
+| `seed:swiss`     | 1191 foods + per-100g nutrition, DE/EN/FR/IT names, from the committed seed file        |
+| `db:seed`        | Curated ingredients absent from the Swiss dataset (e.g. Vanillezucker)                  |
+| `db:seed:tags`   | Base culinary tags                                                                      |
+| `db:seed:tour`   | The onboarding tour's system recipe                                                     |
+| `search:rebuild` | `ingredient_search_terms`, what the autocomplete matches on, derived from all the above |
 
 The Swiss data is read from `server/database/seeds/swiss-foods.jsonl`, which **is**
 committed — so seeding needs no spreadsheets, no downloads and no `xlsx`
@@ -116,6 +118,7 @@ dependency. See [Swiss ingredient data](#swiss-ingredient-data) for regenerating
 | `npm run db:studio`        | Drizzle Studio (visual DB explorer)                   |
 | `npm run seed:swiss`       | Load the committed Swiss BLV seed file into the DB    |
 | `npm run seed:swiss:regen` | Regenerate that seed file from the BLV spreadsheets   |
+| `npm run search:rebuild`   | Rebuild the ingredient search terms from the catalog  |
 | `npm run db:seed`          | Curated ingredients not in the Swiss dataset          |
 | `npm run db:seed:tags`     | Base culinary tags                                    |
 | `npm run generate:icons`   | Regenerate PWA/favicon assets from brand SVG          |

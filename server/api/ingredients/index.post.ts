@@ -79,6 +79,10 @@ export default defineEventHandler(async (event) => {
 
   if (!created) throw createError({ statusCode: 500, statusMessage: 'Insert failed.' })
 
+  // What the autocomplete matches on. Without this the row exists but nobody can type their
+  // way to it until the next deploy's rebuild sweep.
+  await syncIngredientSearchTerms(db, created.id, { name: name.trim(), nameTranslations: nameTranslations ?? {} })
+
   /**
    * Only written when there is an energy value. `computeNutrition` treats
    * `energyKcal100g === null` as "this ingredient is not covered" and reports it in

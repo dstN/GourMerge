@@ -1,6 +1,6 @@
 # Plan: BLS 4.0 als zweite Lebensmittelquelle
 
-Stand: 2026-10-26 · Status: **Entwurf, nichts umgesetzt** · Entscheidungen E1–E4 getroffen (§11)
+Stand: 2026-10-26 · Status: **Phasen 1 und 2 umgesetzt** (Migration `0017`, Importer, Suche, Impressum), Phasen 3–6 offen · Entscheidungen E1–E5 getroffen (§12)
 
 Ziel: den Bundeslebensmittelschlüssel (BLS) 4.0 des Max Rubner-Instituts neben der
 Schweizer BLV-Datenbank V7.0 in den Zutatenkatalog aufnehmen, **ohne doppelte
@@ -378,6 +378,5 @@ Tests:
   (Brühen, Saucen, Teige), die fertigen Gerichte nicht.
 - **E3, FR/IT:** im selben Durchgang wie der Abgleich übersetzen.
 - **E4, doppelte Nutzerzutaten:** ersetzen und löschen (§8).
-- **Offen, E5, Anzeigename bei Paaren:** Schweizer Name („Poulet, Brust …") oder
-  deutscher BLS-Name („Hähnchen Brust …") als DE-Anzeige? Der jeweils andere bleibt
-  Suchbegriff.
+- **E5, Anzeigename bei Paaren:** der deutsche BLS-Name („Hähnchen Brust …") als
+  DE-Anzeige; der Schweizer Name bleibt Suchbegriff.

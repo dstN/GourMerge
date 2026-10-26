@@ -658,7 +658,11 @@
       "contactHeading": "Contact",
       "emailLabel": "Email",
       "formHint": "Alternatively, you can reach us via our",
-      "formLink": "contact form"
+      "formLink": "contact form",
+      "dataSourcesHeading": "Data sources",
+      "dataSourcesIntro": "Ingredients and their nutrition values come from these databases:",
+      "dataSourceBls": "Max Rubner-Institut (2025): German Nutrient Database (Bundeslebensmittelschlüssel, BLS), version 4.0. Karlsruhe.",
+      "dataSourceSwiss": "Swiss Federal Food Safety and Veterinary Office FSVO: Swiss Food Composition Database, version 7.0."
     },
     "privacy": {
       "controllerTitle": "1. Controller",

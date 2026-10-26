@@ -34,9 +34,10 @@
     "db:backup": "node scripts/backup-db.mjs",
     "db:inactive": "node scripts/inactive-accounts.mjs",
     "db:seed:tour": "node --env-file-if-exists=.env scripts/seed-tour-recipe.mjs",
-    "db:setup": "npm run db:migrate && npm run seed:swiss && npm run db:seed && npm run db:seed:tags && npm run db:seed:tour",
+    "db:setup": "npm run db:migrate && npm run seed:swiss && npm run db:seed && npm run db:seed:tags && npm run db:seed:tour && npm run search:rebuild",
     "seed:swiss": "node scripts/import-swiss-foods.mjs",
     "seed:swiss:regen": "node scripts/import-swiss-foods.mjs --from-xlsx --emit-seed",
+    "search:rebuild": "node scripts/rebuild-search-terms.mjs",
     "generate:icons": "node scripts/generate-icons.mjs"
   },
   "dependencies": {

@@ -1,6 +1,6 @@
 /**
  * Remove test/seed ingredients from the DB that were added by seed-ingredients.mjs
- * but have no Swiss BLV nutrition data.
+ * and belong to no reference dataset (no `ingredient_sources` row).
  *
  * Safe: ingredients referenced by any recipe commit are skipped (never deleted).
  *
@@ -42,22 +42,24 @@ if (!DATABASE_URL) {
 const conn = await createConnection(DATABASE_URL)
 
 try {
-  // Ingredients with no Swiss BLV nutrition entry (seeded manually, no data source)
+  // Ingredients no reference dataset knows (seeded manually, no data source). Checked via
+  // `ingredient_sources` rather than `ingredient_nutrition.source`, so a row from any dataset
+  // — Swiss BLV today, BLS once it is imported — counts as reference data and is never a
+  // candidate here.
   const [candidates] = await conn.execute(`
     SELECT i.id, i.name
     FROM ingredients i
-    LEFT JOIN ingredient_nutrition n
-      ON n.ingredient_id = i.id AND n.source = 'swiss-blv-v7'
-    WHERE n.ingredient_id IS NULL
+    LEFT JOIN ingredient_sources s ON s.ingredient_id = i.id
+    WHERE s.id IS NULL
     ORDER BY i.name
   `)
 
   if (candidates.length === 0) {
-    console.log('Nothing to clean up — all ingredients have Swiss BLV nutrition data.')
+    console.log('Nothing to clean up — every ingredient comes from a reference dataset.')
     process.exit(0)
   }
 
-  console.log(`Found ${candidates.length} ingredient(s) without Swiss BLV data:\n`)
+  console.log(`Found ${candidates.length} ingredient(s) from no reference dataset:\n`)
 
   const safe = []
   const referenced = []
