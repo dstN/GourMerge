@@ -18,6 +18,12 @@ const RESERVED_PATHS = new Set([
   'logout',
   '_nuxt',
   '__nuxt',
+  // RFC 8615. `/.well-known/ai-catalog.json` used to render the "recipe not found" page with
+  // a 200, and Lighthouse's `ard-schema` audit read that as a catalog that exists and is not
+  // JSON — a scored 0 instead of "not applicable". The real well-known routes are Nitro
+  // handlers and never reach this middleware; this makes everything else under the prefix a
+  // proper 404, as a soft 404 for a reserved namespace is wrong for crawlers too.
+  '.well-known',
 ])
 
 export default defineNuxtRouteMiddleware((to) => {
