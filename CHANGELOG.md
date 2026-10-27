@@ -46,7 +46,10 @@ hydration task that Lighthouse clocked at ~530 ms under its 4× CPU throttle. No
   `.br`/`.gz` siblings for `/_nuxt` and `/_fonts`, and `server/plugins/compress.ts` brotli-
   compresses the rendered HTML per request (quality 5, async, skipped under 1 KB). Behind
   nginx the only visible change is gzip → brotli on the document; a proxy does not re-encode
-  a body that already carries `Content-Encoding`.
+  a body that already carries `Content-Encoding`. The error page's internal render is left
+  alone: Nuxt's error handler fetches `/__nuxt_error` and reads it back as text, so a
+  compressed inner body came out mangled under a brotli header — the E2E suite caught that on
+  the 409 and 400 answers from `/auth/*` before it reached production.
 - **Icons as inline SVG** (`icon.mode: 'svg'`). A CPU profile of the mobile load showed the
   single most expensive function in hydration was `@nuxt/icon` walking every rule of every
   stylesheet — ~230 KB of Tailwind and Nuxt UI — to learn which icon classes a build step

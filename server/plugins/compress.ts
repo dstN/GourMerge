@@ -13,6 +13,18 @@
  * (about a fifth smaller on this HTML). A proxy does not re-encode a body that already carries
  * `Content-Encoding`, and neither does Apache's mod_deflate, so this cannot double-compress.
  *
+ * Not for the error page's INNER render. When a server handler throws, Nuxt's Nitro error
+ * handler renders the error page by fetching `/__nuxt_error` through `localFetch` with the
+ * original request headers, then takes the result as TEXT (`res.text()`), copies its headers
+ * onto the real response and sends that string. Compressing the inner render therefore
+ * produced a body that was brotli bytes mangled through a UTF-8 decode, sent under a
+ * `content-encoding: br` header — "Decompression failed" in every client. The E2E suite caught
+ * it on the 409 from a duplicate registration and the 400 from a reused e-mail token (both
+ * answered as HTML, because Playwright's request client sends `Accept: * / *`; API routes and
+ * JSON-accepting clients get Nitro's JSON error and never touched this path). The inner render
+ * is recognised by the context flag the error handler sets, and by its path as a fallback;
+ * the outer response is then plain HTML, which the proxy may compress as before.
+ *
  * Brotli at quality 5 rather than the default 11: the default is for assets compressed once at
  * build time and costs ~10× the CPU for a few percent of size. Quality 5 is a few milliseconds
  * for a page this size and still well ahead of gzip. Async, so the event loop is not held for
@@ -29,6 +41,11 @@ const MIN_BYTES = 1024
 export default defineNitroPlugin((nitroApp) => {
   nitroApp.hooks.hook('render:response', async (response, { event }) => {
     if (typeof response.body !== 'string') return
+    if (response.headers?.['content-encoding']) return
+    // The error handler's internal render (see above), and island renders, which are read
+    // back as text by Nuxt itself as well.
+    const nuxtContext = event.context.nuxt as Record<string, unknown> | undefined
+    if (nuxtContext?.['~rendering-error'] || event.path.startsWith('/__nuxt_')) return
 
     const accept = getRequestHeader(event, 'accept-encoding') ?? ''
     const encoding = /\bbr\b/.test(accept) ? 'br' : /\bgzip\b/.test(accept) ? 'gzip' : null
