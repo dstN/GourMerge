@@ -13,13 +13,18 @@
  * the browser is idle. The chunk no longer sits in the entry, and the init runs in its own
  * short task after the page is interactive.
  *
- * ## What is given up
+ * ## The gap before the SDK exists, and how it is closed
  *
- * An error thrown during the first second — inside hydration, or in a plugin that runs before
- * mount — is not reported, because there is no client yet to catch it. Server-side capture
- * (`sentry.server.config.ts`) is untouched and still sees every SSR failure. If a hydration-
- * time error ever has to be chased in the field, restoring `sentry.client.config.ts` with the
- * same options puts the SDK back in the boot path; nothing else depends on this file.
+ * Between the first script and `init()` there is no client, so an error thrown in a plugin's
+ * setup or during hydration would have nowhere to go. Two things cover that window, the same
+ * way Sentry's own loader script does: a small queue — `window` `error` and
+ * `unhandledrejection` listeners plus Nuxt's `app:error` / `vue:error` hooks remember what was
+ * thrown — and an early trigger: the first queued error starts the SDK load at once instead
+ * of waiting for idle. After `init()` the queue is flushed through `captureException`, the two
+ * window listeners are removed (Sentry's own global handlers now hold those events, and
+ * keeping ours would report everything twice), and the Nuxt hooks report directly. The
+ * queue is capped, because a render loop can throw thousands of times before the chunk
+ * arrives. Server-side capture (`sentry.server.config.ts`) is untouched throughout.
  *
  * ## What is kept, and how
  *
@@ -38,40 +43,70 @@
  * Lighthouse measures. The `integrations` filter below is belt-and-braces, so an upstream
  * default cannot re-enable it.
  */
+const EARLY_QUEUE_LIMIT = 20
+
 export default defineNuxtPlugin((nuxtApp) => {
   const { dsn, environment, release } = useRuntimeConfig().public.sentry
   if (!dsn) return
 
-  onNuxtReady(async () => {
-    const Sentry = await import('@sentry/nuxt')
+  const isResponseNotFault = (error: unknown) => {
+    if (!isNuxtError(error)) return false
+    const status = error.statusCode
+    return !!status && status >= 300 && status < 500
+  }
 
-    Sentry.init({
-      dsn,
-      environment,
-      release: release || undefined,
-      integrations: (defaults) => defaults.filter((integration) => integration.name !== 'BrowserTracing'),
-      // No `sendDefaultPii`: Sentry 11 removed the option, and nothing in the v11 SDK sets
-      // `user.ip_address = '{{auto}}'` on events — the behaviour `false` used to buy is now
-      // the only behaviour.
-      ignoreErrors: [
-        'ResizeObserver loop limit exceeded',
-        'ResizeObserver loop completed with undelivered notifications',
-        'Network request failed',
-        'Failed to fetch',
-        'Load failed',
-      ],
-    })
+  // Until the SDK is up, `report` queues and kicks off the load; afterwards it captures.
+  const early: { error: unknown; info?: string }[] = []
+  let report = (error: unknown, info?: string) => {
+    if (early.length < EARLY_QUEUE_LIMIT) early.push({ error, info })
+    void load()
+  }
 
-    const isResponseNotFault = (error: unknown) => {
-      if (!isNuxtError(error)) return false
-      const status = error.statusCode
-      return !!status && status >= 300 && status < 500
-    }
-    nuxtApp.hook('app:error', (error) => {
-      if (!isResponseNotFault(error)) Sentry.captureException(error)
-    })
-    nuxtApp.hook('vue:error', (error, _instance, info) => {
-      if (!isResponseNotFault(error)) Sentry.captureException(error, { extra: { info } })
-    })
+  const onWindowError = (event: ErrorEvent) => report(event.error ?? event.message)
+  const onRejection = (event: PromiseRejectionEvent) => report(event.reason)
+  window.addEventListener('error', onWindowError)
+  window.addEventListener('unhandledrejection', onRejection)
+
+  nuxtApp.hook('app:error', (error) => {
+    if (!isResponseNotFault(error)) report(error)
+  })
+  nuxtApp.hook('vue:error', (error, _instance, info) => {
+    if (!isResponseNotFault(error)) report(error, info)
+  })
+
+  let loading: Promise<void> | null = null
+  function load() {
+    loading ??= (async () => {
+      const Sentry = await import('@sentry/nuxt')
+
+      Sentry.init({
+        dsn,
+        environment,
+        release: release || undefined,
+        integrations: (defaults) => defaults.filter((integration) => integration.name !== 'BrowserTracing'),
+        // No `sendDefaultPii`: Sentry 11 removed the option, and nothing in the v11 SDK sets
+        // `user.ip_address = '{{auto}}'` on events — the behaviour `false` used to buy is now
+        // the only behaviour.
+        ignoreErrors: [
+          'ResizeObserver loop limit exceeded',
+          'ResizeObserver loop completed with undelivered notifications',
+          'Network request failed',
+          'Failed to fetch',
+          'Load failed',
+        ],
+      })
+
+      window.removeEventListener('error', onWindowError)
+      window.removeEventListener('unhandledrejection', onRejection)
+      report = (error, info) => {
+        Sentry.captureException(error, info ? { extra: { info } } : undefined)
+      }
+      for (const { error, info } of early.splice(0)) report(error, info)
+    })()
+    return loading
+  }
+
+  onNuxtReady(() => {
+    void load()
   })
 })
