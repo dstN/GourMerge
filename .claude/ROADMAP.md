@@ -210,17 +210,15 @@ Things the report lists that are not scored or not actionable, unchanged from Au
 `bf-cache` ("Internal error", not actionable), `unused-javascript` on the Nuxt entry itself
 (nothing to remove without measurement), `cache-insight` on `/_nuxt` and `/_fonts` (Plesk's
 static file processing serves them off disk without Nitro's `immutable` rule — owner action,
-see `nuxt.config.ts`). For the last one the fix is in the Plesk panel, not in code: Websites &
-Domains → Apache & nginx Settings → _Additional nginx directives_, with
-
-```nginx
-location ^~ /_nuxt/  { expires 1y; add_header Cache-Control "public, max-age=31536000, immutable"; }
-location ^~ /_fonts/ { expires 1y; add_header Cache-Control "public, max-age=31536000, immutable"; }
-```
-
-Every file under both paths carries a content hash, so a year is safe; the `expires` line is
-what nginx's static handler honours, the `add_header` is what Lighthouse reads. Weighted 0 in
-the score, worth 598 KiB on every repeat visit.
+see `nuxt.config.ts`). For the last one the fix was in the Plesk panel, not in code — done on 2026-10-27. This
+plan's panel has no _Additional nginx directives_ field; what works is **Apache & nginx
+Settings → Expires → custom value, 365 days, "only for static files"**, with _Smart static
+files processing_ left on. Verified on production afterwards: `/_nuxt/*.css`, `/_nuxt/*.js`,
+`/_fonts/*.woff2` and `/favicon.svg` answer `cache-control: max-age=31536000` plus an
+`Expires` a year out; the HTML and `llms.txt` are untouched. No `immutable` token, which
+Lighthouse does not need. Side effect, accepted: the unhashed files (`favicon.svg`, the PWA
+icons, `manifest.webmanifest`) are cached for a year too, so a changed logo needs a new file
+name; `sw.js` is exempt, browsers fetch a service worker's update check past the HTTP cache.
 
 ### Deviations from ARCHITECTURE.md, accepted
 
