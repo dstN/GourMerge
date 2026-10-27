@@ -194,11 +194,33 @@ ai-catalog.json` was a soft 404. All three are fixed in code (see the CHANGELOG)
   version of this page. The lab machines behind PageSpeed and a developer laptop are several
   times faster than this container; on them the same build is expected to land at or near 100. That is the number to confirm after deploy — from production, not from here.
 
+**PageSpeed against production (mobile, 2026-10-27, after the deploy)** listed, all of them
+unscored diagnostics: `unused-javascript` 168 KiB — the Sentry SDK chunk (129 KiB, Session
+Replay and Feedback included, loaded at idle) and Zod (68 KiB, loaded at idle on a page with no
+form); both now load only on the first interaction or error, see the CHANGELOG. `unused-css`
+21 of 30 KiB — the Tailwind + Nuxt UI stylesheet is one file for the whole app; splitting it
+per page is not something Tailwind v4 offers, deliberately left. `render-blocking` 450 ms —
+that same stylesheet; critical-CSS inlining stays declined for the reasons given in August.
+`network-dependency-tree` — a four-level chunk chain to ~870 ms, the known cost of dropping
+the `modulepreload` hints (see `hooks['build:manifest']` in `nuxt.config.ts`): later Time to
+Interactive, which is unscored, for earlier paint, which is scored. `cache-insight` 598 KiB —
+`/_nuxt` and `/_fonts` with no `Cache-Control` at all, below.
+
 Things the report lists that are not scored or not actionable, unchanged from August:
-`bf-cache` ("Internal error", not actionable), `unused-javascript` (the Nuxt entry; nothing
-to remove without measurement), `cache-insight` on `/_nuxt` and `/_fonts` (Plesk's static
-file processing serves them off disk without Nitro's `immutable` rule — owner action, see
-`nuxt.config.ts`).
+`bf-cache` ("Internal error", not actionable), `unused-javascript` on the Nuxt entry itself
+(nothing to remove without measurement), `cache-insight` on `/_nuxt` and `/_fonts` (Plesk's
+static file processing serves them off disk without Nitro's `immutable` rule — owner action,
+see `nuxt.config.ts`). For the last one the fix is in the Plesk panel, not in code: Websites &
+Domains → Apache & nginx Settings → _Additional nginx directives_, with
+
+```nginx
+location ^~ /_nuxt/  { expires 1y; add_header Cache-Control "public, max-age=31536000, immutable"; }
+location ^~ /_fonts/ { expires 1y; add_header Cache-Control "public, max-age=31536000, immutable"; }
+```
+
+Every file under both paths carries a content hash, so a year is safe; the `expires` line is
+what nginx's static handler honours, the `add_header` is what Lighthouse reads. Weighted 0 in
+the score, worth 598 KiB on every repeat visit.
 
 ### Deviations from ARCHITECTURE.md, accepted
 

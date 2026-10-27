@@ -41,19 +41,26 @@
  * homepage. `zod/v4/locales/<code>` is a public subpath export, so each language is
  * its own few-KB chunk and the switcher fetches the next one only when it is picked.
  *
- * ## The race, and why it is acceptable
+ * ## The trigger, and the race it leaves
  *
  * `z.config()` is read at PARSE time, not at schema construction, so the map only
- * has to be in place before the first submit. The trigger below is "whichever comes
- * first: the browser goes idle, or the user touches the page" — and a form cannot
- * be submitted without at least one interaction. The residual window is a submit
- * fired within the same tick as the very first interaction, faster than a dynamic
- * import resolves. A human cannot do that; a synthetic click can. The cost if it
- * ever happens is one English validation message, on one submit, and the next
- * parse is localized. That is a fair trade for taking Zod off every page's boot
- * path — but it is the reason this is written as a deadline rather than a plain
- * `requestIdleCallback`.
+ * has to be in place before the first submit — and a form cannot be submitted
+ * without first being touched. The load therefore starts on the first interaction
+ * (`pointerdown`, `keydown`, `focusin`) and on nothing else. There used to be an idle
+ * deadline as well ("whichever comes first"), and PageSpeed against production showed
+ * what it cost: on the start page, which has no form, Zod arrived as a 68 KiB chunk
+ * that nothing ever read, inside the window Lighthouse counts as Total Blocking Time
+ * ("idle" is long before Time to Interactive, which wants five quiet seconds). A page
+ * that is only read now never loads it.
+ *
+ * The residual window is a submit fired within the same tick as the very first
+ * interaction, faster than a dynamic import resolves. A human cannot do that — typing
+ * into a field fires `keydown` and `focusin` long before the submit — but a synthetic
+ * click can. The cost if it ever happens is one English validation message, on one
+ * submit, and the next parse is localized.
  */
+const INTERACTION_EVENTS = ['pointerdown', 'keydown', 'focusin'] as const
+
 type LocaleFactory = () => Parameters<typeof import('zod').z.config>[0]
 type LocaleModule = { default: LocaleFactory }
 
@@ -95,13 +102,8 @@ export default defineNuxtPlugin((nuxtApp) => {
   watch(i18n.locale, (value) => apply?.(value))
 
   const once = () => {
-    window.removeEventListener('pointerdown', once)
-    window.removeEventListener('keydown', once)
+    for (const type of INTERACTION_EVENTS) window.removeEventListener(type, once, true)
     void load()
   }
-  window.addEventListener('pointerdown', once, { once: true, passive: true })
-  window.addEventListener('keydown', once, { once: true })
-
-  if ('requestIdleCallback' in window) window.requestIdleCallback(once, { timeout: 2000 })
-  else setTimeout(once, 1000)
+  for (const type of INTERACTION_EVENTS) window.addEventListener(type, once, { capture: true, passive: true })
 })

@@ -1,5 +1,5 @@
 /**
- * Sentry in the browser — errors only, and initialised AFTER hydration.
+ * Sentry in the browser — errors only, loaded on the first error or the first interaction.
  *
  * This replaces the conventional `sentry.client.config.ts`. With that file present, the
  * `@sentry/nuxt` module registers a plugin that `await`s the config module before any other
@@ -9,41 +9,50 @@
  * that is work inside the one long task Lighthouse scores as Total Blocking Time, weight 30,
  * spent on a visitor who has not had an error yet.
  *
- * Here the SDK is imported dynamically from `onNuxtReady`, i.e. once the app has mounted and
- * the browser is idle. The chunk no longer sits in the entry, and the init runs in its own
- * short task after the page is interactive.
+ * ## When the SDK loads
+ *
+ * Not at idle. A first version loaded it from `onNuxtReady`, and PageSpeed against production
+ * showed why that is not enough: the chunk still arrives inside the window Lighthouse measures
+ * (Time to Interactive needs five quiet seconds, so "idle" is well before it), it was 129 KiB on
+ * the wire, and `unused-javascript` listed it as the largest piece of code the page never ran.
+ * Now nothing loads until one of two things happens: an error is thrown, or the visitor
+ * interacts (`pointerdown`, `keydown`, `focusin`). A page that is only looked at never pays for
+ * monitoring; a page that is used has the SDK up before the user can do anything that needs
+ * reporting. The cost is breadcrumbs: Sentry only records those from the moment it exists,
+ * so an error on the first tap has no trail before that tap. The error itself is not lost —
+ * see the next section.
  *
  * ## The gap before the SDK exists, and how it is closed
  *
- * Between the first script and `init()` there is no client, so an error thrown in a plugin's
- * setup or during hydration would have nowhere to go. Two things cover that window, the same
- * way Sentry's own loader script does: a small queue — `window` `error` and
- * `unhandledrejection` listeners plus Nuxt's `app:error` / `vue:error` hooks remember what was
- * thrown — and an early trigger: the first queued error starts the SDK load at once instead
- * of waiting for idle. After `init()` the queue is flushed through `captureException`, the two
- * window listeners are removed (Sentry's own global handlers now hold those events, and
- * keeping ours would report everything twice), and the Nuxt hooks report directly. The
- * queue is capped, because a render loop can throw thousands of times before the chunk
- * arrives. Server-side capture (`sentry.server.config.ts`) is untouched throughout.
+ * Before `init()` there is no client, so an error thrown in a plugin's setup, during hydration
+ * or before the first interaction would have nowhere to go. A small queue covers that, the
+ * same way Sentry's own loader script does: `window` `error` and `unhandledrejection`
+ * listeners plus Nuxt's `app:error` / `vue:error` hooks remember what was thrown, and the
+ * first queued error starts the load at once. After `init()` the queue is flushed through
+ * `captureException`, the two window listeners are removed (Sentry's own global handlers now
+ * hold those events, and keeping ours would report everything twice), and the Nuxt hooks
+ * report directly. The queue is capped, because a render loop can throw thousands of times
+ * before the chunk arrives. Server-side capture (`sentry.server.config.ts`) is untouched.
  *
- * ## What is kept, and how
+ * ## Why `@sentry/browser`, not `@sentry/nuxt`
  *
- * The module's own client plugin (`sentry-client-integrations`) is skipped along with the
- * config file, so what it did for capture is done here: Nuxt's `app:error` / `vue:error`
- * hooks forward to `captureException`, with the module's filter for 3xx/4xx `NuxtError`s,
- * which are responses, not faults. Every error thrown in a component reaches `vue:error`
- * (Nuxt installs `app.config.errorHandler` for exactly that), so nothing is lost by not
- * attaching Sentry's `vueIntegration` as well — which `@sentry/nuxt` does not export for
- * the browser in a form that takes the `app` (its client build ships a stand-in that only
- * records options for the module plugin to read). What that integration would have added
- * is the component name on the event; the error, stack and breadcrumbs are the same.
+ * The Nuxt package's client entry re-exports all of `@sentry/vue`, which re-exports all of
+ * `@sentry/browser` — Session Replay, User Feedback and browser tracing included — and that
+ * whole graph survived into the chunk (428 KB raw) although only `init` and
+ * `captureException` were ever called. Importing the two names from `@sentry/browser` directly
+ * leaves the bundler a graph it can prune. What `@sentry/nuxt`'s `init` added on top was SDK
+ * metadata (events say "sentry.javascript.browser" now instead of "…nuxt") and nothing else;
+ * the Vue integration it would have attached is not needed, because every error thrown in a
+ * component reaches `vue:error` (Nuxt installs `app.config.errorHandler` for exactly that),
+ * and what the integration adds is the component name on the event, not the error.
  *
  * Errors only — no browser tracing, same trade as before: `browserTracingIntegration` sets up
  * PerformanceObservers and long-task tracking on the main thread during exactly the window
- * Lighthouse measures. The `integrations` filter below is belt-and-braces, so an upstream
- * default cannot re-enable it.
+ * Lighthouse measures. It is not among `@sentry/browser`'s defaults; the filter below is
+ * belt-and-braces, so an upstream default cannot re-enable it.
  */
 const EARLY_QUEUE_LIMIT = 20
+const INTERACTION_EVENTS = ['pointerdown', 'keydown', 'focusin'] as const
 
 export default defineNuxtPlugin((nuxtApp) => {
   const { dsn, environment, release } = useRuntimeConfig().public.sentry
@@ -74,12 +83,18 @@ export default defineNuxtPlugin((nuxtApp) => {
     if (!isResponseNotFault(error)) report(error, info)
   })
 
+  const onInteraction = () => {
+    for (const type of INTERACTION_EVENTS) window.removeEventListener(type, onInteraction, true)
+    void load()
+  }
+  for (const type of INTERACTION_EVENTS) window.addEventListener(type, onInteraction, { capture: true, passive: true })
+
   let loading: Promise<void> | null = null
   function load() {
     loading ??= (async () => {
-      const Sentry = await import('@sentry/nuxt')
+      const { init, captureException } = await import('@sentry/browser')
 
-      Sentry.init({
+      init({
         dsn,
         environment,
         release: release || undefined,
@@ -99,14 +114,10 @@ export default defineNuxtPlugin((nuxtApp) => {
       window.removeEventListener('error', onWindowError)
       window.removeEventListener('unhandledrejection', onRejection)
       report = (error, info) => {
-        Sentry.captureException(error, info ? { extra: { info } } : undefined)
+        captureException(error, info ? { extra: { info } } : undefined)
       }
       for (const { error, info } of early.splice(0)) report(error, info)
     })()
     return loading
   }
-
-  onNuxtReady(() => {
-    void load()
-  })
 })

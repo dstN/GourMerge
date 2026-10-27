@@ -335,6 +335,31 @@ export default defineNuxtConfig({
    * one they did ask for is still painting. `<NuxtLink>` prefetches on hover and on visibility
    * at runtime independently of this flag, so navigation stays warm.
    */
+  experimental: {
+    defaults: {
+      nuxtLink: {
+        /**
+         * Prefetch linked routes on interaction, not on visibility.
+         *
+         * By default every `<NuxtLink>` that scrolls into view triggers `preloadRouteComponents`
+         * for its target, which does not merely fetch the route's chunk: it `import()`s it, so
+         * the chunk and everything it statically depends on is parsed and evaluated. On the
+         * start page that is the register, login, glossary, explore, contact and privacy pages
+         * — and, because the forms among them import Zod, the 360 KB Zod chunk — for every
+         * visitor, about 700 ms after load, inside the window Lighthouse scores as Total
+         * Blocking Time. PageSpeed against production listed exactly these as 168 KiB of
+         * JavaScript the page never ran.
+         *
+         * On interaction (`pointerenter` / `focus`; on touch the pointer event that precedes
+         * the tap) the prefetch still lands ahead of the navigation for the one link a visitor
+         * actually uses, and nothing is loaded for the ones they do not. Per-link `prefetch-on`
+         * props still override this where a page knows better.
+         */
+        prefetchOn: { visibility: false, interaction: true },
+      },
+    },
+  },
+
   hooks: {
     'build:manifest'(manifest) {
       for (const entry of Object.values(manifest)) {

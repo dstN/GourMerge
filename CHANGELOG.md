@@ -56,12 +56,21 @@ hydration task that Lighthouse clocked at ~530 ms under its 4× CPU throttle. No
   might already have emitted (none here), then inserting one `<style>` per icon while the page
   was still hydrating. SVG mode renders the icon data on the server and hydrates it like any
   element.
-- **Sentry initialised after hydration.** `sentry.client.config.ts` is gone; `app/plugins/
-sentry.client.ts` imports the SDK dynamically from `onNuxtReady`. The module's config plugin
-  used to `await` the SDK before any other plugin ran, which put its download, parse and
-  `init()` on the critical path. The trade (errors thrown during the first second are not
-  reported; server capture is untouched) and how the Vue integration and the Nuxt error hooks
-  are re-attached are documented in the plugin.
+- **Sentry loads on the first error or the first interaction, from `@sentry/browser`.**
+  `sentry.client.config.ts` is gone; the module's config plugin used to `await` the SDK before
+  any other plugin ran, which put its download, parse and `init()` on the critical path. A
+  first replacement loaded it from `onNuxtReady`, and PageSpeed against production showed that
+  "idle" is still inside the window Lighthouse scores: the chunk was 129 KiB on the wire —
+  the Nuxt package re-exports all of `@sentry/vue` and `@sentry/browser`, Session Replay and
+  User Feedback included, and that graph survived into the bundle — and `unused-javascript`
+  listed it as the largest piece of code the page never ran. `app/plugins/sentry.client.ts`
+  now imports `init` and `captureException` from `@sentry/browser` (an explicit dependency),
+  and only once something happens: an error, or a `pointerdown` / `keydown` / `focusin`. A
+  page that is merely read never loads monitoring. Nothing thrown before the SDK exists is
+  lost: `error` and `unhandledrejection` listeners plus Nuxt's `app:error` / `vue:error`
+  hooks queue early errors, the first of them starts the load, and the queue is flushed
+  through `captureException` after `init()`. The trade is breadcrumbs before the first tap,
+  and the SDK name on events ("…browser" instead of "…nuxt").
 - **Lazy hydration where nothing needs JavaScript in the first frame.** The feature grid and
   the step list are `hydrate-never` components (`components/landing/`); the closing call to
   action hydrates on visibility; the header's language select, colour-mode button and mobile
@@ -70,8 +79,20 @@ sentry.client.ts` imports the SDK dynamically from `onNuxtReady`. The module's c
   again inside the one task Lighthouse scores as Total Blocking Time. The onboarding overlays
   mount only for a session (every tour entry point is behind one) and are code-split out of
   the entry.
-- **Zod loads one locale.** `zod-locale.client.ts` imported `zod/locales`, the 210 KB barrel
-  of every language; it now imports `zod/v4/locales/<code>` for the active one.
+- **Links prefetch on interaction, not on visibility.** PageSpeed listed 168 KiB of JavaScript
+  the start page never ran, and most of it was not the plugins at all: every `<NuxtLink>` that
+  scrolls into view calls `preloadRouteComponents`, which `import()`s — parses and evaluates —
+  the target page's chunk and its static dependencies. On the start page that is the register,
+  login, glossary, explore, contact and privacy pages, and through the forms among them the
+  360 KB Zod chunk, ~700 ms after load for every visitor. `experimental.defaults.nuxtLink.
+prefetchOn` is now `{ interaction: true }` only (`nuxt.config.ts` explains the trade): the
+  one link a visitor uses still prefetches on hover or the pointer-down before the tap.
+- **Zod loads one locale, and only when touched.** `zod-locale.client.ts` imported
+  `zod/locales`, the 210 KB barrel of every language; it now imports `zod/v4/locales/<code>`
+  for the active one. The idle deadline is gone too: it fetched Zod itself (68 KiB on the
+  wire) on the start page, which has no form, inside the window Lighthouse counts as blocking
+  time. The load now starts on the first `pointerdown` / `keydown` / `focusin`, which any
+  submit is preceded by.
 
 ### Added — BLS 4.0 (`npm run seed:bls`)
 
