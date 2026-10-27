@@ -148,54 +148,57 @@ ingredient/step made the edit page's `isDirty` true from the moment it typed the
 clicking "View recipe" — the button the tour highlights next — raised an unrelated
 unsaved-changes prompt. See the CHANGELOG.
 
-### Lighthouse (mobile, `lighthouse.json`, 2026-08-08)
+### Lighthouse (CLI 13.5, local production build, 2026-10-26)
 
-**Performance 99 · Accessibility 100 · Best Practices 100 · SEO 100.** The one
-missing point is arithmetic, not a defect:
+Start page, measured against `node .output/server/index.mjs` in a cloud container
+(`benchmarkIndex` ≈ 1 800–2 100), twice: directly over HTTP/1.1, and through a local TLS
+proxy speaking HTTP/2 with the brotli the app now produces itself — the protocol production
+has behind nginx. German `Accept-Language`, so `/` is served without the locale redirect
+an English browser gets (that redirect is `detectBrowserLanguage.redirectOn: 'root'`, a
+product decision, and costs one round trip on `/` for English visitors).
 
-| Metric      | Value  | Score | Weight |
-| ----------- | ------ | ----- | ------ |
-| FCP         | 1.6 s  | 0.95  | 10     |
-| LCP         | 1.8 s  | 0.99  | 25     |
-| TBT         | 100 ms | 0.98  | 30     |
-| CLS         | 0.003  | 1.00  | 25     |
-| Speed Index | 1.6 s  | 1.00  | 10     |
+| Run                                                       | Perf         | A11y | BP  | SEO | Agentic | FCP           | LCP           | TBT                   | CLS   |
+| --------------------------------------------------------- | ------------ | ---- | --- | --- | ------- | ------------- | ------------- | --------------------- | ----- |
+| HTTP/1.1 mobile ×3                                        | 82 · 82 · 85 | 100  | 100 | 100 | 4/4     | 1.3 s         | 1.6 s         | 717 · 689 · 592 ms    | 0.000 |
+| HTTP/1.1 desktop                                          | 100          | 100  | 100 | 100 | 4/4     | 0.5 s         | 0.6 s         | 16 ms                 | 0.001 |
+| HTTP/2 mobile ×3                                          | 82 · 85 · 83 | 100  | 100 | 100 | 4/4     | 1.3 s         | 1.6 s         | 720 · 581 · 647 ms    | 0.000 |
+| HTTP/2 desktop                                            | 100          | 100  | 100 | 100 | 4/4     | 0.4 s         | 0.5 s         | 0 ms                  | 0.001 |
+| `/` → `/en` (English `Accept-Language`), mobile / desktop | 84–85 / 100  | 100  | 100 | 100 | 4/4     | 1.5 s / 0.4 s | 1.7 s / 0.5 s | 555–625 ms / 11–32 ms | 0.000 |
 
-That sums to **98.65**, which rounds to 99; 100 needs ≥ 99.5, i.e. ~0.85 points
-across FCP, LCP and TBT together. Fixing FCP _and_ LCP outright yields 0.75 — so
-no single change gets there.
+**Accessibility, Best Practices and SEO are 100; Agentic Browsing is 4/4; desktop
+performance is 100.** Mobile performance is held back by Total Blocking Time alone — every
+other mobile metric scores 0.98–1.00 — and TBT on this machine is dominated by hydrating the
+Nuxt UI shell under Lighthouse's 4× CPU throttle. What was measured and what was done:
 
-What the report flags, and what each one is actually worth:
+- The baseline on the same machine was **mobile 44 / desktop 95** — not because the site was
+  that slow, but because the local server sent nothing compressed (the host's nginx does), the
+  cookie banner was the LCP element and only painted after hydration, and `/.well-known/
+ai-catalog.json` was a soft 404. All three are fixed in code (see the CHANGELOG).
+- A CPU profile of the mobile load (Playwright, `Profiler` domain, 4× throttle) attributed the
+  hydration task as: Vue's own hydration machinery ≈ 165 ms, `tailwind-merge` ≈ 75 ms (Nuxt
+  UI computes every component's classes through `tv()` + `twMerge` at render time, and the
+  first call builds the class-group map), the Reka `Select` behind `USelect` ≈ 70 ms,
+  `@nuxt/icon` ≈ 100 ms before SVG mode. The icon scan is gone, Sentry's init left the boot
+  path, the onboarding overlays no longer mount for guests, and the header, footer, banner and
+  the below-the-fold sections hydrate lazily — which spreads the work over several tasks but
+  does not remove it: the idle hydrations still run before Time to Interactive and still
+  exceed 50 ms each under the throttle, so they still count.
+- What is left is the cost of Nuxt UI itself. On this page a `UButton` is eight component
+  instances (`ULink` → `ULinkBase` → `NuxtLink` → `RouterLink` → `Primitive` …, plus the icon),
+  and the shell is ~300 instances for 311 DOM nodes. Getting the mobile TBT under 200 ms here
+  would mean replacing those components on the public shell with plain markup, which is a
+  design-system decision (DESIGNBOOK §2) and not a performance fix to make on the side.
+- Run-to-run variance on this container is large (TBT 460–760 ms across identical runs),
+  so single mobile runs are not evidence either way; the table shows three.
+- The previous production run (PageSpeed, 2026-08-08) measured TBT **100 ms** on a heavier
+  version of this page. The lab machines behind PageSpeed and a developer laptop are several
+  times faster than this container; on them the same build is expected to land at or near 100. That is the number to confirm after deploy — from production, not from here.
 
-- **`render-blocking-insight`, est. 300 ms** — `entry.css`, the only blocking
-  request. Measured on the current build: **237,678 B raw, 31,803 B gzip, 25,148 B
-  brotli**, against a ~12 KB document. Inlining it removes one round trip and
-  roughly triples the HTML on every request, and because the host serves
-  `/_nuxt/*` with **no cache headers at all** (see `cache-insight` below) there is
-  no repeat-visit cache to lose either. That makes it close to break-even on the
-  simulated profile rather than the clear win the audit's "savings" model implies,
-  and it cannot be verified without a production Lighthouse run. **Deliberately
-  not done.** If it is attempted, the honest way is real critical-CSS extraction
-  (`beasties`) at build time, and the acceptance test is a before/after run
-  against production — not the lab estimate.
-- **`cache-insight`, 445 KiB over 61 files** — `/_nuxt/*` and `/_fonts/*` come
-  back with `ETag` and nothing else. `nuxt.config.ts` already sets
-  `immutable` route rules for both and documents at length why they never reach
-  the browser: Plesk's "Smart static files processing" serves those files off disk
-  and Nitro never sees the request. **Owner action, not code** — turning that
-  feature off hands every asset to Node. Weighted 0 by Lighthouse.
-- **`bf-cache`** — "Internal error", flagged by Lighthouse itself as _not
-  actionable_.
-- **`unused-javascript`, 20 KiB of the 47 KiB entry chunk** — the Nuxt entry.
-  Nothing to remove without measurement.
-- **TBT** is the largest remaining lever at weight 30, and the obvious candidate
-  is already spent: `sentry.client.config.ts` removed `browserTracing` for exactly
-  this reason and documents the trade. What is left is Vue hydration.
-
-**Conclusion: no speculative performance change was made.** The report shows a
-99 with one actionable item whose net effect is unmeasurable from a lab run, and
-this project's own standard (see the `/_nuxt/**` comment in `nuxt.config.ts`) is
-not to make host-fragile changes for weight-0 or break-even wins.
+Things the report lists that are not scored or not actionable, unchanged from August:
+`bf-cache` ("Internal error", not actionable), `unused-javascript` (the Nuxt entry; nothing
+to remove without measurement), `cache-insight` on `/_nuxt` and `/_fonts` (Plesk's static
+file processing serves them off disk without Nitro's `immutable` rule — owner action, see
+`nuxt.config.ts`).
 
 ### Deviations from ARCHITECTURE.md, accepted
 

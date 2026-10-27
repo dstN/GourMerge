@@ -104,7 +104,7 @@ const localeSwitchItems = [
          nothing unless the gate is on. `tests/e2e/shell.spec.ts` asserts against this. -->
     <main id="main-content" data-shell="app" tabindex="0" class="flex-1 overflow-y-auto">
       <slot />
-      <LegalCookieConsent />
+      <LazyLegalCookieConsent hydrate-on-idle />
     </main>
 
     <!-- ── Footer (fixed) ──────────────────────────────────── -->
@@ -114,7 +114,7 @@ const localeSwitchItems = [
           <p class="text-sm text-muted text-center">
             © {{ new Date().getFullYear() }} GourMerge<span class="hidden sm:inline">: {{ t('app.slogan') }}</span>
           </p>
-          <LayoutFooterLinks />
+          <LazyLayoutFooterLinks hydrate-on-visible />
         </div>
       </div>
     </footer>
