@@ -31,7 +31,13 @@ jobs:
   deploy:
     name: Deploy to Netcup
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    # After CI only for code from this repository: a fork's pull request from a
+    # branch named master passes the branches filter too, and the checkout below
+    # would run its migrations with DATABASE_URL and the SSH password.
+    if: >-
+      ${{ github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_repository.full_name == github.repository) }}
     # The repository default for the workflow token is `read`, which grants
     # contents only. Two steps here read the Actions API and fail with a 403
     # without an explicit grant: the E2E gate calls listWorkflowRuns, and the
@@ -113,6 +119,8 @@ jobs:
               repo: context.repo.repo,
               workflow_id: 'ci.yml',
               branch: 'master',
+              // pushes only: a fork's pull request from a branch named master is listed under master too
+              event: 'push',
               status: 'success',
               per_page: 50,
             })
