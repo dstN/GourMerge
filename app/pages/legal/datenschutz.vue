@@ -101,8 +101,8 @@ useSeoMeta({
           <p class="text-sm text-muted">{{ t('legal.privacy.hostingBody') }}</p>
           <address class="not-italic text-sm text-muted mt-1 space-y-0.5">
             <p class="font-medium text-default">Netcup GmbH</p>
-            <p>Daimlerstraße 25</p>
-            <p>76185 Karlsruhe</p>
+            <p>Emmy-Noether-Straße 10</p>
+            <p>76131 Karlsruhe</p>
             <p>Deutschland</p>
           </address>
           <p class="text-sm text-muted mt-2">{{ t('legal.privacy.hostingProcessing') }}</p>
