@@ -524,7 +524,7 @@ redirect loops are made.
 State verified 2026-08-06: both names resolve to the same address, `http` → `https` 301s
 on both, and the Let's Encrypt certificate is a **wildcard** (`*.gourmerge.de` +
 `gourmerge.de`) that validates for `www` — so the redirect is reachable rather than dying
-in a TLS error, which matters because the app sends HSTS with `includeSubDomains` and a
+in a TLS error, which matters because Plesk sends HSTS with `includeSubDomains` and a
 browser would not let a visitor click past a certificate warning.
 
 **Point the scheduled tasks at the apex.** A `www` URL gets a 301, and Plesk's

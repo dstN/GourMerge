@@ -380,12 +380,8 @@ export default defineNuxtConfig({
         'X-Frame-Options': 'DENY',
         'Referrer-Policy': 'strict-origin-when-cross-origin',
         'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
-        // HSTS in production only (baked at build, NODE_ENV=production). Browsers
-        // ignore HSTS received over plain HTTP, but we still gate it to honor the
-        // local-HTTP-dev workflow. Behind Netcup SSL this enforces HTTPS for 1y.
-        ...(process.env.NODE_ENV === 'production'
-          ? { 'Strict-Transport-Security': 'max-age=31536000; includeSubDomains' }
-          : {}),
+        // No Strict-Transport-Security here: Plesk sends it with the certificate,
+        // and a second one from the app arrived twice (checked 2026-10-30).
       },
     },
     // Lighthouse: 390KiB of "est. savings" from missing cache headers, all of it hashed build
