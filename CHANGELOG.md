@@ -70,7 +70,10 @@ hydration task that Lighthouse clocked at ~530 ms under its 4× CPU throttle. No
   lost: `error` and `unhandledrejection` listeners plus Nuxt's `app:error` / `vue:error`
   hooks queue early errors, the first of them starts the load, and the queue is flushed
   through `captureException` after `init()`. The trade is breadcrumbs before the first tap,
-  and the SDK name on events ("…browser" instead of "…nuxt").
+  and the SDK name on events ("…browser" instead of "…nuxt"). The first production event it
+  caught was noise — "Object Not Found Matching Id:N, MethodName:update, ParamCount:4", the
+  script Microsoft's link scanners and Office add-in inject into pages — so that pattern is on
+  the ignore list and extension URLs are denied.
 - **Lazy hydration where nothing needs JavaScript in the first frame.** The feature grid and
   the step list are `hydrate-never` components (`components/landing/`); the closing call to
   action hydrates on visibility; the header's language select, colour-mode button and mobile

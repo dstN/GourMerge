@@ -108,7 +108,14 @@ export default defineNuxtPlugin((nuxtApp) => {
           'Network request failed',
           'Failed to fetch',
           'Load failed',
+          // Thrown by a script Microsoft injects into pages — Outlook's SafeLinks scanner and
+          // the Office browser add-in — as an unhandled rejection with a plain string reason.
+          // It has nothing to do with the page; the first production event came from a link
+          // scanner visiting /en with a desktop-Chrome user agent. Widely known, never ours.
+          /Object Not Found Matching Id:\d+, MethodName:\w+, ParamCount:\d+/,
         ],
+        // Code that browser extensions run inside the page is not our code either.
+        denyUrls: [/^chrome-extension:\/\//i, /^moz-extension:\/\//i, /^safari-(web-)?extension:/i, /\/extensions\//i],
       })
 
       window.removeEventListener('error', onWindowError)
