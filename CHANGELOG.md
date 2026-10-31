@@ -73,7 +73,12 @@ hydration task that Lighthouse clocked at ~530 ms under its 4× CPU throttle. No
   and the SDK name on events ("…browser" instead of "…nuxt"). The first production event it
   caught was noise — "Object Not Found Matching Id:N, MethodName:update, ParamCount:4", the
   script Microsoft's link scanners and Office add-in inject into pages — so that pattern is on
-  the ignore list and extension URLs are denied.
+  the ignore list and extension URLs are denied. That event also carried the visitor's IP,
+  which the SDK does not send — Sentry derives it from the connection, because the browser
+  posts the event directly — while the privacy policy said transmission of IP addresses was
+  disabled. The Sentry project now has _Prevent Storing of IP Addresses_ on, and the policy
+  says what is actually the case: nothing personal is sent, and the connection IP is not
+  stored.
 - **Lazy hydration where nothing needs JavaScript in the first frame.** The feature grid and
   the step list are `hydrate-never` components (`components/landing/`); the closing call to
   action hydrates on visibility; the header's language select, colour-mode button and mobile

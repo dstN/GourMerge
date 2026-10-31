@@ -680,7 +680,7 @@
       "purposeTitle": "3. Purpose of processing",
       "purposeBody": "The data collected is used solely to operate the GourMerge platform and to communicate with users. The legal basis is Art. 6(1)(b) GDPR (performance of a contract) and Art. 6(1)(f) GDPR (legitimate interests). For enquiries submitted through the contact form, the legal basis is Art. 6(1)(f) GDPR.",
       "thirdPartiesTitle": "4. Disclosure to third parties",
-      "thirdPartiesBody": "As a rule, data is not passed on to third parties. Exception: we use Sentry for error monitoring. When an error occurs, technical data (e.g. stack traces) is transmitted; the Sentry project runs in the EU region and the data stays within the EU. Transmission of personal data such as IP or email addresses is disabled in the SDK. Fonts are served from our own server — there is no connection to Google Fonts or any other external CDN.",
+      "thirdPartiesBody": "As a rule, data is not passed on to third parties. Exception: we use Sentry for error monitoring. When an error occurs, technical data (e.g. stack traces) is transmitted; the Sentry project runs in the EU region and the data stays within the EU. The SDK does not transmit personal data such as email addresses; the IP address that is technically part of the transfer is not stored by Sentry (project setting “Prevent Storing of IP Addresses”). Fonts are served from our own server — there is no connection to Google Fonts or any other external CDN.",
       "thirdPartiesSentryLink": "Sentry’s privacy policy",
       "rightsTitle": "5. Your rights (GDPR Art. 15–22)",
       "right1": "Access to stored data (Art. 15)",
