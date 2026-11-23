@@ -30,6 +30,21 @@ The prose across the repository now says things directly. Facts, code and behavi
   avatar) and `Avatar image must be square. Crop it first`. The status codes are the same.
 - `npm run i18n:check` prints `[i18n] ✓ OK (737 DE, 737 EN, 737 FR, 737 IT): all in parity, no empty values.`
 
+### Fixed: one form of address per language
+
+- German: the privacy policy and the Impressum addressed the reader as "Sie" in six strings
+  (`legal.imprint.formHint`, `legal.privacy.dataPrefsDesc`, `dataRecipesDesc`, `rightsTitle`, `right3`, `rightsHint`)
+  while the rest of the site says "du". They now say "du" as well.
+- Italian: the same six strings used "Lei"; they now use "tu", like the rest of the Italian interface.
+- French: about two thirds of the interface said "vous", the rest (two-factor setup, passkeys, error messages, the data
+  request flow, parts of the privacy policy, every e-mail including the inactivity warnings) said "tu". Everything now
+  says "vous".
+- The `agentCatalog` skill text told agents that recipes have no photos. A recipe can carry one photo since 1.6.0;
+  the text now says so and still points agents to the structured data.
+- `server/utils/maintenanceConfig.json` pointed to section 7 of the privacy policy for the retention periods. They are
+  in section 8 (Speicherdauer), in the `legal.privacy.retention*` keys.
+- The README link to the Swiss BLV section pointed to a heading that no longer exists (`#swiss-ingredient-data`).
+
 ### Changed: SEO and Agentic Browsing to full marks in Lighthouse, the mobile hydration task cut in half
 
 Lighthouse 13.5 (CLI, local production build, 26 October 2026) on the start page. The

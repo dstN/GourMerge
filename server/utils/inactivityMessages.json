@@ -41,22 +41,22 @@
   },
   "fr": {
     "sixMonths": {
-      "subject": "Ton compte GourMerge sera supprimé dans 6 mois",
-      "intro": "Tu ne t’es pas connecté à GourMerge depuis presque trois ans. Nous supprimons automatiquement les comptes après trois ans d’inactivité. Le tien est prévu pour le {date}.",
+      "subject": "Votre compte GourMerge sera supprimé dans 6 mois",
+      "intro": "Vous ne vous êtes pas connecté à GourMerge depuis presque trois ans. Nous supprimons automatiquement les comptes après trois ans d’inactivité. Le vôtre est prévu pour le {date}.",
       "linkLabel": "Se connecter",
-      "outro": "Il suffit de te connecter une fois : ton compte est conservé et le délai repart à zéro. Sans action de ta part, ton compte et tes recettes seront définitivement supprimés le {date}."
+      "outro": "Il suffit de vous connecter une fois : votre compte est conservé et le délai repart à zéro. Sans action de votre part, votre compte et vos recettes seront définitivement supprimés le {date}."
     },
     "fourWeeks": {
-      "subject": "Plus que quatre semaines : ton compte GourMerge sera supprimé",
-      "intro": "Nous t’avons écrit il y a quelques mois : ton compte GourMerge est prévu pour suppression en raison de son inactivité. La date est le {date}, soit dans environ quatre semaines.",
+      "subject": "Plus que quatre semaines : votre compte GourMerge sera supprimé",
+      "intro": "Nous vous avons écrit il y a quelques mois : votre compte GourMerge est prévu pour suppression en raison de son inactivité. La date est le {date}, soit dans environ quatre semaines.",
       "linkLabel": "Se connecter",
-      "outro": "Il suffit de te connecter une fois : ton compte est conservé et le délai repart à zéro. Sinon, ton compte et tes recettes seront définitivement supprimés le {date}."
+      "outro": "Il suffit de vous connecter une fois : votre compte est conservé et le délai repart à zéro. Sinon, votre compte et vos recettes seront définitivement supprimés le {date}."
     },
     "finalDay": {
-      "subject": "Dernier rappel : ton compte GourMerge sera supprimé demain",
-      "intro": "Ceci est le dernier rappel. Ton compte GourMerge sera définitivement supprimé le {date}, soit dans environ 24 heures, en raison de son inactivité.",
+      "subject": "Dernier rappel : votre compte GourMerge sera supprimé demain",
+      "intro": "Ceci est le dernier rappel. Votre compte GourMerge sera définitivement supprimé le {date}, soit dans environ 24 heures, en raison de son inactivité.",
       "linkLabel": "Conserver mon compte",
-      "outro": "Il suffit de te connecter une fois : ton compte est conservé et le délai repart à zéro. Passé ce délai, la suppression est irréversible."
+      "outro": "Il suffit de vous connecter une fois : votre compte est conservé et le délai repart à zéro. Passé ce délai, la suppression est irréversible."
     }
   },
   "it": {

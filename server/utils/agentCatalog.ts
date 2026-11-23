@@ -108,8 +108,8 @@ description: How to read and navigate GourMerge, a recipe platform built on the 
 # Browsing GourMerge
 
 GourMerge is a recipe platform that borrows git's model: recipes are forked, branched,
-committed and merged, so a variation keeps its lineage. It is text by design: there are no
-recipe photos to look at, so read the structured data, not screenshots.
+committed and merged, so a variation keeps its lineage. A recipe can carry one photo,
+but ingredients, quantities and steps are structured text, so read the data, not screenshots.
 
 ## URL shapes
 

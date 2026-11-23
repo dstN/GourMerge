@@ -91,7 +91,7 @@ and you cannot author a recipe, which is the core loop.
 
 The Swiss data is read from `server/database/seeds/swiss-foods.jsonl`, which is
 committed, so seeding needs no spreadsheets, no downloads and no `xlsx`
-dependency. See [Swiss ingredient data](#swiss-ingredient-data) for regenerating it.
+dependency. See [Swiss ingredient data](#swiss-blv) for regenerating it.
 
 ---
 

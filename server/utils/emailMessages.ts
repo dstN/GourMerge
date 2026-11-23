@@ -166,58 +166,59 @@ export const EMAIL_MESSAGES: Record<EmailLocale, EmailBundle> = {
   },
   fr: {
     verification: {
-      subject: 'Confirme ton adresse e-mail GourMerge',
-      intro: 'Clique sur le lien ci-dessous pour confirmer ton compte GourMerge :',
+      subject: 'Confirmez votre adresse e-mail GourMerge',
+      intro: 'Cliquez sur le lien ci-dessous pour confirmer votre compte GourMerge :',
       linkLabel: 'Confirmer mon e-mail',
-      expiry: "Ce lien expire dans 24 heures. Si tu n'es pas à l'origine de cette demande, tu peux ignorer cet e-mail.",
-      textIntro: 'Clique sur le lien pour confirmer ton adresse e-mail GourMerge :',
+      expiry:
+        "Ce lien expire dans 24 heures. Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer cet e-mail.",
+      textIntro: 'Cliquez sur le lien pour confirmer votre adresse e-mail GourMerge :',
     },
     passwordReset: {
-      subject: 'Réinitialise ton mot de passe GourMerge',
-      intro: 'Une réinitialisation du mot de passe a été demandée pour ton compte GourMerge.',
+      subject: 'Réinitialisez votre mot de passe GourMerge',
+      intro: 'Une réinitialisation du mot de passe a été demandée pour votre compte GourMerge.',
       linkLabel: 'Réinitialiser le mot de passe',
       expiry:
-        "Ce lien expire dans 2 heures. Si tu n'es pas à l'origine de cette demande, ignore cet e-mail : ton mot de passe ne changera pas.",
-      textIntro: 'Clique sur le lien pour réinitialiser ton mot de passe GourMerge :',
+        "Ce lien expire dans 2 heures. Si vous n'êtes pas à l'origine de cette demande, ignorez cet e-mail : votre mot de passe ne changera pas.",
+      textIntro: 'Cliquez sur le lien pour réinitialiser votre mot de passe GourMerge :',
     },
     exportConfirm: {
-      subject: 'Confirme ta demande de données',
+      subject: 'Confirmez votre demande de données',
       intro:
-        'Une demande d’accès aux données (art. 15 RGPD) a été faite pour ton compte GourMerge. Confirme via le lien ci-dessous que la demande vient bien de toi :',
+        'Une demande d’accès aux données (art. 15 RGPD) a été faite pour votre compte GourMerge. Confirmez via le lien ci-dessous que la demande vient bien de vous :',
       linkLabel: 'Confirmer la demande',
       expiry:
-        "Ce lien expire dans 2 heures. Si tu n'es pas à l'origine de cette demande, ignore cet e-mail : aucune donnée ne sera transmise.",
-      textIntro: 'Confirme via le lien que la demande de données vient bien de toi :',
+        "Ce lien expire dans 2 heures. Si vous n'êtes pas à l'origine de cette demande, ignorez cet e-mail : aucune donnée ne sera transmise.",
+      textIntro: 'Confirmez via le lien que la demande de données vient bien de vous :',
     },
     exportReady: {
-      subject: 'Tes données GourMerge sont prêtes',
-      intro: 'Ton export de données est prêt. Tu peux le télécharger via le lien ci-dessous :',
+      subject: 'Vos données GourMerge sont prêtes',
+      intro: 'Votre export de données est prêt. Vous pouvez le télécharger via le lien ci-dessous :',
       linkLabel: 'Télécharger mes données',
       expiry:
-        'Ce lien expire dans 24 heures et ne fonctionne que pour toi. Ensuite, tu peux demander un nouvel export à tout moment.',
-      textIntro: 'Télécharge tes données GourMerge via ce lien :',
+        'Ce lien expire dans 24 heures et ne fonctionne que pour vous. Ensuite, vous pouvez demander un nouvel export à tout moment.',
+      textIntro: 'Téléchargez vos données GourMerge via ce lien :',
     },
     deletionConfirm: {
-      subject: 'Confirme la suppression de ton compte',
+      subject: 'Confirmez la suppression de votre compte',
       intro:
-        'Une suppression au titre de l’art. 17 RGPD a été demandée pour ton compte GourMerge. Le lien ci-dessous confirme la demande et te permet de choisir si tes recettes sont supprimées avec :',
+        'Une suppression au titre de l’art. 17 RGPD a été demandée pour votre compte GourMerge. Le lien ci-dessous confirme la demande et vous permet de choisir si vos recettes sont supprimées avec :',
       linkLabel: 'Confirmer la suppression',
       expiry:
-        "Ce lien expire dans 2 heures. Rien ne se passe tant que tu ne l'as pas confirmé. Si tu n'es pas à l'origine de cette demande, ignore cet e-mail.",
-      textIntro: 'Confirme la suppression de ton compte via le lien :',
+        "Ce lien expire dans 2 heures. Rien ne se passe tant que vous ne l'avez pas confirmé. Si vous n'êtes pas à l'origine de cette demande, ignorez cet e-mail.",
+      textIntro: 'Confirmez la suppression de votre compte via le lien :',
     },
     emailChangeConfirm: {
-      subject: 'Confirme ta nouvelle adresse e-mail GourMerge',
+      subject: 'Confirmez votre nouvelle adresse e-mail GourMerge',
       intro:
-        'Un changement vers cette adresse e-mail a été demandé pour ton compte GourMerge. Confirme via le lien ci-dessous que cette adresse t’appartient :',
+        'Un changement vers cette adresse e-mail a été demandé pour votre compte GourMerge. Confirmez via le lien ci-dessous que cette adresse vous appartient :',
       linkLabel: 'Confirmer l’adresse e-mail',
       expiry:
-        'Ce lien expire dans 2 heures. Tant que tu ne l’as pas confirmé, ton adresse e-mail actuelle reste active.',
-      textIntro: 'Confirme via le lien que cette nouvelle adresse e-mail t’appartient :',
+        'Ce lien expire dans 2 heures. Tant que vous ne l’avez pas confirmé, votre adresse e-mail actuelle reste active.',
+      textIntro: 'Confirmez via le lien que cette nouvelle adresse e-mail vous appartient :',
     },
     emailChangeNotice: {
-      subject: 'Changement de ton adresse e-mail GourMerge demandé',
-      body: 'Un changement de l’adresse e-mail de ton compte GourMerge, vers {email}, a été demandé. Le changement ne prendra effet qu’après confirmation de cette nouvelle adresse. Si ce n’est pas toi, change ton mot de passe immédiatement. Quelqu’un ayant accès à ton compte essaie peut-être de le détourner.',
+      subject: 'Changement de votre adresse e-mail GourMerge demandé',
+      body: 'Un changement de l’adresse e-mail de votre compte GourMerge, vers {email}, a été demandé. Le changement ne prendra effet qu’après confirmation de cette nouvelle adresse. Si ce n’est pas vous, changez votre mot de passe immédiatement. Quelqu’un ayant accès à votre compte essaie peut-être de le détourner.',
     },
   },
   it: {

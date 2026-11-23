@@ -6,9 +6,10 @@
     "  3. tests/unit/inactivityEmails.test.ts (asserts policy and code agree)",
     "",
     "JSON rather than a .ts module because the cron CLI runs as plain Node and",
-    "cannot import TypeScript. These numbers are also stated in section 7 of",
-    "app/pages/legal/datenschutz.vue. Changing one without the other makes the",
-    "privacy policy false."
+    "cannot import TypeScript. These numbers are also stated in section 8",
+    "(Speicherdauer) of the privacy policy: the legal.privacy.retention* keys in",
+    "i18n/locales/*.json, rendered by app/pages/legal/datenschutz.vue. Changing one",
+    "without the other makes the privacy policy false."
   ],
   "inactivity": {
     "retentionDays": 1095,
