@@ -5,7 +5,7 @@ import { registerUser, uniqueUser, createRecipe, createIngredient, commitSnapsho
  * Viewing a non-default branch.
  *
  * The detail page used to ignore `?branch=` and always render `defaultBranch`, so a variant
- * could be created and edited but never read — the branches page linked only to "edit" and
+ * could be created and edited but never read: the branches page linked only to "edit" and
  * "history". These assertions pin that the whole page follows the selection: steps,
  * ingredient list and (server-computed) nutrition all belong to the chosen branch.
  */
@@ -43,7 +43,7 @@ test('a non-default branch can be viewed and switched to', async ({ page, reques
   console.log('  main renders its own step')
 
   // GitHub-style trigger and the "N Varianten" link must both be present.
-  // Rendered as a link, not a button — UButton with `to` emits an <a>.
+  // Rendered as a link, not a button (UButton with `to` emits an <a>).
   await expect(page.getByRole('link', { name: /2 Varianten|2 variants/i })).toBeVisible()
   console.log('  branch count link present')
 

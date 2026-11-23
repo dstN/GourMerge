@@ -1,9 +1,11 @@
 /**
- * GET /api/ingredients/categories — the distinct categories already in use.
+ * GET /api/ingredients/categories
+ *
+ * The distinct categories already in use.
  *
  * Feeds the category picker in the new-ingredient dialog. A free-text field there would
  * fragment the vocabulary within a week ("Gemüse", "gemuese", "Vegetables"), and category
- * is what the autocomplete shows as a badge — so it is only useful if it stays consistent.
+ * is what the autocomplete shows as a badge, so it is only useful if it stays consistent.
  *
  * Public read, like the ingredient search itself: this is reference data, not user data.
  */

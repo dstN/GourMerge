@@ -326,7 +326,7 @@ Läuft erst, wenn der BLS-Import deployt ist.
   Seed-Pfad braucht es nicht.
 - Die Download-Links enthalten ein Token, das die Seite pro Aufruf neu erzeugt.
   Deshalb im README nur auf <https://blsdb.de/bls> verlinken, nie einen Token-Link.
-- **Geschwindigkeit:** Der Swiss-Importer braucht drei Roundtrips je Lebensmittel.
+- Geschwindigkeit: Der Swiss-Importer braucht drei Roundtrips je Lebensmittel.
   1.191 Zeilen dauerten in Produktion etwa 15 Minuten. 5.300 weitere Zeilen auf diese
   Art wären über eine Stunde. Der BLS-Importer schreibt deshalb in Batches
   (mehrzeilige Upserts in einer Transaktion). Den Swiss-Importer gleich mit umstellen.
@@ -343,9 +343,9 @@ Neu ist ein Abschnitt „Datenquellen" im Impressum (`app/pages/legal/impressum.
 4 Sprachen), mit Links:
 
 > Max Rubner-Institut (2025): Bundeslebensmittelschlüssel (BLS), Version 4.0.
-> Karlsruhe. DOI: 10.25826/Data20251217-134202-0 – https://blsdb.de
+> Karlsruhe. DOI: 10.25826/Data20251217-134202-0 · https://blsdb.de
 > Bundesamt für Lebensmittelsicherheit und Veterinärwesen BLV: Schweizer
-> Nährwertdatenbank V7.0 – https://naehrwertdaten.ch
+> Nährwertdatenbank V7.0 · https://naehrwertdaten.ch
 
 ---
 

@@ -8,7 +8,7 @@ declare module '#auth-utils' {
     email: string
     avatarUrl: string | null
     /**
-     * Cached copy of `users.email_verified_at != NULL`, for display only — it drives
+     * Cached copy of `users.email_verified_at != NULL`, for display only: it drives
      * the unverified banner without costing a request per page. Never a security
      * boundary: `requireVerifiedUser` re-reads the column on every gated action.
      */

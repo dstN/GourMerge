@@ -2,7 +2,7 @@
 import type { UserProfile } from '~~/shared/types/recipe'
 
 /**
- * `auth: true` was dead metadata — nothing reads `route.meta.auth` (there is no
+ * `auth: true` was dead metadata: nothing reads `route.meta.auth` (there is no
  * global middleware), so this page had NO client-side guard and fell back to the
  * `default` layout instead of the dashboard shell. The API it calls is protected
  * server-side, so nothing leaked; an anonymous visitor just got a broken page
@@ -17,7 +17,7 @@ const toast = useAppToast()
 const form = reactive({
   displayName: '',
   bio: '',
-  // All four locales are supported — this was typed `'de' | 'en'`, predating the
+  // All four locales are supported. This was typed `'de' | 'en'`, predating the
   // FR/IT rollout, so picking Français here was a type error that only didn't
   // surface because the value was never loaded from the profile either.
   preferredLocale: 'de' as 'de' | 'en' | 'fr' | 'it',
@@ -36,7 +36,7 @@ watch(
       form.displayName = p.user.displayName || ''
       form.bio = p.user.bio || ''
       // These two were NOT loaded, so both selects always rendered their
-      // hardcoded defaults ("Deutsch" / metric) no matter what was stored — and
+      // hardcoded defaults ("Deutsch" / metric) no matter what was stored, and
       // because `save()` sends the whole form, editing only your bio silently
       // reset your language and measurement preference.
       form.preferredLocale = (p.user.preferredLocale as typeof form.preferredLocale) || 'de'

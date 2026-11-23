@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * Global Error Page — Handles 404, 500, and all unhandled errors
+ * Global error page: handles 404, 500, and all unhandled errors
  *
  * Displays a branded error screen instead of the raw Nuxt error page.
  */

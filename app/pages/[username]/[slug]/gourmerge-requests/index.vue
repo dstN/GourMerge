@@ -7,7 +7,7 @@ const { t } = useI18n()
 const route = useRoute()
 const { loggedIn } = useUserSession()
 
-/** Needed as a value, not a tag name, to hand to `<UCard :as>` — see the template. */
+/** Needed as a value, not a tag name, to hand to `<UCard :as>` (see the template). */
 const NuxtLink = resolveComponent('NuxtLink')
 
 const username = computed(() => route.params.username as string)
@@ -65,7 +65,7 @@ onMounted(() => {
       </template>
     </CommonPageHeader>
 
-    <!-- Status filter — a toggle row (DESIGNBOOK §2). Colour comes from the
+    <!-- Status filter: a toggle row (DESIGNBOOK §2). Colour comes from the
          shared GMR_STATUS_COLOR map so it matches the badge on each row and on
          the detail page. Also the gmr-page tour anchor: always present, unlike
          the request list below it, which is empty on a brand-new recipe. -->
@@ -99,13 +99,13 @@ onMounted(() => {
     <div v-else class="space-y-3">
       <!--
         `:as="NuxtLink"` is load-bearing. This was `<UCard :to="…">`, and UCard declares no
-        `to` prop — it takes `as`, `title`, `description`, `variant`, `class`, `ui`. The
+        `to` prop; it takes `as`, `title`, `description`, `variant`, `class`, `ui`. The
         attribute fell through to a plain <div>, so nothing navigated, while `cursor-pointer`
         and the hover border made every row look clickable. A request could be listed and
         never opened, which meant it could never be merged or closed either.
 
         Rendering the root AS a link also makes the row a real anchor: keyboard focusable,
-        middle-clickable, openable in a new tab — none of which a click handler on a div
+        middle-clickable, openable in a new tab, none of which a click handler on a div
         would have given us.
       -->
       <UCard

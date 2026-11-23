@@ -1,8 +1,8 @@
 /**
  * Minimal authenticated-payload sealing for short-lived server-issued cookies.
  *
- * Layout: `base64url(json).base64url(hmac-sha256)`. Not encryption — the payload is
- * only a user id and a timestamp, neither secret — but it is **tamper-proof**, which
+ * Layout: `base64url(json).base64url(hmac-sha256)`. Not encryption (the payload is
+ * only a user id and a timestamp, neither secret), but it is **tamper-proof**, which
  * is what matters: a forged `{ userId }` would let anyone skip the second factor.
  *
  * Uses `NUXT_SESSION_PASSWORD` as the key, so it shares the session's trust root

@@ -1,5 +1,7 @@
 /**
- * POST /api/privacy/request — start a GDPR self-service flow.
+ * POST /api/privacy/request
+ *
+ * Start a GDPR self-service flow.
  *
  * Asks for username AND email and requires both to match the same account.
  * Email alone would be enough to prove ownership (the confirmation link goes
@@ -7,7 +9,7 @@
  * probe useless even as a timing signal.
  *
  * Always responds `{ sent: true }`. Revealing that an account does not exist
- * would turn this endpoint into an enumeration oracle — the same reasoning as
+ * would turn this endpoint into an enumeration oracle; the same reasoning applies
  * in the password-reset route.
  */
 import { randomBytes, createHash } from 'node:crypto'
@@ -24,7 +26,7 @@ const bodySchema = z.object({
   email: z.string().email(),
 })
 
-/** Confirmation window. Short on purpose — the link authorises real action. */
+/** Confirmation window. Short on purpose: the link authorises real action. */
 const CONFIRM_TTL_MS = 1000 * 60 * 60 * 2
 
 export default defineEventHandler(async (event) => {
@@ -39,7 +41,7 @@ export default defineEventHandler(async (event) => {
   const { type, username, email } = parsed.data
 
   const db = useDrizzle()
-  if (!db) return { sent: true } // fail open — never expose DB state
+  if (!db) return { sent: true } // fail open: never expose DB state
 
   const [dbUser] = await db
     .select({

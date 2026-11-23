@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// Signed-in visitors redirect via the `guest` middleware, not navigateTo() here — middleware
+// Signed-in visitors redirect via the `guest` middleware, not navigateTo() here. Middleware
 // resolves before render, so there's no flash of this page first.
 definePageMeta({ middleware: 'guest' })
 
@@ -12,8 +12,8 @@ useSeoMeta({
 })
 
 /**
- * Everything below the hero is a lazily hydrated component — see each one in
- * `components/landing/`. The page is server-rendered in full either way; what changes is how
+ * Everything below the hero is a lazily hydrated component (see each one in
+ * `components/landing/`). The page is server-rendered in full either way; what changes is how
  * much of it the browser walks again after the JavaScript arrives. Lighthouse mobile measured
  * that walk as one ~530 ms task (4× CPU throttle), and Total Blocking Time carries 30 % of the
  * performance score. The feature grid and the step list are static text, so they are never

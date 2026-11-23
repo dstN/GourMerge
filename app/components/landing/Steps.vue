@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
  * "How it works": four numbered steps of plain text. Rendered with `hydrate-never` from
- * `pages/index.vue` — there is nothing here for JavaScript to do after the server has
+ * `pages/index.vue`: there is nothing here for JavaScript to do after the server has
  * rendered it. See the note there.
  */
 const { t } = useI18n()

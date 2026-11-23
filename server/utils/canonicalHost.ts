@@ -5,7 +5,7 @@
  *
  * Netcup's panel configures Passenger directly (application root, startup file,
  * application mode, custom environment variables), so there is **no `.htaccess` on the
- * host at all** — and there is an nginx proxy in front of Apache, so a rewrite rule in
+ * host at all**, and there is an nginx proxy in front of Apache, so a rewrite rule in
  * one is not guaranteed to be consulted. A redirect that ships inside the artifact is
  * the only version that certainly runs, and it needs no manual step after a deploy.
  *
@@ -15,7 +15,7 @@
  *
  *   - **The WebAuthn RP ID *is* the hostname.** `gourmerge.de` and `www.gourmerge.de`
  *     are different relying parties, so a passkey enrolled on one does not exist on the
- *     other — the login simply reports no credential.
+ *     other; the login simply reports no credential.
  *   - **The CSRF check** compares the request origin against `NUXT_PUBLIC_APP_URL`, so
  *     every mutation on the wrong host returns 403.
  *   - **`/api/health`** returns 503 there for the same reason, which would make the
@@ -24,7 +24,7 @@
  * ## Why only `www.` is stripped
  *
  * Narrow on purpose. Redirecting *any* host that disagrees with `NUXT_PUBLIC_APP_URL`
- * would loop forever if that variable were itself wrong — the failure mode would be an
+ * would loop forever if that variable were itself wrong, and the failure mode would be an
  * unreachable site. Stripping a leading `www.` cannot loop, because the target host
  * never matches the pattern that triggered it. Every *other* host mismatch is surfaced
  * loudly by `/api/health` instead of being silently papered over.
@@ -47,7 +47,7 @@ export function canonicalRedirect(host: string | undefined, path: string, method
 
   // ACME http-01 must never be redirected: the challenge is answered per-hostname, so
   // forwarding it would hand back the wrong token. The live certificate is a wildcard
-  // (issued via dns-01, which does not use HTTP at all), so this is belt-and-braces —
+  // (issued via dns-01, which does not use HTTP at all), so this is belt-and-braces,
   // but it costs nothing and silently expiring certificates are expensive.
   if (path.startsWith('/.well-known/')) return null
 
@@ -55,7 +55,7 @@ export function canonicalRedirect(host: string | undefined, path: string, method
   if (!match) return null
 
   const apex = match[1]
-  // Guard against a pathological `Host: www.` — redirecting to an empty host would
+  // Guard against a pathological `Host: www.`: redirecting to an empty host would
   // produce a protocol-relative URL pointing at whatever came next in the path.
   if (!apex || !apex.includes('.')) return null
 

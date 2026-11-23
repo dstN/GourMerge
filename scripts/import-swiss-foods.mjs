@@ -3,11 +3,11 @@
  *
  * Two sources, one importer:
  *
- *   1. The committed seed file (DEFAULT) — `server/database/seeds/swiss-foods.jsonl`.
+ *   1. The committed seed file (DEFAULT): `server/database/seeds/swiss-foods.jsonl`.
  *      This is what contributors use. No XLSX, no `xlsx` dependency, no licence
  *      question about redistributing spreadsheets: just `npm run db:seed:swiss`.
  *
- *   2. The original BLV spreadsheets — for regenerating that seed when BLV
+ *   2. The original BLV spreadsheets, for regenerating that seed when BLV
  *      publishes a new revision. They are NOT in the repo (`.claude/` is
  *      gitignored); download them from naehrwertdaten.ch into
  *      `.claude/data/swiss/` first.
@@ -21,14 +21,14 @@
  *                                                          # spreadsheets → seed file, no DB
  *
  * XLSX files expected by --from-xlsx (joined on the stable numeric ID column):
- *   Schweizer_Nahrwertdatenbank.xlsx                     (de — required)
+ *   Schweizer_Nahrwertdatenbank.xlsx                     (de, required)
  *   Swiss_food_composition_database.xlsx                 (en)
  *   Base_de_donnees_suisse_des_valeurs_nutritives.xlsx   (fr)
  *   Banca_dati_svizzera_dei_valori_nutritivi.xlsx        (it)
  *
  * Upserts `ingredients` (canonical EN name when available, else DE), `ingredient_nutrition`,
  * `ingredient_sources` and the ingredient's search terms. Idempotent: a food is looked up by
- * (dataset='swiss-blv', external_id) — the version lives in `ingredient_sources.dataset_version`
+ * (dataset='swiss-blv', external_id). The version lives in `ingredient_sources.dataset_version`
  * and is bumped in place, so a new BLV release updates these rows rather than duplicating them.
  * Writes in multi-row batches inside one transaction (three statements per food took a quarter
  * of an hour against the production host).
@@ -65,11 +65,11 @@ const FORCE = process.argv.includes('--force')
 const limitArg = process.argv.indexOf('--limit')
 const LIMIT = limitArg >= 0 ? parseInt(process.argv[limitArg + 1], 10) : Infinity
 
-/** `ingredient_sources.dataset` — the family, never versioned (see schema.ts). */
+/** `ingredient_sources.dataset`: the family, never versioned (see schema.ts). */
 const DATASET = 'swiss-blv'
-/** `ingredient_sources.dataset_version` — bump when BLV publishes a new revision. */
+/** `ingredient_sources.dataset_version`: bump when BLV publishes a new revision. */
 const DATASET_VERSION = '7.0'
-/** `ingredient_nutrition.source` — the historical marker, kept for every reader of that column. */
+/** `ingredient_nutrition.source`: the historical marker, kept for every reader of that column. */
 const NUTRITION_SOURCE = 'swiss-blv-v7'
 /** Foods per multi-row statement. */
 const BATCH = 200
@@ -191,7 +191,7 @@ function parseXlsx(filePath, XLSX) {
     const id = get(COL.ID)
     if (!id) continue // skip blank rows
     // The export carries a second header line ("ID", "Name", "Synonyme" …) that once slipped
-    // through as food "ID" with the name "Name" — a real ID is numeric.
+    // through as food "ID" with the name "Name"; a real ID is numeric.
     if (!/^\d+$/.test(String(id).trim())) continue
 
     const name = get(COL.NAME)
@@ -300,7 +300,7 @@ async function main() {
     const XLSX = await loadXlsx()
 
     // Find all XLSX files in the data directory
-    // Sort so DE is always first — category strings (Kategorie) come from DE and are the CATEGORY_MAP keys.
+    // Sort so DE is always first: category strings (Kategorie) come from DE and are the CATEGORY_MAP keys.
     const LANG_ORDER = { de: 0, en: 1, fr: 2, it: 3 }
     let xlsxFiles
     try {
@@ -393,12 +393,12 @@ async function main() {
       const canonical = row.names.en || row.names.de || `Swiss-${row.id}`
       const cat = mapCategory(row.kategorie)
       console.log(
-        `  [${row.id}] "${canonical}" — cat: ${cat} — kcal: ${row.nutrition.energyKcal} — density: ${row.dichte}`
+        `  [${row.id}] "${canonical}", cat: ${cat}, kcal: ${row.nutrition.energyKcal}, density: ${row.dichte}`
       )
       console.log(`    names: ${JSON.stringify(row.names)}`)
       if (Object.keys(row.synonyms).length > 0) console.log(`    synonyms: ${JSON.stringify(row.synonyms)}`)
     }
-    console.log(`\nDRY-RUN complete — ${merged.length} foods would be imported.`)
+    console.log(`\nDRY-RUN complete: ${merged.length} foods would be imported.`)
     return
   }
 
@@ -407,10 +407,10 @@ async function main() {
   try {
     // ── Skip when the dataset is already in ────────────────────────────────
     //
-    // This runs on EVERY deploy, before the artifact swap, against the production MySQL — a
+    // This runs on EVERY deploy, before the artifact swap, against the production MySQL, a
     // separate host, so every statement is real network latency. Measured on the first
     // production deploy: ~1200 foods took a quarter of an hour with one statement per food
-    // and column, which is a late place to find out.
+    // and column.
     //
     // One COUNT is enough to know there is nothing to do: `ingredient_sources` carries the
     // dataset version per food, so a new BLV release changes `DATASET_VERSION` and this check
@@ -418,8 +418,8 @@ async function main() {
     // do.
     //
     // It is a count and not a content hash on purpose. A hash would need somewhere to store
-    // it, and the failure it would catch — someone editing the seed file in place without
-    // bumping the version — is better solved by `--force`, which is right there.
+    // it, and the failure it would catch (someone editing the seed file in place without
+    // bumping the version) is better solved by `--force`.
     if (!FORCE && LIMIT === Infinity) {
       // Counted over the ids the seed carries, so a row that left the seed (the stray header
       // line, once) does not keep this from matching forever.
@@ -428,11 +428,11 @@ async function main() {
         [DATASET, DATASET_VERSION, merged.map((row) => row.id)]
       )
       if (n === merged.length) {
-        console.log(`✓ ${n} Swiss foods already imported (${DATASET} ${DATASET_VERSION}) — nothing to do.`)
+        console.log(`✓ ${n} Swiss foods already imported (${DATASET} ${DATASET_VERSION}); nothing to do.`)
         console.log('  Re-import anyway with --force.')
         return
       }
-      if (n > 0) console.log(`… ${n} of ${merged.length} present at ${DATASET_VERSION} — continuing (partial import).`)
+      if (n > 0) console.log(`… ${n} of ${merged.length} present at ${DATASET_VERSION}, continuing (partial import).`)
     }
 
     const foods = LIMIT === Infinity ? merged : merged.slice(0, LIMIT)
@@ -441,7 +441,7 @@ async function main() {
     //
     // Looked up by (dataset, external_id) WITHOUT the version, in one round trip for the
     // whole dataset. The previous importer matched on `ingredient_nutrition.source =
-    // 'swiss-blv-v7'`, version included — so a BLV V8 with a new source string would have
+    // 'swiss-blv-v7'`, version included, so a BLV V8 with a new source string would have
     // re-inserted all 1191 foods as duplicates. The version is informational and gets bumped
     // on the existing rows instead.
     const [sourceRows] = await conn.execute(
@@ -453,7 +453,7 @@ async function main() {
     const toInsert = []
     const toUpdate = []
     for (const row of foods) (idByExternal.has(row.id) ? toUpdate : toInsert).push(row)
-    console.log(`${toInsert.length} new, ${toUpdate.length} existing — writing in batches of ${BATCH}…`)
+    console.log(`${toInsert.length} new, ${toUpdate.length} existing, writing in batches of ${BATCH}…`)
 
     // ── Write, batched, in one transaction ─────────────────────────────────
     //
@@ -472,7 +472,7 @@ async function main() {
           [batch.map((row) => ingredientValues(row))]
         )
         // InnoDB hands a multi-row VALUES insert its auto-increment block in one allocation,
-        // so the ids are `insertId … insertId + n - 1` — the same guarantee Drizzle's
+        // so the ids are `insertId … insertId + n - 1`, the same guarantee Drizzle's
         // `$returningId()` is built on. The row count is checked rather than assumed.
         if (result.affectedRows !== batch.length) {
           throw new Error(`Expected ${batch.length} inserted ingredients, got ${result.affectedRows}`)
@@ -496,7 +496,7 @@ async function main() {
         const batch = toUpdate.slice(i, i + BATCH)
         // A bulk UPDATE keyed by primary key: every id already exists, so the "insert" half
         // never fires and only the listed columns move. `created_by`, `manufacturer` and
-        // `created_at` are left alone — those are not the dataset's to overwrite.
+        // `created_at` are left alone; those are not the dataset's to overwrite.
         await conn.query(
           `INSERT INTO ingredients (id, name, name_translations, category, synonyms) VALUES ? AS incoming
            ON DUPLICATE KEY UPDATE
@@ -546,7 +546,7 @@ function ingredientValues(row) {
   return [canonicalName, JSON.stringify(row.names), mapCategory(row.kategorie), JSON.stringify(row.synonyms)]
 }
 
-/** The shape `writeSearchTerms()` reads — the same columns the DB row would have. */
+/** The shape `writeSearchTerms()` reads: the same columns the DB row would have. */
 function searchTermRow(row, idByExternal) {
   return {
     id: idByExternal.get(row.id),

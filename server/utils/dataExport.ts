@@ -1,5 +1,5 @@
 /**
- * GDPR Art. 15 / Art. 20 — collect everything stored about one account.
+ * GDPR Art. 15 / Art. 20: collect everything stored about one account.
  *
  * Built on request and streamed straight to the client; nothing is ever written
  * to disk. That is deliberate: the export is the single most sensitive artefact
@@ -52,7 +52,7 @@ export interface DataExport {
 
 /**
  * @param db     Drizzle instance
- * @param userId Internal user id — the caller must already have proven ownership.
+ * @param userId Internal user id; the caller must already have proven ownership.
  */
 export async function buildDataExport(
   db: NonNullable<ReturnType<typeof useDrizzle>>,
@@ -119,7 +119,7 @@ export async function buildDataExport(
     /**
      * Metadata only. The photo's bytes are deliberately NOT inlined: base64 in a JSON
      * document would multiply the export size for no gain, and the user already has the
-     * file — they uploaded it. The row is listed so the export is honest about what is
+     * file, since they uploaded it. The row is listed so the export is honest about what is
      * stored, and `url` tells them where to fetch the original while the account lives.
      */
     recipeIds.length
@@ -139,7 +139,7 @@ export async function buildDataExport(
       : Promise.resolve([]),
   ])
 
-  // Nest the version history under each recipe — a flat dump of commit ids is
+  // Nest the version history under each recipe. A flat dump of commit ids is
   // technically complete but useless to a human exercising their access right.
   const recipesOut = ownRecipes.map((r) => {
     const rBranches = branches.filter((b) => b.recipeId === r.id)
@@ -170,11 +170,11 @@ export async function buildDataExport(
       .where(eq(recipeStars.userId, userId)),
     db.select().from(gourmergeRequests).where(eq(gourmergeRequests.authorId, userId)),
     db.select().from(gourmergeRequestComments).where(eq(gourmergeRequestComments.authorId, userId)),
-    // Threads and replies the user wrote anywhere, including on other people's recipes —
+    // Threads and replies the user wrote anywhere, including on other people's recipes:
     // those are their words and Art. 15 covers them wherever they sit.
     db.select().from(recipeDiscussions).where(eq(recipeDiscussions.authorId, userId)),
     db.select().from(recipeDiscussionComments).where(eq(recipeDiscussionComments.authorId, userId)),
-    // Contact messages have no user FK — they are matched on the address, which
+    // Contact messages have no user FK; they are matched on the address, which
     // is the only link that exists between a message and an account.
     db.select().from(contactMessages).where(eq(contactMessages.email, account.email)),
   ])

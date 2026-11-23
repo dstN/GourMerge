@@ -1,5 +1,7 @@
 /**
- * GET /api/auth/passkeys — the viewer's own passkeys.
+ * GET /api/auth/passkeys
+ *
+ * The viewer's own passkeys.
  *
  * Returns no key material: the public key is useless to the client, and the credential
  * id is only needed as an opaque handle for rename/delete.

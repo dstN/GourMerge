@@ -27,7 +27,7 @@ function loadEnv() {
       if (m && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/^["']|["']$/g, '')
     }
   } catch {
-    /* no .env file — rely on environment */
+    /* no .env file, rely on environment */
   }
 }
 loadEnv()
@@ -83,7 +83,7 @@ try {
     const nameTranslations = JSON.stringify(tag.nameTranslations)
 
     if (isDryRun) {
-      console.log(`DRY-RUN: INSERT IGNORE "${tag.name}" — ${JSON.stringify(tag.nameTranslations)}`)
+      console.log(`DRY-RUN: INSERT IGNORE "${tag.name}" ${JSON.stringify(tag.nameTranslations)}`)
       continue
     }
 
@@ -102,7 +102,7 @@ try {
   if (!isDryRun) {
     console.log(`✓ Seeded ${inserted} tags, skipped ${skipped} existing`)
   } else {
-    console.log(`DRY-RUN complete — ${TAGS.length} tags would be processed`)
+    console.log(`DRY-RUN complete: ${TAGS.length} tags would be processed`)
   }
 } finally {
   await conn.end()

@@ -1,13 +1,13 @@
 <script setup lang="ts">
 /**
- * Default Layout — Public-facing app shell with conditional auth state
+ * Default layout: public-facing app shell with conditional auth state
  */
 
 const { t } = useI18n()
 /**
  * The logo's target is a runtime expression, and that is exactly why it needs this.
  * i18n localises a NuxtLink whose `to` is a static literal (`to="/explore"` renders as
- * `/en/explore`), but it cannot rewrite a ternary evaluated at runtime — so the logo kept
+ * `/en/explore`), but it cannot rewrite a ternary evaluated at runtime, so the logo kept
  * navigating to the UNPREFIXED path, which under `prefix_except_default` IS German.
  * Reported symptom: pick French, browse, click the logo, and the site is German again.
  */
@@ -27,7 +27,7 @@ const { loggedIn } = useUserSession()
           <!-- Logo / Brand.
                Points at the dashboard when signed in. The `guest` middleware on `/`
                would bounce them there anyway, but sending them straight there avoids a
-               wasted navigation — and makes the link's href honest, so the status bar
+               wasted navigation and makes the link's href honest, so the status bar
                shows where the click actually goes. -->
           <NuxtLink :to="localePath(loggedIn ? '/dashboard' : '/')" class="flex items-center gap-2.5 group">
             <CommonBrandLogo class="size-7 text-primary transition-opacity group-hover:opacity-80" />
@@ -46,7 +46,7 @@ const { loggedIn } = useUserSession()
          `tabindex="0"`, not `-1`: in this shell <main> is the ONLY scroll
          container, so it has to be reachable by keyboard or the content cannot be
          scrolled without a mouse. axe caught this as `scrollable-region-focusable`
-         on /help/glossary — the one page whose content holds nothing focusable, so
+         on /help/glossary, the one page whose content holds nothing focusable, so
          the region had no other way in. The skip-link still works either way. -->
     <!-- See the note on the same attribute in `dashboard.vue`: it is what tells the two
          shells apart in the DOM, for `tests/e2e/shell.spec.ts`. -->
@@ -63,7 +63,7 @@ const { loggedIn } = useUserSession()
             © {{ new Date().getFullYear() }} GourMerge<span class="hidden sm:inline">: {{ t('app.slogan') }}</span>
           </p>
           <!-- Always on screen in this fixed shell, so `hydrate-on-visible` fires right after
-               mount — in its own task rather than inside the page's hydration task. -->
+               mount, in its own task rather than inside the page's hydration task. -->
           <LazyLayoutFooterLinks hydrate-on-visible />
         </div>
       </div>

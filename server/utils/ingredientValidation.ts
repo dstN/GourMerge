@@ -1,5 +1,5 @@
 /**
- * Shared between creating and editing a user-contributed ingredient — both write the same
+ * Shared between creating and editing a user-contributed ingredient. Both write the same
  * nutrition fields `server/utils/nutrition.ts` reads, and both need the same DECIMAL-safe
  * parsing (a JS float would quietly round a value on the way in).
  */
@@ -17,7 +17,7 @@ const decimalSchema = z
   .optional()
 
 /**
- * `grams_per_piece` is an `int` column, not `decimal` — stored (and read back by Drizzle) as
+ * `grams_per_piece` is an `int` column, not `decimal`, so it is stored (and read back by Drizzle) as
  * a JS number, not a string, unlike every other field here. Same empty-string-clears-it shape
  * as `decimalSchema`, but whole numbers only: a fractional gram count is never real.
  */
@@ -43,14 +43,14 @@ export const ingredientNutritionSchema = z.object({
   saturatedFat100g: decimalSchema,
   fiber100g: decimalSchema,
   salt100g: decimalSchema,
-  /** Approximate grams per one `piece` — see the `toGrams()` doc in `nutrition.ts`. */
+  /** Approximate grams per one `piece`; see the `toGrams()` doc in `nutrition.ts`. */
   gramsPerPiece: gramsPerPieceSchema,
   micros: ingredientMicrosSchema.optional(),
 })
 
 /**
  * `micros` is a plain JSON blob, not DECIMAL columns, and `computeNutrition` already does
- * float arithmetic on it (`val * factor`) — so unlike the macro fields there is no
+ * float arithmetic on it (`val * factor`), so unlike the macro fields there is no
  * DB-precision reason to keep these as strings. Stored as numbers to match the shape the
  * Swiss BLV import already writes (`scripts/import-swiss-foods.mjs`), so a recipe's micro
  * totals never mix string and number entries depending on which import created them.

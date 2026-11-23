@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * RecipeImageUpload — pick, preview, describe and replace the one recipe photo.
+ * RecipeImageUpload: pick, preview, describe and replace the one recipe photo.
  *
  * ## It saves immediately, unlike everything else on the edit page
  *
@@ -10,9 +10,9 @@
  * *into*. Holding it until commit would also drag a multi-megabyte blob through the
  * `JSON.stringify` dirty-state comparison that page runs on every keystroke.
  *
- * ## It owns its state after the first render, and that is load-bearing
+ * ## It owns its state after the first render
  *
- * The obvious wiring — emit `changed`, have the page `refresh()` — is wrong here. That
+ * Emitting `changed` and having the page `refresh()` would be wrong here. That
  * page derives every metadata field from the fetched recipe through an `immediate`
  * watcher, so a refresh mid-edit would silently reset the title, servings, tags and
  * translations the author had typed but not committed. So the server's response for this
@@ -20,7 +20,7 @@
  */
 const props = defineProps<{
   recipeId: number
-  /** Server state at page load. Owned locally from then on — see the docblock. */
+  /** Server state at page load. Owned locally from then on (see the docblock). */
   initialImage: { checksum: string; width: number; height: number; altText: string | null; mimeType: string } | null
 }>()
 
@@ -60,7 +60,7 @@ async function onPick(event: Event) {
 
   busy.value = true
   try {
-    // Downscaled and re-encoded in the browser — see app/utils/imageResize.ts for why that
+    // Downscaled and re-encoded in the browser. See app/utils/imageResize.ts for why that
     // is not the server's job, and why the server re-validates regardless.
     const resized = await resizeImageForUpload(file)
     await upload(resized.blob, 'cover.webp')
@@ -71,7 +71,7 @@ async function onPick(event: Event) {
   }
 }
 
-/** Change the description without picking a new file — the common edit after the fact. */
+/** Change the description without picking a new file, the common edit after the fact. */
 async function saveAltText() {
   const image = current.value
   if (!image) return
@@ -80,7 +80,7 @@ async function saveAltText() {
     /**
      * The PUT is the only writer of this row, so changing the description means sending
      * the bytes again. Reading them back from our own origin costs one already-cached
-     * request and keeps this down to a single, fully-validating write path — a PATCH that
+     * request and keeps this down to a single, fully-validating write path; a PATCH that
      * could update the description alone would be a second one to keep in step with it.
      */
     const blob = await $fetch<Blob>(`/api/recipes/${props.recipeId}/image?v=${image.checksum}`, {

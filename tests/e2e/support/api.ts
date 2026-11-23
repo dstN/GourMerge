@@ -7,7 +7,7 @@ import type { APIRequestContext } from '@playwright/test'
  * `/auth/register` allows 3 requests per minute per IP and `/auth/login` allows 5, which is
  * the right production setting and unworkable for this suite: every test needs its own user,
  * ~34 registrations happen inside a couple of minutes, and all of them come from one host, so
- * they share a single bucket. The first CI run of the E2E workflow failed exactly there —
+ * they share a single bucket. The first CI run of the E2E workflow failed exactly there:
  * `register failed: 429` in gourmerge-requests.spec.ts, and both retries failed too because
  * the window had not reset. Nothing about that is a product bug; the tests are simply not 34
  * different clients.
@@ -17,7 +17,7 @@ import type { APIRequestContext } from '@playwright/test'
  * misconfiguration away from having no registration limit at all, and it would mean the
  * limiter is never exercised in the environment where we run the whole app. And deliberately
  * not done by varying `X-Forwarded-For` per request, even though `getRateLimitKey` trusts its
- * first segment and it would work — see the note in that function; the tests should not be
+ * first segment and it would work (see the note in that function); the tests should not be
  * built on top of that.
  *
  * Fails open. If `DATABASE_URL` is not in the environment there is nothing to clear, and the

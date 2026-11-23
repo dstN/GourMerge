@@ -5,7 +5,7 @@
  *
  * The part header of a multipart upload is attacker-controlled text. A file announced as
  * `image/png` that actually starts with `<svg onload=…>` and gets stored, then served
- * back with the announced type, is stored XSS on our own origin — `img-src 'self'` in the
+ * back with the announced type, is stored XSS on our own origin. `img-src 'self'` in the
  * CSP does nothing about it, because the browser never treats the response as an image.
  * So the type we store and later send is derived here, from the magic bytes, and the
  * client's claim is discarded.
@@ -18,7 +18,7 @@
  * They are stored so the recipe page can reserve the exact aspect ratio before the image
  * loads (`width`/`height` attributes → no layout shift, which is 25% of the Lighthouse
  * performance score). A client-supplied number would silently produce a wrong box. Only
- * the file header is read — a few dozen bytes — not the pixel data, so there is no
+ * the file header is read (a few dozen bytes), not the pixel data, so there is no
  * decoder here and no decoder bug to inherit.
  */
 
@@ -48,7 +48,7 @@ function pngSize(b: Buffer): ProbedImage | null {
 /**
  * Walk the JPEG marker segments to the first Start-Of-Frame, which is the only place the
  * dimensions live. SOF0–SOF15 minus the four markers in that numeric range that are not
- * frame headers (DHT `c4`, JPG `c8`, DAC `cc`) — a naive `>= 0xc0 && <= 0xcf` test reads
+ * frame headers (DHT `c4`, JPG `c8`, DAC `cc`). A naive `>= 0xc0 && <= 0xcf` test reads
  * a Huffman table as a frame header and returns nonsense.
  */
 function jpegSize(b: Buffer): ProbedImage | null {
@@ -93,7 +93,7 @@ function webpSize(b: Buffer): ProbedImage | null {
 
 /**
  * @returns the sniffed type and dimensions, or `null` when the bytes are not a
- *   JPEG/PNG/WebP whose header can be read — which the caller must treat as a rejection,
+ *   JPEG/PNG/WebP whose header can be read. The caller must treat that as a rejection,
  *   never as "store it anyway".
  */
 export function probeImage(bytes: Buffer): ProbedImage | null {

@@ -1,5 +1,5 @@
 /**
- * useAppToast — thin wrapper around Nuxt UI's useToast
+ * useAppToast: thin wrapper around Nuxt UI's useToast
  * with pre-configured success/error/info helpers.
  */
 export function useAppToast() {

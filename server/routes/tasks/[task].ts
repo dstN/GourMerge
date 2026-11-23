@@ -1,5 +1,5 @@
 /**
- * GET|POST /tasks/:task?key=… — trigger a maintenance job over HTTP.
+ * GET|POST /tasks/:task?key=…: trigger a maintenance job over HTTP.
  *
  * ## Why an endpoint and not a cron command
  *
@@ -12,17 +12,17 @@
  * Plesk's **"Fetch a URL"** task type sidesteps all three: the work happens inside
  * the running app, which already holds the database pool, the SMTP settings and the
  * injected environment. Same class of mistake as the migration step that "could
- * never run" (see current_state §15) — the host does not have what the command needs.
+ * never run" (see current_state §15): the host does not have what the command needs.
  *
  * ## Auth
  *
  * A shared secret in `CRON_SECRET`, compared in constant time. Deliberately **not**
  * a session: cron has no user. If the variable is unset the endpoint refuses every
- * request rather than running unauthenticated — a publicly reachable URL that
+ * request rather than running unauthenticated. A publicly reachable URL that
  * deletes accounts would be catastrophic, so failing closed is the only option.
  *
  * `GET` is accepted because Plesk's "Fetch a URL" issues a GET. That makes this a
- * state-changing GET, which is normally wrong — the secret is what makes it safe,
+ * state-changing GET, which is normally wrong; the secret is what makes it safe,
  * and there is no browser session for CSRF to ride on.
  *
  * ## Usage

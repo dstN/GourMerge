@@ -57,13 +57,13 @@ export interface RecipeDetail {
   selectedBranch:
     | { id: number; recipeId: number; name: string; headCommitId: number | null; isDefault: boolean; createdAt: string }
     | undefined
-  /** Count of OPEN GourMerge Requests only — closed and merged ones are history. */
+  /** Count of OPEN GourMerge Requests only; closed and merged ones are history. */
   openGmrCount: number
   /** Recipe-level discussion threads. Commit-anchored ones are counted on the history page. */
   discussionCount: number
   /**
    * Metadata for the serving-suggestion photo, or null. The bytes live at
-   * `/api/recipes/:id/image?v=<checksum>` — never inline in this payload.
+   * `/api/recipes/:id/image?v=<checksum>`, never inline in this payload.
    */
   image: {
     /** SHA-256 of the bytes. Cache key and ETag; a new photo means a new URL. */
@@ -79,15 +79,15 @@ export interface RecipeDetail {
     ingredientName: string
     /** Canonical, metric. What the editor, diff engine and nutrition maths use. */
     quantity: string
-    /** Canonical unit — one of `CanonicalUnit`. */
+    /** Canonical unit, one of `CanonicalUnit`. */
     unit: string
-    /** Resolved for the viewer's measurement preference — for display only. */
+    /** Resolved for the viewer's measurement preference, for display only. */
     displayQuantity: string
     /** Resolved display unit; may be imperial (`oz`, `cup`, …) or scaled (`kg`, `l`). */
     displayUnit: DisplayUnit
     notes: string | null
     sortOrder: number
-    /** True only for the viewer who created this ingredient (`ingredients.created_by`) —
+    /** True only for the viewer who created this ingredient (`ingredients.created_by`);
      *  the Swiss BLV catalog is never editable, regardless of who is looking. */
     canEdit: boolean
   }>
@@ -115,7 +115,7 @@ export interface UserProfile {
     bio: string | null
     avatarUrl: string | null
     createdAt: string
-    /** Own profile only — omitted on a public profile, so optional. */
+    /** Own profile only; omitted on a public profile, so optional. */
     email?: string
     /** Own profile only. */
     preferredLocale?: string

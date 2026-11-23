@@ -7,7 +7,7 @@
     "",
     "JSON rather than a .ts module because the cron CLI runs as plain Node and",
     "cannot import TypeScript. These numbers are also stated in section 7 of",
-    "app/pages/legal/datenschutz.vue — changing one without the other makes the",
+    "app/pages/legal/datenschutz.vue. Changing one without the other makes the",
     "privacy policy false."
   ],
   "inactivity": {

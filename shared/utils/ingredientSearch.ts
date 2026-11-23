@@ -5,11 +5,11 @@
  * BLS names written database-style ("Weizen Mehl, Type 405"), and whatever a user typed.
  * Searching the raw strings means "Weizenmehl" misses the BLS flour and "Moehre" misses the
  * carrot. So every searchable string is reduced to a canonical form once, at write time, and
- * the query is reduced the same way at read time — the two only have to agree with each
+ * the query is reduced the same way at read time. The two only have to agree with each
  * other, never with how the name is displayed.
  *
  * Shared by the server (search endpoint, create/edit handlers) and by the plain-Node seed
- * scripts, which import this file directly — so it must stay dependency-free and use only
+ * scripts, which import this file directly, so it must stay dependency-free and use only
  * syntax Node can strip without a build step (no enums, no parameter properties).
  */
 
@@ -38,7 +38,7 @@ export function normalizeSearchTerm(input: string): string {
   return (
     input
       .toLowerCase()
-      // Ligatures first — NFKD does not decompose these.
+      // Ligatures first: NFKD does not decompose these.
       .replace(/ß/g, 'ss')
       .replace(/æ/g, 'ae')
       .replace(/œ/g, 'oe')
@@ -78,7 +78,7 @@ function orderedLocales(keys: string[]): string[] {
 /**
  * Every row `ingredient_search_terms` should hold for one ingredient: each locale's name,
  * the canonical `name` when it is not already one of them, and every synonym. Deduplicated
- * per (locale, term) — the same word in four locales is four rows, which is what lets the
+ * per (locale, term). The same word in four locales is four rows, which is what lets the
  * search prefer the viewer's own locale.
  */
 export function searchTermsForIngredient(names: IngredientNames): IngredientSearchTerm[] {
@@ -115,7 +115,7 @@ export function searchTermsForIngredient(names: IngredientNames): IngredientSear
 
   // Regional variants: a term containing one side of a vocabulary pair gets a copy with the
   // other side, so "Poulet, Brust" answers to "hahnchen" and "Hähnchen Brust" to "poulet".
-  // One substitution per variant, no chaining — the vocabulary is pairs, not a thesaurus.
+  // One substitution per variant, no chaining: the vocabulary holds pairs only.
   for (const { locale, term } of [...out]) {
     const words = term.split(' ')
     for (const [a, b] of VOCABULARY_PAIRS) {

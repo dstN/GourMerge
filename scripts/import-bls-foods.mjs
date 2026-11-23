@@ -1,13 +1,13 @@
 /**
  * Import the German Bundeslebensmittelschlüssel (BLS) 4.0 into the GourMerge ingredient
- * catalog — next to the Swiss BLV data, not instead of it (docs/BLS-INTEGRATION-PLAN.md).
+ * catalog, next to the Swiss BLV data and not instead of it (docs/BLS-INTEGRATION-PLAN.md).
  *
  * Two sources, one importer, same shape as import-swiss-foods.mjs:
  *
- *   1. The committed seed file (DEFAULT) — `server/database/seeds/bls-foods.jsonl`.
+ *   1. The committed seed file (DEFAULT): `server/database/seeds/bls-foods.jsonl`.
  *      What contributors and the deploy use: no XLSX, no `xlsx` dependency.
  *
- *   2. The MRI's spreadsheet — for regenerating that seed. Not in the repo (`.claude/` is
+ *   2. The MRI's spreadsheet, for regenerating that seed. Not in the repo (`.claude/` is
  *      gitignored); download the German ZIP from https://blsdb.de/bls and put
  *      `BLS_4_0_Daten_2025_DE.xlsx` into `.claude/data/bls/`. The English ZIP is the same
  *      data with English headers, so one file is enough.
@@ -16,7 +16,7 @@
  *   bls-map.csv         decisions: which BLS codes are the same ingredient as a Swiss food
  *                       (`same`), which dish-group codes are ingredients after all (`new`),
  *                       and which are left out (`skip`). Everything else in groups B–W is new.
- *   bls-i18n.jsonl      FR/IT names for every imported code — the BLS itself has only DE/EN.
+ *   bls-i18n.jsonl      FR/IT names for every imported code; the BLS itself has only DE/EN.
  *   bls-4.0-errata.json the MRI's published corrections, applied on the way in.
  *
  * Usage:
@@ -262,7 +262,7 @@ function emitReview(foods, map) {
 
   // Candidates, for the matchers: per Swiss food the eight most similar BLS foods, by name
   // overlap (both languages, vocabulary applied), agreement on the preparation state and
-  // closeness of the five key nutrients. A list to decide from, not a decision.
+  // closeness of the five key nutrients. The matchers make the decision; this only lists options.
   const swiss = readFileSync(SWISS_SEED, 'utf8')
     .split('\n')
     .filter(Boolean)
@@ -356,7 +356,7 @@ function buildSeed(foods, map) {
     if (decision === 'same') {
       const [kind, id] = target.split(/:(.*)/s)
       if (kind === 'swiss') {
-        if (!swissIds.has(id)) problems.push(`${f.code}: same:swiss:${id} — no such Swiss food`)
+        if (!swissIds.has(id)) problems.push(`${f.code}: same:swiss:${id}: no such Swiss food`)
         if (usedSwiss.has(id)) problems.push(`${f.code}: Swiss ${id} already paired with ${usedSwiss.get(id)}`)
         usedSwiss.set(id, f.code)
         // A pair keeps the Swiss values, so the two must describe the same thing: a kcal gap
@@ -392,7 +392,7 @@ function buildSeed(foods, map) {
   }
 
   if (problems.length) {
-    console.error(`\n${problems.length} problem(s) — seed not written:`)
+    console.error(`\n${problems.length} problem(s), seed not written:`)
     for (const p of problems.slice(0, 50)) console.error('  ' + p)
     if (problems.length > 50) console.error(`  … and ${problems.length - 50} more`)
     process.exit(1)
@@ -458,7 +458,7 @@ async function upsertNutrition(conn, rows, idByCode) {
 }
 
 /**
- * Attach a BLS code to an ingredient that already exists — a Swiss food, or a curated row —
+ * Attach a BLS code to an ingredient that already exists (a Swiss food, or a curated row)
  * and give it the German display name (decision E5 in the plan): `name_translations.de`
  * becomes the BLS name, the previous German name and the BLS English name go into
  * `synonyms`, everything else (nutrition, FR/IT, canonical EN name) stays. Runs on every
@@ -476,7 +476,7 @@ async function applyPairs(conn, pairs, idByCode) {
   for (const row of pairs) {
     if (row.same.dataset === 'swiss-blv') {
       const id = swissIdByExternal.get(row.same.externalId)
-      if (!id) throw new Error(`${row.code}: Swiss food ${row.same.externalId} is not imported — run seed:swiss first`)
+      if (!id) throw new Error(`${row.code}: Swiss food ${row.same.externalId} is not imported; run seed:swiss first`)
       targets.set(row.code, id)
     } else {
       const [found] = await conn.execute(
@@ -512,7 +512,7 @@ async function applyPairs(conn, pairs, idByCode) {
         if (list.some((s) => normalizeSearchTerm(s) === norm)) return
         synonyms[locale] = [...list, value]
       }
-      // Display name first, then the previous German name as a synonym — `addSyn` skips a
+      // Display name first, then the previous German name as a synonym. `addSyn` skips a
       // value that equals the current display name, so the other order would drop it.
       const previousDe = translations.de
       translations.de = row.names.de
@@ -567,7 +567,7 @@ async function importToDb(seed) {
       newRows = newRows.concat(unresolved)
 
       if (!FORCE && LIMIT === Infinity && atVersion === foods.length) {
-        console.log(`✓ ${atVersion} BLS foods already imported (${DATASET} ${DATASET_VERSION}) — nothing else to do.`)
+        console.log(`✓ ${atVersion} BLS foods already imported (${DATASET} ${DATASET_VERSION}); nothing else to do.`)
         console.log('  Re-import anyway with --force.')
         await conn.commit()
         return
@@ -575,7 +575,7 @@ async function importToDb(seed) {
 
       const toInsert = newRows.filter((row) => !idByCode.has(row.code))
       const toUpdate = newRows.filter((row) => idByCode.has(row.code))
-      console.log(`${toInsert.length} new, ${toUpdate.length} existing — writing in batches of ${BATCH}…`)
+      console.log(`${toInsert.length} new, ${toUpdate.length} existing, writing in batches of ${BATCH}…`)
       let written = 0
       const progress = () => process.stdout.write(`  ${written}/${newRows.length}...\r`)
 
@@ -688,12 +688,12 @@ async function main() {
   if (isDryRun) {
     for (const row of seed.slice(0, 5)) {
       console.log(
-        `  [${row.code}] "${row.names.en}" — cat: ${row.category} — kcal: ${row.nutrition?.energyKcal ?? '–'}${row.same ? ` — same as ${JSON.stringify(row.same)}` : ''}`
+        `  [${row.code}] "${row.names.en}", cat: ${row.category}, kcal: ${row.nutrition?.energyKcal ?? '–'}${row.same ? `, same as ${JSON.stringify(row.same)}` : ''}`
       )
     }
     const skipped = seed.filter((r) => isDishGroup(r.code)).length
     console.log(
-      `\nDRY-RUN complete — ${seed.length} foods would be imported (${skipped} of them from the dish groups X/Y).`
+      `\nDRY-RUN complete: ${seed.length} foods would be imported (${skipped} of them from the dish groups X/Y).`
     )
     return
   }

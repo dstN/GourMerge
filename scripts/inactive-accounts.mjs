@@ -6,14 +6,14 @@
  * Without a tax-relevant record to keep (GourMerge has no purchase history), there
  * is no legitimate interest in holding a dormant account's personal data
  * indefinitely. The accepted practice is to delete after 2–3 years of no contact.
- * A stated retention period that nobody enforces is worse than none — it is a claim
- * you cannot back up — so this runs nightly alongside `cleanup-retention.mjs`.
+ * A stated retention period has to be enforced, so this runs nightly alongside
+ * `cleanup-retention.mjs`.
  *
  * ## The clock
  *
  * `users.last_login_at`, and only that. Not `updated_at`, which is
  * `ON UPDATE CURRENT_TIMESTAMP` and therefore moves whenever anything writes to the
- * row — a locale change or a counter touch would make an abandoned account look
+ * row: a locale change or a counter touch would make an abandoned account look
  * active forever.
  *
  * Accounts that have never logged in fall back to `created_at`, so a registration
@@ -33,14 +33,14 @@
  *
  * Each notice is recorded in its own column, so re-running the job never re-sends
  * one, and support can see exactly what a user was told and when. A notice that
- * fails to send is left unrecorded and retried on the next run — better a duplicate
- * warning than a silent deletion.
+ * fails to send is left unrecorded and retried on the next run. A duplicate warning is
+ * acceptable; a silent deletion is not.
  *
  * ## Deletion
  *
  * Hard delete. The four RESTRICT FKs into `users` mean the row cannot simply be
  * removed, so attribution living inside *other people's* recipes is reassigned to a
- * shared anonymous `ghost` account first — the same logic as
+ * shared anonymous `ghost` account first. This is the same logic as
  * `server/utils/hardDeleteUser.ts`, reimplemented here in raw SQL because this
  * script runs outside Nitro and cannot import server utils.
  *
@@ -144,7 +144,7 @@ let totals = { notices: 0, deleted: 0, failures: 0 }
 /**
  * Refuse to run without SMTP.
  *
- * Previously a missing transport only counted each notice as a failure — but the
+ * Previously a missing transport only counted each notice as a failure, but the
  * DELETION pass ran anyway, so any account whose final notice had been recorded on
  * an earlier (working) run would still be deleted while the current run could warn
  * nobody. Worse, the in-app twin used sendMail(), which silently succeeds via a
@@ -165,7 +165,7 @@ try {
   // yet. Two reasons this is not a simple per-stage sweep:
   //
   //   * Notice windows must have no upper bound, or an account that crosses the
-  //     3-year line before a notice went out falls between the windows — past the
+  //     3-year line before a notice went out falls between the windows: past the
   //     notice range, and blocked from deletion because the final notice is
   //     missing. That stalls forever. (Caught by a boundary dry-run.)
   //   * With unbounded windows, a per-stage sweep would mail an overdue account
@@ -183,8 +183,8 @@ try {
   for (const row of candidates) {
     // The final notice is TERMINAL. Without this, an account that has already been
     // told "you will be deleted tomorrow" would go on to receive the earlier
-    // "in four weeks" notice on the next run, because that stage was never sent —
-    // nonsense to read, and it would undermine the warning it follows.
+    // "in four weeks" notice on the next run, because that stage was never sent.
+    // That makes no sense to read, and it would undermine the warning it follows.
     if (row.inactivity_notice_24h_at !== null) continue
 
     const ageDays = (Date.now() - new Date(row.last_seen).getTime()) / 86_400_000
@@ -219,7 +219,7 @@ try {
         html: mail.html,
       })
       // Recorded only AFTER a successful send. If the mail fails, the column stays
-      // null and the next run retries — a duplicate warning is far better than a
+      // null and the next run retries. A duplicate warning is far better than a
       // deletion the user was never told about.
       await db.execute(`UPDATE users SET ${due.column} = NOW() WHERE id = ?`, [row.id])
       totals.notices++
@@ -234,10 +234,10 @@ try {
   // Two conditions, both required: past the retention window AND the final notice
   // went out at least 24 hours ago.
   //
-  // The notice requirement is the safety interlock, not decoration. Without it the
+  // The notice requirement is the safety interlock. Without it the
   // first run after deploy would delete every account older than three years the
   // same night, with no warning whatsoever. With it, such an account gets the final
-  // notice on one run and is deleted on the next — so there is always a real 24h
+  // notice on one run and is deleted on the next, so there is always a real 24h
   // window in which logging in saves it.
   const [due] = await db.execute(
     `SELECT u.id, u.username, ${LAST_SEEN} AS last_seen
@@ -268,7 +268,7 @@ try {
   }
 
   console.log(
-    `${isDryRun ? '[dry-run] ' : ''}done — ${totals.notices} notice(s), ${totals.deleted} deletion(s), ${totals.failures} failure(s)`
+    `${isDryRun ? '[dry-run] ' : ''}done: ${totals.notices} notice(s), ${totals.deleted} deletion(s), ${totals.failures} failure(s)`
   )
 } finally {
   await db.end()

@@ -3,7 +3,7 @@
  * commits, commits are ingredient/step snapshots, forks reference their original, and
  * GourMerge Requests propose merging changes between branches.
  *
- * Naming rule: never "Pull Request" — always "GourMerge Request" / "gourmerge_request".
+ * Naming rule: never "Pull Request", always "GourMerge Request" / "gourmerge_request".
  */
 
 import {
@@ -36,7 +36,7 @@ const binary16 = customType<{ data: Buffer; driverData: Buffer }>({
 /**
  * MEDIUMBLOB (up to 16 MB) for the one image a recipe may carry.
  *
- * Drizzle's mysql-core has no `mediumblob` helper, hence the custom type — the same
+ * Drizzle's mysql-core has no `mediumblob` helper, hence the custom type, the same
  * escape hatch `binary16` above uses.
  *
  * **Why the bytes live in MySQL and not on disk.** Production is Netcup + Passenger and
@@ -44,7 +44,7 @@ const binary16 = customType<{ data: Buffer; driverData: Buffer }>({
  * `rename` (see `deploy.yml`). Anything written inside the app directory is therefore one
  * release away from being replaced or, on a rollback, resurrected at an older state.
  * There is no persistent volume, no object storage on the plan, and `server-backup.sh`
- * dumps the database only — so a filesystem upload directory would also be the one part
+ * dumps the database only, so a filesystem upload directory would also be the one part
  * of user content with no backup and no restore drill. A row is transactional, cascades
  * with its recipe, is covered by the nightly dump, and travels through the GDPR export
  * and erasure paths that already exist. The cost is that reads go through Node instead of
@@ -93,7 +93,7 @@ export const users = mysqlTable('users', {
    * SURVIVES: four FKs into `users` are NOT NULL and RESTRICT
    * (recipes.owner_id, recipe_commits.author_id, gourmerge_requests.author_id,
    * gm_request_comments.author_id), and a fork copies commits keeping the
-   * ORIGINAL author_id — so a hard delete would either fail on the constraint
+   * ORIGINAL author_id, so a hard delete would either fail on the constraint
    * or tear holes in somebody else's recipe history. Instead the identifying
    * columns are overwritten in place, which is GitHub's `ghost` behaviour but
    * per-user, so two deleted accounts stay distinguishable in a thread.
@@ -109,14 +109,14 @@ export const users = mysqlTable('users', {
 
   /**
    * Grants access to `/admin/reports` and the report-status endpoints. There is no UI to
-   * set this — it is a direct `UPDATE users SET is_admin = 1` by whoever operates the
+   * set this; it is a direct `UPDATE users SET is_admin = 1` by whoever operates the
    * database, the same trust boundary as everything else that only an owner with DB access
    * can do (there is no self-service admin promotion path to leave open).
    */
   isAdmin: boolean('is_admin').notNull().default(false),
 
   /**
-   * Last successful login. **This is the clock for inactivity deletion** — not
+   * Last successful login. **This is the clock for inactivity deletion**, not
    * `updated_at`, which is a `timestamp … ON UPDATE CURRENT_TIMESTAMP` and so moves
    * on any write to the row (a locale change, a counter touch), which would make an
    * abandoned account look active forever.
@@ -127,7 +127,7 @@ export const users = mysqlTable('users', {
   lastLoginAt: datetime('last_login_at'),
 
   /**
-   * Inactivity-notice bookkeeping — one column per stage rather than a counter, so
+   * Inactivity-notice bookkeeping: one column per stage rather than a counter, so
    * the nightly job is idempotent (it can ask "was THIS notice already sent?"
    * instead of trusting an ordering) and so support can see exactly what a user was
    * told and when. All three are cleared on login.
@@ -146,7 +146,7 @@ export const users = mysqlTable('users', {
 })
 
 // ═══════════════════════════════════════════════════════════════
-// USER AVATAR (uploaded picture — at most one per account)
+// USER AVATAR (uploaded picture, at most one per account)
 // ═══════════════════════════════════════════════════════════════
 // Same storage argument as `recipe_images`: a MEDIUMBLOB row rather than a file, because
 // the deploy swaps `.output/` by rename, there is no persistent volume, and the nightly
@@ -158,7 +158,7 @@ export const users = mysqlTable('users', {
 // on a row read. A quarter-megabyte column on the hottest table in the app is not something
 // to find out about later.
 //
-// `users.avatar_url` stays and keeps its meaning — "where to fetch this user's picture".
+// `users.avatar_url` stays and keeps its meaning: "where to fetch this user's picture".
 // Uploading simply points it at `/api/users/:username/avatar-image?v=<checksum>`, so every
 // payload and component that already renders that column keeps working untouched.
 export const userAvatars = mysqlTable('user_avatars', {
@@ -167,7 +167,7 @@ export const userAvatars = mysqlTable('user_avatars', {
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' })
     .unique(),
-  /** Always `image/webp` — the upload is re-encoded, never stored as it arrived. */
+  /** Always `image/webp`; the upload is re-encoded, never stored as it arrived. */
   mimeType: varchar('mime_type', { length: 30 }).notNull(),
   /** Always square. `AVATAR_EDGE` in the upload handler is the single source for the value. */
   edge: int('edge').notNull(),
@@ -202,7 +202,7 @@ export const userTotp = mysqlTable('user_totp', {
   /**
    * Base32 TOTP secret, **encrypted at rest** (AES-256-GCM, see
    * `server/utils/totp.ts`). A plaintext secret in the database is a bearer token
-   * for every account that has 2FA enabled — a DB dump would defeat the feature it
+   * for every account that has 2FA enabled: a DB dump would defeat the feature it
    * is supposed to provide.
    */
   secretEncrypted: text('secret_encrypted').notNull(),
@@ -225,7 +225,7 @@ export const userTotp = mysqlTable('user_totp', {
 
 /**
  * Single-use recovery codes, bcrypt-hashed like every other credential here.
- * Without these, a lost phone is an unrecoverable lockout — which is the most
+ * Without these, a lost phone is an unrecoverable lockout, which is the most
  * common reason 2FA rollouts generate support load.
  */
 export const userRecoveryCodes = mysqlTable(
@@ -250,7 +250,7 @@ export const userRecoveryCodes = mysqlTable(
 // A passkey replaces the password entirely rather than adding a step to it: the
 // private key never leaves the authenticator, and unlocking it requires the device
 // plus a biometric or PIN. That is already two factors, which is why a passkey login
-// does NOT then ask for a TOTP code — see server/routes/auth/passkey-authenticate.post.ts.
+// does NOT then ask for a TOTP code; see server/routes/auth/passkey-authenticate.post.ts.
 
 export const userPasskeys = mysqlTable(
   'user_passkeys',
@@ -261,7 +261,7 @@ export const userPasskeys = mysqlTable(
       .references(() => users.id, { onDelete: 'cascade' }),
     /**
      * The credential id from the authenticator, base64url. Globally unique, and the
-     * lookup key during authentication — the browser sends it before we know who is
+     * lookup key during authentication: the browser sends it before we know who is
      * signing in, which is what makes usernameless login possible.
      */
     credentialId: varchar('credential_id', { length: 255 }).notNull().unique(),
@@ -270,7 +270,7 @@ export const userPasskeys = mysqlTable(
     /**
      * Signature counter. Authenticators that implement it increment on every
      * assertion; a counter that fails to advance is the documented signal of a cloned
-     * credential. Many passkeys (iCloud, Google) always report 0 — see
+     * credential. Many passkeys (iCloud, Google) always report 0; see
      * `verifyPasskeyCounter` for why that is not treated as an error.
      */
     counter: int('counter').notNull().default(0),
@@ -335,13 +335,13 @@ export const ingredients = mysqlTable(
     /**
      * NULL for every row the Swiss BLV import (or another admin script) seeded; set for a
      * row created through `POST /api/ingredients`. This is the one clean signal for "may
-     * this row be edited or reported" — `ingredient_nutrition.source` almost works, but a
+     * this row be edited or reported". `ingredient_nutrition.source` almost works, but a
      * user-created ingredient with no nutrition supplied has no nutrition row at all, so
      * there is nothing to check. `SET NULL` on delete rather than the ghost-reassignment
      * RESTRICT pattern used for recipe/comment authorship: an ingredient is shared
      * reference data used across other people's recipes, not the deleted account's own
      * content, so losing the attribution on account deletion is correct, not a gap to
-     * patch — it simply reverts to behaving like the seeded rows do.
+     * patch; it simply reverts to behaving like the seeded rows do.
      */
     createdBy: int('created_by').references(() => users.id, { onDelete: 'set null' }),
     createdAt: datetime('created_at')
@@ -409,7 +409,7 @@ export const ingredientNutrition = mysqlTable(
 )
 
 // ═══════════════════════════════════════════════════════════════
-// INGREDIENT SOURCES (n:1 — which reference datasets an ingredient came from)
+// INGREDIENT SOURCES (n:1, which reference datasets an ingredient came from)
 // ═══════════════════════════════════════════════════════════════
 // `ingredient_nutrition.source` + `external_id` can only name ONE origin per ingredient,
 // which stops working the moment a second dataset (BLS 4.0) describes a food the Swiss
@@ -426,7 +426,7 @@ export const ingredientSources = mysqlTable(
       .references(() => ingredients.id, { onDelete: 'cascade' }),
     /**
      * Dataset family WITHOUT a version: `swiss-blv`, `bls`. The version goes in
-     * `dataset_version`. Keyed this way on purpose — the importers look an incoming food
+     * `dataset_version`. Keyed this way on purpose: the importers look an incoming food
      * up by (dataset, external_id), so a new release of the same dataset updates the rows
      * it already created instead of inserting every food a second time under a new name.
      */
@@ -450,12 +450,12 @@ export const ingredientSources = mysqlTable(
 // INGREDIENT SEARCH TERMS (denormalised, what the autocomplete matches on)
 // ═══════════════════════════════════════════════════════════════
 // One row per searchable string of an ingredient: every locale's name plus every synonym,
-// normalised by `normalizeSearchTerm()` (shared/utils/ingredientSearch.ts) — lower-case,
-// umlauts and accents folded, punctuation gone — so "Möhre", "moehre" and "mohre" are the
+// normalised by `normalizeSearchTerm()` (shared/utils/ingredientSearch.ts): lower-case,
+// umlauts and accents folded, punctuation gone. So "Möhre", "moehre" and "mohre" are the
 // same thing, and `compact` (the same without spaces) lets "Weizenmehl" find a dataset
 // name written as "Weizen Mehl, Type 405". Rebuilt from `ingredients` by
 // `scripts/rebuild-search-terms.mjs` after every seed; kept current for user-created rows
-// by the POST/PATCH handlers. Never displayed — the display name still comes from
+// by the POST/PATCH handlers. Never displayed; the display name still comes from
 // `ingredients.name_translations`.
 
 export const ingredientSearchTerms = mysqlTable(
@@ -490,7 +490,7 @@ export const recipes = mysqlTable(
     id: int('id').primaryKey().autoincrement(),
     /**
      * External opaque identifier (UUIDv7, time-ordered → dense B-tree index).
-     * Used in public URLs/API responses — never expose the internal INT id.
+     * Used in public URLs/API responses; never expose the internal INT id.
      */
     publicId: binary16('public_id').notNull(),
     ownerId: int('owner_id')
@@ -534,7 +534,7 @@ export const recipes = mysqlTable(
 )
 
 // ═══════════════════════════════════════════════════════════════
-// RECIPE IMAGE (exactly one per recipe — the "Serviervorschlag")
+// RECIPE IMAGE (exactly one per recipe, the "Serviervorschlag")
 // ═══════════════════════════════════════════════════════════════
 // One row per recipe, enforced by a UNIQUE index rather than a column on `recipes`:
 // the blob would otherwise be dragged into every `SELECT` on the hottest table in the
@@ -552,15 +552,15 @@ export const recipeImages = mysqlTable(
     recipeId: int('recipe_id')
       .notNull()
       .references(() => recipes.id, { onDelete: 'cascade' }),
-    /** Sniffed from the magic bytes server-side — never the client's Content-Type. */
+    /** Sniffed from the magic bytes server-side, never the client's Content-Type. */
     mimeType: varchar('mime_type', { length: 30 }).notNull(),
     width: int('width').notNull(),
     height: int('height').notNull(),
     byteSize: int('byte_size').notNull(),
     /**
      * Hex SHA-256 of the bytes. Doubles as the ETag and as the `?v=` cache key, so the
-     * delivery route can be `immutable` while a replaced image still busts every cache —
-     * a timestamp would do the first job but not survive a restore.
+     * delivery route can be `immutable` while a replaced image still busts every cache.
+     * A timestamp would do the first job but not survive a restore.
      */
     checksum: varchar('checksum', { length: 64 }).notNull(),
     /** Author-supplied alternative text. Required by a11y, so the upload form asks for it. */
@@ -750,7 +750,7 @@ export const recipeCommitSteps = mysqlTable(
 )
 
 // ═══════════════════════════════════════════════════════════════
-// GOURMERGE REQUESTS (branched change proposals — propose/review/merge model)
+// GOURMERGE REQUESTS (branched change proposals: propose/review/merge model)
 // ═══════════════════════════════════════════════════════════════
 // ⚠️  WORDING: Never use "pull_request" anywhere. It's "gourmerge_request". (design-check-ignore: states the rule)
 
@@ -836,7 +836,7 @@ export const gourmergeRequestComments = mysqlTable(
 // ═══════════════════════════════════════════════════════════════
 // RECIPE DISCUSSIONS (threads) + their replies
 // ═══════════════════════════════════════════════════════════════
-// The collaboration loop had exactly one place to say anything — a comment on a
+// The collaboration loop had exactly one place to say anything: a comment on a
 // GourMerge Request, i.e. only once you had already forked, branched, edited and
 // proposed. "I used oat milk and it worked" had nowhere to go.
 //
@@ -846,7 +846,7 @@ export const gourmergeRequestComments = mysqlTable(
 // has fields a reply does not (title, category, status) and a nullable-title comment row
 // makes every query pretend otherwise.
 //
-// `commitId` is what makes this work at commit level too — the same thread shape,
+// `commitId` is what makes this work at commit level too: the same thread shape,
 // anchored to one snapshot in the history instead of to the recipe as a whole. A single
 // nullable FK rather than a second pair of tables: the read path, the permission checks,
 // the Markdown sanitizing and the moderation rules are identical, and the only difference
@@ -860,21 +860,21 @@ export const recipeDiscussions = mysqlTable(
       .references(() => recipes.id, { onDelete: 'cascade' }),
     /**
      * NULL = a thread about the recipe. Set = a thread about that one commit, shown on
-     * the history page. CASCADE, because a commit that is gone takes its thread with it —
+     * the history page. CASCADE, because a commit that is gone takes its thread with it;
      * there is nothing left for the discussion to be about.
      */
     commitId: int('commit_id').references(() => recipeCommits.id, { onDelete: 'cascade' }),
     /**
      * NOT NULL + NO ACTION (= RESTRICT), like `recipe_commits.author_id` and
      * `gm_request_comments.author_id`. A thread inside somebody else's recipe must
-     * survive its author leaving, so `hardDeleteUser()` reassigns it to the ghost —
-     * see that file before adding any further author FK.
+     * survive its author leaving, so `hardDeleteUser()` reassigns it to the ghost.
+     * See that file before adding any further author FK.
      */
     authorId: int('author_id')
       .notNull()
       .references(() => users.id),
     title: varchar('title', { length: 200 }).notNull(),
-    /** Markdown body — sanitized on render, never on write (see app/utils/markdown.ts). */
+    /** Markdown body, sanitized on render, never on write (see app/utils/markdown.ts). */
     body: text('body').notNull(),
     category: mysqlEnum('category', ['idea', 'question', 'issue', 'praise']).notNull().default('idea'),
     /** `resolved` is the thread's own end state; it is not a moderation action. */
@@ -899,12 +899,12 @@ export const recipeDiscussionComments = mysqlTable(
   {
     id: int('id').primaryKey().autoincrement(),
     /**
-     * The FK is declared in the table config below rather than inline, and that is not a
-     * style choice — it is the only way to name it.
+     * The FK is declared in the table config below rather than inline, because that is
+     * the only way to name it.
      *
      * Drizzle derives a constraint name as `{table}_{column}_{refTable}_{refColumn}_fk`,
      * which here comes to `recipe_discussion_comments_discussion_id_recipe_discussions_id_fk`
-     * — **65 characters against MySQL's 64-character limit**. The `CREATE TABLE`s succeed and
+     * (**65 characters against MySQL's 64-character limit**). The `CREATE TABLE`s succeed and
      * the `ALTER TABLE … ADD CONSTRAINT` fails with ER_TOO_LONG_IDENT, so the tables exist,
      * the foreign key does not, and `drizzle-kit migrate` exits non-zero having printed only
      * a spinner. That is what broke the E2E workflow, and it is why
@@ -941,7 +941,7 @@ export const recipeDiscussionComments = mysqlTable(
 // ═══════════════════════════════════════════════════════════════
 // EMAIL VERIFICATION TOKENS
 // ═══════════════════════════════════════════════════════════════
-// Tokens are CSPRNG — NOT UUIDv7 (predictable prefix would weaken them).
+// Tokens are CSPRNG, NOT UUIDv7 (predictable prefix would weaken them).
 
 export const emailVerificationTokens = mysqlTable(
   'email_verification_tokens',
@@ -966,7 +966,7 @@ export const emailVerificationTokens = mysqlTable(
 // ═══════════════════════════════════════════════════════════════
 // Confirmation lands on the NEW address, not the old one: clicking it is proof of
 // ownership of the address being switched to, which is the same proof `email_verified_at`
-// exists to record — so a successful confirm sets both the email column AND the
+// exists to record, so a successful confirm sets both the email column AND the
 // verification timestamp in one step. See server/routes/auth/confirm-email-change.get.ts.
 
 export const emailChangeTokens = mysqlTable(
@@ -977,7 +977,7 @@ export const emailChangeTokens = mysqlTable(
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
     /**
-     * The address being switched to. Stored in plain text (it is not a secret — it is
+     * The address being switched to. Stored in plain text (it is not a secret; it is
      * the destination of the mail this token was sent to) so the confirm step can act on
      * it without a second round trip through whatever else may have changed meanwhile.
      */
@@ -1014,7 +1014,7 @@ export const passwordResetTokens = mysqlTable(
 )
 
 // ═══════════════════════════════════════════════════════════════
-// RATE LIMIT HITS (DB-backed — safe for multi-process Passenger)
+// RATE LIMIT HITS (DB-backed, safe for multi-process Passenger)
 // ═══════════════════════════════════════════════════════════════
 // In-memory rate limiting is not safe when Passenger spawns multiple processes.
 // This table replaces the in-memory Map with a DB counter per bucket+window.
@@ -1033,7 +1033,7 @@ export const rateLimitHits = mysqlTable(
 )
 
 // ═══════════════════════════════════════════════════════════════
-// CONTACT MESSAGES (stored, no email send — SMTP not configured)
+// CONTACT MESSAGES (stored, no email send, SMTP not configured)
 // ═══════════════════════════════════════════════════════════════
 
 export const contactMessages = mysqlTable('contact_messages', {
@@ -1049,8 +1049,8 @@ export const contactMessages = mysqlTable('contact_messages', {
 /**
  * GDPR self-service requests (Art. 15 access / Art. 17 erasure).
  *
- * One row covers a whole flow. The same token is reused across both steps —
- * `confirmedAt` is what separates them — rather than issuing a second token:
+ * One row covers a whole flow. The same token is reused across both steps
+ * (`confirmedAt` is what separates them) rather than issuing a second token:
  * the export link is also emailed, so it must stay valid for a while, and a
  * one-shot token would break the moment the browser fetched it first.
  *
@@ -1066,7 +1066,7 @@ export const dataRequests = mysqlTable(
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
     type: mysqlEnum('type', ['export', 'deletion']).notNull(),
-    // sha256 of the raw token, never the token itself — same as the auth tables.
+    // sha256 of the raw token, never the token itself, same as the auth tables.
     tokenHash: varchar('token_hash', { length: 255 }).notNull().unique(),
     expiresAt: datetime('expires_at').notNull(),
     confirmedAt: datetime('confirmed_at'),
@@ -1079,17 +1079,17 @@ export const dataRequests = mysqlTable(
 )
 
 // ═══════════════════════════════════════════════════════════════
-// REPORTS (moderation flags — recipes, users, discussion comments, images, ingredients)
+// REPORTS (moderation flags: recipes, users, discussion comments, images, ingredients)
 // ═══════════════════════════════════════════════════════════════
 // Polymorphic on purpose: one row shape covers every reportable kind rather than five
-// near-identical tables. `targetId` is NOT a foreign key — it means a different column in a
-// different table depending on `targetKind` — so every write and read goes through
+// near-identical tables. `targetId` is NOT a foreign key (it means a different column in a
+// different table depending on `targetKind`), so every write and read goes through
 // `server/utils/reports.ts`, the one place that knows how to resolve a target and check it
 // is visible to the reporter, rather than five endpoints each re-deriving that logic.
 //
 // v1 moderation per ROADMAP.md: reports are visible to the owner of the reported artefact
 // and to an admin; nothing is auto-hidden. The response is the delete tools that already
-// exist (recipe, discussion, comment, image) — actioning a report is "someone deleted the
+// exist (recipe, discussion, comment, image); actioning a report is "someone deleted the
 // thing", not a separate workflow, and those handlers close the matching open reports
 // themselves when that happens.
 export const reports = mysqlTable(
@@ -1102,7 +1102,7 @@ export const reports = mysqlTable(
      * `CASCADE`, deliberately not the RESTRICT + ghost-reassignment pattern the other
      * authorship columns use: a report's value is "this was flagged", not "who flagged
      * it", and ghost-reassigning would risk colliding with the unique constraint below the
-     * moment two now-departed accounts had reported the same target — a real scenario over
+     * moment two now-departed accounts had reported the same target. That is a real scenario over
      * a long enough timeline, and not one worth building around for metadata this
      * disposable. The flagged content itself is untouched; it can always be re-reported.
      */
@@ -1124,7 +1124,7 @@ export const reports = mysqlTable(
       .default(sql`CURRENT_TIMESTAMP`),
   },
   (table) => [
-    // One report per (reporter, target) — resubmitting does not inflate a count.
+    // One report per (reporter, target): resubmitting does not inflate a count.
     uniqueIndex('uq_reports_reporter_target').on(table.reporterId, table.targetKind, table.targetId),
     index('idx_reports_target').on(table.targetKind, table.targetId),
     index('idx_reports_status').on(table.status),

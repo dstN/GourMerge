@@ -8,7 +8,7 @@ function resolveStepContent(step: { content: string; contentTranslations: StepTr
   const loc = locale.value as keyof StepTranslations
   const translated = step.contentTranslations?.[loc]
   const effective = translated && translated.trim() !== '' ? translated : step.content
-  // Output is sanitized (allowlist) before v-html — see app/utils/markdown.ts
+  // Output is sanitized (allowlist) before v-html (see app/utils/markdown.ts)
   return renderMarkdownSafe(effective)
 }
 
@@ -24,7 +24,7 @@ const { apiError } = useApiError()
 /**
  * Unit labels. Covers the canonical set AND the display-only units the API can
  * return once the viewer's measurement preference is applied (`kg`/`l` for scaled
- * metric, `oz`/`lb`/`cup`/`floz` for imperial) — see the by-slug endpoint.
+ * metric, `oz`/`lb`/`cup`/`floz` for imperial); see the by-slug endpoint.
  */
 const UNIT_I18N: Record<string, string> = {
   g: 'recipe.unitG',
@@ -68,7 +68,7 @@ const {
 } = useFetch<RecipeDetail>(() => `/api/recipes/by-slug/${username.value}/${slug.value}`, {
   headers: useRequestHeaders(['cookie']),
   // `branch` is reactive and part of the key, so switching variant refetches and
-  // re-renders server-side — the nutrition totals and structured data have to match the
+  // re-renders server-side: the nutrition totals and structured data have to match the
   // branch on screen, which client-side swapping of the ingredient list would not give us.
   query: computed(() => ({ locale: locale.value, branch: route.query.branch })),
 })
@@ -81,7 +81,7 @@ const openGmrCount = computed(() => recipe.value?.openGmrCount ?? 0)
 // ── Ingredient edit (hover affordance in the ingredient list, owner only) ──
 const editingIngredientId = ref<number | null>(null)
 
-// ── Report (overflow menu — see DESIGNBOOK §2.4: not a 7th icon in the row) ──
+// ── Report (overflow menu; DESIGNBOOK §2.4: not a 7th icon in the row) ──
 const reportRecipeButton = useTemplateRef('reportRecipeButton')
 const reportImageButton = useTemplateRef('reportImageButton')
 const reportMenuItems = computed<DropdownMenuItem[]>(() => {
@@ -96,7 +96,7 @@ const reportMenuItems = computed<DropdownMenuItem[]>(() => {
 
 // ── Ingredients → clipboard / share sheet ────────────────────
 /**
- * Built from the DISPLAY values, so the list you get is the list you were reading —
+ * Built from the DISPLAY values, so the list you get is the list you were reading,
  * including the viewer's metric/imperial preference. Using the canonical metric values
  * would hand an imperial reader a list in grams.
  */
@@ -114,7 +114,7 @@ const shoppingList = computed(() =>
 )
 
 /**
- * The share sheet is the actual feature on a phone — it is what puts the list into Notes,
+ * The share sheet is the actual feature on a phone: it is what puts the list into Notes,
  * Reminders or a messenger. It exists only in a secure context on mobile browsers, so the
  * button is feature-detected on mount rather than guessed from the user agent, and copy is
  * always offered beside it.
@@ -220,12 +220,12 @@ async function forkRecipe() {
   if (!loggedIn.value || !recipe.value) return
 
   // Already on the fork tour's OWN fork-button step (tour.start('fork') below already
-  // navigated here, to the system recipe) — this click is the real action and must fall
+  // navigated here, to the system recipe), this click is the real action and must fall
   // through, not restart the tour it's already in.
   const inForkTourStep = tour.active.value && tour.currentStep.value?.id === 'fork-button'
 
   // First-ever "Remix" click, on ANY recipe, launches the guided fork tour instead of
-  // forking THIS one — it walks the visitor through remixing the safe practice recipe
+  // forking THIS one. It walks the visitor through remixing the safe practice recipe
   // (the system one) rather than their first-ever fork being a real, permanent copy of
   // someone else's actual work, and shows them how to delete it again afterward.
   // markTourCompleted('fork') at the end of that tour is what stops this firing again.
@@ -242,7 +242,7 @@ async function forkRecipe() {
     )
     toast.success(t('recipe.forkSuccess'))
     if (inForkTourStep) {
-      // The tour's own route watcher takes it from here — straight to the fork's EDIT
+      // The tour's own route watcher takes it from here, straight to the fork's EDIT
       // page (@fork-edit), where the delete-fork anchor lives, not the view page a
       // normal fork lands on.
       tour.setForkedRecipe({ id: res.id, url: `/${res.owner.username}/${res.slug}` })
@@ -261,12 +261,12 @@ async function forkRecipe() {
  * Jump to the discussion panel at the foot of the page.
  *
  * Deliberately imperative. `<UButton to="#discussion">` renders a `ULink`, which
- * auto-localises its target through `$localePath` — a bare hash is not a route, so the
+ * auto-localises its target through `$localePath`, and a bare hash is not a route, so the
  * router had nothing to resolve and the click did nothing at all. And even without i18n it
  * would be unreliable in this shell: `<main>` is the only scroll container (DESIGNBOOK
  * §4.1), so the browser's own hash scroll, which moves the window, has nothing to move.
  *
- * `smooth` unless the visitor has asked for less motion — the panel is a long way down, and
+ * `smooth` unless the visitor has asked for less motion: the panel is a long way down, and
  * an instant jump there reads as a page change rather than as a scroll.
  */
 function scrollToDiscussion() {
@@ -373,28 +373,27 @@ useHead(() => {
              Side by side only from `lg`, and the cluster is NOT `shrink-0`. Both of those
              are corrections to a measured fault, not preference. The cluster held six `sm`
              buttons at a fixed 578px and refused to shrink, while the identity line beside
-             it carried `min-w-0` — so the identity was always the side that gave way. At a
+             it carried `min-w-0`, so the identity was always the side that gave way. At a
              640px viewport it was squeezed to **zero width** and vanished entirely; at 768px
              the slug was fully truncated; and even at the full 832px content column it got
-             238px, showing 93px of a 435px recipe name. Six buttons were legible and the
-             name of the page was not.
+             238px, showing 93px of a 435px recipe name.
 
              Stacking until `lg` gives the identity the whole line at the widths where it
              was losing, and dropping `shrink-0` lets the cluster wrap into a second row
-             instead of monopolising the first. Same failure the header had at `md` — see
-             `LayoutMainNav` — and the same reason it went unnoticed: nothing overflowed
+             instead of monopolising the first. Same failure the header had at `md` (see
+             `LayoutMainNav`), and the same reason it went unnoticed: nothing overflowed
              visibly, the wrong element simply lost.
 
              **The actions are icon-only at every width**, and that is the other half of the
              fix. Labelled, the cluster is 578px against an 832px reading column, so even at
-             2560px it wrapped to two ragged lines with "Bearbeiten" orphaned underneath —
+             2560px it wrapped to two ragged lines with "Bearbeiten" orphaned underneath;
              the content column is capped at `max-w-4xl`, so a wider screen buys it nothing.
              As icons it is ~250px on one line and the recipe name gets the rest.
 
              This is the DESIGNBOOK §2.4 pattern: ALL of them collapse together, never one
              among labelled siblings. Each carries `aria-label` (the accessible name, since
              there is no text) and `title` (what a mouse user gets for an icon they do not
-             recognise). The star keeps its number — a count is information, not a name. -->
+             recognise). The star keeps its number, since a count is information, not a name. -->
         <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between mb-3">
           <div class="flex items-center gap-x-2 text-sm text-muted min-w-0">
             <UIcon name="i-lucide-user-circle" class="size-4 shrink-0" aria-hidden="true" />
@@ -414,7 +413,7 @@ useHead(() => {
               :label="t('recipe.private')"
             />
             <!-- Star toggle. The visible text is the COUNT, not a name, so the control still
-                 needs both a label and a title like its icon-only neighbours — and both have
+                 needs both a label and a title like its icon-only neighbours, and both have
                  to say what the click will do, which depends on the current state. -->
             <UButton
               v-if="loggedIn"
@@ -466,11 +465,11 @@ useHead(() => {
 
             <!-- An in-page anchor, not a route: the discussion lives at the bottom of this
                  page, so this is a jump. The badge counts every thread rather than only the
-                 open ones — unlike the GourMerge Request badge above, where "open" means
+                 open ones, unlike the GourMerge Request badge above, where "open" means
                  "needs your attention". A resolved discussion is still worth reading. -->
             <!-- A click handler, not `to="#discussion"`.
                  The link form did nothing: `<UButton to>` renders a `ULink`, which
-                 auto-localises through `$localePath` — and a bare hash is not a route, so
+                 auto-localises through `$localePath`, and a bare hash is not a route, so
                  the router had nothing to resolve and swallowed the navigation. Even
                  unlocalised it would be unreliable here, because only `<main>` scrolls: the
                  window-level hash scroll the browser performs has no effect on an inner
@@ -500,7 +499,7 @@ useHead(() => {
               data-tour="edit-recipe-btn"
             />
 
-            <!-- Moderation goes in an overflow menu, not a 7th icon in this row —
+            <!-- Moderation goes in an overflow menu, not a 7th icon in this row.
                  DESIGNBOOK §2.4 is about not mixing icon-only with labelled siblings, but a
                  row that already collapses together is still a row a "report" button would
                  crowd for no benefit to the common case. -->
@@ -584,7 +583,7 @@ useHead(() => {
       <!-- Tags row -->
       <RecipeTagList :tags="recipe.tags" class="mb-6" />
 
-      <!-- Branch selector — a toolbar row, not a card.
+      <!-- Branch selector: a toolbar row, not a card.
            The card version printed the branch name in its heading AND again in the picker
            trigger, then left an empty body with a divider under it. The picker already
            states which variant is shown, so the heading was duplication and the card was
@@ -635,7 +634,7 @@ useHead(() => {
         <!-- Moved out of the icon-only action cluster above: six icon buttons no longer
              fit on one line at exactly the `lg` breakpoint once the report kebab joined
              them (tests/e2e/layout-alignment.spec.ts caught it), and a labelled link sits
-             more naturally here anyway — commit history belongs with the branch it walks,
+             more naturally here anyway: commit history belongs with the branch it walks,
              the same reasoning that already keeps "Varianten" out of that row. -->
         <UButton
           :label="t('history.title')"
@@ -750,7 +749,7 @@ useHead(() => {
         @saved="() => refresh()"
       />
 
-      <!-- Serving suggestion — deliberately between the ingredients and the steps.
+      <!-- Serving suggestion, deliberately between the ingredients and the steps.
            That is the seam where the reader stops asking "what do I need" and starts
            asking "how do I make it", and it is the moment a picture of the finished dish
            is worth something. See RecipeCoverImage for why the dimensions travel with it. -->
@@ -792,7 +791,7 @@ useHead(() => {
         </div>
       </UCard>
 
-      <!-- Discussion — last, under the recipe. See RecipeDiscussionPanel for why under
+      <!-- Discussion: last, under the recipe. See RecipeDiscussionPanel for why under
            and not beside. -->
       <div id="discussion" class="mt-6 scroll-mt-6">
         <RecipeDiscussionPanel :recipe-id="recipe.id" :is-recipe-owner="isOwner" />

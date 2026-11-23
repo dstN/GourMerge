@@ -1,25 +1,25 @@
 <script setup lang="ts">
 /**
- * RecipeDiscussionPanel — threads on a recipe, or on one commit of it.
+ * RecipeDiscussionPanel: threads on a recipe, or on one commit of it.
  *
  * ## Why it sits *under* the recipe and not beside it
  *
- * A side rail was the other candidate and it loses on every axis that matters here. The
+ * A side rail was the other candidate and it loses here. The
  * reading column is capped at `max-w-4xl` (DESIGNBOOK §4.2) because that is the measure a
  * recipe reads well at; a second column has to come out of that budget, so both halves get
- * worse. Below `lg` a rail collapses underneath anyway — which means designing the stacked
+ * worse. Below `lg` a rail collapses underneath anyway, which means designing the stacked
  * version regardless, and on a phone, which is where a recipe is actually used, the rail
  * *is* the stacked version. And the content is sequential: you read the dish, then you have
  * something to say about it. GitHub puts the conversation under the artefact for the same
  * reason.
  *
- * So: one column, discussion last, after the steps.
+ * Hence one column, discussion last, after the steps.
  *
  * ## Commit level
  *
- * Same component, same endpoints, `commitId` set — which was the question worth answering
- * before building anything, and the answer is yes, cheaply, because a note about a snapshot
- * has the identical shape to a note about a recipe. It earns its place in this product
+ * Same component, same endpoints, `commitId` set. Whether that would work was checked
+ * before building anything; it does, cheaply, because a note about a snapshot
+ * has the identical shape to a note about a recipe. It fits this product
  * specifically: "this is the version that worked, the next commit over-salted it" is a
  * remark about one commit and belongs on it, not on the recipe as a whole. The history page
  * opens this panel per commit in a modal.
@@ -46,7 +46,7 @@ const CATEGORIES: DiscussionCategory[] = ['idea', 'question', 'issue', 'praise']
 
 /**
  * Light-mode label colour for the category badge. `variant="subtle"` paints the semantic
- * 500 on a 10% wash of the same hue, which measures ~2:1 on white — DESIGNBOOK §1.6. The
+ * 500 on a 10% wash of the same hue, which measures ~2:1 on white (DESIGNBOOK §1.6). The
  * two lookups are resolved here rather than in the template so neither can be `undefined`
  * at the index.
  */
@@ -57,7 +57,7 @@ const categoryItems = computed(() => CATEGORIES.map((value) => ({ label: t(`disc
 
 /**
  * Deliberately not `await`ed. A top-level await turns this into an async setup component,
- * which suspends the nearest `<Suspense>` boundary — and the history page mounts this
+ * which suspends the nearest `<Suspense>` boundary, and the history page mounts this
  * inside a modal, so opening that modal would blank the page behind it while the request
  * resolves. `lazy` still fetches during SSR and still ships the result in the payload;
  * it only stops the fetch from blocking.
@@ -69,7 +69,7 @@ const {
 } = useFetch<RecipeDiscussion[]>(() => `/api/recipes/${props.recipeId}/discussions`, {
   headers: useRequestHeaders(['cookie']),
   query: computed(() => (props.commitId ? { commitId: props.commitId } : {})),
-  // Keyed on both, so the commit panel and the recipe panel cannot share a cache entry —
+  // Keyed on both, so the commit panel and the recipe panel cannot share a cache entry:
   // they are different lists behind the same URL path.
   key: `discussions:${props.recipeId}:${props.commitId ?? 'recipe'}`,
   lazy: true,
@@ -139,7 +139,7 @@ async function submitReply(discussionId: number) {
 // ── Moderation ───────────────────────────────────────────────
 const busyThread = ref<number | null>(null)
 
-/** Author or recipe owner — the same rule the endpoints enforce, restated for the UI only. */
+/** Author or recipe owner: the same rule the endpoints enforce, restated for the UI only. */
 function canModerate(thread: RecipeDiscussion): boolean {
   return props.isRecipeOwner || thread.authorId === user.value?.id
 }
@@ -351,7 +351,7 @@ function formatDate(value: string): string {
                   :aria-label="t('discussion.deleteReply')"
                   @click="deleteReply(thread.id, reply.id)"
                 />
-                <!-- Reporting is for someone who can't already moderate it directly — the
+                <!-- Reporting is for someone who can't already moderate it directly. The
                      author and the recipe owner have the stronger delete action above instead. -->
                 <CommonReportButton
                   v-else-if="loggedIn"
@@ -447,7 +447,7 @@ function formatDate(value: string): string {
     </ul>
 
     <!-- Deleting a thread takes other people's replies with it, so it asks first.
-         UModal, never window.confirm — DESIGNBOOK §6.4. -->
+         UModal, never window.confirm (DESIGNBOOK §6.4). -->
     <UModal
       :open="deleteTarget !== null"
       :title="t('discussion.deleteTitle')"

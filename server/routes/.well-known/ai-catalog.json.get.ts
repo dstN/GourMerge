@@ -1,9 +1,9 @@
 /**
- * `/.well-known/ai-catalog.json` — the Agentic Resource Discovery catalog.
+ * `/.well-known/ai-catalog.json`: the Agentic Resource Discovery catalog.
  *
  * Content and rationale live in `server/utils/agentCatalog.ts`. A route rather than a file in
  * `public/` because the entry URL has to be absolute and the host is only known at runtime.
- * Discovery is by this well-known path alone — see the util for why `robots.txt` does not name it.
+ * Discovery is by this well-known path alone; see the util for why `robots.txt` does not name it.
  */
 export default defineEventHandler((event) => {
   const appUrl = useRuntimeConfig(event).public.appUrl

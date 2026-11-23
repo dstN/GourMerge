@@ -3,7 +3,7 @@ import { resetRateLimits } from '../support/db'
 import { uniqueUser, registerUser, createRecipe, createIngredient, commitSnapshot } from '../support/api'
 
 /**
- * Recipe discussions — the authorization matrix and the scoping rules.
+ * Recipe discussions: the authorization matrix and the scoping rules.
  *
  * This is the first feature where an arbitrary signed-in user writes text into somebody
  * else's page, so the things worth proving are not "does a comment appear". They are:
@@ -74,8 +74,8 @@ test('only the author edits the text; the owner may still resolve and delete', a
   expect((await request.delete(`/api/recipes/${recipe.id}/discussions/${id}`)).status()).toBe(403)
   await request.post('/auth/logout')
 
-  // The recipe owner may moderate — resolve and delete — but not rewrite the text. That
-  // split is the point: moderation is not authorship.
+  // The recipe owner may moderate (resolve and delete) but not rewrite the text,
+  // because moderation is not authorship.
   await request.post('/auth/login', { data: { email: owner.email, password: owner.password } })
   expect(
     (await request.patch(`/api/recipes/${recipe.id}/discussions/${id}`, { data: { body: 'not mine' } })).status()
@@ -84,7 +84,7 @@ test('only the author edits the text; the owner may still resolve and delete', a
     (await request.patch(`/api/recipes/${recipe.id}/discussions/${id}`, { data: { status: 'resolved' } })).ok()
   ).toBeTruthy()
 
-  // A resolved thread takes no more replies — otherwise the state is decorative.
+  // A resolved thread takes no more replies; otherwise the resolved state would have no effect.
   expect(
     (
       await request.post(`/api/recipes/${recipe.id}/discussions/${id}/comments`, { data: { body: 'still talking' } })
@@ -146,7 +146,7 @@ test('a commit-scoped thread is scoped to its own recipe', async ({ request }) =
 
   const other = await createRecipe(request, { title: 'Other', visibility: 'public' })
 
-  // A commit belongs to a branch, which belongs to a recipe — `recipe_commits` has no
+  // A commit belongs to a branch, which belongs to a recipe; `recipe_commits` has no
   // `recipe_id`. An unchecked `?commitId=` would therefore reach across recipes.
   expect((await request.get(`/api/recipes/${other.id}/discussions?commitId=${myCommitId}`)).status()).toBe(404)
   expect(
@@ -186,7 +186,7 @@ test('validation rejects an empty body, an over-long title and unknown keys', as
     { title: 'x'.repeat(201), body: 'fine' },
     { title: 'ok title', body: 'fine', category: 'rant' },
     // `.strict()` on the schema: an unknown key is a rejected request, not a silently
-    // ignored one — that is what stops a future column being mass-assignable.
+    // ignored one. That is what stops a future column being mass-assignable.
     { title: 'ok title', body: 'fine', status: 'resolved' },
   ]) {
     expect(

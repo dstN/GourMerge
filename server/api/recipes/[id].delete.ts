@@ -1,5 +1,7 @@
 /**
- * DELETE /api/recipes/:id — Delete a recipe and all related data
+ * DELETE /api/recipes/:id
+ *
+ * Delete a recipe and all related data
  *
  * Cascade behaviour (via FK constraints):
  *   recipes → recipe_branches → recipe_commits → commit_ingredients, commit_steps
@@ -8,9 +10,9 @@
  *
  * Two FK relations use NO ACTION (= RESTRICT in MySQL) and must be
  * handled explicitly before the main delete:
- *   1. recipes.forked_from_recipe_id  — forks that reference this recipe as their origin
- *   2. gourmerge_requests.source_recipe_id / source_branch_id / target_branch_id
- *      — cross-recipe GMRs that reference branches of this recipe
+ *   1. recipes.forked_from_recipe_id: forks that reference this recipe as their origin
+ *   2. gourmerge_requests.source_recipe_id / source_branch_id / target_branch_id:
+ *      cross-recipe GMRs that reference branches of this recipe
  */
 import { eq, inArray, or } from 'drizzle-orm'
 import {
@@ -69,7 +71,7 @@ export default defineEventHandler(async (event) => {
   // (cross-recipe GMRs where this is the fork / source side)
   await db.delete(gourmergeRequests).where(eq(gourmergeRequests.sourceRecipeId, id))
 
-  // Reports address a comment by its own id, not by the recipe it lives on — gathered
+  // Reports address a comment by its own id, not by the recipe it lives on. They are gathered
   // before the delete below removes them (via CASCADE through recipe_discussions), since
   // there is nothing left to join against afterwards.
   const commentIds = (
@@ -84,7 +86,7 @@ export default defineEventHandler(async (event) => {
   await db.delete(recipes).where(eq(recipes.id, id))
 
   // Deleting the recipe is the moderation response for every report against it, its photo,
-  // and every comment that went with it — best-effort, never blocks the response above.
+  // and every comment that went with it. Best-effort, never blocks the response above.
   await closeReportsForTarget(db, 'recipe', id)
   await closeReportsForTarget(db, 'image', id)
   await Promise.all(commentIds.map((commentId) => closeReportsForTarget(db, 'discussion_comment', commentId)))

@@ -1,5 +1,5 @@
 /**
- * Mint an email-verification token and mail it — the one place that does so.
+ * Mint an email-verification token and mail it. This is the one place that does so.
  *
  * ## Why this is a shared util and not inline in the handler
  *
@@ -7,13 +7,13 @@
  * did not send anything. That is a worse bug than it sounds: `email_verified_at` is
  * only ever set by `/auth/verify?token=…`, whose token only this code can issue, and
  * no client screen called the resend endpoint. So with
- * `REQUIRE_EMAIL_VERIFICATION=true` (production — see docs/RUNBOOK.md) every account
+ * `REQUIRE_EMAIL_VERIFICATION=true` (production, see docs/RUNBOOK.md) every account
  * was permanently unverified, and `requireVerifiedUser` turned every attempt to
  * publish a public recipe, edit one to public, or open a GourMerge request into a 403
  * with no way out from inside the app.
  *
  * Registration is the natural moment to send it, so the token logic has to be
- * reachable from two places — hence here.
+ * reachable from two places, hence here.
  *
  * Any unused token for the same user is invalidated first, so the newest mail is
  * always the one that works. Otherwise a resend leaves several live tokens and
@@ -54,7 +54,7 @@ export async function issueEmailVerification(recipient: VerificationRecipient): 
     .delete(emailVerificationTokens)
     .where(and(eq(emailVerificationTokens.userId, recipient.id), isNull(emailVerificationTokens.usedAt)))
 
-  // CSPRNG, NOT UUIDv7 — a timestamp prefix would weaken unguessability.
+  // CSPRNG, NOT UUIDv7: a timestamp prefix would weaken unguessability.
   const rawToken = randomBytes(32).toString('hex')
   const tokenHash = createHash('sha256').update(rawToken).digest('hex')
   const expiresAt = new Date(Date.now() + TOKEN_TTL_MS)

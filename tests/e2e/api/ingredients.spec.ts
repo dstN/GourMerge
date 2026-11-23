@@ -6,7 +6,7 @@ import { registerUser, uniqueUser, createRecipe, commitSnapshot } from '../suppo
  * The master-ingredient API, as the new-ingredient dialog uses it.
  *
  * Creating an ingredient used to send a bare name, so the row arrived with no
- * translations, no category and no nutrition — findable only in whichever language it
+ * translations, no category and no nutrition: findable only in whichever language it
  * happened to be typed in, and silently dragging every recipe's nutrition totals toward
  * zero. These specs pin the three things that fix depends on.
  */
@@ -37,7 +37,7 @@ test('creating an ingredient stores translations, category and nutrition', async
   expect(body.created).toBe(true)
   expect(body.hasNutrition).toBe(true)
 
-  // Findable by its ENGLISH name although the canonical name is German — the entire
+  // Findable by its ENGLISH name although the canonical name is German. This is the
   // reason for collecting translations at creation time rather than never.
   const found = await (await request.get(`/api/ingredients?q=${encodeURIComponent(enName)}&locale=en`)).json()
   expect(found.length).toBeGreaterThan(0)
@@ -99,7 +99,7 @@ test('sugars, salt and grams-per-piece round-trip, decimal comma included', asyn
     await request.post('/api/ingredients', {
       data: {
         name: `Spec Zucker Salz ${Date.now()}`,
-        // `8,5` / `1,2` on purpose — same decimal-comma reasoning as the other macro fields.
+        // `8,5` / `1,2` on purpose, with the same decimal-comma reasoning as the other macro fields.
         nutrition: { energyKcal100g: '250', carbs100g: '20', sugars100g: '8,5', salt100g: '1,2', gramsPerPiece: '60' },
       },
     })
@@ -191,7 +191,7 @@ test('creating an ingredient requires a session', async ({ request }) => {
 
 /**
  * Editing: only the creator, never the Swiss BLV rows. `created_by` is the one signal for
- * this — `ingredient_nutrition.source` almost works but a user ingredient with no nutrition
+ * this. `ingredient_nutrition.source` almost works, but a user ingredient with no nutrition
  * supplied has no nutrition row to check at all.
  */
 test.describe('editing', () => {
@@ -234,7 +234,7 @@ test.describe('editing', () => {
     expect(after.energyKcal100g).toBeNull()
   })
 
-  test('a stranger cannot edit someone else’s ingredient — 404, not 403', async ({ request }) => {
+  test('a stranger cannot edit someone else’s ingredient: 404, not 403', async ({ request }) => {
     await registerUser(request, uniqueUser('ingowner'))
     const created = await (
       await request.post('/api/ingredients', { data: { name: `Spec Owned ${Date.now()}` } })
@@ -251,7 +251,7 @@ test.describe('editing', () => {
 
   test('a Swiss BLV ingredient (no creator) cannot be edited by anyone', async ({ request }) => {
     await registerUser(request)
-    // A real seeded row has `created_by IS NULL` — inserted directly rather than found via
+    // A real seeded row has `created_by IS NULL`. It is inserted directly rather than found via
     // the autocomplete, because the E2E job's `db:seed:tour` does not load the full Swiss
     // BLV catalog (that's `npm run seed:swiss`, a local/CI-migrate-only step), so a fixed
     // name like "Karotte" is not guaranteed to exist here the way it does in local dev.
@@ -274,10 +274,10 @@ test.describe('editing', () => {
 })
 
 /**
- * Deleting: the typo-correction escape hatch — create, mistype, delete before anyone else
+ * Deleting: the typo-correction escape hatch: create, mistype, delete before anyone else
  * ever sees it. Same ownership rule as editing, plus the one deleting doesn't share: a
- * commit's ingredient reference has no `onDelete` clause (schema.ts), so once ANY commit —
- * even a superseded one — has snapshotted the ingredient, MySQL's own FK RESTRICT blocks the
+ * commit's ingredient reference has no `onDelete` clause (schema.ts), so once ANY commit
+ * (even a superseded one) has snapshotted the ingredient, MySQL's own FK RESTRICT blocks the
  * delete outright. That is turned into a clean 409 rather than surfacing as a raw 500.
  */
 test.describe('deleting', () => {
@@ -313,7 +313,7 @@ test.describe('deleting', () => {
     expect((await request.get(`/api/ingredients/${used.id}`)).status()).toBe(200)
   })
 
-  test('a stranger cannot delete someone else’s ingredient — 404, not 403', async ({ request }) => {
+  test('a stranger cannot delete someone else’s ingredient: 404, not 403', async ({ request }) => {
     await registerUser(request, uniqueUser('ingowner'))
     const created = await (
       await request.post('/api/ingredients', { data: { name: `Spec Owned Delete ${Date.now()}` } })

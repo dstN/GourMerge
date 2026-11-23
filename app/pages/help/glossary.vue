@@ -6,7 +6,7 @@ useSeoMeta({
   description: () => t('glossary.seoDescription'),
 })
 
-/** Icon per glossary term — a lookup, rather than the eight-deep nested ternary
+/** Icon per glossary term: a lookup, rather than the eight-deep nested ternary
  *  that used to sit in the template. */
 const TERM_ICONS = {
   recipe: 'i-lucide-book-open',

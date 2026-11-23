@@ -13,7 +13,7 @@ describe('buildShoppingList', () => {
 
   test('renders a title, a subtitle and a dash-prefixed list', () => {
     // `- ` because Apple Notes, Google Keep and most editors turn it into a checklist on
-    // paste — the reason the list is worth sending anywhere at all.
+    // paste, which is the reason the list is worth sending anywhere at all.
     expect(buildShoppingList(base)).toBe(
       [
         'Garlic Butter Chicken',

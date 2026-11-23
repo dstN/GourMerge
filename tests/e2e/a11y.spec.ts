@@ -11,7 +11,7 @@ import { registerUser, uniqueUser, createRecipe, createIngredient, commitSnapsho
  * be logged and shrugged off were all real, and all fixed centrally in `main.css`:
  * brand-orange contrast (light-mode palette darkening), `text-dimmed` measuring
  * 3.74:1 on dark card surfaces, and `.link` being distinguishable by colour alone
- * inside a paragraph. Keep this list at zero — a "serious" that stays logged is a
+ * inside a paragraph. Keep this list at zero: a "serious" that stays logged is a
  * defect that ships.
  */
 const PUBLIC_PAGES = [
@@ -54,7 +54,7 @@ test('a11y (dark): landing + explore', async ({ page }) => {
 /**
  * The recipe page, in both schemes, with a discussion thread on it.
  *
- * The static list above covers marketing, auth and legal pages — none of which carry
+ * The static list above covers marketing, auth and legal pages, none of which carry
  * user-generated content. The recipe page is the one visitors actually read, and it is
  * where the newest surfaces live: the serving-suggestion `<figure>`, the QR avatars in the
  * discussion list, and the thread markup itself. It needs data, which is why it is a

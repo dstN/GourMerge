@@ -85,14 +85,14 @@ for (const code of LOCALES) {
 // ── 3. Unescaped `@` (vue-i18n linked messages) ──────────────────────────────
 /**
  * `@` opens a *linked message* in vue-i18n's message syntax (`@:other.key`,
- * `@.lower:other.key`). A bare `@` — the natural way to write an email placeholder —
+ * `@.lower:other.key`). A bare `@`, the natural way to write an email placeholder,
  * makes the compiler throw `INVALID_LINKED_FORMAT`, and because production builds
  * strip the message table, it surfaces as a **500 whose entire body is the string
  * "10"**. Nothing in that points at a translation file.
  *
  * It cost a debugging session exactly once: `du@beispiel.de` in a new placeholder
  * took `/auth/login` down while every other page stayed up. The existing
- * `auth.emailPlaceholder` had it right all along (`deine{'@'}email.de`) — the
+ * `auth.emailPlaceholder` had it right all along (`deine{'@'}email.de`); the
  * convention was simply invisible until it broke.
  *
  * The escape is `{'@'}`. This check is a parser, not a regex on the raw string:
@@ -109,7 +109,7 @@ for (const code of LOCALES) {
     // A genuine linked message (`@:key` / `@.modifier:key`) is legitimate syntax.
     const bare = withoutEscaped.replace(/@(?:\.[a-z]+)?:[\w.]+/g, '')
     if (bare.includes('@')) {
-      console.error(`[i18n] UNESCAPED @ in ${code.toUpperCase()}: ${key} — write it as {'@'} (value: ${value})`)
+      console.error(`[i18n] UNESCAPED @ in ${code.toUpperCase()}: ${key}: write it as {'@'} (value: ${value})`)
       errors++
     }
   }
@@ -119,9 +119,9 @@ for (const code of LOCALES) {
 const counts = LOCALES.map((c) => `${Object.keys(flatLocales[c]).length} ${c.toUpperCase()}`).join(', ')
 
 if (errors === 0) {
-  console.log(`[i18n] ✓ OK — ${counts} — all in parity, no empty values.`)
+  console.log(`[i18n] ✓ OK (${counts}): all in parity, no empty values.`)
   process.exit(0)
 } else {
-  console.error(`\n[i18n] ✗ FAILED — ${errors} issue(s) found. Fix before merging.`)
+  console.error(`\n[i18n] ✗ FAILED: ${errors} issue(s) found. Fix before merging.`)
   process.exit(1)
 }

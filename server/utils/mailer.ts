@@ -31,8 +31,8 @@ function getTransporter(): Transporter {
  *
  * Matters because `getTransporter()` deliberately falls back to a `streamTransport`
  * when the credentials are missing, so `sendMail()` *succeeds* with nothing actually
- * delivered. That is the right trade for local dev — verification and reset mails
- * should not break a dev server — but it is dangerous for any job whose correctness
+ * delivered. That is the right trade for local dev (verification and reset mails
+ * should not break a dev server), but it is dangerous for any job whose correctness
  * depends on delivery.
  *
  * The inactivity sweep is exactly such a job: it records "notice sent" and deletes
@@ -58,7 +58,7 @@ export async function sendMail(opts: MailOptions): Promise<void> {
   try {
     const info = await transporter.sendMail({ from, ...opts })
     if (process.env.NODE_ENV !== 'production') {
-      logger.info('email (dev mode — not sent)', { to: opts.to, subject: opts.subject })
+      logger.info('email (dev mode, not sent)', { to: opts.to, subject: opts.subject })
     } else {
       logger.info('email sent', { to: opts.to, subject: opts.subject, messageId: info.messageId })
     }

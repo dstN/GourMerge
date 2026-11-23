@@ -27,7 +27,7 @@ function loadEnv() {
       if (m && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/^["']|["']$/g, '')
     }
   } catch {
-    /* no .env file — rely on environment */
+    /* no .env file, rely on environment */
   }
 }
 loadEnv()
@@ -43,7 +43,7 @@ if (!DATABASE_URL) {
 //
 // The Swiss BLV Food Composition Database (import-swiss-foods.mjs)
 // is the authoritative source for all ingredients + nutrition data.
-// This list is intentionally empty — use the Swiss import instead.
+// This list is intentionally empty; use the Swiss import instead.
 //
 // To add an ingredient that has no Swiss BLV entry, add it here
 // with { name, de, category }. It will be seeded without nutrition
@@ -89,7 +89,7 @@ try {
   if (!isDryRun) {
     console.log(`✓ Seeded ${inserted} ingredients, skipped ${skipped} existing`)
   } else {
-    console.log(`DRY-RUN complete — ${INGREDIENTS.length} ingredients would be processed`)
+    console.log(`DRY-RUN complete: ${INGREDIENTS.length} ingredients would be processed`)
   }
 } finally {
   await conn.end()

@@ -1,8 +1,10 @@
 /**
- * POST /api/recipes/:id/commits — Create a new commit (save recipe state)
+ * POST /api/recipes/:id/commits
+ *
+ * Create a new commit (save recipe state)
  *
  * Receives the full ingredient list + steps and stores them as a new snapshot.
- * This is the core "save" action — each save is a commit in the recipe's history.
+ * This is the core "save" action: each save is a commit in the recipe's history.
  */
 import { z } from 'zod'
 import { eq, and } from 'drizzle-orm'

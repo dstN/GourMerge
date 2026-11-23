@@ -1,5 +1,7 @@
 /**
- * GET /api/recipes/:id/forks — List recipes forked from this one
+ * GET /api/recipes/:id/forks
+ *
+ * List recipes forked from this one
  *
  * Returns public forks to everyone; a viewer additionally sees their own
  * private forks. Card-shaped rows for RecipeCard.

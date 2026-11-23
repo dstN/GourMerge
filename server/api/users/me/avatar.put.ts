@@ -1,22 +1,24 @@
 /**
- * PUT /api/users/me/avatar — set (or replace) the caller's profile picture.
+ * PUT /api/users/me/avatar
  *
- * Self only — there is no `:username` in the path on purpose, so this can never become an
+ * Set (or replace) the caller's profile picture.
+ *
+ * Self only: there is no `:username` in the path on purpose, so this can never become an
  * "upload a photo for any account" endpoint by a routing mistake. One row per user, enforced
  * by the UNIQUE index on `user_avatars.user_id` and by upserting rather than inserting.
  *
  * ## The crop happens before this endpoint ever sees the bytes
  *
- * `AvatarCropper.vue` always exports a square canvas — that is what "crop" means here, and
+ * `AvatarCropper.vue` always exports a square canvas (that is what "crop" means here), and
  * it is done client-side for the same reason `imageResize.ts` downscales client-side (see
  * that file): no image decoder on a Passenger worker. This handler still checks squareness
  * on the sniffed dimensions rather than trusting it, because a direct API caller skips the
  * cropper entirely and the stored invariant ("`edge` is one number, width equals height")
  * has to hold regardless of who is calling.
  *
- * Everything else — the early `Content-Length` guard, the header-sniff instead of trusting
+ * Everything else (the early `Content-Length` guard, the header-sniff instead of trusting
  * the part's own Content-Type, re-encoding for storage and checking the cap on what that
- * re-encode actually produced — mirrors `recipes/[id]/image.put.ts`; see that file for why
+ * re-encode actually produced) mirrors `recipes/[id]/image.put.ts`; see that file for why
  * each of those exists.
  */
 import { createHash } from 'node:crypto'
@@ -25,13 +27,13 @@ import { userAvatars, users } from '~~/server/database/schema'
 
 /**
  * On the wire. The cropper exports a fixed-size square canvas (well under this), so this
- * ceiling only matters for a client that skipped it — a direct API call with an original
+ * ceiling only matters for a client that skipped it, such as a direct API call with an original
  * photo.
  */
 const MAX_UPLOAD_BYTES = 512 * 1024
 
 /**
- * The limit that actually means something — see `MAX_STORED_BYTES` in
+ * The limit that actually means something. See `MAX_STORED_BYTES` in
  * `recipes/[id]/image.put.ts` for why it is the stored size and not the wire size, and why
  * a `MEDIUMBLOB` column makes that the same thing as `Buffer.length`.
  */
@@ -66,17 +68,17 @@ export default defineEventHandler(async (event) => {
   // Sniffed from the bytes; the part's own Content-Type is discarded (see imageProbe.ts).
   const probed = probeImage(filePart.data)
   if (!probed) {
-    throw createError({ statusCode: 415, statusMessage: 'Unsupported image format — use JPEG, PNG or WebP' })
+    throw createError({ statusCode: 415, statusMessage: 'Unsupported image format. Use JPEG, PNG or WebP' })
   }
   if (probed.width !== probed.height) {
-    throw createError({ statusCode: 422, statusMessage: 'Avatar image must be square — crop it first' })
+    throw createError({ statusCode: 422, statusMessage: 'Avatar image must be square. Crop it first' })
   }
   if (probed.width < MIN_EDGE_PX || probed.width > MAX_EDGE_PX) {
     throw createError({ statusCode: 422, statusMessage: 'Image dimensions out of range' })
   }
 
   /**
-   * Re-encoded to WebP, capped at a much smaller edge than a recipe photo — see
+   * Re-encoded to WebP, capped at a much smaller edge than a recipe photo. See
    * `imageEncode.ts` for the fail-open behaviour this shares with that path. The square
    * check above already ran on the *input* dimensions, so even a fail-open (original bytes,
    * untouched) keeps the stored image square; `resize({width, height, fit: 'inside'})` on a
@@ -115,14 +117,14 @@ export default defineEventHandler(async (event) => {
       },
     })
 
-  // `users.avatar_url` keeps its existing meaning — "where to fetch this user's picture" —
+  // `users.avatar_url` keeps its existing meaning ("where to fetch this user's picture"),
   // so every component that already renders it (UserAvatar.vue, API payloads) picks this up
   // untouched. Content-addressed: a later replacement gets a new checksum and therefore a
   // new URL, so caches never need to be told anything changed.
   const avatarUrl = `/api/users/${session.user.username}/avatar-image?v=${checksum}`
   await db.update(users).set({ avatarUrl }).where(eq(users.id, session.user.id))
 
-  // Read on every authenticated request via the session cookie, not the DB row — must be
+  // Read on every authenticated request via the session cookie, not the DB row, so it must be
   // updated here too, or the new picture stays invisible to its own owner until next login.
   await setUserSession(event, { ...session, user: { ...session.user, avatarUrl } })
 

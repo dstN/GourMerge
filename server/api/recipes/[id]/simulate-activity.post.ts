@@ -1,5 +1,7 @@
 /**
- * POST /api/recipes/:id/simulate-activity — Tour Simulation Endpoint
+ * POST /api/recipes/:id/simulate-activity
+ *
+ * Tour Simulation Endpoint
  *
  * Simulates background activity on a user's newly created demo recipe so the tour
  * can demonstrate the History and GourMerge Requests features with actual data.
@@ -8,11 +10,11 @@
  *
  * ## Why "the recipe has exactly one commit" is the gate, not a client-supplied flag
  *
- * There is no server-side notion of "the visitor is currently in the tour" — `useProductTour`
+ * There is no server-side notion of "the visitor is currently in the tour": `useProductTour`
  * is client-only, in-memory state. A flag on the request (`?tour=1`) would just move the
  * decision to whoever sends the request, which is the caller we are trying to bound. The
  * tour only ever calls this in the instant right after `POST /api/recipes` creates the demo
- * recipe, before anything else has touched it — and that instant has one structural
+ * recipe, before anything else has touched it, and that instant has one structural
  * fingerprint that isn't self-reported: exactly the one commit recipe creation itself made.
  * Once a second commit exists, the window this endpoint exists for has closed, on any
  * recipe, tour-created or not, so it refuses rather than fabricating more history on top of

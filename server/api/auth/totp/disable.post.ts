@@ -1,10 +1,12 @@
 /**
- * POST /api/auth/totp/disable — turn 2FA off.
+ * POST /api/auth/totp/disable
+ *
+ * Turn 2FA off.
  *
  * Requires the **password**, not a TOTP code. Two reasons: someone who has grabbed
  * an unlocked session should not be able to strip the second factor, and a user
- * whose phone is lost or broken must still be able to disable it (which a
- * code-gated endpoint would prevent — they would have to burn a recovery code just
+ * whose phone is lost or broken must still be able to disable it (a
+ * code-gated endpoint would prevent that: they would have to burn a recovery code just
  * to switch the feature off).
  *
  * Deleting the enrolment also deletes the recovery codes, so a previously printed

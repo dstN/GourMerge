@@ -1,5 +1,5 @@
 #!/bin/sh
-# GourMerge — nightly database dump, run ON the Netcup host.
+# GourMerge nightly database dump, run ON the Netcup host.
 #
 # Plesk's Backup Manager cannot be scheduled on this plan (it demands remote storage and
 # only offers FTP), but `mysqldump` exists on the host, so a Plesk **"Run a command"**
@@ -33,7 +33,7 @@
 #
 #        command -v mysqldump gzip find date
 #
-#      If `gzip` is missing, set NO_GZIP=1 below — dumps stay uncompressed but valid.
+#      If `gzip` is missing, set NO_GZIP=1 below; dumps stay uncompressed but valid.
 #      If `find` is missing, rotation is skipped with a warning rather than failing.
 #
 # ── Two things that would make this dangerous, both handled ───────────────────
@@ -42,9 +42,9 @@
 #     OUTSIDE the document root (httpdocs) and outside .output/public, so neither nginx
 #     nor Nitro will serve it. After the first run, confirm:
 #         curl -sI https://gourmerge.de/backups/   → expect 404, never a listing
-#   • A backup that exists and is empty is worse than none, because it is trusted. A
+#   • A backup that exists but is empty still gets trusted. A
 #     wrong password or an empty database both yield a valid file of almost nothing, so
-#     the dump is verified BEFORE compression — both its size and the presence of real
+#     the dump is verified BEFORE compression: both its size and the presence of real
 #     INSERT statements. Checking the gzip would be meaningless: repetitive SQL
 #     compresses so well that a perfectly good dump can land under any byte threshold.
 #
@@ -57,7 +57,7 @@
 # That cross-vendor pairing is fine *because this dump is data only*. A schema dump
 # would be the dangerous case: MySQL 8.4 emits collations like utf8mb4_0900_ai_ci that
 # MariaDB's client does not know, and the result would not reload cleanly. With
-# `--no-create-info` there are no DDL statements to mistranslate — only INSERTs.
+# `--no-create-info` there are no DDL statements to mistranslate, only INSERTs.
 #
 # It does mean option support cannot be assumed. `--set-gtid-purged` is MySQL-only, so
 # it is probed rather than passed blindly; everything else used here exists in both.
@@ -84,10 +84,10 @@ die() {
   exit 1
 }
 
-[ -f "$CNF" ] || die "missing $CNF — see the install notes at the top of this script"
+[ -f "$CNF" ] || die "missing $CNF; see the install notes at the top of this script"
 # An `if`, not `[ … ] && die`: under `set -e` a failing test as the last command of a
 # top-level AND-list aborts the script, so the configured case would exit 1 and never take
-# a backup. Same trap as the GTID probe below — worth stating twice.
+# a backup. Same trap as the GTID probe below.
 if [ "$DB" = "CHANGE_ME" ]; then
   die "set DB= near the top of this script to your database name"
 fi
@@ -106,14 +106,14 @@ STAMP=$(date +%Y-%m-%d-%H%M)
 # including it makes the load fail on a duplicate key. rate_limit_hits and
 # webauthn_challenges hold state that is meaningless minutes later.
 # MySQL-only. Passing it to MariaDB's mysqldump is a hard "unknown option" failure, so
-# it is added only when the binary actually advertises it — which also means this keeps
+# it is added only when the binary actually advertises it, which also means this keeps
 # working if the host ever ships a real MySQL client.
 GTID_OPT=""
 if mysqldump --help 2>/dev/null | grep -q -- '--set-gtid-purged'; then
   GTID_OPT="--set-gtid-purged=OFF"
   log "mysqldump supports --set-gtid-purged (MySQL client)"
 else
-  log "mysqldump has no --set-gtid-purged (MariaDB client) — omitting it"
+  log "mysqldump has no --set-gtid-purged (MariaDB client), omitting it"
 fi
 
 # `--defaults-file` must be mysqldump's FIRST argument, so the optional flag is appended
@@ -142,7 +142,7 @@ set -- "$@" \
   "$DB"
 
 # Dump uncompressed first. Piping straight into gzip would mean verifying the compressed
-# file, and there is no honest threshold for that — SQL compresses 20:1 or better, so a
+# file, and there is no honest threshold for that: SQL compresses 20:1 or better, so a
 # good dump and an empty one are both "small". It also avoids needing pipefail, which
 # POSIX sh does not have: a mysqldump failure piped into a successful gzip would otherwise
 # look like success.
@@ -155,14 +155,14 @@ mysqldump "$@" >"$TMP" || {
 SIZE=$(wc -c <"$TMP" | tr -d ' ')
 if [ "$SIZE" -lt "$MIN_BYTES" ]; then
   rm -f "$TMP"
-  die "dump is only $SIZE bytes — refusing to keep an empty backup"
+  die "dump is only $SIZE bytes; refusing to keep an empty backup"
 fi
 
 # Size alone would still accept a file of nothing but comments and SET statements, which
 # is exactly what a dump of an empty (or wrong) database looks like.
 if ! grep -q 'INSERT INTO' "$TMP"; then
   rm -f "$TMP"
-  die "dump contains no INSERT statements — wrong database, or no data"
+  die "dump contains no INSERT statements (wrong database, or no data)"
 fi
 
 if [ "${NO_GZIP:-0}" = "1" ] || ! command -v gzip >/dev/null 2>&1; then
@@ -186,7 +186,7 @@ if command -v find >/dev/null 2>&1; then
   find "$OUT_DIR" -name 'gourmerge-*.sql*' -type f -mtime "+$KEEP_DAYS" -delete 2>/dev/null || true
   log "rotated: kept the last $KEEP_DAYS days"
 else
-  log "WARNING: find not available — old dumps are NOT being rotated, prune by hand"
+  log "WARNING: find not available; old dumps are NOT being rotated, prune by hand"
 fi
 
 # A backup on the same webspace dies with the webspace. Pull a copy off-host regularly

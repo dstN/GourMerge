@@ -6,17 +6,17 @@ name: E2E
 # It also runs on any PR that changes the dependency manifest, and that exception was paid for.
 # A Dependabot PR bumping @simplewebauthn from 11 to 13 arrived green: CI does lint, typecheck,
 # unit tests and build, none of which touch a passkey. The only coverage of enrol-then-sign-in
-# is here, and it never gated the PR — so the way to find out whether passkeys still worked was
+# is here, and it never gated the PR, so the way to find out whether passkeys still worked was
 # to build the artifact and run this suite by hand. That is not a thing to do per bump.
 #
 # `paths` and not every PR: this suite takes ~4 minutes, and a PR that only moves CSS around
 # cannot break a dependency. No secrets are needed either (the job's env holds literals for the
 # throwaway MySQL service), which matters because Dependabot PRs run without repository
-# secrets — a job that needed them would fail for reasons unrelated to the bump.
+# secrets; a job that needed them would fail for reasons unrelated to the bump.
 #
 # On the Deploy side this is harmless: `deploy.yml` looks up E2E runs by head SHA, and a PR head
 # SHA is not master's. If a PR is ever merged as a fast-forward the two coincide, and the gate
-# then finds two runs for one SHA and takes the newest — both ran the same code, so either
+# then finds two runs for one SHA and takes the newest. Both ran the same code, so either
 # answer is correct.
 on:
   push:
@@ -39,7 +39,7 @@ jobs:
     runs-on: ubuntu-latest
 
     services:
-      # MySQL 8.4 to match production — see the note in ci.yml.
+      # MySQL 8.4 to match production (see the note in ci.yml).
       mysql:
         image: mysql:8.4
         env:
@@ -79,13 +79,13 @@ jobs:
 
       - name: Seed the onboarding tour's system recipe
         # tour.spec.ts's fork-step test forks off the hidden `system` account's recipe
-        # (`GET /api/recipes/tour-recipe`) — without it the fork tour has nothing to resolve
+        # (`GET /api/recipes/tour-recipe`). Without it the fork tour has nothing to resolve
         # to and the anchor never appears. Self-contained (creates its own ingredients if
         # the Swiss-BLV catalog isn't seeded), so this is the only seed step this job needs.
         run: npm run db:seed:tour
 
       # The ingredients the tour seed just inserted by hand have no search terms yet, and
-      # the autocomplete reads nothing else — same sweep the deploy runs after its seeds.
+      # the autocomplete reads nothing else. This is the same sweep the deploy runs after its seeds.
       - name: Build the ingredient search terms
         run: npm run search:rebuild
 
@@ -100,7 +100,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           # NOT `playwright-report/`. That directory is the HTML reporter's output, and CI
-          # uses the `github` reporter (see playwright.config.ts) — it annotates the Actions
+          # uses the `github` reporter (see playwright.config.ts), which annotates the Actions
           # log directly and never writes an HTML report, so this step ran on every failure
           # so far and silently uploaded nothing. Screenshots (`screenshot: only-on-failure`)
           # and traces (`trace: on-first-retry`) both land in `test-results/`, which is

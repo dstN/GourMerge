@@ -144,7 +144,7 @@ async function submitComment() {
   }
 }
 
-/** Shared map (app/utils/ui.ts) — this used to be a second, local copy of the
+/** Shared map (app/utils/ui.ts). This used to be a second, local copy of the
  *  same object, which is how the list page and this page drift apart. */
 const statusColor = computed(() => GMR_STATUS_COLOR[gmr.value?.status ?? 'open'] ?? 'neutral')
 
@@ -194,7 +194,7 @@ useSeoMeta({
             @click="executeMerge()"
           />
           <!-- `lg` to match Merge and Close either side of it. DESIGNBOOK §2.3: one height
-               per cluster — at `sm` this rendered 28px against their 36px and read as
+               per cluster; at `sm` this rendered 28px against their 36px and read as
                misaligned rather than as a quieter affordance. -->
           <CommonHelpHint v-if="gmr.canMerge" i18n-key="glossary.merge.helpHint" size="lg" />
           <UButton

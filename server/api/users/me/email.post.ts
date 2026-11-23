@@ -1,17 +1,19 @@
 /**
- * POST /api/users/me/email — request an email address change
+ * POST /api/users/me/email
+ *
+ * Request an email address change
  *
  * Does NOT change `users.email`. It mints a token, mails a confirmation link to the
  * NEW address, and mails a plain notice (no link) to the OLD one. The switch itself
  * happens in `server/routes/auth/confirm-email-change.get.ts`, only once the new
- * address is confirmed — see that file, and the schema comment on `emailChangeTokens`,
+ * address is confirmed. See that file, and the schema comment on `emailChangeTokens`,
  * for why confirming doubles as verifying.
  *
  * ## Why the current password is required
  *
  * A signed-in session is already enough to reach this endpoint, but a session can be
- * inherited — a shared machine, a stolen cookie, a forgotten tab. Changing the address
- * an account is reachable at is exactly the kind of action a passkey/password change
+ * inherited: a shared machine, a stolen cookie, a forgotten tab. Changing the address
+ * an account is reachable at is the kind of action a passkey/password change
  * flow gates behind re-entering the password, and this is the same class of action:
  * get it wrong and the real owner can be locked out of their own account recovery.
  */
@@ -60,7 +62,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 409, statusMessage: 'That is already your email address.' })
   }
 
-  // Same address, different account — checked explicitly (rather than left to the unique
+  // Same address, different account: checked explicitly (rather than left to the unique
   // constraint on `users.email`) so this answers 409 instead of a raw SQL error, and so it
   // never collides with the CURRENT user's own row.
   const [existing] = await db
@@ -70,7 +72,7 @@ export default defineEventHandler(async (event) => {
     .limit(1)
   if (existing) throw createError({ statusCode: 409, statusMessage: 'That email address is already in use.' })
 
-  // Invalidate any pending change for this account — same reasoning as the verification
+  // Invalidate any pending change for this account. Same reasoning as the verification
   // and reset-password flows: the newest request is the one that should work, and an old
   // token left alive is one more way to end up confirming an address nobody asked for.
   await db
@@ -79,7 +81,7 @@ export default defineEventHandler(async (event) => {
 
   const rawToken = randomBytes(32).toString('hex')
   const tokenHash = createHash('sha256').update(rawToken).digest('hex')
-  const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 2) // 2h — matches password reset
+  const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 2) // 2h, matches password reset
 
   await db.insert(emailChangeTokens).values({ userId: dbUser.id, newEmail, tokenHash, expiresAt })
 
@@ -91,7 +93,7 @@ export default defineEventHandler(async (event) => {
 
   // Best-effort: the change is already correctly pending even if this second mail fails to
   // send, and a delivery problem on the notice must not be reported back as a request that
-  // failed outright — the confirmation mail above is the one that actually matters.
+  // failed outright. The confirmation mail above is the one that actually matters.
   try {
     const noticeMail = buildEmailChangeNoticeEmail(dbUser.preferredLocale, newEmail)
     await sendMail({ to: dbUser.email, ...noticeMail })

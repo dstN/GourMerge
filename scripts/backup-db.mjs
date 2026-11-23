@@ -1,21 +1,21 @@
 /**
- * npm run db:backup — take a compressed, verified dump of a GourMerge database.
+ * npm run db:backup: take a compressed, verified dump of a GourMerge database.
  *
  * ## Why this exists
  *
  * Plesk's Backup Manager on this plan **refuses to schedule anything** without remote
  * storage ("Only the remote storages are allowed for backups"), and the only remote type
- * it offers is FTP — which needs a second webspace we do not have. So the panel cannot
+ * it offers is FTP, which needs a second webspace we do not have. So the panel cannot
  * produce an automated backup at all until storage is added.
  *
- * The obvious workaround — dump from a GitHub Actions runner, which already reaches the
- * production MySQL for migrations — is **ruled out by our own privacy policy**, which
+ * Dumping from a GitHub Actions runner, which already reaches the
+ * production MySQL for migrations, is **ruled out by our own privacy policy**, which
  * states that data goes to no third party except Sentry and "die Daten verbleiben in der
  * EU". A full dump is every user's personal data; shipping it to GitHub would make
  * Microsoft a processor and a US transfer, and would need the policy rewritten first.
  *
  * So the dump is pulled to a machine we control, over the same external MySQL access the
- * runner uses. Free, off-host, and no new processor.
+ * runner uses. That costs nothing, keeps the copy off the host and adds no processor.
  *
  * ## What it does NOT contain, on purpose
  *
@@ -30,8 +30,8 @@
  *   npm run db:backup -- --keep 30         # retain 30 files instead of 14
  *
  * Output: `backups/gourmerge-<host>-<db>-YYYY-MM-DD-HHmm.sql.gz` (git-ignored).
- * The filename carries the host and database because a backup you cannot identify is a
- * backup you will not trust when it matters.
+ * The filename carries the host and database so that a file can be identified at restore
+ * time.
  */
 import { spawn } from 'node:child_process'
 import { createGzip } from 'node:zlib'
@@ -95,7 +95,7 @@ try {
 
 /**
  * Find mysqldump. Not on PATH in a default Windows MySQL install, and guessing wrong
- * produces a confusing ENOENT — so the candidates are explicit and `MYSQLDUMP` wins.
+ * produces a confusing ENOENT, so the candidates are explicit and `MYSQLDUMP` wins.
  * Prefer 8.4 to match the server: an older client can fail against a newer server.
  */
 function findMysqldump() {
@@ -124,7 +124,7 @@ const args = [
   `--user=${decodeURIComponent(url.username)}`,
   '--single-transaction', // consistent snapshot without locking the live site
   '--quick', // stream rows instead of buffering the whole table
-  '--no-create-info', // data only — migrations own the schema
+  '--no-create-info', // data only; migrations own the schema
   '--complete-insert', // survives a later column reorder
   '--default-character-set=utf8mb4',
   '--no-tablespaces', // shared hosting users lack the PROCESS privilege this needs
@@ -133,8 +133,8 @@ const args = [
 
   /**
    * `__drizzle_migrations` is excluded because the restore procedure runs
-   * `db:migrate` first, which writes it — including it here means loading the dump
-   * fails on a duplicate key, right when you least want a surprise.
+   * `db:migrate` first, which writes it. Including it here would make loading the dump
+   * fail on a duplicate key.
    *
    * The other two hold state that is meaningless minutes later: rate-limiter hits and
    * 5-minute WebAuthn challenges. Restoring them would only re-apply stale throttling.
@@ -157,10 +157,10 @@ try {
     stdio: ['ignore', 'pipe', 'pipe'],
   })
 } catch (err) {
-  // Node throws synchronously for some unspawnable targets — notably EINVAL for a .cmd
+  // Node throws synchronously for some unspawnable targets, notably EINVAL for a .cmd
   // or .bat on Windows without `shell: true`. Without this, an operator who points
   // MYSQLDUMP at a wrapper script gets a raw stack trace instead of the actual problem.
-  console.error(`ERROR: could not run ${BIN} — ${err.code ?? err.message}`)
+  console.error(`ERROR: could not run ${BIN}: ${err.code ?? err.message}`)
   console.error('MYSQLDUMP must point at the mysqldump executable itself, not a .cmd/.bat wrapper.')
   process.exit(1)
 }
@@ -174,7 +174,7 @@ child.stderr.on('data', (c) => {
  * Subscribe to `close` and `error` NOW, before awaiting the pipeline. Attaching the
  * listener afterwards is a race the short path always loses: mysqldump can exit before
  * the gzip stream finishes, the event fires with nobody listening, and the await never
- * settles — Node then exits silently with "unsettled top-level await" and no backup.
+ * settles. Node then exits silently with "unsettled top-level await" and no backup.
  */
 const exited = new Promise((res) => {
   child.on('error', (err) => res(err.code === 'ENOENT' ? 'ENOENT' : 1))
@@ -185,7 +185,7 @@ const exited = new Promise((res) => {
  * Inspect the stream on its way past, so the dump can be judged on what mysqldump
  * actually produced rather than on how well gzip compressed it. Checking the compressed
  * size is meaningless: SQL compresses 20:1 or better, so a healthy dump and an empty one
- * are both "small" — a 500-row fixture gzipped to 542 bytes while testing, which any
+ * are both "small": a 500-row fixture gzipped to 542 bytes while testing, which any
  * plausible byte floor would have rejected.
  */
 let rawBytes = 0
@@ -208,7 +208,7 @@ const inspect = new Transform({
 try {
   await pipeline(child.stdout, inspect, createGzip({ level: 9 }), createWriteStream(outFile))
 } catch (err) {
-  console.error(`ERROR: writing the dump failed — ${err.message}`)
+  console.error(`ERROR: writing the dump failed: ${err.message}`)
   process.exit(1)
 }
 
@@ -239,15 +239,15 @@ if (noise) console.warn(noise)
  * comments and SET statements, and nobody notices until a restore is needed.
  *
  * Both checks are on the pre-compression stream: a byte floor, and the presence of real
- * INSERT statements — which is the check that actually means "there is data in here".
+ * INSERT statements, which is the check that actually means "there is data in here".
  */
 if (rawBytes < 4096) {
-  console.error(`ERROR: the dump is only ${rawBytes} bytes — refusing to keep an empty backup.`)
+  console.error(`ERROR: the dump is only ${rawBytes} bytes; refusing to keep an empty backup.`)
   unlinkSync(outFile)
   process.exit(1)
 }
 if (!sawInsert) {
-  console.error('ERROR: the dump contains no INSERT statements — wrong database, or no data.')
+  console.error('ERROR: the dump contains no INSERT statements (wrong database, or no data).')
   unlinkSync(outFile)
   process.exit(1)
 }

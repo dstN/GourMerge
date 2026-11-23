@@ -1,5 +1,5 @@
 /**
- * Rebuild `ingredient_search_terms` from `ingredients` — the whole table, every row.
+ * Rebuild `ingredient_search_terms` from `ingredients`: the whole table, every row.
  *
  * The autocomplete (`GET /api/ingredients`) matches on this table, not on the JSON name
  * columns. The importers maintain it for the rows they write and the create/edit API
@@ -10,7 +10,7 @@
  *
  * Idempotent and complete: replaces the terms of every ingredient, including the ones
  * users created. ~6 rows per ingredient, so a few thousand ingredients are a dozen batched
- * statements inside one transaction — seconds, not minutes, even against the remote
+ * statements inside one transaction, which takes seconds even against the remote
  * production host.
  *
  * Usage:

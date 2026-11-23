@@ -1,5 +1,7 @@
 /**
- * POST /api/recipes/:id/branches — Create a new branch
+ * POST /api/recipes/:id/branches
+ *
+ * Create a new branch
  *
  * Creates a branch from a source branch's head commit.
  * This is the equivalent of `git checkout -b <name>`.
@@ -9,7 +11,7 @@ import { eq, and } from 'drizzle-orm'
 import { recipes, recipeBranches } from '~~/server/database/schema'
 
 const createBranchSchema = z.object({
-  // Spaces are a common, reasonable way to type a branch name — auto-convert them to hyphens
+  // Spaces are a common, reasonable way to type a branch name, so they are auto-converted to hyphens
   // instead of rejecting the request, so the UI doesn't have to bounce the user with an error.
   name: z.preprocess(
     (val) => (typeof val === 'string' ? val.trim().replace(/\s+/g, '-') : val),

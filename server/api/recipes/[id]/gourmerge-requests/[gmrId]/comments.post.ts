@@ -1,5 +1,7 @@
 /**
- * POST /api/recipes/:id/gourmerge-requests/:gmrId/comments — Add a comment
+ * POST /api/recipes/:id/gourmerge-requests/:gmrId/comments
+ *
+ * Add a comment
  */
 import { z } from 'zod'
 import { eq, and } from 'drizzle-orm'

@@ -1,17 +1,19 @@
 /**
- * DELETE /api/users/me/avatar — remove the caller's uploaded profile picture.
+ * DELETE /api/users/me/avatar
+ *
+ * Remove the caller's uploaded profile picture.
  *
  * Falls back to the generated identicon-QR badge, same as an account that never uploaded
- * one — see `server/utils/identiconAvatar.ts`.
+ * one (see `server/utils/identiconAvatar.ts`).
  *
  * ## `replaceUserSession`, not `setUserSession`
  *
  * `setUserSession` merges the given object onto the existing session with `defu`, and
- * `defu` skips any key whose new value is `null` — it exists to let a partial update omit
+ * `defu` skips any key whose new value is `null`. It exists to let a partial update omit
  * fields it does not touch, not to describe "clear this". Clearing `avatarUrl` needs the
  * literal replacement `replaceUserSession` does, or the cookie keeps the old value: the row
- * is gone and the profile page reads null from the DB, but the header's own avatar — read
- * from the session, not re-fetched — would keep showing the deleted photo until next login.
+ * is gone and the profile page reads null from the DB, but the header's own avatar (read
+ * from the session, not re-fetched) would keep showing the deleted photo until next login.
  */
 import { eq } from 'drizzle-orm'
 import { userAvatars, users } from '~~/server/database/schema'

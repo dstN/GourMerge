@@ -1,14 +1,16 @@
 /**
- * GET /api/recipes/explore — Browse public recipes
+ * GET /api/recipes/explore
+ *
+ * Browse public recipes
  *
  * Query params:
- *   q           — full-text search on title + description
- *   difficulty  — 'easy' | 'medium' | 'hard'
- *   dietaryType — 'vegan' | 'vegetarian' | 'pescatarian' | 'omnivore'
- *   tag         — tag name (case-insensitive)
- *   sort        — 'stars' (default) | 'newest' | 'forks'
- *   page        — 1-based page number (default 1)
- *   limit       — page size (default 20, max 50)
+ *   q           full-text search on title + description
+ *   difficulty  'easy' | 'medium' | 'hard'
+ *   dietaryType 'vegan' | 'vegetarian' | 'pescatarian' | 'omnivore'
+ *   tag         tag name (case-insensitive)
+ *   sort        'stars' (default) | 'newest' | 'forks'
+ *   page        1-based page number (default 1)
+ *   limit       page size (default 20, max 50)
  */
 import { eq, and, desc, like, or, inArray, sql } from 'drizzle-orm'
 import { recipes, users, recipeTags, tags } from '~~/server/database/schema'
@@ -76,8 +78,8 @@ export default defineEventHandler(async (event) => {
 
   // Tag filter: join recipe_tags + tags
   if (tagFilter) {
-    // No wildcards are meant to be in play here — `like()` only for case-insensitive
-    // matching via collation — so an unescaped `%`/`_` in the tag name would turn an
+    // No wildcards are meant to be in play here (`like()` only for case-insensitive
+    // matching via collation), so an unescaped `%`/`_` in the tag name would turn an
     // exact-ish lookup into "any tag" or "any 5-character tag".
     const [tag] = await db
       .select({ id: tags.id })

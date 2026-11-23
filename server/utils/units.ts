@@ -1,4 +1,4 @@
-// Only g/ml are ever stored for mass/volume — conversion to display units (incl. imperial)
+// Only g/ml are ever stored for mass/volume; conversion to display units (incl. imperial)
 // happens here, never at write time.
 
 import type { CanonicalUnit, DisplayUnit, MeasurementSystem } from '~~/shared/types'

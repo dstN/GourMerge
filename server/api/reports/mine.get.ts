@@ -1,9 +1,11 @@
 /**
- * GET /api/reports/mine — Reports about content the caller is responsible for.
+ * GET /api/reports/mine
+ *
+ * Reports about content the caller is responsible for.
  *
  * "Responsible for" per `resolveReportTarget`'s docblock: the recipe owner, a discussion
  * comment's author or the recipe owner it lives on, the ingredient's creator. Never reports
- * where the caller themselves is the *reported* target (`target_kind = 'user'`) — those are
+ * where the caller themselves is the *reported* target (`target_kind = 'user'`). Those are
  * admin-only, deliberately, so this is not a way to find out who reported you.
  *
  * One small query per reportable kind rather than a generic per-row resolve: at the volume
@@ -133,7 +135,7 @@ export default defineEventHandler(async (event) => {
       status: r.status,
       createdAt: r.createdAt,
       // Not a `#discussion` hash: the recipe page's own jump-to-discussion is a JS
-      // `scrollIntoView` handler, not a real route fragment — see `recipe/index.vue`'s
+      // `scrollIntoView` handler, not a real route fragment; see `recipe/index.vue`'s
       // `scrollToDiscussion()` and why the earlier `to="#discussion"` link never worked.
       target: { label: r.title, url: `/${r.ownerUsername}/${r.slug}` },
     })),

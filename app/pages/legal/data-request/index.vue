@@ -46,7 +46,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   loading.value = true
   try {
     await $fetch('/api/privacy/request', { method: 'POST', body: event.data })
-    // Always shows the same result — the endpoint deliberately does not reveal
+    // Always shows the same result: the endpoint deliberately does not reveal
     // whether the account exists, and the UI must not undo that.
     sent.value = true
   } finally {

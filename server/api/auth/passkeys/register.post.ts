@@ -1,5 +1,7 @@
 /**
- * POST /api/auth/passkeys/register — enrol a passkey on the signed-in account.
+ * POST /api/auth/passkeys/register
+ *
+ * Enrol a passkey on the signed-in account.
  *
  * Registration requires an existing session. That is the trust anchor: proving you
  * already control the account is what makes the new key legitimately yours. An
@@ -8,8 +10,8 @@
  *
  * Two round-trips, both through this handler (`nuxt-auth-utils` switches on
  * `body.verify`): first it returns creation options, then it verifies the attestation.
- * The challenge is stored in the database between them — see `server/utils/webauthn.ts`
- * for why not the session.
+ * The challenge is stored in the database between them (see `server/utils/webauthn.ts`
+ * for why not the session).
  */
 import { eq } from 'drizzle-orm'
 import { userPasskeys, users } from '~~/server/database/schema'
@@ -19,11 +21,11 @@ export default defineWebAuthnRegisterEventHandler({
   getChallenge: (_event, attemptId) => consumeWebauthnChallenge(attemptId),
 
   /**
-   * Both of these must be stated explicitly, and neither is a nicety.
+   * Both of these must be stated explicitly.
    *
    * `residentKey: 'required'` makes the credential *discoverable*, which is what lets
    * the login page ask for a passkey without first asking who you are. Leaving it out
-   * is not a softer default — `nuxt-auth-utils` passes its own `authenticatorSelection`
+   * does not fall back to a safe default: `nuxt-auth-utils` passes its own `authenticatorSelection`
    * object, which replaces SimpleWebAuthn's default wholesale, so `residentKey` lands
    * on "discouraged" and the key becomes invisible to a usernameless request. Skipping
    * this produced a passkey that enrolled fine and could never be used to sign in.

@@ -1,4 +1,4 @@
-# GourMerge — Ground Truth (August 2026)
+# GourMerge: Ground Truth (August 2026)
 
 > Single document of current project state. Updated as features ship.
 > For future plans see `ROADMAP.md`. For architectural rules see `ARCHITECTURE.md`.
@@ -9,18 +9,18 @@
 
 ## 1. What GourMerge Is
 
-A git-like recipe platform. Recipes are repositories with branches, snapshot commits, diffs, forks, and **GourMerge Requests** (the project's mandatory term — "Pull Request" / PR / `pull_request` are forbidden everywhere).
+A git-like recipe platform. Recipes are repositories with branches, snapshot commits, diffs, forks, and **GourMerge Requests** (the project's mandatory term; "Pull Request" / PR / `pull_request` are forbidden everywhere).
 
 - Slogan: "Fork the recipe, merge the flavor." / DE: "Wo bester Geschmack verschmilzt."
 - Target: German-speaking home cooks who want to collaborate on recipes.
-- Languages: DE (default), EN, FR, IT — all 4 at full parity.
+- Languages: DE (default), EN, FR, IT, all 4 at full parity.
 
 ---
 
-## 2. Tech Stack (fixed — do not substitute)
+## 2. Tech Stack (fixed, do not substitute)
 
 Versions are the ones actually installed as of 2026-08-05, not the range in
-`package.json` — the ranges drifted far behind reality once and cost a debugging
+`package.json`. The ranges drifted far behind reality once and cost a debugging
 round.
 
 | Layer         | Technology                                     | Installed  |
@@ -57,7 +57,7 @@ GourMerge/
 │   │   │                       # PasskeyCard, ChangeEmailCard, GlossaryTerm, HelpHint,
 │   │   │                       # ObfuscatedEmail  (design system)
 │   │   ├── layout/             # MainNav, UserDropdown, MobileMenu, FooterLinks,
-│   │   │                       # VerifyEmailBanner  (no dashboard sidebar — see §12)
+│   │   │                       # VerifyEmailBanner  (no dashboard sidebar, see §12)
 │   │   ├── onboarding/         # ConceptIntro, HelpMenu, TourOverlay, TourStep
 │   │   └── recipe/             # IngredientAutocomplete, IngredientRow, NewIngredientModal,
 │   │                           # EditIngredientModal, StepEditor, RecipeCard,
@@ -85,17 +85,17 @@ GourMerge/
 │                                # likeEscape.ts, ingredientValidation.ts, imageProbe.ts,
 │                                # imageEncode.ts, hardDeleteUser.ts
 ├── shared/types/               # TypeScript types shared app ↔ server
-├── shared/utils/                # ingredientMicros.ts — vitamin/mineral catalog shared by
+├── shared/utils/                # ingredientMicros.ts: vitamin/mineral catalog shared by
 │                                # validation, input forms and NutritionFacts.vue
 ├── i18n/locales/               # de.json, en.json, fr.json, it.json (714 keys, 4-way parity)
 ├── scripts/                    # Maintenance + setup scripts (see §8)
 ├── public/                     # PWA icons, favicon, apple-touch-icon
 ├── docs/RUNBOOK.md             # Production operations playbook
-├── DESIGNBOOK.md               # Design system — the source of truth for the UI
+├── DESIGNBOOK.md               # Design system, the source of truth for the UI
 ├── .claude/                    # AI + team reference docs
 ├── nuxt.config.ts              # Main config (CSP, i18n, PWA, runtime config)
 ├── drizzle.config.ts           # Drizzle Kit config
-├── docker-compose.yml          # LOCAL DEV ONLY — MySQL 8.4
+├── docker-compose.yml          # LOCAL DEV ONLY, MySQL 8.4
 └── app.js                      # Passenger startup shim → .output/server/index.mjs
 ```
 
@@ -105,47 +105,47 @@ GourMerge/
 
 All migrations versioned in `server/database/migrations/`. **Never use `db:push` against production.**
 
-| Table                        | Purpose                                                                                                                               | Key Relations                                                              |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| `users`                      | Auth + profile (`is_admin` gates `/admin/*`)                                                                                          | —                                                                          |
-| `user_avatars`               | Profile picture, `MEDIUMBLOB` (WebP)                                                                                                  | CASCADE on user delete                                                     |
-| `ingredients`                | Global master catalog (Swiss BLV + BLS 4.0 + user-created); `created_by` null for the imports                                         | 1:1 → `ingredient_nutrition`; creator → `users` (SET NULL)                 |
-| `ingredient_nutrition`       | Per-100g nutritional data (Swiss BLV V7.0 or user-supplied) — the _effective_ values; `source` names the dataset they came from       | —                                                                          |
-| `ingredient_sources`         | Which reference datasets know an ingredient: `(dataset, external_id)` unique, `dataset_version` informational (migration `0017`)      | n:1 → `ingredients` (CASCADE)                                              |
-| `ingredient_search_terms`    | Normalised names + synonyms per locale, what `GET /api/ingredients` matches and ranks on (migration `0017`)                           | n:1 → `ingredients` (CASCADE)                                              |
-| `recipes`                    | Repository equivalent                                                                                                                 | owner → `users`; forkedFrom → self                                         |
-| `recipe_tags`                | Recipe ↔ tag M:M                                                                                                                      | CASCADE on recipe delete                                                   |
-| `tags`                       | Tag master list                                                                                                                       | —                                                                          |
-| `recipe_stars`               | Favorites (unique per user+recipe)                                                                                                    | CASCADE on recipe delete                                                   |
-| `recipe_branches`            | Lightweight branch pointer                                                                                                            | CASCADE on recipe delete                                                   |
-| `recipe_commits`             | Full snapshot per commit (not deltas)                                                                                                 | CASCADE on branch delete                                                   |
-| `recipe_commit_ingredients`  | Ingredient snapshot per commit                                                                                                        | CASCADE on commit delete                                                   |
-| `recipe_commit_steps`        | Step (Markdown) snapshot per commit                                                                                                   | CASCADE on commit delete                                                   |
-| `gourmerge_requests`         | GMR (cross-branch/fork proposals)                                                                                                     | CASCADE on recipe delete (recipe_id)                                       |
-| `gm_request_comments`        | Comments on GMRs                                                                                                                      | CASCADE on GMR delete                                                      |
-| `email_verification_tokens`  | CSPRNG tokens (bcrypt-hashed)                                                                                                         | CASCADE on user delete                                                     |
-| `email_change_tokens`        | CSPRNG tokens for changing a verified email                                                                                           | CASCADE on user delete                                                     |
-| `password_reset_tokens`      | CSPRNG tokens (bcrypt-hashed)                                                                                                         | CASCADE on user delete                                                     |
-| `rate_limit_hits`            | DB-backed rate limiter (multi-process safe)                                                                                           | —                                                                          |
-| `contact_messages`           | Contact form submissions                                                                                                              | —                                                                          |
-| `data_requests`              | GDPR self-service tokens (export/erasure)                                                                                             | CASCADE on user delete                                                     |
-| `user_totp`                  | Opt-in TOTP enrolment (secret encrypted)                                                                                              | CASCADE on user delete                                                     |
-| `user_recovery_codes`        | Single-use 2FA recovery codes (hashed)                                                                                                | CASCADE on user delete                                                     |
-| `recipe_images`              | The one serving-suggestion photo per recipe                                                                                           | CASCADE on recipe delete                                                   |
-| `recipe_discussions`         | Discussion threads (recipe- or commit-level)                                                                                          | CASCADE on recipe / commit delete                                          |
-| `recipe_discussion_comments` | Replies within a thread                                                                                                               | CASCADE on thread delete                                                   |
-| `user_passkeys`              | WebAuthn credentials (`credential_id` uniq)                                                                                           | CASCADE on user delete                                                     |
-| `webauthn_challenges`        | Single-use ceremony challenges, 5-min TTL                                                                                             | —                                                                          |
-| `reports`                    | Polymorphic moderation flag (`target_kind` + `target_id`, no real FK on the target) — recipe/user/discussion_comment/image/ingredient | reporter → `users` (CASCADE); unique on (reporter, target_kind, target_id) |
-| `user_passkeys`              | WebAuthn credentials (`credential_id` uniq)                                                                                           | CASCADE on user delete                                                     |
-| `webauthn_challenges`        | Single-use ceremony challenges, 5-min TTL                                                                                             | —                                                                          |
+| Table                        | Purpose                                                                                                                              | Key Relations                                                              |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------- |
+| `users`                      | Auth + profile (`is_admin` gates `/admin/*`)                                                                                         | —                                                                          |
+| `user_avatars`               | Profile picture, `MEDIUMBLOB` (WebP)                                                                                                 | CASCADE on user delete                                                     |
+| `ingredients`                | Global master catalog (Swiss BLV + BLS 4.0 + user-created); `created_by` null for the imports                                        | 1:1 → `ingredient_nutrition`; creator → `users` (SET NULL)                 |
+| `ingredient_nutrition`       | Per-100g nutritional data (Swiss BLV V7.0 or user-supplied), the _effective_ values; `source` names the dataset they came from       | —                                                                          |
+| `ingredient_sources`         | Which reference datasets know an ingredient: `(dataset, external_id)` unique, `dataset_version` informational (migration `0017`)     | n:1 → `ingredients` (CASCADE)                                              |
+| `ingredient_search_terms`    | Normalised names + synonyms per locale, what `GET /api/ingredients` matches and ranks on (migration `0017`)                          | n:1 → `ingredients` (CASCADE)                                              |
+| `recipes`                    | Repository equivalent                                                                                                                | owner → `users`; forkedFrom → self                                         |
+| `recipe_tags`                | Recipe ↔ tag M:M                                                                                                                     | CASCADE on recipe delete                                                   |
+| `tags`                       | Tag master list                                                                                                                      | —                                                                          |
+| `recipe_stars`               | Favorites (unique per user+recipe)                                                                                                   | CASCADE on recipe delete                                                   |
+| `recipe_branches`            | Lightweight branch pointer                                                                                                           | CASCADE on recipe delete                                                   |
+| `recipe_commits`             | Full snapshot per commit (not deltas)                                                                                                | CASCADE on branch delete                                                   |
+| `recipe_commit_ingredients`  | Ingredient snapshot per commit                                                                                                       | CASCADE on commit delete                                                   |
+| `recipe_commit_steps`        | Step (Markdown) snapshot per commit                                                                                                  | CASCADE on commit delete                                                   |
+| `gourmerge_requests`         | GMR (cross-branch/fork proposals)                                                                                                    | CASCADE on recipe delete (recipe_id)                                       |
+| `gm_request_comments`        | Comments on GMRs                                                                                                                     | CASCADE on GMR delete                                                      |
+| `email_verification_tokens`  | CSPRNG tokens (bcrypt-hashed)                                                                                                        | CASCADE on user delete                                                     |
+| `email_change_tokens`        | CSPRNG tokens for changing a verified email                                                                                          | CASCADE on user delete                                                     |
+| `password_reset_tokens`      | CSPRNG tokens (bcrypt-hashed)                                                                                                        | CASCADE on user delete                                                     |
+| `rate_limit_hits`            | DB-backed rate limiter (multi-process safe)                                                                                          | —                                                                          |
+| `contact_messages`           | Contact form submissions                                                                                                             | —                                                                          |
+| `data_requests`              | GDPR self-service tokens (export/erasure)                                                                                            | CASCADE on user delete                                                     |
+| `user_totp`                  | Opt-in TOTP enrolment (secret encrypted)                                                                                             | CASCADE on user delete                                                     |
+| `user_recovery_codes`        | Single-use 2FA recovery codes (hashed)                                                                                               | CASCADE on user delete                                                     |
+| `recipe_images`              | The one serving-suggestion photo per recipe                                                                                          | CASCADE on recipe delete                                                   |
+| `recipe_discussions`         | Discussion threads (recipe- or commit-level)                                                                                         | CASCADE on recipe / commit delete                                          |
+| `recipe_discussion_comments` | Replies within a thread                                                                                                              | CASCADE on thread delete                                                   |
+| `user_passkeys`              | WebAuthn credentials (`credential_id` uniq)                                                                                          | CASCADE on user delete                                                     |
+| `webauthn_challenges`        | Single-use ceremony challenges, 5-min TTL                                                                                            | —                                                                          |
+| `reports`                    | Polymorphic moderation flag (`target_kind` + `target_id`, no real FK on the target): recipe/user/discussion_comment/image/ingredient | reporter → `users` (CASCADE); unique on (reporter, target_kind, target_id) |
+| `user_passkeys`              | WebAuthn credentials (`credential_id` uniq)                                                                                          | CASCADE on user delete                                                     |
+| `webauthn_challenges`        | Single-use ceremony challenges, 5-min TTL                                                                                            | —                                                                          |
 
 ### FK cascade gaps (manually handled in API)
 
 Two FKs use NO ACTION (= RESTRICT in MySQL) and require pre-delete cleanup:
 
-- `recipes.forked_from_recipe_id` — forks nullified before parent delete
-- `gourmerge_requests.source_branch_id / target_branch_id / source_recipe_id` — cross-recipe GMRs deleted before branch cascade
+- `recipes.forked_from_recipe_id`: forks nullified before parent delete
+- `gourmerge_requests.source_branch_id / target_branch_id / source_recipe_id`: cross-recipe GMRs deleted before branch cascade
 
 This is handled in `server/api/recipes/[id].delete.ts`, and repeated in `server/api/privacy/delete.post.ts` for the "delete my recipes too" path.
 
@@ -153,18 +153,18 @@ This is handled in `server/api/recipes/[id].delete.ts`, and repeated in `server/
 
 `recipes.owner_id`, `recipe_commits.author_id`, `gourmerge_requests.author_id` and `gm_request_comments.author_id` are all **NOT NULL** and NO ACTION. On top of that `fork.post.ts` copies commits keeping the **original** `author_id`, so a stranger's fork legitimately contains commits authored by the departing user. A bare `DELETE FROM users` therefore either fails on the constraint or destroys rows inside another user's recipe history.
 
-**Account deletion is nonetheless a real `DELETE`** (changed 2026-08-05; it used to anonymise the row in place). A single shared tombstone account — `users.is_ghost`, username `ghost`, seeded by migration `0008` — inherits the orphaned attribution first, which is GitHub's pattern. The user's own content is deleted outright; only their fingerprints inside other people's forks and threads survive, and those read as the anonymous ghost. Git can orphan attribution for free because it stores the author as free text; our `author_id` is a real foreign key, hence the tombstone.
+**Account deletion is nonetheless a real `DELETE`** (changed 2026-08-05; it used to anonymise the row in place). A single shared tombstone account (`users.is_ghost`, username `ghost`, seeded by migration `0008`) inherits the orphaned attribution first, which is GitHub's pattern. The user's own content is deleted outright; only their fingerprints inside other people's forks and threads survive, and those read as the anonymous ghost. Git can orphan attribution for free because it stores the author as free text; our `author_id` is a real foreign key, hence the tombstone.
 
-One implementation, `server/utils/hardDeleteUser.ts`, serves both callers — the self-service GDPR erasure and the nightly inactivity job. Two copies would drift on exactly the constraints that make this hard. The ghost is never loginable (`password_hash` is a sentinel no bcrypt comparison can match) and is excluded from every sweep.
+One implementation, `server/utils/hardDeleteUser.ts`, serves both callers: the self-service GDPR erasure and the nightly inactivity job. Two copies would drift on exactly the constraints that make this hard. The ghost is never loginable (`password_hash` is a sentinel no bcrypt comparison can match) and is excluded from every sweep.
 
 ### Key schema decisions
 
 - **Snapshot commits**: each commit stores a full ingredient + step snapshot. No delta encoding. Diffs computed on-read.
 - **Branch = pointer**: a branch row points to `head_commit_id`. Creating a branch is 1 INSERT.
-- **INT PK internal, UUIDv7 external**: `recipes` and `gourmerge_requests` have a `public_id BINARY(16)` (UUIDv7) for external URLs/API — internal JOINs use INT PKs. Auth tokens use CSPRNG, NOT UUIDv7.
+- **INT PK internal, UUIDv7 external**: `recipes` and `gourmerge_requests` have a `public_id BINARY(16)` (UUIDv7) for external URLs/API; internal JOINs use INT PKs. Auth tokens use CSPRNG, NOT UUIDv7.
 - **Metric-canonical units**: DB stores `g` / `ml` / `piece` / `pinch` / `tsp` / `tbsp` only. Display conversion in `server/utils/units.ts`.
-- **Commit DAG walked application-side** (`parentCommitId`), not via recursive CTE. The original rationale ("MariaDB CTEs are slow") no longer applies — production is MySQL 8.4 — but the app-side walk stays: it is built, paginated and proven.
-- **Explore search**: FULLTEXT index on `recipes(title, description)` (migration `0006`, hand-authored — Drizzle's mysql `index()` can't express FULLTEXT). `explore.get.ts` uses `MATCH … AGAINST` for queries ≥ 3 chars, `LIKE` fallback for shorter terms.
+- **Commit DAG walked application-side** (`parentCommitId`), not via recursive CTE. The original rationale ("MariaDB CTEs are slow") no longer applies (production is MySQL 8.4), but the app-side walk stays because it is built, paginated and proven.
+- **Explore search**: FULLTEXT index on `recipes(title, description)` (migration `0006`, hand-authored, because Drizzle's mysql `index()` can't express FULLTEXT). `explore.get.ts` uses `MATCH … AGAINST` for queries ≥ 3 chars, `LIKE` fallback for shorter terms.
 
 ---
 
@@ -202,7 +202,7 @@ One implementation, `server/utils/hardDeleteUser.ts`, serves both callers — th
 | `/legal/data-request/confirm`                   | Token landing: download or erase      | No\*        | default   |
 | `/admin/reports`                                | Moderation queue (`isAdmin` required) | Yes (admin) | dashboard |
 
-Plus `/dev/skeletons`, a debugging surface that 404s outside `import.meta.dev` — never built or linked in production.
+Plus `/dev/skeletons`, a debugging surface that 404s outside `import.meta.dev`. It is never built or linked in production.
 
 \* `/explore` uses a **dynamic layout** (`definePageMeta({ layout: false })` + `<NuxtLayout :name="loggedIn ? 'dashboard' : 'default'">`): logged-in users get the dashboard shell with sidebar; guests get the public layout.
 
@@ -222,16 +222,16 @@ All routes: Zod-validated body/query, `requireUserSession()` where auth required
 | PUT    | `/api/users/me/avatar`               | Yes      | Upload/replace avatar (multipart, forced square, re-encoded WebP)                  |
 | DELETE | `/api/users/me/avatar`               | Yes      | Remove avatar, full session replace so the header updates immediately              |
 | GET    | `/api/users/[username]/avatar`       | No       | Generated identicon-QR badge (no upload on file). `?variant=mark` small            |
-| GET    | `/api/users/[username]/avatar-image` | No       | Serve an uploaded avatar's bytes. 404 if none — never a placeholder                |
+| GET    | `/api/users/[username]/avatar-image` | No       | Serve an uploaded avatar's bytes. 404 if none, never a placeholder                 |
 
-### Auth — 2FA / Passkeys
+### Auth: 2FA / Passkeys
 
 | Method | Route                         | Auth     | Purpose                                                    |
 | ------ | ----------------------------- | -------- | ---------------------------------------------------------- |
 | GET    | `/api/auth/totp`              | Yes      | Enrollment status                                          |
-| POST   | `/api/auth/totp/setup`        | Yes      | Begin enrollment — returns the secret + QR enrolment URI   |
+| POST   | `/api/auth/totp/setup`        | Yes      | Begin enrollment; returns the secret + QR enrolment URI    |
 | POST   | `/api/auth/totp/confirm`      | Yes      | Confirm the first code, activate 2FA, issue recovery codes |
-| POST   | `/api/auth/totp/disable`      | Yes (pw) | Disable 2FA — password required, not a code                |
+| POST   | `/api/auth/totp/disable`      | Yes (pw) | Disable 2FA; password required, not a code                 |
 | GET    | `/api/auth/passkeys`          | Yes      | List enrolled passkeys                                     |
 | POST   | `/api/auth/passkeys/register` | Yes      | WebAuthn registration ceremony (options + verify)          |
 | PATCH  | `/api/auth/passkeys/[id]`     | Yes      | Rename a passkey                                           |
@@ -239,14 +239,14 @@ All routes: Zod-validated body/query, `requireUserSession()` where auth required
 
 ### Ingredients
 
-| Method | Route                         | Auth | Purpose                                                                                                                          |
-| ------ | ----------------------------- | ---- | -------------------------------------------------------------------------------------------------------------------------------- |
-| GET    | `/api/ingredients`            | No   | Search (q + locale) — Swiss BLV catalog + user-created ingredients                                                               |
-| POST   | `/api/ingredients`            | Yes  | Create ingredient on-the-fly (deduped, rate-limited, sets `createdBy`)                                                           |
-| GET    | `/api/ingredients/categories` | No   | Distinct category list for the picker                                                                                            |
-| GET    | `/api/ingredients/[id]`       | No   | Detail (incl. `canEdit` for the viewer's session, never raw `createdBy`)                                                         |
-| PATCH  | `/api/ingredients/[id]`       | Yes  | Edit name/translations/category/manufacturer/nutrition (incl. micros) — creator only, 404 (not 403) otherwise, no admin override |
-| DELETE | `/api/ingredients/[id]`       | Yes  | Remove — creator only; 409 `ingredient_in_use` if any commit has ever snapshotted it (FK RESTRICT)                               |
+| Method | Route                         | Auth | Purpose                                                                                                                         |
+| ------ | ----------------------------- | ---- | ------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | `/api/ingredients`            | No   | Search (q + locale): Swiss BLV catalog + user-created ingredients                                                               |
+| POST   | `/api/ingredients`            | Yes  | Create ingredient on-the-fly (deduped, rate-limited, sets `createdBy`)                                                          |
+| GET    | `/api/ingredients/categories` | No   | Distinct category list for the picker                                                                                           |
+| GET    | `/api/ingredients/[id]`       | No   | Detail (incl. `canEdit` for the viewer's session, never raw `createdBy`)                                                        |
+| PATCH  | `/api/ingredients/[id]`       | Yes  | Edit name/translations/category/manufacturer/nutrition (incl. micros); creator only, 404 (not 403) otherwise, no admin override |
+| DELETE | `/api/ingredients/[id]`       | Yes  | Remove; creator only; 409 `ingredient_in_use` if any commit has ever snapshotted it (FK RESTRICT)                               |
 
 ### Recipes
 
@@ -254,7 +254,7 @@ All routes: Zod-validated body/query, `requireUserSession()` where auth required
 | ------ | ---------------------------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | GET    | `/api/recipes`                           | Yes         | Own recipes list                                                                                                                    |
 | GET    | `/api/recipes/starred`                   | Yes         | Recipes the viewer has starred (card shape)                                                                                         |
-| GET    | `/api/recipes/tour-recipe`               | Yes         | The `system` account's demo recipe, for the guided-tour fork step — invisible once the tour is finished                             |
+| GET    | `/api/recipes/tour-recipe`               | Yes         | The `system` account's demo recipe, for the guided-tour fork step; invisible once the tour is finished                              |
 | POST   | `/api/recipes`                           | Yes         | Create recipe (transactional: recipe+branch+commit)                                                                                 |
 | GET    | `/api/recipes/explore`                   | No          | Public browse (search/filter/sort/paginate)                                                                                         |
 | GET    | `/api/recipes/by-slug/[username]/[slug]` | No          | Fetch by URL slug (incl. resolved `forkedFrom`, per-viewer `canEdit` on ingredients)                                                |
@@ -265,7 +265,7 @@ All routes: Zod-validated body/query, `requireUserSession()` where auth required
 | GET    | `/api/recipes/[id]/forks`                | No          | List recipes forked from this one                                                                                                   |
 | POST   | `/api/recipes/[id]/star`                 | Yes         | Toggle star (rate-limited)                                                                                                          |
 | POST   | `/api/recipes/[id]/tags`                 | Yes (owner) | Set tags (rate-limited)                                                                                                             |
-| POST   | `/api/recipes/[id]/simulate-activity`    | Yes (owner) | Tour-only: seed a demo commit + GMR. Gated on the recipe having **exactly one commit**, not a client flag — see the file's docblock |
+| POST   | `/api/recipes/[id]/simulate-activity`    | Yes (owner) | Tour-only: seed a demo commit + GMR. Gated on the recipe having **exactly one commit**, not a client flag (see the file's docblock) |
 
 ### Branches / Commits
 
@@ -318,11 +318,11 @@ is `Cache-Control: private`.
 | Method | Route                     | Auth        | Purpose                                                                                                                                                   |
 | ------ | ------------------------- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | POST   | `/api/reports`            | Yes         | Flag a recipe/user/comment/image/ingredient. Idempotent per (reporter, target); 404 (not 403) on a target the reporter cannot see; cannot report yourself |
-| GET    | `/api/reports/mine`       | Yes         | Open reports against content the viewer owns — never for `targetKind: 'user'`, so a reported person is never told                                         |
+| GET    | `/api/reports/mine`       | Yes         | Open reports against content the viewer owns; never for `targetKind: 'user'`, so a reported person is never told                                          |
 | GET    | `/api/admin/reports`      | Yes (admin) | `?status=open\|actioned\|dismissed` moderation queue                                                                                                      |
 | PATCH  | `/api/admin/reports/[id]` | Yes (admin) | Set status to `actioned` or `dismissed`                                                                                                                   |
 
-Deleting the reported content is the moderation response — there is no separate
+Deleting the reported content is the moderation response; there is no separate
 resolve workflow. `closeReportsForTarget()` marks matching open reports `actioned`
 whenever the recipe, its photo, or a discussion comment is deleted (see the
 Recipes/Discussions rows above).
@@ -352,10 +352,10 @@ link, because a user locked out of their account still holds both rights.
 ## 7. i18n Status
 
 - **4 locales**: `de` (default), `en`, `fr`, `it`
-- **Strategy**: `prefix_except_default` — German has no prefix; `/en/`, `/fr/`, `/it/` prefixed
+- **Strategy**: `prefix_except_default`; German has no prefix; `/en/`, `/fr/`, `/it/` prefixed
 - **Key count**: 731 keys, 4-way parity (verified by `npm run i18n:check`)
 - **Locale files**: `i18n/locales/{de,en,fr,it}.json`
-- **CI gate**: `scripts/i18n-check.mjs` — fails if any locale has a missing key or empty value
+- **CI gate**: `scripts/i18n-check.mjs` fails if any locale has a missing key or empty value
 - **Translated**: all UI labels, navigation, errors, toasts, onboarding, glossary, legal pages, auth flows
 - **Not translated**: user-generated recipe content (stays in author's language)
 
@@ -366,7 +366,7 @@ link, because a user locked out of their account still holds both rights.
 | Script                         | NPM command                                 | Purpose                                                                                                                                                                                           |
 | ------------------------------ | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `i18n-check.mjs`               | `npm run i18n:check`                        | 4-way locale parity gate                                                                                                                                                                          |
-| `import-swiss-foods.mjs`       | `npm run seed:swiss`                        | Import Swiss BLV Food Composition DB V7.0 — keyed by `ingredient_sources (dataset, external_id)`, batched, one transaction                                                                        |
+| `import-swiss-foods.mjs`       | `npm run seed:swiss`                        | Import Swiss BLV Food Composition DB V7.0, keyed by `ingredient_sources (dataset, external_id)`, batched, one transaction                                                                         |
 | `rebuild-search-terms.mjs`     | `npm run search:rebuild`                    | Rebuild `ingredient_search_terms` for every ingredient; runs after all seeds (`db:setup`, deploy, E2E)                                                                                            |
 | `seed-ingredients.mjs`         | `npm run db:seed`                           | Curated ingredient entries (not in Swiss BLV)                                                                                                                                                     |
 | `merge-user-ingredients.mjs`   | `node scripts/merge-user-ingredients.mjs`   | Fold user-created ingredients that duplicate a catalog row: `--report` lists them with candidates, `--apply <tsv>` re-points every commit line and deletes the row (dry-run first, backup before) |
@@ -374,7 +374,7 @@ link, because a user locked out of their account still holds both rights.
 | `seed-tags.mjs`                | —                                           | Seed default recipe tags                                                                                                                                                                          |
 | `reconcile-counters.mjs`       | —                                           | Repair denormalized star/fork counters (idempotent)                                                                                                                                               |
 | `generate-icons.mjs`           | `npm run generate:icons`                    | Generate PWA/favicon assets from brand SVG                                                                                                                                                        |
-| `cleanup-retention.mjs`        | `npm run db:cleanup`                        | **Enforce the retention windows the privacy policy states.** Nightly cron in production — see `docs/RUNBOOK.md`. `--dry-run` previews                                                             |
+| `cleanup-retention.mjs`        | `npm run db:cleanup`                        | **Enforce the retention windows the privacy policy states.** Nightly cron in production, see `docs/RUNBOOK.md`. `--dry-run` previews                                                              |
 
 `npm run db:setup` chains migrate + all seeds + `search:rebuild` for a fresh clone.
 `npm run seed:swiss:regen` rebuilds the committed seed from the BLV spreadsheets.
@@ -385,22 +385,22 @@ link, because a user locked out of their account still holds both rights.
 
 The `ingredients` master table is populated from the **Swiss BLV Food Composition Database V7.0** (naehrwertdaten.ch).
 
-- **1190** Swiss food entries with DE/EN/FR/IT names and synonyms. (Previously documented as "~2300+" — wrong; the BLV generic-foods sheet is `A1:EK1193`, i.e. 1190 data rows after its header rows — the second header line had slipped through as food "ID"/"Name" until 2026-10-26 — and the importer merges all four language exports onto that same ID set.)
+- **1190** Swiss food entries with DE/EN/FR/IT names and synonyms. (Previously documented as "~2300+", which was wrong. The BLV generic-foods sheet is `A1:EK1193`, i.e. 1190 data rows after its header rows; until 2026-10-26 the second header line had slipped through as food "ID"/"Name". The importer merges all four language exports onto that same ID set.)
 - Nutrition data per 100g (kcal, macros, fiber, micros) in `ingredient_nutrition`
-- Source marker: `ingredient_nutrition.source = 'swiss-blv-v7'` (the values), plus one `ingredient_sources` row per food: `dataset = 'swiss-blv'`, `external_id` = the BLV numeric ID, `dataset_version = '7.0'`. The importer looks foods up by `(dataset, external_id)` — the version is bumped in place, so a BLV V8 updates these rows instead of inserting 1191 duplicates (which is what matching on the versioned `source` string would have done). The same key is what a second dataset (BLS 4.0, see `docs/BLS-INTEGRATION-PLAN.md`) will attach to an existing ingredient.
+- Source marker: `ingredient_nutrition.source = 'swiss-blv-v7'` (the values), plus one `ingredient_sources` row per food: `dataset = 'swiss-blv'`, `external_id` = the BLV numeric ID, `dataset_version = '7.0'`. The importer looks foods up by `(dataset, external_id)`; the version is bumped in place, so a BLV V8 updates these rows instead of inserting 1191 duplicates (which is what matching on the versioned `source` string would have done). The same key is what a second dataset (BLS 4.0, see `docs/BLS-INTEGRATION-PLAN.md`) will attach to an existing ingredient.
 - Search (`GET /api/ingredients?q=&locale=`) matches `ingredient_search_terms`: every locale name and synonym, normalised by `shared/utils/ingredientSearch.ts` (lower-case, umlauts/accents and their digraph spellings folded, punctuation dropped, plus a space-free `compact` form), ranked exact → prefix → compact/word prefix → substring, then viewer locale, name before synonym, shorter term first. Written by the importer for its rows, by the POST/PATCH handlers for user rows, and rebuilt wholesale by `npm run search:rebuild` after every seed.
 - Curated entries (not in Swiss DB) can be added to `seed-ingredients.mjs` with `source = 'curated'`
-- **Vanilla Sugar** (`Vanillezucker`): not in Swiss BLV DB — added as a curated entry in `seed-ingredients.mjs` (apply with `npm run db:seed`)
-- **Manufacturer** (`ingredients.manufacturer`, migration `0016`): optional, for a branded product ("Barilla") — the Swiss BLV import never sets it, since its entries are generic foods
-- **Micronutrient catalog**: 13 vitamins + 10 minerals, the exact key set `import-swiss-foods.mjs` writes into `ingredient_nutrition.micros` for its own foods. Canonical list lives in `shared/utils/ingredientMicros.ts`, imported by the create/edit forms and by `NutritionFacts.vue`'s display — one source, so a self-reported value lands in the same field a recipe's micronutrient totals already read from
+- **Vanilla Sugar** (`Vanillezucker`): not in Swiss BLV DB, added as a curated entry in `seed-ingredients.mjs` (apply with `npm run db:seed`)
+- **Manufacturer** (`ingredients.manufacturer`, migration `0016`): optional, for a branded product ("Barilla"). The Swiss BLV import never sets it, since its entries are generic foods
+- **Micronutrient catalog**: 13 vitamins + 10 minerals, the exact key set `import-swiss-foods.mjs` writes into `ingredient_nutrition.micros` for its own foods. Canonical list lives in `shared/utils/ingredientMicros.ts`, imported by the create/edit forms and by `NutritionFacts.vue`'s display. Because there is one source, a self-reported value lands in the same field a recipe's micronutrient totals already read from
 
 ### BLS 4.0 (2026-10-26)
 
-The German Bundeslebensmittelschlüssel 4.0 (Max Rubner-Institut, Dec 2025, free of licence barriers) is the second dataset. 5325 of its 7140 foods are imported: all of groups B–W (foods one can buy, cooked variants included) plus 230 components out of the dish groups X/Y (stocks, sauces/dressings, doughs); the remaining dishes are what GourMerge makes out of ingredients. 442 BLS codes are attached to an existing ingredient (438 Swiss foods, decided one by one with a strict rule — same food, same state, kcal within 20 %/30 kcal, fat within 5 g — plus Vanillezucker and three `ok:` pairs); 4883 become their own ingredients, so the catalog grows to ~6100. Files, all in `server/database/seeds/`: `bls-foods.jsonl` (generated, ~4 MB), `bls-map.csv` (decisions), `bls-i18n.jsonl` (FR/IT names for every imported code — the BLS itself has only DE/EN; the English ZIP is the same data with English headers), `bls-4.0-errata.json` (the MRI's corrections: skimmed-milk retinol, 1.5 % milk iodine, almond calcium; `T104100` Sardelle roh imported without nutrition; the OLSAC double count in the energy formula is corrected in `scripts/lib/bls.mjs`). Mapping: 12 macros + 22 micros (VITB6 µg→mg; no selenium, no density); `-` → NULL, `TR`/`<LOQ`/`<LOD` → 0. The importer is keyed by `(bls, code)`, writes in batches and applies the pairs on every run (the Swiss importer rewrites the names from its seed whenever it runs, this puts the German name back). `tests/unit/blsSeed.test.ts` guards the invariants of the committed files. One row needs a hand: the stray "ID"/"Name" food from the old Swiss seed still exists in any database seeded before 2026-10-26 (`created_by IS NULL`, no `ingredient_sources` row, category `kategorie`); `node scripts/cleanup-seed-ingredients.mjs --execute` removes it when no recipe uses it (it lists the curated Vanillezucker too — that one has a BLS source now and is not a candidate).
+The German Bundeslebensmittelschlüssel 4.0 (Max Rubner-Institut, Dec 2025, free of licence barriers) is the second dataset. 5325 of its 7140 foods are imported: all of groups B–W (foods one can buy, cooked variants included) plus 230 components out of the dish groups X/Y (stocks, sauces/dressings, doughs); the remaining dishes are what GourMerge makes out of ingredients. 442 BLS codes are attached to an existing ingredient (438 Swiss foods, decided one by one with a strict rule: same food, same state, kcal within 20 %/30 kcal, fat within 5 g; plus Vanillezucker and three `ok:` pairs); 4883 become their own ingredients, so the catalog grows to ~6100. Files, all in `server/database/seeds/`: `bls-foods.jsonl` (generated, ~4 MB), `bls-map.csv` (decisions), `bls-i18n.jsonl` (FR/IT names for every imported code; the BLS itself has only DE/EN, and the English ZIP is the same data with English headers), `bls-4.0-errata.json` (the MRI's corrections: skimmed-milk retinol, 1.5 % milk iodine, almond calcium; `T104100` Sardelle roh imported without nutrition; the OLSAC double count in the energy formula is corrected in `scripts/lib/bls.mjs`). Mapping: 12 macros + 22 micros (VITB6 µg→mg; no selenium, no density); `-` → NULL, `TR`/`<LOQ`/`<LOD` → 0. The importer is keyed by `(bls, code)`, writes in batches and applies the pairs on every run (the Swiss importer rewrites the names from its seed whenever it runs, this puts the German name back). `tests/unit/blsSeed.test.ts` guards the invariants of the committed files. One row needs a hand: the stray "ID"/"Name" food from the old Swiss seed still exists in any database seeded before 2026-10-26 (`created_by IS NULL`, no `ingredient_sources` row, category `kategorie`); `node scripts/cleanup-seed-ingredients.mjs --execute` removes it when no recipe uses it (it lists the curated Vanillezucker too, but that one has a BLS source now and is not a candidate).
 
 ### Seeding (committed seed file, not the spreadsheets)
 
-`server/database/seeds/swiss-foods.jsonl` (1190 foods, ~1 MB, **tracked**) is the seed source, so a fresh clone can run `npm run db:setup` — migrate + all three seeds — with no downloads and without the `xlsx` dependency. JSON Lines, one food per line, so a dataset update is a reviewable diff rather than one rewritten mega-line.
+`server/database/seeds/swiss-foods.jsonl` (1190 foods, ~1 MB, **tracked**) is the seed source, so a fresh clone can run `npm run db:setup` (migrate + all three seeds) with no downloads and without the `xlsx` dependency. JSON Lines, one food per line, so a dataset update is a reviewable diff rather than one rewritten mega-line.
 
 `scripts/import-swiss-foods.mjs` reads that file by default; `--from-xlsx` re-parses the four BLV spreadsheets from `.claude/data/swiss/` (gitignored, not redistributed) and `--emit-seed` regenerates the seed. `xlsx` is a **lazy** import inside that path only, so the contributor path never loads the package carrying the unfixed advisory.
 
@@ -412,16 +412,16 @@ The German Bundeslebensmittelschlüssel 4.0 (Max Rubner-Institut, Dec 2025, free
 
 | Measure                   | Status | Notes                                                                                                                                                                                                                                                                                                                          |
 | ------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Rate limiting             | ✓ Done | DB-backed (`rate_limit_hits` table) — multi-process safe for Passenger                                                                                                                                                                                                                                                         |
+| Rate limiting             | ✓ Done | DB-backed (`rate_limit_hits` table), multi-process safe for Passenger                                                                                                                                                                                                                                                          |
 | CSRF                      | ✓ Done | nuxt-auth-utils / Nitro                                                                                                                                                                                                                                                                                                        |
 | Session rotation          | ✓ Done | Post-login session regeneration                                                                                                                                                                                                                                                                                                |
 | Secure cookies            | ✓ Done | `httpOnly`, `sameSite=lax`, 14-day maxAge                                                                                                                                                                                                                                                                                      |
-| Cookie consent            | ✓ Done | Banner + settings modal (`app/components/legal/CookieConsent.vue`, `useCookieConsent.ts`); `statistics`/`marketing` are real opt-in toggles (off by default, unused so far); necessary cookies (session, 2FA-pending, locale, onboarding-seen) are always on, not user-togglable — exempt from consent under TTDSG §25(2)      |
+| Cookie consent            | ✓ Done | Banner + settings modal (`app/components/legal/CookieConsent.vue`, `useCookieConsent.ts`); `statistics`/`marketing` are real opt-in toggles (off by default, unused so far); necessary cookies (session, 2FA-pending, locale, onboarding-seen) are always on, not user-togglable, and exempt from consent under TTDSG §25(2)   |
 | Email verification        | ✓ Done | CSPRNG token + bcrypt hash + SMTP send                                                                                                                                                                                                                                                                                         |
 | Password reset            | ✓ Done | CSPRNG token + bcrypt hash + expiry + no-enumeration response                                                                                                                                                                                                                                                                  |
 | Zod validation            | ✓ Done | All endpoint bodies + query params                                                                                                                                                                                                                                                                                             |
 | Authorization             | ✓ Done | Ownership checks on all mutating routes                                                                                                                                                                                                                                                                                        |
-| CSP                       | ✓ Done | Set per-request in `server/plugins/csp.ts` (`render:html` hook), not `routeRules` — allows TipTap inline styles, Sentry, Google Fonts                                                                                                                                                                                          |
+| CSP                       | ✓ Done | Set per-request in `server/plugins/csp.ts` (`render:html` hook), not `routeRules`, which allows TipTap inline styles, Sentry, Google Fonts                                                                                                                                                                                     |
 | Security headers          | ✓ Done | X-Content-Type-Options, X-Frame-Options, Referrer-Policy                                                                                                                                                                                                                                                                       |
 | HSTS                      | ✓ Done | Enabled in production via `routeRules` (baked when `NODE_ENV=production`): 1y max-age + includeSubDomains. Local HTTP dev unaffected. The host 301s HTTP→HTTPS on both names, and `server/middleware/canonical-host.ts` folds `www` into the apex                                                                              |
 | Email-verification gating | ✓ Done | `requireVerifiedUser` wired into GMR creation + recipe publish (create/patch to public); no-op unless `REQUIRE_EMAIL_VERIFICATION=true`                                                                                                                                                                                        |
@@ -439,118 +439,118 @@ The German Bundeslebensmittelschlüssel 4.0 (Max Rubner-Institut, Dec 2025, free
 | Structured logging | Pino → rotating file       | `server/utils/logger.ts`; rotates at 10 MB or daily, keeps 7 gzipped files via `rotating-file-stream` (no worker thread); `LOG_LEVEL` env; redacts cookies/auth                   |
 | Error tracking     | Sentry.io (`@sentry/nuxt`) | Client + server auto-capture of unhandled errors; `autoInjectServerSentry: 'top-level-import'` (unconditional) so the CI-built artifact ships server capture; DSN/release via env |
 | Health check       | `GET /api/health`          | Returns `{ status: "ok", db: "ok" }` or 503                                                                                                                                       |
-| Uptime monitoring  | UptimeRobot (external)     | Polls `/api/health` — configure manually                                                                                                                                          |
+| Uptime monitoring  | UptimeRobot (external)     | Polls `/api/health`; configure manually                                                                                                                                           |
 
 ---
 
 ## 12. Feature Implementation Status
 
-### ✓ Complete
+### Complete
 
 - **Ingredient delete, edit-everywhere, manufacturer, and the full micronutrient catalog (2026-08-12)**: found
-  while chasing a bug report — creating an ingredient with nutrition values failed with a generic "server
+  while chasing a bug report: creating an ingredient with nutrition values failed with a generic "server
   unreachable" toast and nothing in the console or Sentry. Root cause was client-side, not network: Nuxt UI's
   `UInput` coerces `type="number"` to a JS `number` on every keystroke regardless of a `.number` v-model
-  modifier, and `NewIngredientModal.vue`'s `submit()` called `.trim()` on that value to drop empty fields —
+  modifier, and `NewIngredientModal.vue`'s `submit()` called `.trim()` on that value to drop empty fields.
   `.trim()` on a number throws before `$fetch` is ever called, and `useApiError()` maps any status-less error to
   the network message. Fixed by coercing back to a string on every update (`IngredientRow.vue`'s quantity field
   already did this). That investigation surfaced three real gaps, closed together: `DELETE
 /api/ingredients/:id` (creator-only, 404 not 403, blocked with a clean `409 ingredient_in_use` if any
-  commit — even a superseded one — has ever snapshotted it, since `recipe_commit_ingredients.ingredient_id` has
+  commit (even a superseded one) has ever snapshotted it, since `recipe_commit_ingredients.ingredient_id` has
   no `onDelete` clause); the edit button, which only ever existed on a published recipe's detail page, now
   appears wherever an owned ingredient shows up, including the recipe editor itself (`IngredientRow.vue` gained
   the same reveal-on-hover pencil, plus a Delete action with its own `UModal` confirmation); and an optional
   `manufacturer` field (migration `0016`) for branded products. Also added: the same micronutrient catalog the
   Swiss BLV import already writes into `ingredient_nutrition.micros` (13 vitamins + 10 minerals, canonical list
-  in `shared/utils/ingredientMicros.ts`, shared by the input forms and `NutritionFacts.vue`'s display — which
+  in `shared/utils/ingredientMicros.ts`, shared by the input forms and `NutritionFacts.vue`'s display, which
   used to keep its own copy, missing `beta_carotene_mcg`). And, independent of the crash: every nutrition input
   was `type="number"`, which rejects a comma decimal separator in most locales even though the server
-  (`decimalSchema`) has accepted `,` or `.` all along — switched to `type="text" inputmode="decimal"`
+  (`decimalSchema`) has accepted `,` or `.` all along; the inputs are now `type="text" inputmode="decimal"`
   everywhere. 6 new e2e tests in `tests/e2e/api/ingredients.spec.ts` (delete success/blocked/authz, and a
   manufacturer/comma-decimal-micros round-trip)
 - **Sugar, salt, piece-weight, and a layout bug from the button above (2026-08-12)**: follow-up feedback on the
-  entry above, from actually using it. The new edit-pencil was `v-if`'d onto `IngredientRow.vue` — present only
-  for an owned ingredient — so removing that flex child changed how much width its siblings got, and an owned
+  entry above, from actually using it. The new edit-pencil was `v-if`'d onto `IngredientRow.vue` (present only
+  for an owned ingredient), so removing that flex child changed how much width its siblings got, and an owned
   row's name field rendered a different width than a catalog row's right next to it. Fixed by always rendering
   the button and toggling `invisible` + `disabled` instead of existence, matching the remove button's own
   reveal-on-hover mechanism. Also: `ingredients.manufacturer` was written and read back but never shown where a
-  recipe author actually picks an ingredient — now a badge in the autocomplete dropdown, next to category.
+  recipe author actually picks an ingredient; it is now a badge in the autocomplete dropdown, next to category.
   `ingredient_nutrition.sugars_100g` and `salt_100g` have held Swiss BLV data since v1.0 but were never
-  validated, stored for a user ingredient, or aggregated — wired end to end (validation → POST/PATCH/GET →
+  validated, stored for a user ingredient, or aggregated. They are now wired end to end (validation → POST/PATCH/GET →
   input forms → `computeNutritionTotals` → `NutritionFacts.vue`, sugars shown as "davon Zucker" under carbs,
-  salt as its own line, same pattern saturated fat already used under fat). And `gramsPerPiece` — the column
+  salt as its own line, same pattern saturated fat already used under fat). And `gramsPerPiece`, the column
   `toGrams()` has always used for an exact `piece`→grams conversion (falling back to a flagged-approximate
-  100 g guess without it) — finally has an input field, so a user-created ingredient with an accurate per-piece
+  100 g guess without it), finally has an input field, so a user-created ingredient with an accurate per-piece
   weight (e.g. 60 g for an egg) is no longer stuck with the guess. 3 new e2e tests + 1 unit assertion; a
   throwaway Playwright check measured the row-width fix directly (344px, same x-offset, owned vs. catalog row)
 - **Reporting / moderation (2026-08-09)**: flag a recipe, a user, a discussion comment, a recipe photo, or an
   ingredient. `reports` is one polymorphic table (`targetKind` + `targetId`, no real FK on the target) rather than five
-  near-identical ones. Idempotent per (reporter, target) — resubmitting returns the existing row, guarded by a unique
-  index against the SELECT-then-INSERT race, not just app logic. 404, not 403, on a target the reporter cannot see —
+  near-identical ones. Idempotent per (reporter, target): resubmitting returns the existing row, guarded by a unique
+  index against the SELECT-then-INSERT race, not just app logic. 404, not 403, on a target the reporter cannot see,
   the same rule `requireVisibleRecipe` already used, now generalised in `resolveReportTarget()`. Visible to the owner
-  of the reported content via `/api/reports/mine` (recipe owner, comment author, ingredient creator) — **deliberately
+  of the reported content via `/api/reports/mine` (recipe owner, comment author, ingredient creator), but **deliberately
   not** for `targetKind: 'user'`, so a reported person is never told, which standard moderation practice treats as a
   retaliation risk. `users.is_admin` (checked fresh from the DB on every request via `requireAdmin()`, never trusted
-  from the session — same posture as `requireVerifiedUser`) gates `/admin/reports` and its two endpoints. There is no
+  from the session; same posture as `requireVerifiedUser`) gates `/admin/reports` and its two endpoints. There is no
   separate resolve workflow: deleting the flagged content is the moderation response, and `closeReportsForTarget()`
   auto-closes matching open reports whenever a recipe, its photo, or a discussion comment is deleted
 - **Ingredient editing (2026-08-09)**: a user-created ingredient (`ingredients.created_by`, null for the Swiss BLV
-  import) can now be corrected by its creator — name, translations, category, nutrition — instead of living with a
+  import) can now be corrected by its creator (name, translations, category, nutrition) instead of living with a
   typo or a missing macro forever. 404, not 403, for anyone else, **including an admin**: there is no override, because
   silently rewriting someone else's data would leave no trace of who actually wrote what. Clearing the energy value
   deletes the nutrition row rather than zeroing it, matching creation's own rule that a zeroed row would claim coverage
   the data doesn't have
 - **Rate limiting swept across 21 previously-open mutating endpoints (2026-08-09)**: an audit of every `POST`/`PATCH`/
-  `DELETE` under `/api/` found roughly a third with no `useRateLimit()` call at all — fork, star, tag, branch/commit
+  `DELETE` under `/api/` found roughly a third with no `useRateLimit()` call at all: fork, star, tag, branch/commit
   create, GMR create/comment/merge/status, discussion create/edit/delete/comment, recipe photo delete, avatar delete,
   profile update, and ingredient create. All now carry the same DB-backed limiter every other mutating route already
-  used, keyed per-user and sized to the action (a recipe delete at 10/10min, a GMR comment at 30/10min, and so on) — an
+  used, keyed per-user and sized to the action (a recipe delete at 10/10min, a GMR comment at 30/10min, and so on). An
   Explore-agent audit of every existing E2E test confirmed none of them call a newly-limited endpoint enough times in
   one run to trip its new limit
 - **`recipes/[id]/simulate-activity` gated structurally, not by a client flag (2026-08-09)**: the tour-demo endpoint
   that seeds a fake commit + GMR onto a fresh recipe had no limiter and no ownership check beyond the recipe's own
-  visibility rule — reachable, repeatedly, against any recipe by anyone signed in. Now rate-limited (5/hour) **and**
+  visibility rule, so it was reachable, repeatedly, against any recipe by anyone signed in. Now rate-limited (5/hour) **and**
   refuses unless the target branch has exactly one commit, which only a just-created recipe satisfies; a `?tour=1`-style
   flag would only move the trust decision to the caller being bounded
 - **LIKE-wildcard escaping in ingredient/tag/explore search (2026-08-09)**: `%`/`_` in a search query were passed
-  straight into `LIKE`, so a search for `%` matched everything and `_` matched any single character — not exploitable
-  beyond an odd result set (no data disclosure), but a real correctness bug in every text search in the app.
+  straight into `LIKE`, so a search for `%` matched everything and `_` matched any single character. It was not exploitable
+  beyond an odd result set (no data disclosure), but it was a real correctness bug in every text search in the app.
   `escapeLikePattern()` is now the one place that decision lives
 - **Dashboard "recently edited" restored, and a clock-skew bug found while doing it (2026-08-09)**: the one thing in
-  the dashboard sidebar that had no duplicate anywhere else — a slice of the user's own most-recently-updated recipes —
+  the dashboard sidebar that had no duplicate anywhere else (a slice of the user's own most-recently-updated recipes)
   was dropped when the sidebar was removed (see below) and never rebuilt. Restored on the dashboard page itself, with
   an `Intl.RelativeTimeFormat` label. Building it surfaced a real, still-open issue: on this local dev box a
   freshly-created recipe's `updated_at`, read back immediately, could be measurably ahead of the reading Node process's
-  own clock — not chased to a root cause (the ROADMAP entry explains why guessing at a timezone fix is worse than the
+  own clock. It was not chased to a root cause (the ROADMAP entry explains why guessing at a timezone fix is worse than the
   bug), but the label is defensively clamped so it can never display a future time regardless of which way a real skew
   runs
 - **Discussions (2026-08-09)**: threads on a recipe, and on any single commit, with Markdown bodies, replies, four
-  categories (idea/question/issue/praise) and an open→resolved state. One table pair serves both scopes — a note about a
+  categories (idea/question/issue/praise) and an open→resolved state. One table pair serves both scopes: a note about a
   snapshot has the same shape as a note about the dish, and only where it is listed differs. The panel sits **under** the
   steps rather than beside them: the reading column is capped at `max-w-4xl` because that is the measure a recipe reads
   at, a rail would come out of that budget, and below `lg` a rail _is_ the stacked version anyway. Commit-level threads
-  open in a modal from the history page so the timeline stays scannable. Moderation splits deliberately — only the author
+  open in a modal from the history page so the timeline stays scannable. Moderation splits deliberately: only the author
   may edit the text, while the recipe owner may resolve or delete, because moderation is not authorship
 - **Recipe photo (2026-08-09)**: exactly one serving-suggestion image per recipe, rendered **between the ingredients and
-  the steps** — the seam where the reader stops asking "what do I need" and starts asking "how do I make it". Stored as a
-  `MEDIUMBLOB` row, not a file (the deploy swaps `.output/` by rename and nothing else is backed up — see ROADMAP).
+  the steps**, the seam where the reader stops asking "what do I need" and starts asking "how do I make it". Stored as a
+  `MEDIUMBLOB` row, not a file (the deploy swaps `.output/` by rename and nothing else is backed up; see ROADMAP).
   Downscaled to 1600px WebP **in the browser**, so the server never runs an image decoder; it reads the header only
   (`imageProbe.ts`) and re-validates format, dimensions and length. Delivered content-addressed (`?v=<sha256>` +
   `immutable`). Revises locked decision 2
 - **Navigation, de-duplicated (2026-08-09)**: the 256px dashboard `<aside>` is gone. It listed four destinations that
-  were already in the header nav and again in the user dropdown — fifteen entries for nine destinations, with no rule
+  were already in the header nav and again in the user dropdown: fifteen entries for nine destinations, with no rule
   about which copy to use. Navigation now lives in exactly two places with distinct jobs: `<LayoutMainNav>` for
   destinations you move between while working, `<LayoutUserDropdown>` for your account. Removing it also fixed the
   logo/content alignment for free: header and content are now the same `max-w-7xl` container centred in the same
-  viewport, so they line up at every width — which retired a block of magic numbers in `main.css`
+  viewport, so they line up at every width. That retired a block of magic numbers in `main.css`
   (`--gm-shell-lead`/`--gm-shell-trail`) that only worked from `lg` up. `tests/e2e/layout-alignment.spec.ts` measures the
   logo's left edge against the content's; `nav.spec.ts` asserts each destination appears **once**
 - **Identicon-QR avatars (2026-08-09)**: a user with no uploaded picture gets a mark generated from their username, in
-  two renderings picked by size. `badge` (`lg`+) is an identicon bezel around a soft-dotted QR of their profile URL —
-  scan it and it opens the profile. `mark` (below `lg`) is the identicon alone, because a QR at 32px is not a small QR,
-  it is grey noise. The header shows the avatar instead of the username, which also removed the variable-width string
-  that used to shove the whole control cluster around by ~70px. Machine readability is **measured**, not assumed:
-  `tests/unit/identiconAvatar.test.ts` rasterises the real SVG and samples every module centre against the matrix —
+  two renderings picked by size. `badge` (`lg`+) is an identicon bezel around a soft-dotted QR of their profile URL;
+  scanning it opens the profile. `mark` (below `lg`) is the identicon alone, because at 32px a QR code is only
+  grey noise. The header shows the avatar instead of the username, which also removed the variable-width string
+  that used to shove the whole control cluster around by ~70px. Machine readability is **measured**:
+  `tests/unit/identiconAvatar.test.ts` rasterises the real SVG and samples every module centre against the matrix:
   exact from 192px (`size="2xl"`, what the profile page uses), inside the error-correction budget at 160px
 - **Auth**: register, login, logout, email verification, password reset, session rotation, rate limiting
 - **Recipe CRUD**: create (transactional), read, update metadata, delete (with FK cleanup)
@@ -565,12 +565,12 @@ The German Bundeslebensmittelschlüssel 4.0 (Max Rubner-Institut, Dec 2025, free
 - **Tags**: attach/detach, filter in explore
 - **Explore**: public browse with text search, difficulty/tag filter, sort (stars/newest/forks), pagination
 - **User profiles**: public profile (recipes, starred, bio, avatar), settings page
-- **GourMerge Requests**: full lifecycle — create, list, view with diff, comment (Markdown), status (draft→open→closed/merged), three-way snapshot merge with conflict detection + **interactive per-conflict resolution** (keep source/target), merge commit. Merge is transactional with a `SELECT … FOR UPDATE` guard against concurrent double-merge; merged ingredient `sortOrder` is normalized
-- **i18n**: 4 locales (DE/EN/FR/IT), 516 keys in parity, 4-way CI gate — incl. transactional emails (verification + password reset) localized per recipient's `preferredLocale`
+- **GourMerge Requests**: full lifecycle with create, list, view with diff, comment (Markdown), status (draft→open→closed/merged), three-way snapshot merge with conflict detection + **interactive per-conflict resolution** (keep source/target), merge commit. Merge is transactional with a `SELECT … FOR UPDATE` guard against concurrent double-merge; merged ingredient `sortOrder` is normalized
+- **i18n**: 4 locales (DE/EN/FR/IT), 516 keys in parity, 4-way CI gate, incl. transactional emails (verification + password reset) localized per recipient's `preferredLocale`
 - **Onboarding**: concept explainer, interactive skippable/re-runnable tour, guided first-recipe flow, contextual help (`<HelpHint>`), glossary page
-- **GDPR self-service**: data export (Art. 15/20) and account erasure (Art. 17) at `/legal/data-request`, both confirmed by email rather than by a session. Exports are built per request and streamed — never written to disk — and exclude the password hash. Erasure **hard-deletes the account row** and lets the user choose whether recipes go too; the four RESTRICT FKs are handled by reassigning attribution that lives inside other people's recipes to a shared `ghost` account first (see §4). Retention windows are stated in the policy **and enforced** by `npm run db:cleanup`
-- **Legal texts**: imprint + privacy policy fully translated in all four locales (they were hardcoded German with only the title translated). Contact email rendered via `<CommonObfuscatedEmail>` — readable without JS, `aria-hidden` decoy against scrapers, `mailto:` attached only on mount, so the address never appears in the SSR payload
-- **Dirty-state guard**: edit page navigation guard via UModal (not `window.confirm` — suppressed in Chromium)
+- **GDPR self-service**: data export (Art. 15/20) and account erasure (Art. 17) at `/legal/data-request`, both confirmed by email rather than by a session. Exports are built per request and streamed (never written to disk) and exclude the password hash. Erasure **hard-deletes the account row** and lets the user choose whether recipes go too; the four RESTRICT FKs are handled by reassigning attribution that lives inside other people's recipes to a shared `ghost` account first (see §4). Retention windows are stated in the policy **and enforced** by `npm run db:cleanup`
+- **Legal texts**: imprint + privacy policy fully translated in all four locales (they were hardcoded German with only the title translated). Contact email rendered via `<CommonObfuscatedEmail>`: readable without JS, `aria-hidden` decoy against scrapers, `mailto:` attached only on mount, so the address never appears in the SSR payload
+- **Dirty-state guard**: edit page navigation guard via UModal (not `window.confirm`, which Chromium suppresses)
 - **Delete recipe**: from edit page with confirmation modal; cascade handles all FK cleanup
 - **Layout**: default (header nav + footer), dashboard (sidebar + max-w-7xl header/footer), auth (minimal)
 - **PWA**: icons generated, manifest configured, autoUpdate service worker
@@ -578,74 +578,74 @@ The German Bundeslebensmittelschlüssel 4.0 (Max Rubner-Institut, Dec 2025, free
 - **Security headers**: static headers in `nuxt.config.ts` `routeRules`; CSP set per-request in `server/plugins/csp.ts` (nonce-based `script-src` in production)
 - **Markdown sanitization**: user step content sanitized via allowlist before `v-html` (`app/utils/markdown.ts`)
 - **Brand**: GourMerge SVG logo (`BrandLogo.vue`), saffron primary ramp, DM Sans + JetBrains Mono fonts
-- **Two-factor authentication (opt-in)**: TOTP per RFC 6238, working with any authenticator app — the enrolment URI uses the standard SHA1 / 6-digit / 30 s parameters because Google Authenticator _ignores_ non-default values and would otherwise import a secret whose codes never validate. Secret encrypted at rest (AES-256-GCM), ten bcrypt-hashed single-use recovery codes shown once, replay protection on the accepted time step, 8-per-5-min rate limit on every verify path. The post-password state is a short-lived HMAC-signed cookie, **not** a session — a half-authenticated session would make `requireUserSession()` succeed and render the second factor decorative. Disabling requires the password, not a code, so a broken phone cannot lock you out of the setting
-- **Passkeys (opt-in, WebAuthn/FIDO2)**: usernameless sign-in with no email, password or TOTP code — add one in `/settings`, then use the login page's passkey button. A successful assertion completes the login outright, and that is stronger rather than weaker: the private key never leaves the authenticator and the origin is bound into the assertion, so it is phishing-resistant in a way TOTP is not. TOTP stays the second factor for **password** logins. Enrolment requires a session (the trust anchor) and the client-supplied `userName` is discarded in favour of it. Challenges are DB-backed, single-use, 5-min TTL — not session-backed, because a passwordless login has no session yet and Passenger's multiple processes would split the two halves of a ceremony. Counter regression is refused as the clone signal, except that `0` is tolerated because synced passkeys always report it. Two things must be stated explicitly and are easy to lose: `residentKey: 'required'` (nuxt-auth-utils replaces SimpleWebAuthn's `authenticatorSelection` wholesale, which silently makes the credential non-discoverable and the whole feature unusable) and `userVerification: 'required'` **plus an own `userVerified` assertion** (the library verifies with a hardcoded `requireUserVerification: false`, so a presence-only assertion would otherwise bypass password _and_ 2FA). Both are covered by `tests/e2e/passkey.spec.ts`, which drives a real virtual authenticator
-- **Inactive-account deletion**: three years without a login → hard delete, preceded by warning emails at 6 months, 4 weeks and 24 hours (`npm run db:inactive`, nightly). The clock is `users.last_login_at` and **only a login resets it** — a notice does not, or it would extend the period it warns about. Nothing is deleted unless the final notice went out ≥24 h earlier, which is what stops the first post-deploy run from deleting every dormant account unwarned
-- **One canonical host, enforced in the app**: `server/middleware/canonical-host.ts` folds `www.` into the apex (301 for GET/HEAD, 308 otherwise so a POST keeps its body), skipping `/.well-known/`. It lives in the app rather than in Apache config because there is **no `.htaccess` on this host** — Netcup's Node.js panel configures Passenger and every environment variable directly — and because an nginx proxy sits in front of Apache, so a rewrite rule there is not guaranteed to run. Only a leading `www.` is stripped: redirecting any host that disagrees with `NUXT_PUBLIC_APP_URL` could loop if that variable were itself wrong, whereas this cannot, and `/api/health` surfaces every other mismatch as a 503. It matters beyond tidiness — the WebAuthn RP ID **is** the hostname, so a passkey enrolled on `www` does not exist on the apex
-- **Maintenance tasks run over HTTP, not cron**: `GET /tasks/retention` and `GET /tasks/inactive-accounts`, guarded by `CRON_SECRET` (constant-time compare; unset means refuse everything). A shell cron cannot work on this host — the deploy ships only `.output/` + `app.js`, so there is no `scripts/`, no `package.json` and no `.env`, and a Plesk scheduled task does not inherit the **Node.js custom environment variables** Passenger injects into the app process. Plesk's **"Fetch a URL"** task type runs the job inside the app instead. Sweep logic in `server/utils/{retention,inactivity}Sweep.ts`; the CLI scripts stay for local use and share `maintenanceConfig.json` so the paths cannot drift
+- **Two-factor authentication (opt-in)**: TOTP per RFC 6238, working with any authenticator app. The enrolment URI uses the standard SHA1 / 6-digit / 30 s parameters because Google Authenticator _ignores_ non-default values and would otherwise import a secret whose codes never validate. Secret encrypted at rest (AES-256-GCM), ten bcrypt-hashed single-use recovery codes shown once, replay protection on the accepted time step, 8-per-5-min rate limit on every verify path. The post-password state is a short-lived HMAC-signed cookie, **not** a session, because a half-authenticated session would make `requireUserSession()` succeed and render the second factor decorative. Disabling requires the password, not a code, so a broken phone cannot lock you out of the setting
+- **Passkeys (opt-in, WebAuthn/FIDO2)**: usernameless sign-in with no email, password or TOTP code. Add one in `/settings`, then use the login page's passkey button. A successful assertion completes the login outright, and that is stronger rather than weaker: the private key never leaves the authenticator and the origin is bound into the assertion, so it is phishing-resistant in a way TOTP is not. TOTP stays the second factor for **password** logins. Enrolment requires a session (the trust anchor) and the client-supplied `userName` is discarded in favour of it. Challenges are DB-backed, single-use, 5-min TTL. They are not session-backed, because a passwordless login has no session yet and Passenger's multiple processes would split the two halves of a ceremony. Counter regression is refused as the clone signal, except that `0` is tolerated because synced passkeys always report it. Two things must be stated explicitly and are easy to lose: `residentKey: 'required'` (nuxt-auth-utils replaces SimpleWebAuthn's `authenticatorSelection` wholesale, which silently makes the credential non-discoverable and the whole feature unusable) and `userVerification: 'required'` **plus an own `userVerified` assertion** (the library verifies with a hardcoded `requireUserVerification: false`, so a presence-only assertion would otherwise bypass password _and_ 2FA). Both are covered by `tests/e2e/passkey.spec.ts`, which drives a real virtual authenticator
+- **Inactive-account deletion**: three years without a login → hard delete, preceded by warning emails at 6 months, 4 weeks and 24 hours (`npm run db:inactive`, nightly). The clock is `users.last_login_at` and **only a login resets it**. A notice does not, or it would extend the period it warns about. Nothing is deleted unless the final notice went out ≥24 h earlier, which is what stops the first post-deploy run from deleting every dormant account unwarned
+- **One canonical host, enforced in the app**: `server/middleware/canonical-host.ts` folds `www.` into the apex (301 for GET/HEAD, 308 otherwise so a POST keeps its body), skipping `/.well-known/`. It lives in the app rather than in Apache config because there is **no `.htaccess` on this host** (Netcup's Node.js panel configures Passenger and every environment variable directly) and because an nginx proxy sits in front of Apache, so a rewrite rule there is not guaranteed to run. Only a leading `www.` is stripped: redirecting any host that disagrees with `NUXT_PUBLIC_APP_URL` could loop if that variable were itself wrong, whereas this cannot, and `/api/health` surfaces every other mismatch as a 503. It matters beyond tidiness: the WebAuthn RP ID **is** the hostname, so a passkey enrolled on `www` does not exist on the apex
+- **Maintenance tasks run over HTTP, not cron**: `GET /tasks/retention` and `GET /tasks/inactive-accounts`, guarded by `CRON_SECRET` (constant-time compare; unset means refuse everything). A shell cron cannot work on this host: the deploy ships only `.output/` + `app.js`, so there is no `scripts/`, no `package.json` and no `.env`, and a Plesk scheduled task does not inherit the **Node.js custom environment variables** Passenger injects into the app process. Plesk's **"Fetch a URL"** task type runs the job inside the app instead. Sweep logic in `server/utils/{retention,inactivity}Sweep.ts`; the CLI scripts stay for local use and share `maintenanceConfig.json` so the paths cannot drift
 - **The inactivity sweep refuses to run without SMTP**: `sendMail()` falls back to a `streamTransport` that succeeds while delivering nothing (deliberate, so local dev is not blocked), which for this job would stamp the notice column and hard-delete the account 24h later unwarned. Both the endpoint and the CLI now stop; dry runs still work
 
-### ✓ Complete (test + delivery pipeline)
+### Complete (test + delivery pipeline)
 
-- **Tests**: **unit** — 304 cases across 24 files (`tests/unit/`: diff, merge incl. resolution, units incl. the display read path, slug, uuid, nutrition, markdown-XSS, emailI18n, i18n-gate, totp, webauthn, seal/pendingTotp, dataRequest, inactivityEmails, ui, likeEscape, imageProbe, identiconAvatar), **86.9% line coverage** against a 75/75/70 gate in CI. **E2E/API/a11y** — 88 Playwright specs across 23 files (`tests/e2e/`): auth lifecycle + authz matrix, recipe CRUD/fork/star, merge conflict-detect → interactive resolve → verify → immutable, discussions, recipe photo + avatar upload, reporting + admin moderation, ingredient create/edit/delete, branch viewing, private-recipe visibility, SSR render, register UI journey, passkey ceremonies over CDP, the guided tour, and axe scans (critical-gated). Run via `npm run test:e2e` + the `E2E` workflow on master
-  - `passkey.spec.ts` drives Chrome's **WebAuthn virtual authenticator** over CDP, because nothing weaker proves anything: the browser will not sign without an authenticator and a stubbed `navigator.credentials` would only test the stub — it is what caught both passkey bugs. Two constraints to know before touching it: navigating while an authenticator is attached crashes the renderer, so every ceremony runs on **one page load** via in-page fetches; and it needs `CI=1` (built artifact) like the rest of the suite
+- **Tests**: **unit**: 304 cases across 24 files (`tests/unit/`: diff, merge incl. resolution, units incl. the display read path, slug, uuid, nutrition, markdown-XSS, emailI18n, i18n-gate, totp, webauthn, seal/pendingTotp, dataRequest, inactivityEmails, ui, likeEscape, imageProbe, identiconAvatar), **86.9% line coverage** against a 75/75/70 gate in CI. **E2E/API/a11y**: 88 Playwright specs across 23 files (`tests/e2e/`): auth lifecycle + authz matrix, recipe CRUD/fork/star, merge conflict-detect → interactive resolve → verify → immutable, discussions, recipe photo + avatar upload, reporting + admin moderation, ingredient create/edit/delete, branch viewing, private-recipe visibility, SSR render, register UI journey, passkey ceremonies over CDP, the guided tour, and axe scans (critical-gated). Run via `npm run test:e2e` + the `E2E` workflow on master
+  - `passkey.spec.ts` drives Chrome's **WebAuthn virtual authenticator** over CDP, because nothing weaker proves anything: the browser will not sign without an authenticator and a stubbed `navigator.credentials` would only test the stub. This spec is what caught both passkey bugs. Two constraints to know before touching it: navigating while an authenticator is attached crashes the renderer, so every ceremony runs on **one page load** via in-page fetches; and it needs `CI=1` (built artifact) like the rest of the suite
 - **CI** (`ci.yml`): lint → **design:check** → format:check → knip → typecheck → i18n → `npm audit` (critical) → migrate → test **with coverage gate** → build → upload artifact. Build stamps `NUXT_SENTRY_RELEASE` = commit SHA
 - **CD** (`deploy.yml`): preflight secrets → E2E gate → `production` environment gate → checkout of the CI-built SHA → migrate from the runner (fail-fast) → **tar-over-ssh** into `.output.new` → atomic rename swap (previous kept as `.output.prev`) → restart → polling smoke test → **auto-rollback on smoke-test failure**. Password auth via `sshpass` over plain `ssh` (Netcup offers no key auth; `rsync` and `gzip` do not exist in the chroot)
 - **Dependabot + audit gate**: `.github/dependabot.yml` proposes high/moderate fixes; CI fails on critical
 
-### ✗ Not yet done / deliberately deferred
+### Not yet done / deliberately deferred
 
-- **Dedicated component-mount tests**: not added — covered functionally by the E2E journeys
-- ~~E2E does not gate deploy~~ — **now gated.** `deploy.yml`'s first step polls the GitHub API for the `e2e.yml` run matching `workflow_run.head_sha` and refuses to deploy unless it concluded `success` (30 min deadline, newest run wins so a re-run supersedes). It runs before the migrate step, so a failed E2E never touches the production DB. Caveat: re-running `CI` alone without a corresponding E2E run for that SHA will time out — dispatch `E2E` for the commit first
+- **Dedicated component-mount tests**: not added; covered functionally by the E2E journeys
+- ~~E2E does not gate deploy~~: **now gated.** `deploy.yml`'s first step polls the GitHub API for the `e2e.yml` run matching `workflow_run.head_sha` and refuses to deploy unless it concluded `success` (30 min deadline, newest run wins so a re-run supersedes). It runs before the migrate step, so a failed E2E never touches the production DB. Caveat: re-running `CI` alone without a corresponding E2E run for that SHA will time out; dispatch `E2E` for the commit first
 - **Staging environment**: ROADMAP §8 describes local → staging → production; only local and production exist
-- **Manual/infra steps** (owner actions, not code) — all documented in `docs/RUNBOOK.md`. Done as of 2026-08-06: wildcard SSL + HSTS, all 12 runtime variables injected as Netcup **Node.js custom environment variables** (there is no `.htaccess` on this host — Passenger is configured by the panel), production migrated and seeded, `scripts/server-backup.sh` installed, and a **restore drill passed** (counts + `CHECKSUM TABLE` identical, `JSON_VALID` 1192/1192/1192, utf8mb4 intact — which matters because the host's `mysqldump` is MariaDB's against a MySQL 8.4 server). Still open: schedule the 03:15 Plesk backup task, and point UptimeRobot at `/api/health`
-- ~~Majors held~~ — **all taken (2026-08-05):** `zod` 4.4.3, `eslint` 10.8.0, `typescript` 6.0.3, `vue-router` 5.2.0, `@nuxtjs/i18n` 10.6.0, `@vite-pwa/nuxt` 1.1.1, `drizzle-kit` 0.31.10, `diff-match-patch-es` 2.0.0, plus `nuxt` 4.5.1 / `vite` 8.2.0. **Still blocked: `typescript` 7** — `@nuxt/ui@4.10.0` declares peer `typescript "^5.6.3 || ^6.0.0"`, so npm refuses 7. Re-check when Nuxt UI widens that range.
+- **Manual/infra steps** (owner actions, not code), all documented in `docs/RUNBOOK.md`. Done as of 2026-08-06: wildcard SSL + HSTS, all 12 runtime variables injected as Netcup **Node.js custom environment variables** (there is no `.htaccess` on this host; Passenger is configured by the panel), production migrated and seeded, `scripts/server-backup.sh` installed, and a **restore drill passed** (counts + `CHECKSUM TABLE` identical, `JSON_VALID` 1192/1192/1192, utf8mb4 intact, which matters because the host's `mysqldump` is MariaDB's against a MySQL 8.4 server). Still open: schedule the 03:15 Plesk backup task, and point UptimeRobot at `/api/health`
+- ~~Majors held~~: **all taken (2026-08-05):** `zod` 4.4.3, `eslint` 10.8.0, `typescript` 6.0.3, `vue-router` 5.2.0, `@nuxtjs/i18n` 10.6.0, `@vite-pwa/nuxt` 1.1.1, `drizzle-kit` 0.31.10, `diff-match-patch-es` 2.0.0, plus `nuxt` 4.5.1 / `vite` 8.2.0. **Still blocked: `typescript` 7.** `@nuxt/ui@4.10.0` declares peer `typescript "^5.6.3 || ^6.0.0"`, so npm refuses 7. Re-check when Nuxt UI widens that range.
 
-- ~~**UI consistency audit**~~ — **done (2026-08-05).** See §16.
+- ~~**UI consistency audit**~~: **done (2026-08-05).** See §16.
 
 ---
 
 ## 13. Known Quirks and Non-Obvious Decisions
 
-- **`UInput type="number"` coerces to a JS `number` unconditionally** — `Input.vue`'s `updateInput()` checks `props.type === 'number'` directly, not the `.number` v-model modifier the name implies, so a plain `v-model` on a number-type field silently stops being a string the moment a real value is typed (empty stays a string: `looseToNumber('')` is `NaN`, which returns the input unchanged). Broke `NewIngredientModal.vue`'s nutrition fields in production — `.trim()` on the coerced number threw before the request was ever sent (2026-08-12, see CHANGELOG). Bind those fields explicitly with `:model-value` + `@update:model-value="(v) => (x = String(v))"`, same pattern `IngredientRow.vue`'s quantity used. For any decimal input (money, nutrition), also use `type="text" inputmode="decimal"` rather than `type="number"` — the native number input rejects a comma decimal separator in most locales, which matters in a German-first app.
-- **A `v-if`'d trailing button in a flex row changes its siblings' width, not just its own visibility** — `IngredientRow.vue`'s edit-pencil was `v-if`'d on `canEdit`, so an owned row had one more flex child than a catalog row and the (flex-1) name field got less width on the owned row — visibly different, even though the button itself is invisible until hover either way (2026-08-12, see CHANGELOG). Fix for any conditional trailing action in a flex/grid list row: always render it, toggle `invisible` (or `opacity`) + `disabled` instead of `v-if`/`v-show`, so every row reserves the same layout space regardless of which actions apply.
-- **`window.confirm` is suppressed in Chromium dev environments** — always use `UModal` for async confirmations. Replaced in edit page (`onBeforeRouteLeave`).
+- **`UInput type="number"` coerces to a JS `number` unconditionally**: `Input.vue`'s `updateInput()` checks `props.type === 'number'` directly, not the `.number` v-model modifier the name implies, so a plain `v-model` on a number-type field silently stops being a string the moment a real value is typed (empty stays a string: `looseToNumber('')` is `NaN`, which returns the input unchanged). Broke `NewIngredientModal.vue`'s nutrition fields in production: `.trim()` on the coerced number threw before the request was ever sent (2026-08-12, see CHANGELOG). Bind those fields explicitly with `:model-value` + `@update:model-value="(v) => (x = String(v))"`, same pattern `IngredientRow.vue`'s quantity used. For any decimal input (money, nutrition), also use `type="text" inputmode="decimal"` rather than `type="number"`, because the native number input rejects a comma decimal separator in most locales, which matters in a German-first app.
+- **A `v-if`'d trailing button in a flex row changes its siblings' width, not just its own visibility**: `IngredientRow.vue`'s edit-pencil was `v-if`'d on `canEdit`, so an owned row had one more flex child than a catalog row and the (flex-1) name field got less width on the owned row. It was visibly different, even though the button itself is invisible until hover either way (2026-08-12, see CHANGELOG). Fix for any conditional trailing action in a flex/grid list row: always render it, toggle `invisible` (or `opacity`) + `disabled` instead of `v-if`/`v-show`, so every row reserves the same layout space regardless of which actions apply.
+- **`window.confirm` is suppressed in Chromium dev environments**: always use `UModal` for async confirmations. Replaced in edit page (`onBeforeRouteLeave`).
 - **USelect in Nuxt UI v4** uses `:items` (not `:options`) and requires `value-key="value"` to bind object arrays correctly.
-- **TipTap SSR**: `@tiptap/vue-3` v3 `useEditor` has **no** `immediatelyRender` option (passing it fails typecheck) — SSR safety comes from wrapping `<StepEditor>` in `<ClientOnly>` plus the `v-if="editor"` guard. Empty-state mismatch (`''` vs `'<p></p>'`) causes constant `setContent()` resets — normalize via `isEmpty()` helper.
-- **Dietary options**: empty string `value: ''` causes Nuxt UI v4 falsy-value handling to break USelect — use sentinel `'none'` instead.
+- **TipTap SSR**: `@tiptap/vue-3` v3 `useEditor` has **no** `immediatelyRender` option (passing it fails typecheck); SSR safety comes from wrapping `<StepEditor>` in `<ClientOnly>` plus the `v-if="editor"` guard. Empty-state mismatch (`''` vs `'<p></p>'`) causes constant `setContent()` resets; normalize via `isEmpty()` helper.
+- **Dietary options**: empty string `value: ''` causes Nuxt UI v4 falsy-value handling to break USelect; use sentinel `'none'` instead.
 - **`isDirty` tracking**: compare via `JSON.stringify` of `{ ingredients, stepsForSnapshot }`. Set `initialSnapshot` synchronously after data loads in `loadBranchSnapshot()`, not in a separate `watch`. Exclude local UI state (`translationsOpen`) from the snapshot.
 - **Rate limiting across Passenger processes**: in-memory rate limiting is NOT multi-process safe. The `rate_limit_hits` DB table is the correct approach.
 - **Ingredient nutrition source**: `ingredient_nutrition.source = 'swiss-blv-v7'` identifies Swiss BLV rows. Manually curated entries use `'curated'`.
-- **UDropdownMenu navigation**: use `to:` for navigation items, `click:` for actions. Items need `color: 'neutral'` so they don't default to the primary highlight. Separately, the menu items (incl. their leading **icons**) carry a colour `transition` that **fades the highlight out on open**, reading as a one-frame flash. `transition` does not inherit, so `main.css` disables it on `[role='menu'] [role='menuitem']`, its `::before`, **and every descendant (`*`)** — the icon flash was only fixed once the descendant selector was added (verified frame-by-frame with Playwright).
+- **UDropdownMenu navigation**: use `to:` for navigation items, `click:` for actions. Items need `color: 'neutral'` so they don't default to the primary highlight. Separately, the menu items (incl. their leading **icons**) carry a colour `transition` that **fades the highlight out on open**, reading as a one-frame flash. `transition` does not inherit, so `main.css` disables it on `[role='menu'] [role='menuitem']`, its `::before`, **and every descendant (`*`)**. The icon flash was only fixed once the descendant selector was added (verified frame-by-frame with Playwright).
 - **Multi-statement inline handlers break the build**: a `@click="a = 1\n b = 2"` (multiple statements on separate lines, no semicolons) fails the Vue macro parser at build time. Use a single expression or a `function` in `<script setup>`. (Was masked while CI was red on typecheck.)
-- **Inline handlers must not leak a return value on Nuxt UI components**: `@click="open = true"` or `@click="editor.chain()…run()"` compiles to `($event) => (expr)`, whose return type is the assigned value / `boolean`. TypeScript's void-return bivariance (a `() => T` _is_ assignable to `() => void`) **does not apply** because Nuxt UI 4.9 types the click prop as the **union** `((e: MouseEvent) => void | Promise<void>) | […][] | undefined` — the special rule only fires when the target return type is exactly `void`. Result: `error TS2322` on **components** but not on native `<button>`, which is why only some sites broke. Fix: wrap in a block arrow so it returns `undefined` — `@click="() => { open = true }"`. Inside a closure the `v-if="editor"` narrowing is lost, so use `editor?.chain()`. This surfaced from the Nuxt UI 4.6→4.9 bump and broke 11 call sites.
+- **Inline handlers must not leak a return value on Nuxt UI components**: `@click="open = true"` or `@click="editor.chain()…run()"` compiles to `($event) => (expr)`, whose return type is the assigned value / `boolean`. TypeScript's void-return bivariance (a `() => T` _is_ assignable to `() => void`) **does not apply** because Nuxt UI 4.9 types the click prop as the **union** `((e: MouseEvent) => void | Promise<void>) | […][] | undefined`; the special rule only fires when the target return type is exactly `void`. Result: `error TS2322` on **components** but not on native `<button>`, which is why only some sites broke. Fix: wrap in a block arrow so it returns `undefined`: `@click="() => { open = true }"`. Inside a closure the `v-if="editor"` narrowing is lost, so use `editor?.chain()`. This surfaced from the Nuxt UI 4.6→4.9 bump and broke 11 call sites.
 - **Nuxt UI v4 `USelect` uses `:items` + `value-key`, never `:options`** (a v3 holdover that is silently ignored → empty dropdowns). Fixed in explore filters + GMR-create branch pickers.
-- **Every environment is MySQL 8.4 — never MariaDB**: the docs specified MariaDB for months while production (**8.4.11**) and local dev were both MySQL; only `ci.yml`/`e2e.yml` ran `mariadb:11`, making the **test suite the single MariaDB in the project**. That is not academic: the ingredient autocomplete and ingredient-name resolution run raw `JSON_UNQUOTE(JSON_EXTRACT(…))` with a collation-sensitive `LIKE`, and explore search uses `MATCH … AGAINST`. MariaDB implements `JSON` as `LONGTEXT` + a CHECK constraint, so comparison, collation and full-text tokenizer/stopword behaviour all differ from MySQL's native JSON type — German umlaut and accent matching was being tested on one engine and served from another. CI, E2E and `docker-compose.yml` are now pinned to `mysql:8.4`. The MySQL image needs `MYSQL_*` env vars (not `MARIADB_*`) and `mysqladmin ping -h 127.0.0.1` as its healthcheck — `-h 127.0.0.1` forces TCP so the check cannot pass against the init-phase unix socket before the network listener is up.
-- **Drizzle migration meta MUST be tracked**: `server/database/migrations/meta/` (the `_journal.json` + per-migration snapshots) was previously gitignored, which silently broke `drizzle-kit migrate` on any fresh checkout (CI/deploy) — no journal means no migrations applied. It is now versioned; never re-ignore it.
+- **Every environment is MySQL 8.4, never MariaDB**: the docs specified MariaDB for months while production (**8.4.11**) and local dev were both MySQL; only `ci.yml`/`e2e.yml` ran `mariadb:11`, making the **test suite the single MariaDB in the project**. This had real consequences: the ingredient autocomplete and ingredient-name resolution run raw `JSON_UNQUOTE(JSON_EXTRACT(…))` with a collation-sensitive `LIKE`, and explore search uses `MATCH … AGAINST`. MariaDB implements `JSON` as `LONGTEXT` + a CHECK constraint, so comparison, collation and full-text tokenizer/stopword behaviour all differ from MySQL's native JSON type, so German umlaut and accent matching was being tested on one engine and served from another. CI, E2E and `docker-compose.yml` are now pinned to `mysql:8.4`. The MySQL image needs `MYSQL_*` env vars (not `MARIADB_*`) and `mysqladmin ping -h 127.0.0.1` as its healthcheck; `-h 127.0.0.1` forces TCP so the check cannot pass against the init-phase unix socket before the network listener is up.
+- **Drizzle migration meta MUST be tracked**: `server/database/migrations/meta/` (the `_journal.json` + per-migration snapshots) was previously gitignored, which silently broke `drizzle-kit migrate` on any fresh checkout (CI/deploy): no journal means no migrations applied. It is now versioned; never re-ignore it.
 - **Dead-code gate (`knip`)**: `npm run knip` (config in `knip.json`, enforced in CI) flags unused files/exports/deps. The mysql2 pool is closed gracefully on Nitro shutdown via `server/plugins/database.ts`.
-- **Nuxt path-prefixes components in subdirectories**: `components/common/HelpHint.vue` registers as `<CommonHelpHint>`, not `<HelpHint>` (same for `<CommonGlossaryTerm>`, `<CommonBrandLogo>`). Using the bare name silently renders nothing — this is why `GlossaryTerm`/`HelpHint` sat unused until adopted onto the fork/merge controls + history page.
+- **Nuxt path-prefixes components in subdirectories**: `components/common/HelpHint.vue` registers as `<CommonHelpHint>`, not `<HelpHint>` (same for `<CommonGlossaryTerm>`, `<CommonBrandLogo>`). Using the bare name silently renders nothing, which is why `GlossaryTerm`/`HelpHint` sat unused until adopted onto the fork/merge controls + history page.
 - **a11y axe gate**: `tests/e2e/a11y.spec.ts` fails CI on any **critical** axe violation; **serious** ones are logged. Fixed: missing `<html lang>` (set from i18n locale in `app.vue`) and 5 unnamed comboboxes (locale switchers + explore filters now have `aria-label`). **Brand-orange contrast** is now handled **light-mode only**: `main.css` darkens `primary-300…950` and the muted/dimmed neutral text under `:root:not(.dark)` (dark mode keeps the lighter palette, which already contrasts on dark bg). Difficulty + dietary badges and the in-text Sentry privacy link were darkened too (light `text-*-700`, `dark:text-*-400`). Modal focus-traps/keyboard-nav rely on Nuxt UI defaults (not independently audited).
 - **Double focus indicator**: the global `:focus-visible { outline }` fallback stacked on top of Nuxt UI's own ring on inputs/buttons. `main.css` now suppresses the global outline on native form controls + Reka widget roles (`:is(input, textarea, select, button, [role=...]):focus-visible { outline: none }`) so they show a single ring; links/custom elements keep the fallback outline.
 - **App shell (fixed chrome, scroll-in-content)**: `default` + `dashboard` layouts are `flex flex-col h-dvh overflow-hidden`; the header, footer (and dashboard sidebar) are `shrink-0`, and **only `<main>` scrolls** (`flex-1 overflow-y-auto`). `h-dvh` (not `h-screen`) handles mobile browser chrome. Header is no longer `sticky` (it's a flex row in the shell).
-- **Custom scrollbars**: `main.css` styles a slim, rounded, themed thumb (`--gm-scrollbar-thumb`, light/dark) via `scrollbar-width`/`scrollbar-color` (Firefox) + `::-webkit-scrollbar*` (Chromium) — replaces the chunky native OS bar on every scroll container.
-- **Mobile nav**: below `md`, both layouts hide the desktop control cluster (`hidden md:flex`) and show `<LayoutMobileMenu>` — a hamburger opening a `USlideover` offcanvas with all nav links (incl. dashboard/starred), the language switcher, theme toggle, tour helper and account actions. Closes on route change via a `route.fullPath` watcher.
-- **Dependency updates (2026-06-20)**: safe in-range minors/patches bumped — `@nuxt/ui` 4.6→4.9, all `@tiptap/*` 3.22→3.27, `vitest`+`@vitest/coverage-v8` 4.1.9, `happy-dom`, `mysql2`, `sharp`, `vue` 3.5.38 (gate stayed green). **Security fixes (highs):** `nodemailer` 8→**9.0.1** (the `<=9.0.0` raw-option file-read/SSRF advisory — our `mailer.ts` only uses `createTransport`+`sendMail`, never `raw`, so the bump is low-risk); `vite` pinned to **6.4.3** via `overrides` (clears the NTLM/`fs.deny` highs while staying on the Nuxt-4 vite-6 line — no jump to vite 7). **`@sentry/nuxt` held at 10.57** — 10.59 drags in `nitro@3`/`vite@7`, conflicting with the Nuxt 4 stack. **Majors deliberately held** (each a breaking migration; do as a focused pass): `zod` 4, `eslint` 10, `typescript` 6, `vue-router` 5, `@nuxtjs/i18n` 10, `@vite-pwa/nuxt` 1, `drizzle-kit` 0.31, `diff-match-patch-es` 1. **Accepted (5 remaining, all dev-only, not in the runtime bundle)**: `xlsx` high (no fix; the Swiss-foods import script) and `esbuild` moderates in build tooling (`@nuxt/vite-builder`, `vite-node`, `drizzle-kit` — fix needs `drizzle-kit` 0.31 major).
-- **Scroll container reaches the viewport edge**: the dashboard layout's body row is **full-width** (`flex-1 flex` — no `max-w` on the row), so the sidebar sits at the left edge and `<main>`'s scrollbar sits at the right edge. Content is capped + centred **inside** `<main>` (`max-w-screen-2xl mx-auto`). Capping the row instead (a previous bug) left the scrollbar floating ~512px from the edge on wide screens.
-- **Onboarding vs. Tour** (one flow, two parts): **onboarding** = the `ConceptIntro` "Welcome" modal (explains fork/branch/commit/merge aliases), shown once on first login; **tour** = `useProductTour` + `TourOverlay`, a guided walkthrough that highlights `data-tour` anchors. The intro's "Got it" now actually launches the tour. Both are **mounted globally in `app.vue`** (not per-layout) so they work in every layout — previously they lived only in `default.vue`, so the tour silently did nothing on dashboard pages. The tour driver carries a `route` per step: a literal path, `'@recipe'` (another user's public recipe, fetched on `start()` via `resolveOtherRecipe()` — only Fork needs this, since forking your own brand-new recipe makes no sense), or `'@demo'` (the recipe the visitor creates through the **real** `/recipes/new` form — see below). Step order: `explore-search` (/explore) → `new-recipe-btn` (/dashboard button, purely educational — "here's where this lives") → `recipe-form-title` (`/recipes/new`, `hideNext: true`) → `star-button`/`history-link`/`gourmerge-requests-link` (`@demo`) → `fork-button` (`@recipe`, always last, since it's the one step still needing a stranger's recipe). The overlay **navigates** to each step's route, **polls** for the anchor (~2.5s), **clamps** the panel inside the viewport (mobile-safe), and **auto-skips** any step whose anchor never appears (or whose `@recipe`/`@demo` target never resolved) so it can't dead-end.
-  - **`recipe-form-title` stays VISIBLE, anchored on the real form** — not hidden behind a `suspended` flag the way an earlier version of this worked. "The tour creates a recipe together with the user" was reported back as still leaving visitors to fill the form in alone, and hiding the whole overlay while they did was why: the mechanism worked, but there was zero guidance during the one step that most needed it. `backdropInteractive` makes the backdrop click-through (`pointer-events-none`) for this step (and `new-recipe-btn`, so the highlighted dashboard link is reachable too) rather than fighting `.tour-highlight`'s `z-index: 200` across stacking contexts — that never wins against the backdrop's `z-[199]` fixed over the whole viewport anyway. `hideNext: true` removes the "Weiter" button entirely for this one step: only "Zurück" and abandoning the tour outright stay available, since a "Weiter" that just calls `next()` would skip past creating the recipe the rest of the tour depends on.
-  - **Two paths reach `recipe-form-title`, and both have to work**: the panel's "Weiter" on `new-recipe-btn` (a plain `tour.next()` — `recipe-form-title`'s own route IS `/recipes/new`, so no override is needed) and the highlighted "+ Neues Rezept" link clicked directly, which bypasses `tour.next()` entirely since it's a plain `<NuxtLink>`. A second `route.path` watcher in `TourOverlay` advances the step for the direct-click path too — without it, `currentIndex` would stay on `new-recipe-btn` while the visitor is already looking at the form, and `suspended`/`backdropInteractive` (both keyed on `recipe-form-title`) wouldn't recognise the state.
-  - **The demo recipe is not fabricated by a background API call** — `recipes/new.vue` reads `tour.active.value` directly (the shared reactive singleton, already `true` by the time either path reaches this page) to default `visibility` to **private**, dodging the email-verification gate on public recipes for a fresh signup. Deliberately NOT a `?tour=1` query param: that would only be present on whichever path set it, and the dashboard button is back to a plain static `to="/recipes/new"` (a dynamic `:to` would not be auto-localised by `@nuxtjs/i18n` — the same bug class already fixed once elsewhere in this codebase). A `route.path` watcher detects arrival at `/<owner>/<slug>/edit` (the form's success redirect) to capture the recipe (`tour.setDemoRecipe`) and resume (`tour.next()`).
-  - **Cleanup**: `finish()`/`skip()` both delete the demo recipe again (`cleanupDemoRecipe`, best-effort) — abandoning the tour outright (closed tab) is the one path that leaves it behind.
-  - **Ending on Fork**: because `fork-button` is always last, `TourOverlay.finishEarly(step)` reaching `isLast` unreachable can now ONLY mean fork specifically has nothing to demo — it shows a distinct, positive `tour.finishedNoFork` toast rather than the generic `tour.endedEarly` one, since everything before it (create/star/history/GMR) already succeeded. That distinction matters concretely: production has zero other public recipes as of this writing (publishing was only just fixed — see the changelog), so `fork-button` is unreachable for every single visitor right now, and showing identical wording for that against a genuine early failure read as "the fix changed nothing" when reported back.
+- **Custom scrollbars**: `main.css` styles a slim, rounded, themed thumb (`--gm-scrollbar-thumb`, light/dark) via `scrollbar-width`/`scrollbar-color` (Firefox) + `::-webkit-scrollbar*` (Chromium). It replaces the chunky native OS bar on every scroll container.
+- **Mobile nav**: below `md`, both layouts hide the desktop control cluster (`hidden md:flex`) and show `<LayoutMobileMenu>`: a hamburger opening a `USlideover` offcanvas with all nav links (incl. dashboard/starred), the language switcher, theme toggle, tour helper and account actions. Closes on route change via a `route.fullPath` watcher.
+- **Dependency updates (2026-06-20)**: safe in-range minors/patches bumped: `@nuxt/ui` 4.6→4.9, all `@tiptap/*` 3.22→3.27, `vitest`+`@vitest/coverage-v8` 4.1.9, `happy-dom`, `mysql2`, `sharp`, `vue` 3.5.38 (gate stayed green). **Security fixes (highs):** `nodemailer` 8→**9.0.1** (the `<=9.0.0` raw-option file-read/SSRF advisory; our `mailer.ts` only uses `createTransport`+`sendMail`, never `raw`, so the bump is low-risk); `vite` pinned to **6.4.3** via `overrides` (clears the NTLM/`fs.deny` highs while staying on the Nuxt-4 vite-6 line, no jump to vite 7). **`@sentry/nuxt` held at 10.57**: 10.59 drags in `nitro@3`/`vite@7`, conflicting with the Nuxt 4 stack. **Majors deliberately held** (each a breaking migration; do as a focused pass): `zod` 4, `eslint` 10, `typescript` 6, `vue-router` 5, `@nuxtjs/i18n` 10, `@vite-pwa/nuxt` 1, `drizzle-kit` 0.31, `diff-match-patch-es` 1. **Accepted (5 remaining, all dev-only, not in the runtime bundle)**: `xlsx` high (no fix; the Swiss-foods import script) and `esbuild` moderates in build tooling (`@nuxt/vite-builder`, `vite-node`, `drizzle-kit`; the fix needs `drizzle-kit` 0.31 major).
+- **Scroll container reaches the viewport edge**: the dashboard layout's body row is **full-width** (`flex-1 flex`, no `max-w` on the row), so the sidebar sits at the left edge and `<main>`'s scrollbar sits at the right edge. Content is capped + centred **inside** `<main>` (`max-w-screen-2xl mx-auto`). Capping the row instead (a previous bug) left the scrollbar floating ~512px from the edge on wide screens.
+- **Onboarding vs. Tour** (one flow, two parts): **onboarding** = the `ConceptIntro` "Welcome" modal (explains fork/branch/commit/merge aliases), shown once on first login; **tour** = `useProductTour` + `TourOverlay`, a guided walkthrough that highlights `data-tour` anchors. The intro's "Got it" now actually launches the tour. Both are **mounted globally in `app.vue`** (not per-layout) so they work in every layout. Previously they lived only in `default.vue`, so the tour silently did nothing on dashboard pages. The tour driver carries a `route` per step: a literal path, `'@recipe'` (another user's public recipe, fetched on `start()` via `resolveOtherRecipe()`; only Fork needs this, since forking your own brand-new recipe makes no sense), or `'@demo'` (the recipe the visitor creates through the **real** `/recipes/new` form, see below). Step order: `explore-search` (/explore) → `new-recipe-btn` (/dashboard button, purely educational: "here's where this lives") → `recipe-form-title` (`/recipes/new`, `hideNext: true`) → `star-button`/`history-link`/`gourmerge-requests-link` (`@demo`) → `fork-button` (`@recipe`, always last, since it's the one step still needing a stranger's recipe). The overlay **navigates** to each step's route, **polls** for the anchor (~2.5s), **clamps** the panel inside the viewport (mobile-safe), and **auto-skips** any step whose anchor never appears (or whose `@recipe`/`@demo` target never resolved) so it can't dead-end.
+  - **`recipe-form-title` stays VISIBLE, anchored on the real form**, not hidden behind a `suspended` flag the way an earlier version of this worked. "The tour creates a recipe together with the user" was reported back as still leaving visitors to fill the form in alone, and hiding the whole overlay while they did was why: the mechanism worked, but there was zero guidance during the one step that most needed it. `backdropInteractive` makes the backdrop click-through (`pointer-events-none`) for this step (and `new-recipe-btn`, so the highlighted dashboard link is reachable too) rather than fighting `.tour-highlight`'s `z-index: 200` across stacking contexts, which never wins against the backdrop's `z-[199]` fixed over the whole viewport anyway. `hideNext: true` removes the "Weiter" button entirely for this one step: only "Zurück" and abandoning the tour outright stay available, since a "Weiter" that just calls `next()` would skip past creating the recipe the rest of the tour depends on.
+  - **Two paths reach `recipe-form-title`, and both have to work**: the panel's "Weiter" on `new-recipe-btn` (a plain `tour.next()`; `recipe-form-title`'s own route IS `/recipes/new`, so no override is needed) and the highlighted "+ Neues Rezept" link clicked directly, which bypasses `tour.next()` entirely since it's a plain `<NuxtLink>`. A second `route.path` watcher in `TourOverlay` advances the step for the direct-click path too. Without it, `currentIndex` would stay on `new-recipe-btn` while the visitor is already looking at the form, and `suspended`/`backdropInteractive` (both keyed on `recipe-form-title`) wouldn't recognise the state.
+  - **The demo recipe is not fabricated by a background API call**: `recipes/new.vue` reads `tour.active.value` directly (the shared reactive singleton, already `true` by the time either path reaches this page) to default `visibility` to **private**, dodging the email-verification gate on public recipes for a fresh signup. Deliberately NOT a `?tour=1` query param: that would only be present on whichever path set it, and the dashboard button is back to a plain static `to="/recipes/new"` (a dynamic `:to` would not be auto-localised by `@nuxtjs/i18n`, the same bug class already fixed once elsewhere in this codebase). A `route.path` watcher detects arrival at `/<owner>/<slug>/edit` (the form's success redirect) to capture the recipe (`tour.setDemoRecipe`) and resume (`tour.next()`).
+  - **Cleanup**: `finish()`/`skip()` both delete the demo recipe again (`cleanupDemoRecipe`, best-effort). Abandoning the tour outright (closed tab) is the one path that leaves it behind.
+  - **Ending on Fork**: because `fork-button` is always last, `TourOverlay.finishEarly(step)` reaching `isLast` unreachable can now ONLY mean fork specifically has nothing to demo. It shows a distinct, positive `tour.finishedNoFork` toast rather than the generic `tour.endedEarly` one, since everything before it (create/star/history/GMR) already succeeded. That distinction matters concretely: production has zero other public recipes as of this writing (publishing was only just fixed; see the changelog), so `fork-button` is unreachable for every single visitor right now, and showing identical wording for that against a genuine early failure read as "the fix changed nothing" when reported back.
   - Verified frame-by-frame on desktop + 390px mobile.
 - **Fork carries history**: `POST /api/recipes/[id]/fork` replays the source default branch's **full commit chain** (root→head) into the fork, preserving `parentCommitId` lineage, original `authorId`/`createdAt` and step `contentTranslations` (the old version copied only the head snapshot and dropped translations). Commits inserted one-by-one (child parent refs the freshly-created parent); ingredient/step rows batch-inserted after. `mergeSourceCommitId` remapped only if in the copied set, else null. Bounded by `MAX_FORK_HISTORY` (1000).
 
-- **Nuxt UI form controls are NOT full width by default**: `UInput`/`UTextarea`/`UInputMenu`/`UInputNumber` have an `inline-flex` **`root`** slot, and `USelect`/`USelectMenu` an `inline-flex` **`base`** slot, so a control shrinks to content width unless something adds `w-full`. `app/app.config.ts` appends it to those slots once, centrally — never write `class="w-full"` on a form control. (Before that, `w-full` was on 9 controls and missing from 23, so login's email field was ~20 characters wide while the settings fields were full width.)
-- **`app.config.ts` is the supported central lever**: components resolve props through `useComponentProps`, which reads `appConfig.ui.<component>.defaultVariants.<prop>` — it beats the component's own default and loses to an explicitly-passed prop. Slot classes (`ui.<component>.slots.<slot>`) merge into the theme via `tv({ extend: theme, ...appConfig.ui.<component> })` with tailwind-merge, so adding a class appends it everywhere.
-- **`route.meta.auth` is not a thing** — there is no global middleware reading it. `definePageMeta({ auth: true })` compiles fine, type-checks fine, and does **nothing**. Guarding a page requires `middleware: 'auth'`. Two pages shipped unguarded this way (see §16).
-- **Only `<main>` scrolls, so `<main>` needs `tabindex="0"`** — with `tabindex="-1"` the sole scroll container is unreachable by keyboard, which axe reports as `scrollable-region-focusable`. It only shows up on a page whose content contains nothing focusable (`/help/glossary`), which is why it hid for so long. The skip-link works with either value.
+- **Nuxt UI form controls are NOT full width by default**: `UInput`/`UTextarea`/`UInputMenu`/`UInputNumber` have an `inline-flex` **`root`** slot, and `USelect`/`USelectMenu` an `inline-flex` **`base`** slot, so a control shrinks to content width unless something adds `w-full`. `app/app.config.ts` appends it to those slots once, centrally; never write `class="w-full"` on a form control. (Before that, `w-full` was on 9 controls and missing from 23, so login's email field was ~20 characters wide while the settings fields were full width.)
+- **`app.config.ts` is the supported central lever**: components resolve props through `useComponentProps`, which reads `appConfig.ui.<component>.defaultVariants.<prop>`: it beats the component's own default and loses to an explicitly-passed prop. Slot classes (`ui.<component>.slots.<slot>`) merge into the theme via `tv({ extend: theme, ...appConfig.ui.<component> })` with tailwind-merge, so adding a class appends it everywhere.
+- **`route.meta.auth` is not a thing**: there is no global middleware reading it. `definePageMeta({ auth: true })` compiles fine, type-checks fine, and does **nothing**. Guarding a page requires `middleware: 'auth'`. Two pages shipped unguarded this way (see §16).
+- **Only `<main>` scrolls, so `<main>` needs `tabindex="0"`**: with `tabindex="-1"` the sole scroll container is unreachable by keyboard, which axe reports as `scrollable-region-focusable`. It only shows up on a page whose content contains nothing focusable (`/help/glossary`), which is why it hid for so long. The skip-link works with either value.
 - **An in-text link must not rely on colour alone** (WCAG 1.4.1): `.link` is always underlined, with a dialled-back `text-decoration-color` that goes solid on hover. Underline-on-hover-only fails axe's `link-in-text-block`.
-- **Dark mode needed its own contrast fix**: Nuxt UI's dark `text-dimmed` (neutral-500) measures **3.74:1** on our dark card surface. `main.css` lifts dark `--ui-text-muted`/`--ui-text-dimmed` one step each. The light-mode darkening block is _not_ sufficient on its own — both modes need pinning.
+- **Dark mode needed its own contrast fix**: Nuxt UI's dark `text-dimmed` (neutral-500) measures **3.74:1** on our dark card surface. `main.css` lifts dark `--ui-text-muted`/`--ui-text-dimmed` one step each. The light-mode darkening block is _not_ sufficient on its own; both modes need pinning.
 - **axe "serious" is not a free pass**: the gate fails on critical only, so three real defects sat in the console log for months. Treat a logged serious as a defect (see §16).
 
 ---
@@ -671,20 +671,20 @@ Full deployment runbook: `docs/RUNBOOK.md`.
 
 ## 15. Active Branch
 
-`feature/phase-0-foundation` — all current development is on this branch. `master` is the target for production deploys.
+`feature/phase-0-foundation`: all current development is on this branch. `master` is the target for production deploys.
 
-### Finishing plan — executed (2026-06-20)
+### Finishing plan, executed (2026-06-20)
 
 The "to gold-plated v1" finishing plan ran end to end. Committed phases:
 
-- **CI unblocked** — TipTap typecheck fix, Prettier baseline + `format:check`, stored-XSS closed (Markdown sanitizer).
-- **Prod safety** — Pino log rotation, server-side Sentry capture, prod HSTS, secrets/`docs/SECRETS.md`, verify rate-limit, `requireVerifiedUser` wired.
-- **i18n** — all 4 locales saveable; transactional emails localized.
-- **Schema/data** — FULLTEXT search; Vanilla Sugar seed; **migration `meta/` un-ignored** (migrations previously applied nothing on fresh checkouts).
-- **GMR merge** — interactive per-conflict resolution + `FOR UPDATE` guard; repaired build-breaking handlers + 5 broken `:options` dropdowns (GMR creation was unusable).
-- **Tests** — 118 unit (97% gate) + 24 Playwright (API/journey/axe); CI coverage gate + `E2E` workflow. (Now 150 unit at 94.7% lines — see §16.)
-- **Dead code** — knip gate; removed dead composable/types/keys; drizzle-orm CVE upgrade; Dependabot + critical-audit gate.
-- **a11y** — `<html lang>`, combobox labels, StepEditor labels i18n'd; axe critical-gate.
+- **CI unblocked**: TipTap typecheck fix, Prettier baseline + `format:check`, stored-XSS closed (Markdown sanitizer).
+- **Prod safety**: Pino log rotation, server-side Sentry capture, prod HSTS, secrets/`docs/SECRETS.md`, verify rate-limit, `requireVerifiedUser` wired.
+- **i18n**: all 4 locales saveable; transactional emails localized.
+- **Schema/data**: FULLTEXT search; Vanilla Sugar seed; **migration `meta/` un-ignored** (migrations previously applied nothing on fresh checkouts).
+- **GMR merge**: interactive per-conflict resolution + `FOR UPDATE` guard; repaired build-breaking handlers + 5 broken `:options` dropdowns (GMR creation was unusable).
+- **Tests**: 118 unit (97% gate) + 24 Playwright (API/journey/axe); CI coverage gate + `E2E` workflow. (Now 150 unit at 94.7% lines; see §16.)
+- **Dead code**: knip gate; removed dead composable/types/keys; drizzle-orm CVE upgrade; Dependabot + critical-audit gate.
+- **a11y**: `<html lang>`, combobox labels, StepEditor labels i18n'd; axe critical-gate.
 
 Post-plan commits: brand-orange contrast (light-mode palette darkening), fixed app shell + mobile offcanvas nav + custom scrollbars, forks list + starred dashboard + fork-carries-history, guided tour end-to-end repair, dependency/security bumps, scrollbar-at-viewport-edge, **nonce-based CSP `script-src`** (dropped `'unsafe-inline'` in prod).
 
@@ -692,20 +692,20 @@ Post-plan commits: brand-orange contrast (light-mode palette darkening), fixed a
 
 Audited the branch against §10 of `ROADMAP.md` before cutting v1. Fixed in this pass:
 
-- **Typecheck was red** — 11 inline `@click` handlers leaked a return value after the Nuxt UI 4.6→4.9 bump (see §13). CI would have failed on every push; the previous close-out predates the bump.
-- **Production migrations could never run** — `deploy.yml` ran `npx drizzle-kit migrate` over SSH, but only `.output/` + `app.js` are rsynced: the host has neither `drizzle.config.ts`, `server/database/migrations/`, nor the CLI. Migrations now run **from the CI runner** (matching ROADMAP §8's "against MySQL (CI secrets)"), fail-fast, and **before** the release is swapped in. Requires the production MySQL to accept connections from GitHub Actions — SSH fallback documented in the runbook.
-- **Rollback was impossible** — `rsync --delete` went straight into the live `.output/`, so no previous artifact survived, and the runbook documented a `releases/<ts>` + `current` symlink layout that was never implemented. Deploy now stages to `.output.new`, swaps by rename (retaining `.output.prev`), and **auto-rolls back if the smoke test fails**. A symlink layout was rejected: it would require repointing the Netcup docroot, which the panel's application root + `app.js` assume.
-- **Sentry had no release tag** — `NUXT_SENTRY_RELEASE` is read at _build_ time but was never set in `ci.yml` (and cannot be injected on the host: the name doesn't map to `runtimeConfig.public.sentry.release`). Now stamped with the commit SHA.
-- **The `production` environment did not exist** — `deploy.yml` declared `environment: production`, but the repo had **zero** environments, so there was no approval gate at all: GitHub silently auto-creates an unprotected environment on first run. A declared environment is not a configured one. Now created via the API with **required reviewer `dstN`**, a **`master`-only deployment branch policy**, and `prevent_self_review: false` (a sole reviewer who is also the pusher could otherwise never approve). Environments live in repo settings, not in the repo — they are **not** restored by cloning or reverting, so re-create them by hand if the repo is forked or migrated.
-- **No deploy secrets were configured** — all six (`DEPLOY_HOST/USER/SSH_KEY/PATH/DOMAIN`, `DATABASE_URL`) were unset. Worse than a plain failure: with `DATABASE_URL` empty, `drizzle.config.ts` falls back to its **localhost dev URL**, so the migrate step fails looking like a database problem. Added a preflight step that names the missing secrets and aborts in seconds.
-- **Ground truth was stale** — §12 listed the coverage gate, audit gate and Dependabot as missing though all had shipped; counts corrected (25 pages, 33 endpoints, 387 keys).
+- **Typecheck was red**: 11 inline `@click` handlers leaked a return value after the Nuxt UI 4.6→4.9 bump (see §13). CI would have failed on every push; the previous close-out predates the bump.
+- **Production migrations could never run**: `deploy.yml` ran `npx drizzle-kit migrate` over SSH, but only `.output/` + `app.js` are rsynced: the host has neither `drizzle.config.ts`, `server/database/migrations/`, nor the CLI. Migrations now run **from the CI runner** (matching ROADMAP §8's "against MySQL (CI secrets)"), fail-fast, and **before** the release is swapped in. Requires the production MySQL to accept connections from GitHub Actions; SSH fallback documented in the runbook.
+- **Rollback was impossible**: `rsync --delete` went straight into the live `.output/`, so no previous artifact survived, and the runbook documented a `releases/<ts>` + `current` symlink layout that was never implemented. Deploy now stages to `.output.new`, swaps by rename (retaining `.output.prev`), and **auto-rolls back if the smoke test fails**. A symlink layout was rejected: it would require repointing the Netcup docroot, which the panel's application root + `app.js` assume.
+- **Sentry had no release tag**: `NUXT_SENTRY_RELEASE` is read at _build_ time but was never set in `ci.yml` (and cannot be injected on the host: the name doesn't map to `runtimeConfig.public.sentry.release`). Now stamped with the commit SHA.
+- **The `production` environment did not exist**: `deploy.yml` declared `environment: production`, but the repo had **zero** environments, so there was no approval gate at all: GitHub silently auto-creates an unprotected environment on first run. Now created via the API with **required reviewer `dstN`**, a **`master`-only deployment branch policy**, and `prevent_self_review: false` (a sole reviewer who is also the pusher could otherwise never approve). Environments live in repo settings, not in the repo. They are **not** restored by cloning or reverting, so re-create them by hand if the repo is forked or migrated.
+- **No deploy secrets were configured**: all six (`DEPLOY_HOST/USER/SSH_KEY/PATH/DOMAIN`, `DATABASE_URL`) were unset. Worse than a plain failure: with `DATABASE_URL` empty, `drizzle.config.ts` falls back to its **localhost dev URL**, so the migrate step fails looking like a database problem. Added a preflight step that names the missing secrets and aborts in seconds.
+- **Ground truth was stale**: §12 listed the coverage gate, audit gate and Dependabot as missing though all had shipped; counts corrected (25 pages, 33 endpoints, 387 keys).
 
 Verified **not** a problem despite looking like one: `ci.yml` sets `NODE_ENV: test` workflow-wide, but `nuxt build` calls `overrideEnv('production')`, so HSTS and the `secure` session-cookie flag are baked correctly in the shipped artifact.
 
-- **Tests ran on the wrong database engine** — CI used `mariadb:11` while production and local dev were both MySQL (prod confirmed **8.4.11**). Given the raw `JSON_EXTRACT`/`JSON_UNQUOTE` and `MATCH … AGAINST` SQL on core read paths, the suite could not tell you whether ingredient search behaves in production. CI, E2E and `docker-compose.yml` pinned to `mysql:8.4`; engine corrected across all docs (see §13).
-- **DB reachability confirmed** — the production MySQL host answers on 3306 from an arbitrary external IP, so the runner-based migration step works and no SSH fallback is needed. Note this also means the DB is publicly reachable and the password is the only control.
+- **Tests ran on the wrong database engine**: CI used `mariadb:11` while production and local dev were both MySQL (prod confirmed **8.4.11**). Given the raw `JSON_EXTRACT`/`JSON_UNQUOTE` and `MATCH … AGAINST` SQL on core read paths, the suite could not tell you whether ingredient search behaves in production. CI, E2E and `docker-compose.yml` pinned to `mysql:8.4`; engine corrected across all docs (see §13).
+- **DB reachability confirmed**: the production MySQL host answers on 3306 from an arbitrary external IP, so the runner-based migration step works and no SSH fallback is needed. Note this also means the DB is publicly reachable and the password is the only control.
 
-Also added: **deploy now waits on the `E2E` run for the same commit** and refuses to proceed unless it passed — previously a green `CI` could deploy while the only end-to-end coverage of the fork → GMR → merge flow was still running.
+Also added: **deploy now waits on the `E2E` run for the same commit** and refuses to proceed unless it passed. Previously a green `CI` could deploy while the only end-to-end coverage of the fork → GMR → merge flow was still running.
 
 **Remaining owner actions (infra, not code):** Let's Encrypt SSL; Passenger env injection; UptimeRobot on `/api/health`; nightly `mysqldump` cron + restore drill. **Deferred:** no staging environment; dedicated component-mount tests.
 
@@ -735,26 +735,26 @@ Styling had been decided per call site rather than centrally:
 **The `w-full` finding was the substantive one.** `UInput`/`UTextarea`/`UInputMenu`/
 `UInputNumber` have an `inline-flex` **root** and `USelect`/`USelectMenu` an
 `inline-flex` **base**, so a form control collapses to content width unless
-something adds `w-full`. Login's inputs were ~20 characters wide; settings' were
-full width. That is not a taste difference, it is a broken form.
+something adds `w-full`. Login's inputs were ~20 characters wide, which broke the form;
+settings' were full width.
 
 ### What changed centrally
 
-- **`app/app.config.ts`** — `defaultVariants` for `button` (`md`/`primary`/`solid`),
+- **`app/app.config.ts`**: `defaultVariants` for `button` (`md`/`primary`/`solid`),
   `badge` (`sm`/`neutral`/`subtle`), `card` (`outline`), `alert` (`subtle`); and
   `w-full` appended to the root/base slot of all six form controls. A
   standard-rank button is now `<UButton :label="…" />` with no props, and no call
   site passes `w-full` or `size` to a form control.
-- **`app/assets/css/main.css`** — `.link` (the single in-text link style),
+- **`app/assets/css/main.css`**: `.link` (the single in-text link style),
   `.tint-{success,warning,error,info,herb}` (the light/dark contrast pairs,
   collected from ~15 call sites), `--gm-macro-{protein,carbs,fat}` +
   `bg-macro-*`, and the dark-mode neutral-text lift (below).
-- **New primitives** — `<CommonPageShell>` (3 widths, one gutter set),
+- **New primitives**: `<CommonPageShell>` (3 widths, one gutter set),
   `<CommonPageHeader>`, `<CommonEmptyState>`, `<RecipeTagList>`,
   `<RecipeDifficultyBadge>`, `<LayoutFooterLinks>`, and `app/utils/ui.ts`
   (`GMR_STATUS_COLOR`, `DIFFICULTY_COLOR`, `TINT_CLASS`, `CARD_GRID`,
   `navLinkClass`).
-- **Layouts** — `dashboard.vue`'s `<main>` no longer wraps content in its own
+- **Layouts**: `dashboard.vue`'s `<main>` no longer wraps content in its own
   `max-w-screen-2xl px-4 … py-8`; that wrapper fought each page's own cap and
   doubled the padding. All three layouts now share the same `h-dvh` shell, and
   `auth.vue` owns the `max-w-md` cap that two auth pages used to re-apply
@@ -774,32 +774,32 @@ that states the naming rule.
 ### Three real a11y defects surfaced by verifying the work
 
 All three had been shipping. The axe gate only fails on **critical**, and all
-three were **serious** — logged to the console and ignored.
+three were **serious**: logged to the console and ignored.
 
-- **Dark-mode `text-dimmed` measured 3.74:1** on the card surface — below AA for
+- **Dark-mode `text-dimmed` measured 3.74:1** on the card surface, below AA for
   the 12px meta text on `RecipeCard` (6 failing nodes on `/explore`). §1.6 of the
   design book claimed contrast was solved centrally, but the fix was light-mode
   only. Dark now lifts `--ui-text-muted`/`--ui-text-dimmed` one step each
   (slate-300/slate-400), keeping a three-tier hierarchy with all tiers over AA.
 - **`.link` was distinguishable by colour alone** inside a paragraph
-  (`link-in-text-block` on the imprint page) — a regression from this very pass,
+  (`link-in-text-block` on the imprint page). This was a regression from this very pass,
   since the first `.link` draft underlined on hover only. Now always underlined,
   with a dialled-back `text-decoration-color` that goes solid on hover.
 - **`<main>` was not keyboard-scrollable** (`scrollable-region-focusable` on
   `/help/glossary`). In this shell `<main>` is the only scroll container, so
-  `tabindex="-1"` meant content could not be scrolled without a mouse — visible
+  `tabindex="-1"` meant content could not be scrolled without a mouse. It was visible
   only on the one page whose content holds nothing focusable. Now `tabindex="0"`
   in all three layouts; the skip-link still works.
 
 **axe is now at zero critical _and_ zero serious violations on every public page
-in both colour schemes.** Keep it there — a logged "serious" is a defect that
+in both colour schemes.** Keep it there: a logged "serious" is a defect that
 ships.
 
 ### Bugs found and fixed along the way
 
 - **`definePageMeta({ auth: true })` was dead metadata** on `/settings` and
-  `/[username]/[slug]/gourmerge-requests/new`. Nothing reads `route.meta.auth` —
-  there is no global middleware — so neither page had a client-side guard, and
+  `/[username]/[slug]/gourmerge-requests/new`. Nothing reads `route.meta.auth`
+  (there is no global middleware), so neither page had a client-side guard, and
   `/settings` also fell back to the `default` layout instead of the dashboard
   shell. The APIs are protected server-side, so nothing leaked; an anonymous
   visitor just got a broken page instead of a redirect. Both now use
@@ -810,12 +810,12 @@ ships.
   `by-slug` now resolves the viewer's preference and returns
   `displayQuantity`/`displayUnit` alongside the canonical pair (verified
   end-to-end: 250 g → 8.82 oz, canonical preserved). Conversion is server-side
-  because the session cookie does not carry the preference — and the row is read
+  because the session cookie does not carry the preference, and the row is read
   fresh, so a preference change takes effect without re-login. `getBestDisplayUnit`
   also handles metric scaling (1200 g → 1.2 kg), so it runs for both systems.
 - **`/settings` silently reset your preferences.** `preferredLocale` and
   `preferredMeasurementSystem` were in the form but never loaded from the profile,
-  so both selects always rendered their hardcoded defaults — and because `save()`
+  so both selects always rendered their hardcoded defaults, and because `save()`
   submits the whole form, editing your bio reset your language to German. Root
   cause was one layer down: `GET /api/users/[username]` never selected those
   columns (nor `email`) though `UserProfile` declared all three. Now selected and
@@ -825,7 +825,7 @@ ships.
 
 ### Not changed, deliberately
 
-The landing page keeps its display type scale (`text-5xl`…`text-7xl` hero) — it is
+The landing page keeps its display type scale (`text-5xl`…`text-7xl` hero) because it is
 marketing copy, and the exception is documented in §1.4 rather than left implicit.
 Explore's filter row and three other controls keep explicit widths; they sit in
 horizontal clusters, not form columns, and §3.4 lists them exhaustively.

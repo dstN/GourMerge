@@ -1,5 +1,5 @@
 /**
- * POST /auth/send-verification — re-send the verification mail to the signed-in user.
+ * POST /auth/send-verification: re-send the verification mail to the signed-in user.
  *
  * The token minting and the mail itself live in `server/utils/emailVerification.ts`,
  * because registration sends the same message and the two must not drift.

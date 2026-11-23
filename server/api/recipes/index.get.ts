@@ -1,5 +1,7 @@
 /**
- * GET /api/recipes — List recipes
+ * GET /api/recipes
+ *
+ * List recipes
  *
  * For authenticated users: returns their own recipes.
  * With ?public=true: returns public recipes (for explore page).

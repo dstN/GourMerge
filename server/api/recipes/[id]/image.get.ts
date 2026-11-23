@@ -1,5 +1,7 @@
 /**
- * GET /api/recipes/:id/image — deliver the recipe photo.
+ * GET /api/recipes/:id/image
+ *
+ * Deliver the recipe photo.
  *
  * ## Caching
  *
@@ -15,8 +17,8 @@
  * routeRules) and is what stops a browser from second-guessing that. `Content-Disposition:
  * inline` with a fixed, generated filename keeps a user-supplied filename out of a header.
  *
- * A private recipe's photo is behind the same 404-not-403 check as the recipe itself —
- * otherwise the image endpoint would confirm the existence of private recipes that the
+ * A private recipe's photo is behind the same 404-not-403 check as the recipe itself.
+ * Otherwise the image endpoint would confirm the existence of private recipes that the
  * recipe endpoint carefully does not.
  */
 import { eq } from 'drizzle-orm'

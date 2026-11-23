@@ -10,19 +10,18 @@
  * rebuild on; and Passenger workers on shared hosting have a memory ceiling that decoding
  * a 12-megapixel phone JPEG walks straight into.
  *
- * Doing it here means the server never decodes an image at all — it reads a few dozen
+ * Doing it here means the server never decodes an image at all; it reads a few dozen
  * header bytes (`server/utils/imageProbe.ts`) and stores the rest verbatim. That removes
- * the entire class of image-decoder vulnerabilities from the server, which is worth more
- * than the convenience.
+ * the entire class of image-decoder vulnerabilities from the server.
  *
  * The trade-off is that the client can lie: it can send anything, at any size, and skip
  * this function entirely. That is why the server re-validates format, dimensions and byte
- * length rather than trusting what arrives — this function is a courtesy to the user's
+ * length rather than trusting what arrives. This function is a courtesy to the user's
  * data plan, never a security control.
  *
  * `createImageBitmap` over `new Image()`: it decodes off the main thread, so picking a
  * large photo does not freeze the page, and it honours EXIF orientation with
- * `imageOrientation: 'from-image'` — without which portrait phone photos upload sideways.
+ * `imageOrientation: 'from-image'`, without which portrait phone photos upload sideways.
  */
 
 /** Longest edge after downscaling. Wide enough for a full-bleed card on a 2× display. */

@@ -6,21 +6,21 @@ import { uniqueUser, registerUser, createRecipe } from '../support/api'
 /**
  * The recipe photo: upload, delivery, and the rules that make storing user bytes safe.
  *
- * Two kinds of fixture, and the difference matters. Paths rejected **before** any decode —
- * wrong format, out-of-range dimensions, over the wire cap — use a hand-built header, which
+ * Two kinds of fixture, and the difference matters. Paths rejected **before** any decode
+ * (wrong format, out-of-range dimensions, over the wire cap) use a hand-built header, which
  * is all `probeImage()` ever reads and is reviewable in a way a binary blob is not. Paths
  * that reach the encoder use a real, decodable PNG, because the upload now re-encodes to
  * WebP and a fake fixture would only ever exercise the fail-open branch.
  *
  * What is actually at stake here, in order:
  *
- * 1. The stored MIME type comes from the bytes, never from the upload's own header —
- *    otherwise an SVG announced as `image/png` is served back as SVG and executes on our
+ * 1. The stored MIME type comes from the bytes, never from the upload's own header.
+ *    Otherwise an SVG announced as `image/png` is served back as SVG and executes on our
  *    origin.
- * 2. Only the owner may write, and a private recipe's photo 404s for everyone else — the
+ * 2. Only the owner may write, and a private recipe's photo 404s for everyone else; the
  *    image route must not become the existence oracle the recipe route carefully is not.
  * 3. The delivery URL is content-addressed, so it can be cached hard without ever going
- *    stale — and the checksum describes the bytes we STORE, not the ones that arrived,
+ *    stale, and the checksum describes the bytes we STORE, not the ones that arrived,
  *    which is the part re-encoding could have quietly broken.
  * 4. Storage is minimised: what lands in the row is WebP and smaller than what was sent.
  */
@@ -44,7 +44,7 @@ test.beforeEach(async () => {
  * all. This sits where a photograph sits.
  *
  * JPEG by default because that is what a phone actually uploads, and because WebP at q80
- * reliably beats it — which is what makes `byteSize < source.length` a real assertion rather
+ * reliably beats it. That is what makes `byteSize < source.length` a real assertion rather
  * than a coin flip.
  */
 async function realPhoto(width: number, height: number, format: 'jpeg' | 'png' = 'jpeg'): Promise<Buffer> {
@@ -91,13 +91,13 @@ test('owner uploads, it is re-encoded to WebP, and the payload describes what is
   expect(put.ok()).toBeTruthy()
   const meta = await put.json()
 
-  // Stored as WebP regardless of what came in — that is the storage-minimisation claim.
+  // Stored as WebP regardless of what came in. That is the storage-minimisation claim.
   expect(meta).toMatchObject({ width: 1600, height: 900, mimeType: 'image/webp', altText: 'Angerichteter Teller' })
   expect(meta.recompressed, 'sharp did not run — is the native binary missing?').toBe(true)
   expect(meta.byteSize, 'the re-encode made the file bigger').toBeLessThan(source.length)
   expect(meta.checksum).toMatch(/^[0-9a-f]{64}$/)
 
-  // The recipe payload carries the metadata but never the bytes — the page has to be able
+  // The recipe payload carries the metadata but never the bytes. The page has to be able
   // to reserve the box, and must not pay a megabyte of base64 to do it.
   const detail = await (await request.get(`/api/recipes/by-slug/${owner.username}/${recipe.slug}`)).json()
   expect(detail.image).toMatchObject({ width: 1600, height: 900, checksum: meta.checksum })
@@ -154,7 +154,7 @@ test('the stored type comes from the bytes, not from the upload header', async (
 
   // And the inverse: real PNG bytes announced as `application/octet-stream` are accepted,
   // because the decision is made from the magic bytes and the part header is ignored
-  // entirely. (What lands in the row is WebP either way — the re-encode normalises it — so
+  // entirely. (What lands in the row is WebP either way, because the re-encode normalises it, so
   // the acceptance itself is what proves the sniff, together with the SVG rejection above.)
   const put = await request.put(`/api/recipes/${recipe.id}/image`, {
     multipart: upload(await realPhoto(800, 600, 'png'), 'application/octet-stream'),
@@ -168,7 +168,7 @@ test('a decompression bomb is refused by pixel count, not just by byte count', a
   const recipe = await createRecipe(request, { visibility: 'public' })
 
   // The case a size cap does nothing about: a small file that decodes enormous. This one is
-  // caught by the dimension check on the header, before sharp is handed anything — which is
+  // caught by the dimension check on the header, before sharp is handed anything. That is
   // the order that matters, since `limitInputPixels` is the second line of defence and not
   // the first.
   const bomb = pngHeader(30_000, 30_000)

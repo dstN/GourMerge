@@ -3,16 +3,16 @@ import { registerUser, createRecipe, uniqueUser } from './support/api'
 
 // `recipe-form-title` anchors on the real /recipes/new form's title field (hideNext, click-through
 // backdrop via backdropInteractive) so the tour guides actual recipe creation instead of vanishing
-// at the door. Reachable via the panel's "Weiter" or the highlighted link directly — both advance
+// at the door. Reachable via the panel's "Weiter" or the highlighted link directly; both advance
 // the step through route watchers in TourOverlay.
 //
-// Forking is NOT part of this continuous flow — it is its own sub-tour (`FORK_TOUR`,
+// Forking is NOT part of this continuous flow. It is its own sub-tour (`FORK_TOUR`,
 // `tour.start('fork')`), launched the first time the visitor clicks "Remix" on ANY recipe
 // that isn't their own, and always demos on the hidden `system` account's recipe rather than
 // the one actually clicked (`forkRecipe()` in the recipe page). `db:seed:tour` creates that
 // account and recipe; the E2E workflow runs it before this suite.
 
-/** A raw `page.goto` outruns Vue's hydration — the DOM is there but no `@click` is wired up
+/** A raw `page.goto` outruns Vue's hydration: the DOM is there but no `@click` is wired up
  *  yet, so a click on it does nothing. `startTourAtNewRecipeStep` already waits for this on
  *  `/dashboard`; anything else navigated to directly (not via a SPA link click) needs it too. */
 async function waitForHydration(page: Page) {
@@ -28,7 +28,7 @@ async function startTourAtNewRecipeStep(page: Page) {
   await page.goto('/dashboard', { waitUntil: 'load' })
   await waitForHydration(page)
   // `OnboardingConceptIntro` greets a brand-new account with its own modal ~800ms after
-  // mount, and its backdrop sits on top of the header — including the help menu below —
+  // mount, and its backdrop sits on top of the header (including the help menu below)
   // until dismissed. Its "Verstanden!" ("Got it") button calls the same `tour.start()`
   // as the help menu's "Start tour" entry, so this is not a different path to test.
   await page.getByRole('button', { name: /verstanden|got it/i }).click()
@@ -42,7 +42,7 @@ async function startTourAtNewRecipeStep(page: Page) {
 async function createDemoRecipe(page: Page, title: string) {
   await page.getByLabel(/titel|title/i).waitFor({ timeout: 8000 })
   await expect(page.locator('[data-tour="recipe-form-title"].tour-highlight')).toBeVisible({ timeout: 8000 })
-  // hideNext: true — there is no "Weiter" to accidentally click past this step with.
+  // hideNext: true, so there is no "Weiter" to accidentally click past this step with.
   await expect(page.getByRole('button', { name: /weiter|next/i })).toHaveCount(0)
 
   await page.getByLabel(/titel|title/i).fill(title)
@@ -54,7 +54,7 @@ async function createDemoRecipe(page: Page, title: string) {
 /**
  * `createDemoRecipe` lands on `/edit` with the tour already advanced to `add-ingredient`
  * (the route watcher in `TourOverlay` does that). `add-ingredient` / `add-step` /
- * `commit-button` are optional-interaction steps — highlighted, but not `hideNext`, so
+ * `commit-button` are optional-interaction steps: highlighted, but not `hideNext`, so
  * "Weiter" moves past them without actually adding anything itself; the watcher in
  * `edit.vue` types a demo ingredient/step in on the visitor's behalf regardless of whether
  * they click through fast or slow. `view-recipe-btn` IS `hideNext: true`: there is no
@@ -86,8 +86,8 @@ async function walkEditorToViewPage(page: Page) {
   await page.locator('[data-tour="view-recipe-btn"]').click()
   // The regression this guards: the demo ingredient/step used to leave `isDirty` true
   // against the pre-tour empty baseline, so this exact click used to raise the
-  // unsaved-changes modal instead of navigating — proven below by the caller's own
-  // assertion that this actually lands on the view page.
+  // unsaved-changes modal instead of navigating. The caller's own assertion below proves
+  // that this click actually lands on the view page.
 }
 
 test.describe('onboarding tour', () => {
@@ -133,7 +133,7 @@ test.describe('onboarding tour', () => {
     const [demoUsername, demoSlug] = await createDemoRecipe(page, 'Tour Onboarding Recipe')
     await walkEditorToViewPage(page)
 
-    // The real "View recipe" click lands here — view page, not edit — with star-button
+    // The real "View recipe" click lands here (view page, not edit), with star-button
     // highlighted next.
     await expect(page).toHaveURL(new RegExp(`/${demoUsername}/${demoSlug}$`), { timeout: 8000 })
     await expect(page.locator('[data-tour="star-button"].tour-highlight')).toBeVisible({ timeout: 8000 })
@@ -144,27 +144,27 @@ test.describe('onboarding tour', () => {
     await page.getByRole('button', { name: /weiter|next/i }).click()
     await expect(page.locator('[data-tour="tour-pointers"].tour-highlight')).toBeVisible({ timeout: 8000 })
 
-    // edit-recipe-btn is `hideNext: true` too — a real click back onto /edit.
+    // edit-recipe-btn is `hideNext: true` too: a real click back onto /edit.
     await page.getByRole('button', { name: /weiter|next/i }).click()
     await expect(page.locator('[data-tour="edit-recipe-btn"].tour-highlight')).toBeVisible({ timeout: 8000 })
     await expect(page.getByRole('button', { name: /weiter|next/i })).toHaveCount(0)
     await page.locator('[data-tour="edit-recipe-btn"]').click()
 
     // delete-demo: the tour's last step, and also `hideNext: true`. Deleting for real is
-    // the only way through it — there is no "Weiter" standing in for the actual action here.
+    // the only way through it; there is no "Weiter" standing in for the actual action here.
     await expect(page).toHaveURL(new RegExp(`/${demoUsername}/${demoSlug}/edit$`), { timeout: 8000 })
     await expect(page.locator('[data-tour="delete-demo"].tour-highlight')).toBeVisible({ timeout: 8000 })
     await page.locator('[data-tour="delete-demo"]').click()
-    // The confirmation modal's own button is exact "Delete"/"Löschen" — the trigger just
+    // The confirmation modal's own button is exact "Delete"/"Löschen". The trigger just
     // clicked is labelled "Delete Recipe"/"Rezept löschen", which a loose match would also
     // hit.
     await page.getByRole('button', { name: /^(löschen|delete)$/i }).click()
 
-    // A normal finish (reaching the last step and completing it) has no toast of its own —
+    // A normal finish (reaching the last step and completing it) has no toast of its own;
     // only the auto-skip endings (`finishEarly`) show one. Landing on /recipes is the signal.
     await expect(page).toHaveURL(/\/recipes$/, { timeout: 8000 })
 
-    // The recipe carried every one of those steps and is gone now — deleted, not just hidden.
+    // The recipe carried every one of those steps and is gone now: deleted, not just hidden.
     await expect
       .poll(async () => (await request.get(`/api/recipes/by-slug/${demoUsername}/${demoSlug}`)).status(), {
         timeout: 8000,
@@ -173,12 +173,12 @@ test.describe('onboarding tour', () => {
   })
 
   test('the first "Remix" click on someone else’s recipe launches the guided fork tour', async ({ page, request }) => {
-    // Owner setup can use the standalone `request` fixture — its cookies never need to
+    // Owner setup can use the standalone `request` fixture; its cookies never need to
     // reach `page`. The viewer below is the account the test actually signs in as, so it
-    // goes through `page.context().request` instead — see the note in the previous test.
+    // goes through `page.context().request` instead; see the note in the previous test.
     await registerUser(request, uniqueUser('tourowner'))
     const otherRecipe = await createRecipe(request, { title: 'Tour Demo Recipe', visibility: 'public' })
-    await registerUser(page.context().request) // the viewer — different account, so Fork shows
+    await registerUser(page.context().request) // the viewer, a different account, so Fork shows
     await startTourAtNewRecipeStep(page)
 
     await page.getByRole('button', { name: /weiter|next/i }).click()
@@ -186,7 +186,7 @@ test.describe('onboarding tour', () => {
     await walkEditorToViewPage(page)
     await expect(page.locator('[data-tour="star-button"].tour-highlight')).toBeVisible({ timeout: 8000 })
 
-    // Forking is not the next "Weiter" step from here — it is its own sub-tour, launched by
+    // Forking is not the next "Weiter" step from here. It is its own sub-tour, launched by
     // a real "Remix" click on a recipe that isn't the visitor's own. Navigating straight to
     // it rather than through Explore + a title search: the shared dev database also carries
     // "Tour Demo Recipe" entries left behind by other runs of this same spec, so a text
@@ -195,7 +195,7 @@ test.describe('onboarding tour', () => {
     await waitForHydration(page)
     await page.locator('[data-tour="fork-button"]').click()
 
-    // Redirects to the hidden `system` account's recipe — the fork tour always demos on
+    // Redirects to the hidden `system` account's recipe; the fork tour always demos on
     // that one, never on the recipe actually clicked (see `forkRecipe()`).
     await expect(page).toHaveURL(/\/system\/[^/]+$/, { timeout: 8000 })
     await expect(page.locator('[data-tour="fork-button"].tour-highlight')).toBeVisible({ timeout: 8000 })

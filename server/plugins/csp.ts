@@ -9,7 +9,7 @@
  *
  * CSP is set here (not in `routeRules`) because a static header cannot carry a
  * per-request nonce. The hook only runs for HTML renders, so API/auth JSON
- * responses are unaffected — matching the previous `routeRules` carve-outs.
+ * responses are unaffected, matching the previous `routeRules` carve-outs.
  */
 import { randomBytes } from 'node:crypto'
 
@@ -37,7 +37,7 @@ export default defineNitroPlugin((nitroApp) => {
       // 'unsafe-inline' stays for style-src because TipTap sets inline styles.
       "style-src 'self' 'unsafe-inline'",
       "font-src 'self'",
-      // `blob:` is for the avatar cropper's live preview (`URL.createObjectURL(file)`) — a
+      // `blob:` is for the avatar cropper's live preview (`URL.createObjectURL(file)`). A
       // blob URL can only ever be minted by script already running on this page, so it
       // carries none of the "loads attacker content" risk a wildcard scheme normally would.
       "img-src 'self' data: blob: https:",

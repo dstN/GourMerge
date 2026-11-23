@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * UserDropdown — the avatar, and the single home for everything about *your* account.
+ * UserDropdown: the avatar, and the single home for everything about *your* account.
  *
  * ## The trigger is an avatar, not a username
  *
@@ -18,14 +18,14 @@
  * ## What is in the menu
  *
  * Account-scoped destinations only. `Entdecken`, `Meine Rezepte`, `Favoriten` and
- * `Neues Rezept` live in `<LayoutMainNav>` and are deliberately NOT repeated here — that
+ * `Neues Rezept` live in `<LayoutMainNav>` and are deliberately NOT repeated here; that
  * triple-listing is what this pass removed. `Dashboard` is here rather than in the nav
  * because the logo already goes there, so it needs a named entry somewhere but not a third
  * one.
  *
- * ## The items array is typed, and that is not decoration
+ * ## Why the items array is typed
  *
- * The logout entry once carried `click: handleLogout` — the Nuxt UI **v3** API. In v4 a
+ * The logout entry once carried `click: handleLogout`, the Nuxt UI **v3** API. In v4 a
  * `DropdownMenuItem` has `onSelect`, and `click` is simply not a property the renderer
  * looks at, so the entry rendered perfectly and did nothing at all when clicked. Signing
  * out was impossible from the desktop header for as long as the app had been on v4.
@@ -40,7 +40,7 @@ import type { DropdownMenuItem } from '@nuxt/ui'
 const { t } = useI18n()
 const { user, clear } = useUserSession()
 /**
- * Only for `navigateTo` below — the `to` on the items does NOT need it.
+ * Only for `navigateTo` below; the `to` on the items does NOT need it.
  *
  * Nuxt UI renders menu entries through `ULink`, whose `locale` prop defaults to
  * auto-localizing via `$localePath` and detects an existing prefix so it cannot double up.

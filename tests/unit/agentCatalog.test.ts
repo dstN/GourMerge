@@ -3,8 +3,8 @@ import { buildAiCatalog, buildAgentSkill, AI_CATALOG_PATH, AGENT_SKILL_PATH } fr
 
 /**
  * Pins the ARD 1.0 invariants Lighthouse's `ard-schema` audit checks (a port of the spec's
- * conformance tester). Each one that fails turns the catalog from "valid" into a scored 0 —
- * worse than not having one — so they are asserted here rather than discovered in a report.
+ * conformance tester). Each one that fails turns the catalog from "valid" into a scored 0,
+ * which is worse than not having one, so they are asserted here rather than discovered in a report.
  */
 describe('buildAiCatalog', () => {
   const catalog = buildAiCatalog('https://gourmerge.de/')

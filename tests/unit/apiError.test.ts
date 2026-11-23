@@ -15,8 +15,8 @@ import { describe, test, expect, vi } from 'vitest'
 
 /**
  * The composable auto-imports `useI18n`, which needs a live Vue setup context. The
- * translations themselves are not what is under test here — the key that gets chosen
- * is — so `t` returns its key and the assertions read as the decision being made.
+ * translations themselves are not what is under test here; the key that gets chosen
+ * is. So `t` returns its key and the assertions read as the decision being made.
  */
 vi.mock('vue-i18n', () => ({ useI18n: () => ({ t: (key: string) => key }) }))
 
@@ -27,7 +27,7 @@ function fetchError(statusCode: number, data: Record<string, unknown> = {}) {
   return { statusCode, data: { statusCode, ...data } }
 }
 
-describe('apiError — machine-readable codes', () => {
+describe('apiError: machine-readable codes', () => {
   const { apiError } = useApiError()
 
   test('email_not_verified resolves to its own message, not the generic 403 text', () => {
@@ -37,7 +37,7 @@ describe('apiError — machine-readable codes', () => {
 
   test('the code wins even when the call site passes a fallback key', () => {
     // The create-recipe form passes `recipe.createError`. "Could not create recipe" is
-    // true but useless — it does not say what to do next.
+    // true but useless: it does not say what to do next.
     const message = apiError(fetchError(403, { code: 'email_not_verified' }), 'recipe.createError')
     expect(message).toBe('errors.emailNotVerified')
   })

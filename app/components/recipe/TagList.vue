@@ -1,12 +1,12 @@
 <script setup lang="ts">
 /**
- * TagList — static recipe tag pills. DESIGNBOOK §7.
+ * TagList: static recipe tag pills. DESIGNBOOK §7.
  *
  * Usage: <RecipeTagList :tags="recipe.tags" :max="3" />
  *
  * The pill markup was hand-written in three places (recipe detail, RecipeCard,
  * and the explore filter row) with three different paddings. The interactive
- * filter variant is deliberately NOT here — a filter is a toggle button per
+ * filter variant is deliberately NOT here: a filter is a toggle button per
  * DESIGNBOOK §2, not a pill.
  */
 const props = defineProps<{

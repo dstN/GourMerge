@@ -1,7 +1,9 @@
 /**
- * PATCH /api/users/me — Update current user's profile settings
+ * PATCH /api/users/me
  *
- * `avatarUrl` is deliberately not a field here — it used to accept any URL, which meant a
+ * Update current user's profile settings
+ *
+ * `avatarUrl` is deliberately not a field here. It used to accept any URL, which meant a
  * profile picture could point at an arbitrary third-party origin (mixed content, hotlinking,
  * a link that silently changes what it serves later). `PUT/DELETE /api/users/me/avatar` are
  * now the only writers of that column, and they always set it to our own content-addressed
@@ -61,7 +63,7 @@ export default defineEventHandler(async (event) => {
 
   await db.update(users).set(updates).where(eq(users.id, session.user.id))
 
-  // useUserSession() reads the session cookie, not the DB row — must update it here too, or
+  // useUserSession() reads the session cookie, not the DB row, so it must be updated here too, or
   // these fields stay stale until re-login. Spreads `session` (not just `user`): setUserSession
   // replaces rather than deep-merges, so passing only `user` would drop `loggedInAt`.
   await setUserSession(event, {

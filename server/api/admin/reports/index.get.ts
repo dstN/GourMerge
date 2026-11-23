@@ -1,11 +1,13 @@
 /**
- * GET /api/admin/reports — Every report, regardless of the target's own visibility.
+ * GET /api/admin/reports
+ *
+ * Every report, regardless of the target's own visibility.
  *
  * The one place `resolveReportTarget`'s visibility check is deliberately NOT applied: an
  * admin has to be able to see a report on a private recipe to act on it at all, which is
  * exactly the access `requireAdmin` gates.
  *
- * Query: `?status=open|actioned|dismissed` (default `open` — the actual queue; the other
+ * Query: `?status=open|actioned|dismissed` (default `open`, the actual queue; the other
  * two are for the "show me what already got handled" view, not the default landing state).
  */
 import { desc, eq, inArray } from 'drizzle-orm'
@@ -49,7 +51,7 @@ export default defineEventHandler(async (event) => {
 
   if (rows.length === 0) return []
 
-  // Batch-resolve a human-readable label per target kind — one query per kind touched,
+  // Batch-resolve a human-readable label per target kind: one query per kind touched,
   // not one per row.
   const idsByKind: Record<string, number[]> = {}
   const reporterIds = new Set<number>()
@@ -86,7 +88,7 @@ export default defineEventHandler(async (event) => {
   ])
 
   // Recipes are needed for direct recipe/image targets AND, separately, for whichever
-  // recipe each reported comment lives on — two different id spaces, gathered into one
+  // recipe each reported comment lives on. These are two different id spaces, gathered into one
   // set so this is still a single query rather than one per comment.
   const recipeIds = new Set<number>([...(idsByKind.recipe || []), ...(idsByKind.image || [])])
   for (const c of commentRows) recipeIds.add(c.recipeId)
@@ -127,7 +129,7 @@ export default defineEventHandler(async (event) => {
         label = comment.body.slice(0, 80)
         const recipe = recipeMap.get(comment.recipeId)
         // Not resolved in the batch above (discussion_comment ids live in a different id
-        // space than recipe ids) — a targeted lookup only when a comment actually matched.
+        // space than recipe ids), so this is a targeted lookup only when a comment actually matched.
         url = recipe ? `/${recipe.ownerUsername}/${recipe.slug}` : null
       }
     } else if (r.targetKind === 'ingredient') {

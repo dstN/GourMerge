@@ -10,7 +10,7 @@ import { defineConfig, devices } from '@playwright/test'
  * there. Written out rather than pulling in `dotenv` for one variable: the app's own loader is
  * Nuxt's, so a second dotenv in the tree would just be a second thing that can disagree.
  *
- * Only DATABASE_URL, and only if unset — this must not become a general side channel for
+ * Only DATABASE_URL, and only if unset. This must not become a general side channel for
  * pointing tests at surprising configuration.
  */
 if (!process.env.DATABASE_URL) {
@@ -24,7 +24,7 @@ if (!process.env.DATABASE_URL) {
       .replace(/^["']|["']$/g, '')
     if (value) process.env.DATABASE_URL = value
   } catch {
-    // No .env (CI, or a checkout that has not been set up) — resetRateLimits() fails open.
+    // No .env (CI, or a checkout that has not been set up): resetRateLimits() fails open.
   }
 }
 

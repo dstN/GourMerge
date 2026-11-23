@@ -5,7 +5,7 @@ import { parseMap, isDishGroup } from '~~/scripts/lib/bls.mjs'
 
 /**
  * Invariants over the committed BLS seed files. The seed is generated, but the decision
- * file and the translations are hand-reviewed inputs that a later edit can break quietly —
+ * file and the translations are hand-reviewed inputs that a later edit can break quietly:
  * a pair pointing at a Swiss food that no longer exists, two BLS codes claiming the same
  * Swiss food, a translation that fell out. The importer refuses a broken seed at generation
  * time; this is the same check at review time, seconds after the edit.

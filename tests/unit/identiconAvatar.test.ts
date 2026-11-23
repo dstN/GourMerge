@@ -6,7 +6,7 @@ import sharp from 'sharp'
 import { renderIdenticonAvatar, qrGeometry, parseBrandMark } from '../../server/utils/identiconAvatar'
 
 /**
- * The real brand mark, read from the same file the endpoint serves it from — so this
+ * The real brand mark, read from the same file the endpoint serves it from, so this
  * exercises the actual artwork rather than a fixture that can drift away from it.
  */
 // `process.cwd()`, not `import.meta.url`: under happy-dom `import.meta.url` is an http URL
@@ -16,15 +16,15 @@ const LOGO = parseBrandMark(readFileSync(resolve(process.cwd(), 'public/icon.svg
 /**
  * The fallback avatar has one requirement that is not a matter of taste: **it must still
  * scan**. Everything in the renderer that makes it look like a badge rather than a barcode
- * — round dots instead of blocks, rounded finder eyes, an identicon frame eating into the
- * tile — spends some of a decoder's tolerance, and none of it is safe by inspection.
+ * (round dots instead of blocks, rounded finder eyes, an identicon frame eating into the
+ * tile) spends some of a decoder's tolerance, and none of it is safe by inspection.
  *
  * So this rasterises the real SVG at the sizes the app actually renders it, binarises the
  * pixels the way a decoder does, samples the centre of every module, and compares the
  * result against the matrix `qrcode` produced. A style change that quietly drops modules
  * fails here instead of failing on somebody's phone.
  *
- * It is not a full decode — that would mean adding a decoder dependency for one test — but
+ * It is not a full decode, which would mean adding a decoder dependency for one test, but
  * it checks the property a decode depends on: every module reads back as the bit it is
  * supposed to be, with enough contrast to binarise.
  */
@@ -39,7 +39,7 @@ const luma = (r: number, g: number, b: number) => 0.299 * r + 0.587 * g + 0.114 
  * `.resize()`.
  *
  * `sharp(svg).resize(192)` renders the document at its declared 100×100 and then upscales
- * the bitmap — so every module is sampled at ~2px and blurred back up, and the test reports
+ * the bitmap, so every module is sampled at ~2px and blurred back up, and the test reports
  * failures the browser would never produce. That cost an hour and two "fixes" to the
  * renderer before the artefact was spotted, which is why it is written down here.
  */
@@ -49,7 +49,7 @@ async function rasterise(svg: string, pixels: number) {
 }
 
 /**
- * @param withLogo when true, the badge carries the centre mark — which raises the error
+ * @param withLogo when true, the badge carries the centre mark, which raises the error
  *   correction to `H` and deliberately destroys the modules under it. Those are reported
  *   separately as `covered`; `mismatches` counts only modules that should have survived.
  */
@@ -96,7 +96,7 @@ async function sampleModules(username: string, pixels: number, withLogo = false)
        * The arrays keep their names by what the bit means, not by how it looks: `dark`
        * collects the set bits (rendered light) and `light` the clear ones. What the assertions
        * downstream actually check is that the two populations stay far apart, which is
-       * polarity-agnostic — the whole point of measuring separation rather than absolute
+       * polarity-agnostic. That is the whole point of measuring separation rather than absolute
        * luminance.
        */
       ;(isSetBit ? dark : light).push(value)
@@ -111,17 +111,17 @@ async function sampleModules(username: string, pixels: number, withLogo = false)
     mismatches,
     covered,
     total: n * n,
-    /** The worst-rendered SET bit — inverted, so "worst" means the *darkest* of the lights. */
+    /** The worst-rendered SET bit. Inverted, so "worst" means the *darkest* of the lights. */
     setBitWorst: Math.min(...dark),
-    /** The worst-rendered CLEAR bit — the *lightest* of the darks. */
+    /** The worst-rendered CLEAR bit: the *lightest* of the darks. */
     clearBitWorst: Math.max(...light),
   }
 }
 
-describe('identicon avatar — machine readability', () => {
+describe('identicon avatar: machine readability', () => {
   /**
    * 192px is `<CommonUserAvatar size="2xl">`, the size the profile page renders and the
-   * one place the badge is meant to be scanned. Every module must be exact there — this is
+   * one place the badge is meant to be scanned. Every module must be exact there. This is
    * the assertion the whole design was tuned against, and it is what a change to the
    * identicon band, the plate padding or the dot radius will break first.
    */
@@ -136,7 +136,7 @@ describe('identicon avatar — machine readability', () => {
   /**
    * The 50-character maximum a username may be is the one case 192px does not render
    * exactly: the URL needs a 37×37 symbol, so a module is 3.4px and three of 1369 land on
-   * an antialiased edge. Recorded rather than hidden — it is well inside `M`'s 15%
+   * an antialiased edge. Recorded rather than hidden: it is well inside `M`'s 15%
    * recovery, and it is exact one size up. Nobody registers a 50-character name, but the
    * schema allows it and a limit that is not measured is a limit nobody knows about.
    */
@@ -155,7 +155,7 @@ describe('identicon avatar — machine readability', () => {
   })
 
   /**
-   * Below the scanning size the badge is an identity mark, not a scanning target — so this
+   * Below the scanning size the badge is an identity mark, not a scanning target, so this
    * asserts a budget rather than perfection. The budget is the code's own error correction:
    * `M` recovers 15% of the codewords, and staying under 2% of modules keeps a real read
    * comfortably inside it if someone does try.
@@ -169,19 +169,19 @@ describe('identicon avatar — machine readability', () => {
 
   /**
    * The centre logo is the only thing here that damages the symbol on purpose, so the size
-   * of that damage is the number worth pinning — and the two claims either side of it.
+   * of that damage is the number worth pinning, along with the two claims either side of it.
    *
    * `covered` is a deliberate **over-estimate**: the box excludes the knockout (24% of the
    * width, ~5.8% of the area), plus the plate pad around it, plus a module of measurement
    * slack, so the true damage is smaller than the figure asserted. `H` reconstructs 30% of
    * the codewords, so even the over-estimate leaves better than half the budget unspent.
    *
-   * **The two sizes are not arbitrary.** `H` grows the symbol — 37 modules where `M` needed
-   * 29 — so each one is smaller at the same box. 256 device pixels is where the render is
+   * **The two sizes are not arbitrary.** `H` grows the symbol (37 modules where `M` needed
+   * 29), so each one is smaller at the same box. 256 device pixels is where the render is
    * exact, and that is the number that describes reality: the profile badge is a 192 CSS-px
    * box, and a phone held up to a screen is looking at its *device* pixels, so any display
    * at 2× or better renders it at 384+. 192 is therefore the 1×-display worst case, and it
-   * is allowed a fraction of a percent of antialiasing noise — three modules of 1369, against
+   * is allowed a fraction of a percent of antialiasing noise: three modules of 1369, against
    * the 30% of codewords `H` reconstructs.
    */
   it('the centre logo destroys only a small, budgeted share of the symbol', async () => {
@@ -200,7 +200,7 @@ describe('identicon avatar — machine readability', () => {
        *
        * Measured: 0 wrong for a 33-module symbol, 19 of 1681 (**1.1%**) for the densest one
        * a 25-character username produces. `H` reconstructs 30% of the codewords, so 1.1% of
-       * modules blurring at the threshold is deep inside the budget — and it only happens on
+       * modules blurring at the threshold is deep inside the budget, and it only happens on
        * a 1× display, which a phone camera pointed at a screen almost never is. 2% is the
        * line: past that something structural has changed, not antialiasing.
        */
@@ -216,7 +216,7 @@ describe('identicon avatar — machine readability', () => {
     // A decoder picks its own threshold from the local histogram. A gap this wide means it
     // lands correctly wherever it puts it; a marginal one would pass the tests above and
     // still fail on a phone under warm light. Inverted, so a set bit must render LIGHT and a
-    // clear bit dark — the assertion is the separation, not the absolute values.
+    // clear bit dark. The assertion is the separation, not the absolute values.
     const { setBitWorst, clearBitWorst } = await sampleModules('margin_check', 192)
     expect(setBitWorst, 'a set module rendered too dark').toBeGreaterThan(150)
     expect(clearBitWorst, 'a clear module rendered too light').toBeLessThan(110)
@@ -238,7 +238,7 @@ describe('identicon avatar — machine readability', () => {
     }
 
     // One module out from the matrix on every side must still be clear plate. The symbol is
-    // inverted, so "clear" is DARK here — the assertion is that nothing from the identicon
+    // inverted, so "clear" is DARK here. The assertion is that nothing from the identicon
     // frame or a stray module intrudes, not that the pixels are bright.
     for (let k = 0; k < n; k++) {
       const along = (origin + (k + 0.5) * module) * scale
@@ -256,7 +256,7 @@ describe('identicon avatar — machine readability', () => {
   })
 })
 
-describe('identicon avatar — identity and safety', () => {
+describe('identicon avatar: identity and safety', () => {
   it('is deterministic: the same username always renders the same bytes', async () => {
     const a = await renderIdenticonAvatar({ username: 'stable', origin: ORIGIN })
     const b = await renderIdenticonAvatar({ username: 'stable', origin: ORIGIN })
@@ -284,7 +284,7 @@ describe('identicon avatar — identity and safety', () => {
     expect(frame(a)).not.toBe(frame(c))
   })
 
-  it('stays inside the two brand ramps — no per-user hue', async () => {
+  it('stays inside the two brand ramps, no per-user hue', async () => {
     // DESIGNBOOK §1.3: individuality comes from geometry, not from inventing a palette.
     // Every value here is a `--color-{primary,secondary}-*` token from main.css.
     const ALLOWED = new Set([
@@ -311,7 +311,7 @@ describe('identicon avatar — identity and safety', () => {
     const mark = await renderIdenticonAvatar({ username: 'small_user', origin: ORIGIN, variant: 'mark' })
     const badge = await renderIdenticonAvatar({ username: 'small_user', origin: ORIGIN })
     // The badge's ink is the QR; a mark that still carried one would be the noise this
-    // variant exists to avoid. Same seed, so the ramp must match — one identity, two views.
+    // variant exists to avoid. Same seed, so the ramp must match: one identity, two views.
     // The plate is the code's ground; a mark that had one would mean a QR crept in.
     expect(mark).not.toContain('#381706')
     expect(mark).not.toContain('#121904')
@@ -331,7 +331,7 @@ describe('identicon avatar — identity and safety', () => {
     }
   })
 
-  it('emits only shapes — no script, no external reference, no foreignObject', async () => {
+  it('emits only shapes: no script, no external reference, no foreignObject', async () => {
     // With the logo too: it is the one part assembled from a file on disk rather than from
     // shapes this module generates, so it is the one that could smuggle something in.
     const svg = await renderIdenticonAvatar({ username: 'safe_user', origin: ORIGIN, logo: LOGO })

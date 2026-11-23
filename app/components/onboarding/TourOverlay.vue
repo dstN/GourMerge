@@ -19,7 +19,7 @@ const ready = ref(false)
 
 // `recipe-form-title`/`fork-button` stay visible through the post-submit redirect to
 // `/<owner>/<slug>/edit` (which has no matching anchor yet) until the route watcher below
-// advances the step — suspended for exactly that one transitional route.
+// advances the step; it is suspended for exactly that one transitional route.
 const suspended = computed(() => {
   if (!tour.currentStep.value) return false
   const id = tour.currentStep.value.id
@@ -31,7 +31,7 @@ const suspended = computed(() => {
 })
 
 // Steps where the visitor must click through to the real page (the highlighted "+ Neues
-// Rezept" link, or the real form fields under `hideNext: true`) — the backdrop otherwise
+// Rezept" link, or the real form fields under `hideNext: true`). The backdrop otherwise
 // captures every click, and `.tour-highlight`'s z-index alone can't win against it across
 // stacking contexts. "Tour überspringen" on the panel is still available either way.
 const backdropInteractive = computed(
@@ -108,10 +108,10 @@ function positionPanel(anchor: HTMLElement, placement?: 'top' | 'bottom' | 'left
 }
 
 // tour.finish() has no feedback of its own, so an auto-skip ending (anchor/route never
-// reachable) needs its own toast — the panel's been hidden silently for a few seconds already.
+// reachable) needs its own toast; the panel's been hidden silently for a few seconds already.
 // fork-button is always the last step, so landing here for it means everything before it
 // (recipe, star, history, GMR) already succeeded and only forking someone else's recipe has
-// nothing to demo — a different message than the generic "tour ended early" case.
+// nothing to demo. That gets a different message than the generic "tour ended early" case.
 function finishEarly(step: TourStep) {
   tour.finish()
   if (step.id === 'fork-button') {
@@ -134,7 +134,7 @@ async function showStep() {
 
   // A `@`-prefixed step (`@demo`, `@system`, `@fork-edit`, …) with no resolved target is known
   // unreachable right now (e.g. the demo recipe was never created, or the fork hasn't happened
-  // yet) — skip straight to the next step instead of waiting out waitForEl's timeout for it.
+  // yet). Skip straight to the next step instead of waiting out waitForEl's timeout for it.
   if (step.route.startsWith('@') && !target) {
     if (myRun !== runToken) return
     if (tour.isLast.value) finishEarly(step)
@@ -151,7 +151,7 @@ async function showStep() {
   if (myRun !== runToken || !tour.active.value) return
 
   if (!anchor) {
-    // Anchor never appeared — skip rather than dead-end.
+    // Anchor never appeared: skip rather than dead-end.
     if (tour.isLast.value) finishEarly(step)
     else tour.next()
     return
@@ -178,7 +178,7 @@ watch(
   { immediate: true }
 )
 
-// Clicking the highlighted "+ Neues Rezept" link directly bypasses tour.next() — this catches
+// Clicking the highlighted "+ Neues Rezept" link directly bypasses tour.next(). This catches
 // that path too, so currentIndex advances to recipe-form-title regardless of how the visitor got here.
 watch(
   () => route.path,

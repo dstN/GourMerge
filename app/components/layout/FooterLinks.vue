@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * FooterLinks — the legal/meta link row. DESIGNBOOK §2 ("footer / legal link").
+ * FooterLinks: the legal/meta link row. DESIGNBOOK §2 ("footer / legal link").
  *
  * Extracted because the identical four-button block was duplicated verbatim in
  * `default.vue` and `dashboard.vue`, which is exactly how a footer ends up with

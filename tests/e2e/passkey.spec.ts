@@ -9,7 +9,7 @@ import type { TestUser } from './support/api'
  *
  * Nothing weaker proves anything here. The browser will not produce an assertion
  * without an authenticator, and stubbing `navigator.credentials` would only test the
- * stub — the parts that can actually break (discoverability, user verification,
+ * stub. The parts that can actually break (discoverability, user verification,
  * signature checking) all live below that line.
  *
  * Two properties are load-bearing and each has cost a bug already:
@@ -17,7 +17,7 @@ import type { TestUser } from './support/api'
  *  1. **Discoverability.** Usernameless login sends no `allowCredentials`, so the
  *     credential must be a resident key. `nuxt-auth-utils` passes its own
  *     `authenticatorSelection`, which replaces SimpleWebAuthn's default outright and
- *     drops `residentKey` to "discouraged" — a passkey that enrols and can never sign in.
+ *     drops `residentKey` to "discouraged": a passkey that enrols and can never sign in.
  *  2. **User verification.** A passkey assertion skips both the password and the TOTP
  *     code, which is only defensible if a biometric or PIN was checked. The library
  *     verifies with a hardcoded `requireUserVerification: false`, so the app enforces it.
@@ -34,7 +34,7 @@ const HELPERS = { b64: B64_TO_BYTES, u8: BYTES_TO_B64 }
 
 /**
  * Attach a virtual platform authenticator. `userVerifying: false` models a device that
- * only proves presence — a security key with no PIN — which is exactly the case the
+ * only proves presence (a security key with no PIN), which is exactly the case the
  * app must refuse.
  */
 async function attachAuthenticator(context: BrowserContext, page: Page, userVerifying = true): Promise<CDPSession> {
@@ -62,7 +62,7 @@ async function openLoginPage(page: Page): Promise<void> {
     })
     .catch(() => {
       // Hydration is a convenience for the button assertion, not a precondition for
-      // the ceremonies — those are plain fetches.
+      // the ceremonies, which are plain fetches.
     })
 }
 
@@ -134,7 +134,7 @@ async function enrolPasskey(page: Page): Promise<{ status: number; verified?: bo
   }, HELPERS)
 }
 
-/** Run the usernameless authentication ceremony — no email, no `allowCredentials`. */
+/** Run the usernameless authentication ceremony: no email, no `allowCredentials`. */
 async function authenticateWithPasskey(page: Page): Promise<{ status: number; verified?: boolean; error?: string }> {
   return page.evaluate(async (h) => {
     const toBytes = eval(h.b64) as (s: string) => Uint8Array
@@ -237,7 +237,7 @@ test.describe('passkeys', () => {
     /**
      * Either outcome is correct, and which one occurs is Chrome's call: the browser may
      * refuse `userVerification: 'required'` outright, or produce a presence-only
-     * attestation that the server then rejects. What must never happen is a stored key —
+     * attestation that the server then rejects. What must never happen is a stored key:
      * that would be a passkey able to bypass the password and the TOTP code without any
      * biometric or PIN.
      */

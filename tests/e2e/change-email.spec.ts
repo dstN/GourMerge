@@ -4,14 +4,14 @@ import { registerUser, uniqueUser } from './support/api'
 import { resetRateLimits, dbQuery } from './support/db'
 
 /**
- * Reported: settings has no way to change the account's email address at all — the field
+ * Reported: settings has no way to change the account's email address at all. The field
  * doesn't exist on the page, and `PATCH /api/users/me` doesn't accept it server-side either.
  *
  * Built as a two-step confirm flow rather than an immediate switch, matching the pattern
  * already used for password reset and the GDPR self-service links: `POST /api/users/me/email`
  * only mints a token and mails the NEW address; `GET /auth/confirm-email-change` is what
  * actually updates `users.email` (and, since clicking it is proof of ownership, sets
- * `email_verified_at` in the same step — see the schema comment on `emailChangeTokens`).
+ * `email_verified_at` in the same step; see the schema comment on `emailChangeTokens`).
  */
 test.beforeEach(async () => {
   await resetRateLimits()
@@ -22,7 +22,7 @@ test.describe('email address change', () => {
     const user = await registerUser(request, uniqueUser('emailreq'))
     const other = await registerUser(request, uniqueUser('emailother'))
 
-    // Re-authenticate as `user` — `registerUser` for `other` overwrote the session cookie.
+    // Re-authenticate as `user`, because `registerUser` for `other` overwrote the session cookie.
     const login = await request.post('/auth/login', { data: { identifier: user.email, password: user.password } })
     expect(login.ok()).toBeTruthy()
 
@@ -41,7 +41,7 @@ test.describe('email address change', () => {
     })
     expect(takenAddress.status()).toBe(409)
 
-    // `POST /api/users/me/email` allows 3 requests per hour per IP — the right production
+    // `POST /api/users/me/email` allows 3 requests per hour per IP. That is the right production
     // limit for a security-sensitive action, and exactly why the three checks above must not
     // count against the one this test actually cares about. Same reasoning as `registerUser`
     // clearing the table before every registration: this is one test, not four attackers.
@@ -67,8 +67,8 @@ test.describe('email address change', () => {
     const user = await registerUser(request, uniqueUser('emailconfirm'))
     const newEmail = `confirmed-${Date.now()}@example.test`
 
-    // Mints a token the exact way `/api/users/me/email` does, and inserts it directly —
-    // this isolates the CONFIRM endpoint from mail delivery, which dev has no way to
+    // Mints a token the exact way `/api/users/me/email` does, and inserts it directly.
+    // This isolates the CONFIRM endpoint from mail delivery, which dev has no way to
     // capture (SMTP isn't configured, so `sendMail` only logs `to`/`subject`, never the
     // body the real token would appear in).
     const rawToken = randomBytes(32).toString('hex')

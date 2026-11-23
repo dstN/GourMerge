@@ -44,7 +44,7 @@ const conn = await createConnection(DATABASE_URL)
 try {
   // Ingredients no reference dataset knows (seeded manually, no data source). Checked via
   // `ingredient_sources` rather than `ingredient_nutrition.source`, so a row from any dataset
-  // — Swiss BLV today, BLS once it is imported — counts as reference data and is never a
+  // (Swiss BLV today, BLS once it is imported) counts as reference data and is never a
   // candidate here.
   const [candidates] = await conn.execute(`
     SELECT i.id, i.name
@@ -55,7 +55,7 @@ try {
   `)
 
   if (candidates.length === 0) {
-    console.log('Nothing to clean up — every ingredient comes from a reference dataset.')
+    console.log('Nothing to clean up: every ingredient comes from a reference dataset.')
     process.exit(0)
   }
 
@@ -82,7 +82,7 @@ try {
   }
 
   if (referenced.length > 0) {
-    console.log('Skipping (referenced in recipes — manual cleanup required):')
+    console.log('Skipping (referenced in recipes, manual cleanup required):')
     for (const r of referenced) console.log(`  [${r.id}] ${r.name}  (used in ${r.usedIn} commit ingredient row(s))`)
     console.log()
   }
@@ -93,7 +93,7 @@ try {
   }
 
   if (safe.length === 0) {
-    console.log('Nothing to delete — all candidates are referenced in recipes.')
+    console.log('Nothing to delete: all candidates are referenced in recipes.')
     process.exit(0)
   }
 

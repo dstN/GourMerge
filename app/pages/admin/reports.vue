@@ -1,8 +1,8 @@
 <script setup lang="ts">
 /**
- * /admin/reports — the moderation queue. No link to it anywhere in the nav: `isAdmin` is
+ * /admin/reports: the moderation queue. No link to it anywhere in the nav: `isAdmin` is
  * not something most visitors need to know exists, and `requireAdmin` on the server is the
- * real gate regardless — this page is convenience, not the boundary.
+ * real gate regardless. This page is convenience, not the boundary.
  */
 definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 

@@ -2,7 +2,7 @@
  * DELETE /api/recipes/:id/discussions/:discussionId
  *
  * Author or recipe owner. The owner needs it because this is the one place strangers can
- * write onto their page — without a removal path, moderation would mean deleting the
+ * write onto their page; without a removal path, moderation would mean deleting the
  * recipe. Replies go with the thread via `ON DELETE CASCADE`.
  */
 import { and, eq } from 'drizzle-orm'
@@ -35,7 +35,7 @@ export default defineEventHandler(async (event) => {
 
   await useRateLimit(`discussion:delete:${session.user.id}`, { max: 20, windowSeconds: 600 })
 
-  // Gathered before the delete below cascades them away — reports address a comment by
+  // Gathered before the delete below cascades them away: reports address a comment by
   // its own id, so there is nothing left to find them by afterwards.
   const commentIds = (
     await db

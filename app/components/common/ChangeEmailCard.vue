@@ -1,12 +1,12 @@
 <script setup lang="ts">
 /**
- * ChangeEmailCard — request an email address change, used on /settings.
+ * ChangeEmailCard: request an email address change, used on /settings.
  *
  * Usage (Nuxt path-prefixes components in components/common/):
  *   <CommonChangeEmailCard />
  *
  * Submitting here does NOT change the address. It only sends a confirmation link to the
- * new one — see `server/api/users/me/email.post.ts` for why: this is the same class of
+ * new one. `server/api/users/me/email.post.ts` explains why: this is the same class of
  * action as a password change, so it is gated behind re-entering the current password,
  * and it needs proof the new address is reachable before anything switches.
  */

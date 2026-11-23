@@ -1,5 +1,5 @@
 /**
- * Auth Middleware — Redirects unauthenticated users to login
+ * Auth middleware: redirects unauthenticated users to login
  *
  * Usage: definePageMeta({ middleware: 'auth' })
  */

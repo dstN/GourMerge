@@ -1,7 +1,7 @@
 /**
  * DELETE /api/recipes/:id/discussions/:discussionId/comments/:commentId
  *
- * Author or recipe owner — same moderation reasoning as deleting a whole thread.
+ * Author or recipe owner, with the same moderation reasoning as deleting a whole thread.
  */
 import { and, eq } from 'drizzle-orm'
 import { recipeDiscussions, recipeDiscussionComments } from '~~/server/database/schema'
@@ -22,7 +22,7 @@ export default defineEventHandler(async (event) => {
   if (!db) throw createError({ statusCode: 503, statusMessage: 'Database unavailable.' })
 
   // One join, so a comment id can only be reached through a thread that belongs to this
-  // recipe — the id alone is not enough.
+  // recipe. The id alone is not enough.
   const [comment] = await db
     .select({ id: recipeDiscussionComments.id, authorId: recipeDiscussionComments.authorId })
     .from(recipeDiscussionComments)

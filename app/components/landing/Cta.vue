@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
  * The closing call to action. Rendered with `hydrate-on-visible` from `pages/index.vue`: it
- * holds a button, so it does need its JavaScript for client-side navigation — but only once it
+ * holds a button, so it does need its JavaScript for client-side navigation, but only once it
  * has been scrolled to, which on a phone is three screens below the first paint.
  */
 const { t } = useI18n()

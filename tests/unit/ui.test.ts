@@ -3,7 +3,7 @@ import { GMR_STATUS_COLOR, DIFFICULTY_COLOR, TINT_CLASS, CARD_GRID, navLinkClass
 
 /**
  * These maps exist so a state→colour decision is made once (DESIGNBOOK §7). They
- * were previously duplicated — the GourMerge Request status map lived in both the
+ * were previously duplicated: the GourMerge Request status map lived in both the
  * list page and the detail page, difficulty colour was re-derived in three places.
  *
  * What is worth testing is not the individual values but the *completeness*
@@ -67,7 +67,7 @@ describe('TINT_CLASS', () => {
     expect(TINT_CLASS.info).toBe('tint-info')
   })
 
-  test('primary and neutral opt out — the palette already handles them', () => {
+  test('primary and neutral opt out; the palette already handles them', () => {
     expect(TINT_CLASS.primary).toBe('')
     expect(TINT_CLASS.neutral).toBe('')
   })
@@ -86,7 +86,7 @@ describe('navLinkClass', () => {
   })
 
   test('shared structural classes are identical in both states', () => {
-    // Only the colour block may vary — otherwise the active item would shift
+    // Only the colour block may vary; otherwise the active item would shift
     // position or size relative to its neighbours.
     const [activeBase] = navLinkClass(true)
     const [idleBase] = navLinkClass(false)

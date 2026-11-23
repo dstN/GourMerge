@@ -8,13 +8,13 @@
  * Requires: sharp (npm install --save-dev sharp)
  *
  * Output files (orange glyph, transparent background):
- *   public/favicon.svg          — inline orange SVG (no rasterization)
- *   public/icon.svg             — same, for PWA manifest
- *   public/favicon.ico          — 32x32 ICO (PNG inside)
+ *   public/favicon.svg          inline orange SVG (no rasterization)
+ *   public/icon.svg             same, for PWA manifest
+ *   public/favicon.ico          32x32 ICO (PNG inside)
  *   public/pwa-192x192.png
  *   public/pwa-512x512.png
  *   public/apple-touch-icon-180x180.png
- *   public/maskable-icon-512x512.png   — with safe-zone padding (~18%)
+ *   public/maskable-icon-512x512.png   with safe-zone padding (~18%)
  */
 
 import sharp from 'sharp'
@@ -26,7 +26,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = resolve(__dirname, '..')
 const isDryRun = process.argv.includes('--dry-run')
 
-// Primary orange — matches --color-primary-500 in main.css (#f97316)
+// Primary orange, matches --color-primary-500 in main.css (#f97316)
 const ORANGE = '#f97316'
 
 // ── Build orange SVG from the source logo ────────────────────────────────────
@@ -74,11 +74,11 @@ async function generatePng(svgContent, size) {
 }
 
 async function main() {
-  console.log(`GourMerge Icon Generator — orange glyph on transparent bg`)
+  console.log(`GourMerge Icon Generator: orange glyph on transparent bg`)
   if (isDryRun) {
     for (const o of outputs)
       console.log(`  DRY-RUN: would write ${o.file} (${o.type}${o.size ? ` ${o.size}×${o.size}` : ''})`)
-    console.log(`DRY-RUN complete — ${outputs.length} files would be generated`)
+    console.log(`DRY-RUN complete: ${outputs.length} files would be generated`)
     return
   }
 

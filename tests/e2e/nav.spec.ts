@@ -4,7 +4,7 @@ import { registerUser, uniqueUser } from './support/api'
 /**
  * The desktop header navigation: identical on both layouts, and free of duplicates.
  *
- * ## Part one — one copy, not two
+ * ## Part one: a single copy of the nav
  *
  * `default.vue` and `dashboard.vue` each carried a hand-written copy of the nav, and the
  * copies drifted: `default.vue` was missing "Meine Rezepte", so a signed-in user lost that
@@ -12,7 +12,7 @@ import { registerUser, uniqueUser } from './support/api'
  * they could infer. Both layouts render one component, and this test is what stops the
  * second copy coming back.
  *
- * ## Part two — one place per destination
+ * ## Part two: one place per destination
  *
  * The nav rework removed a 256px dashboard sidebar that listed the same four destinations
  * again and two actions a third time. The rule it left behind is what the second assertion
@@ -20,7 +20,7 @@ import { registerUser, uniqueUser } from './support/api'
  * "add it to the nav too" is a one-line change nobody notices.
  *
  * Assertions are on `href`, not on the label. The browser Playwright launches asks for
- * English, so i18n redirects `/` to `/en` and renders "Explore" — a test written against
+ * English, so i18n redirects `/` to `/en` and renders "Explore"; a test written against
  * the German strings fails for a reason that has nothing to do with the nav. The
  * destination is also the thing that actually matters here. Hence the `$=` suffix match,
  * which holds with or without a locale prefix.
@@ -48,7 +48,7 @@ test('the header nav is identical on both layouts and lists each destination onc
   await registerUser(request, user)
 
   // Guests: the public browse link must be reachable from the desktop header, and nothing
-  // auth-only may appear. `Entdecken` sitting outside the `loggedIn` guard is deliberate —
+  // auth-only may appear. `Entdecken` sitting outside the `loggedIn` guard is deliberate:
   // it is the only public browse surface, and an earlier nav hid it from guests entirely.
   await page.goto('/', { waitUntil: 'load' })
   await expect(page.locator(link('/explore'))).toBeVisible()
@@ -63,8 +63,8 @@ test('the header nav is identical on both layouts and lists each destination onc
     })
   }, user)
 
-  // `/dashboard` uses the dashboard layout, `/legal/impressum` the default one — the two
-  // that had drifted. `/explore` is in the list because it is the one page both a guest and
+  // `/dashboard` uses the dashboard layout, `/legal/impressum` the default one; those two
+  // had drifted. `/explore` is in the list because it is the one page both a guest and
   // a signed-in user land on, so a regression shows there first.
   for (const path of ['/dashboard', '/explore', '/legal/impressum']) {
     await page.goto(path, { waitUntil: 'load' })
@@ -102,7 +102,7 @@ test('the generated QR avatar is a real, cacheable SVG for the profile URL', asy
   const res = await request.get(`/api/users/${user.username}/avatar`)
   expect(res.status()).toBe(200)
   expect(res.headers()['content-type']).toContain('image/svg+xml')
-  // Deterministic per username, so it is safe to cache hard — and it must be, since the
+  // Deterministic per username, so it is safe to cache hard, and it must be, since the
   // header renders it on every page.
   expect(res.headers()['cache-control']).toContain('immutable')
 
@@ -111,15 +111,15 @@ test('the generated QR avatar is a real, cacheable SVG for the profile URL', asy
   // A quiet zone is what makes it scan at all; `margin: 2` shows up as a viewBox larger
   // than the module grid. Guarding on the path being non-trivial catches an empty render.
   expect(svg.length).toBeGreaterThan(500)
-  // The chef's hat is a nested <svg> element set into the middle — distinct from the
+  // The chef's hat is a nested <svg> element set into the middle, distinct from the
   // outer document, so this cannot pass on the identicon alone. Only against a BUILT
   // artifact does this mean anything: `getBrandMark()` reads the icon through Nitro's
   // server-assets storage, which resolves to a `Uint8Array` there and to a plain string
-  // under `npm run dev`'s filesystem read — a mismatch this exact assertion caught once
+  // under `npm run dev`'s filesystem read. This exact assertion caught that mismatch once
   // already, silently, in production (the logo simply never rendered, no error anywhere).
   expect(svg, 'the chef’s-hat logo must be set into the middle of the code').toContain('<svg x=')
 
-  // The charset is the same one registration enforces — this must not become a generic
+  // The charset is the same one registration enforces; this must not become a generic
   // "put arbitrary text in a QR on our domain" endpoint.
   expect((await request.get('/api/users/a/avatar')).status()).toBe(404)
   expect((await request.get('/api/users/has%20space/avatar')).status()).toBe(404)

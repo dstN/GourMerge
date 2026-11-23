@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test'
 import { registerUser, uniqueUser, createRecipe, createIngredient, commitSnapshot } from './support/api'
 
 // Stubs navigator.clipboard (the real Clipboard API needs document focus, unreliable in CI)
-// and waits for #__nuxt's __vnode (hydration) before clicking — see tour.spec.ts, journey.spec.ts.
+// and waits for #__nuxt's __vnode (hydration) before clicking; see tour.spec.ts, journey.spec.ts.
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
     let stored = ''
@@ -53,7 +53,7 @@ test('the ingredient list reaches the clipboard as a shopping list', async ({ pa
     .poll(async () => (await page.evaluate(() => navigator.clipboard.readText())).length, { timeout: 15_000 })
     .toBeGreaterThan(0)
 
-  // Tolerant split rather than asserting a specific separator — the stub above stores
+  // Tolerant split rather than asserting a specific separator. The stub above stores
   // exactly what `buildShoppingList()` produces, but there is no reason to couple this test
   // to that function's internal line-ending choice.
   const raw = await page.evaluate(() => navigator.clipboard.readText())
@@ -77,7 +77,7 @@ test('the ingredient list reaches the clipboard as a shopping list', async ({ pa
   expect(items[0], 'notes ride along in parentheses').toContain('(in Streifen geschnitten)')
   expect(items[0], 'quantity and unit, as displayed').toMatch(/650\s*g/)
 
-  // Order is the recipe's order, not alphabetical — a cook reads it top to bottom.
+  // Order is the recipe's order, not alphabetical, because a cook reads it top to bottom.
   expect(items[1]).toContain('Olivenöl')
   expect(items[2]).toContain('Salz')
 

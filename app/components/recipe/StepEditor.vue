@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * StepEditor — TipTap 3 WYSIWYG editor for a single recipe step.
+ * StepEditor: TipTap 3 WYSIWYG editor for a single recipe step.
  *
  * - Wrapped in <ClientOnly> at usage site so it only mounts client-side (SSR-safe)
  * - Uses StarterKit + @tiptap/markdown for Markdown output

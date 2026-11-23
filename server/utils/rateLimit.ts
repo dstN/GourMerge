@@ -8,7 +8,7 @@ interface RateLimitOptions {
 }
 
 /**
- * DB-backed rate limiter — safe across Phusion Passenger multi-process.
+ * DB-backed rate limiter, safe across Phusion Passenger multi-process.
  *
  * Uses atomic INSERT … ON DUPLICATE KEY UPDATE to increment a counter per
  * (bucketKey, windowStart) pair. A SELECT after the upsert reads the count.
@@ -48,7 +48,7 @@ export async function useRateLimit(key: string, options: RateLimitOptions): Prom
  *
  * ⚠ The first X-Forwarded-For segment is CLIENT-CONTROLLED, so as written every limit here is
  * bypassable: send a different `X-Forwarded-For` per request and each one lands in its own
- * bucket. XFF is built left to right — each proxy appends the address it received from — so
+ * bucket. XFF is built left to right (each proxy appends the address it received from), so
  * the leftmost entry is whatever the original caller chose to put there, not a fact about the
  * connection.
  *
@@ -58,7 +58,7 @@ export async function useRateLimit(key: string, options: RateLimitOptions): Prom
  * three attempts. Our chain is nginx → Apache → Passenger, which should yield
  * `client, 127.0.0.1` and therefore index `length - 2`, but "should" is doing real work in that
  * sentence and nothing is deployed yet to check it against. The fix is: log one real request's
- * XFF on the host, count the hops, then pin the index — see the entry in ROADMAP.
+ * XFF on the host, count the hops, then pin the index. See the entry in ROADMAP.
  */
 export function getRateLimitKey(event: H3Event, prefix: string): string {
   const forwarded = getHeader(event, 'x-forwarded-for')

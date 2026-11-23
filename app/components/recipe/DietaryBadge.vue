@@ -4,7 +4,7 @@ const props = defineProps<{ type?: string | null }>()
 
 // The light/dark contrast pair for each tint lives in the `.tint-*` classes in
 // `main.css` (DESIGNBOOK §1.6), so this component names a tint rather than
-// re-deriving `text-*-700 dark:text-*-400` per case — which is what it used to do,
+// re-deriving `text-*-700 dark:text-*-400` per case. That is what it used to do,
 // in the fourth copy of that pattern in the codebase.
 const config = computed(() => {
   switch (props.type) {

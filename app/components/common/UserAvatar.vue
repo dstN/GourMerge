@@ -1,30 +1,30 @@
 <script setup lang="ts">
 /**
- * CommonUserAvatar — the one place a user is drawn as a picture.
+ * CommonUserAvatar: the one place a user is drawn as a picture.
  *
  * A user with no uploaded photo gets a generated mark derived from their username, in one
  * of two renderings picked by size (see `server/utils/identiconAvatar.ts` for both):
  *
- * - **`badge`**, from `lg` up — an identicon frame with a scannable QR of the user's
+ * - **`badge`**, from `lg` up: an identicon frame with a scannable QR of the user's
  *   profile URL set into it. Point a phone at it and it opens that profile.
- * - **`mark`**, below `lg` — the identicon alone, coarse and clean.
+ * - **`mark`**, below `lg`: the identicon alone, coarse and clean.
  *
- * The split is not a nicety. A QR drawn at 32px is not a small QR, it is grey noise: the
+ * The split is necessary. A QR drawn at 32px is grey noise: the
  * modules fall under a pixel, so it is neither scannable nor recognisable and fails both
  * halves of its job at once. At header size the job is "tell two users apart at a glance",
  * and a 5×5 identicon does that far better. Both renderings share the seed and the brand
  * ramp, so one person's mark and their badge read as the same identity.
  *
- * **Where the boundary sits, measured rather than guessed.** Rasterising the real SVG and
+ * The boundary was measured, not guessed. Rasterising the real SVG and
  * sampling every module: exact from 192px (`2xl`), inside the error-correction budget at
- * 160px, noise below that. So `2xl` is what the profile page uses — the one place a
- * stranger would point a camera — and `lg`/`xl` are the badge shown as decoration.
+ * 160px, noise below that. So `2xl` is what the profile page uses (the one place a
+ * stranger would point a camera), and `lg`/`xl` are the badge shown as decoration.
  *
  * ## Shape
  *
  * Circles, except the scannable badge. DESIGNBOOK §1.3 makes avatars `rounded-full`, and a
  * photo and the identicon mark both take that. The badge cannot: a circular mask cuts off
- * the three finder patterns a decoder uses to locate the symbol, so it is `rounded-md` —
+ * the three finder patterns a decoder uses to locate the symbol, so it is `rounded-md`,
  * the documented §1.3 exception, and the only square avatar in the app.
  */
 const props = withDefaults(
@@ -47,7 +47,7 @@ const SIZES = {
   md: 'size-10',
   lg: 'size-16',
   xl: 'size-24',
-  // 192px — the smallest size at which every module of the badge rasterises correctly, so
+  // 192px: the smallest size at which every module of the badge rasterises correctly, so
   // it is the only one that makes the "scan me" promise true.
   '2xl': 'size-48',
 } as const
@@ -61,11 +61,11 @@ const isBadge = computed(() => !hasPhoto.value && SCANNABLE_SIZES.has(props.size
 
 /**
  * The generated badge has no upload behind it to content-address, unlike `avatarUrl`'s own
- * `?v=<sha256>` — but `server/utils/identiconAvatar.ts`'s rendering has already changed
+ * `?v=<sha256>`, but `server/utils/identiconAvatar.ts`'s rendering has already changed
  * shape twice in one day (colour inversion, then the centre logo), and its response is
  * `Cache-Control: immutable, max-age=604800`. Every browser that had already fetched a
  * user's mark kept the bytes from whichever revision it first saw for up to a week,
- * `immutable` telling it never to even check — bump this by one whenever the renderer's
+ * `immutable` telling it never to even check. Bump this by one whenever the renderer's
  * *output* changes again, so every existing cache orphans itself instead of going stale.
  */
 const IDENTICON_RENDER_VERSION = 2
@@ -77,8 +77,8 @@ const src = computed(() => {
 })
 
 /**
- * The alt text says what the image *is*. For the badge that is not "avatar of X" — it is a
- * code someone could scan — and a description that hides that is a lie about a plain
+ * The alt text says what the image *is*. For the badge that is not "avatar of X"; it is a
+ * code someone could scan, and a description that hides that is a lie about a plain
  * portrait. For the mark and for a photo, the person's name is the whole of it.
  */
 const alt = computed(() => (isBadge.value ? t('profile.qrAvatarAlt', { name: label.value }) : label.value))
@@ -89,7 +89,7 @@ const frameClass = computed(() => [
   'inline-flex shrink-0 items-center justify-center overflow-hidden bg-elevated',
   SIZES[props.size],
   // The one square avatar in the app, and only because rounding it off would delete the
-  // finder patterns — see the docblock.
+  // finder patterns (see the docblock).
   isBadge.value ? 'rounded-md' : 'rounded-full',
 ])
 </script>

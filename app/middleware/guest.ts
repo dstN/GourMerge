@@ -1,5 +1,5 @@
 /**
- * Guest Middleware — Redirects authenticated users away from auth pages
+ * Guest middleware: redirects authenticated users away from auth pages
  *
  * Usage: definePageMeta({ middleware: 'guest' })
  */

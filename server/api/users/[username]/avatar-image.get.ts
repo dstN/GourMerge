@@ -1,13 +1,15 @@
 /**
- * GET /api/users/:username/avatar-image — deliver an uploaded profile picture.
+ * GET /api/users/:username/avatar-image
+ *
+ * Deliver an uploaded profile picture.
  *
  * Only reachable once a user has actually uploaded one; `users.avatar_url` is what points
  * here, and it is `null` until then. `CommonUserAvatar.vue` falls back to the generated
  * identicon-QR badge at `/api/users/:username/avatar` (a different endpoint, no hyphen) in
- * that case — this route 404s rather than serving a placeholder, so a stale cached `<img>`
+ * that case. This route 404s rather than serving a placeholder, so a stale cached `<img>`
  * fails loudly instead of silently drawing the wrong person's mark.
  *
- * A profile picture has no privacy tier of its own — a profile page is always public — so
+ * A profile picture has no privacy tier of its own (a profile page is always public), so
  * unlike the recipe photo this is `public, immutable` unconditionally. The URL is
  * content-addressed (`?v=<checksum>`), so "immutable forever" is true by construction: a
  * replaced picture is a different checksum and therefore a different URL.
@@ -46,7 +48,7 @@ export default defineEventHandler(async (event) => {
     return null
   }
 
-  // `Content-Length` left to Nitro, derived from the Buffer it actually sends — see the
+  // `Content-Length` left to Nitro, derived from the Buffer it actually sends; see the
   // matching note in `recipes/[id]/image.get.ts`.
   return avatar.data
 })

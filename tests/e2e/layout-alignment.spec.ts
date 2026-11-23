@@ -15,7 +15,7 @@ import { registerUser, uniqueUser, createRecipe, createIngredient, commitSnapsho
  *
  * The sidebar is gone. Header and content are the same `max-w-7xl` container centred in the
  * same viewport, so alignment is structural, holds at every width, and needs no CSS. This
- * spec now asserts that directly — the logo's left edge against the content's — which is
+ * spec now asserts that directly (the logo's left edge against the content's), which is
  * both a stronger claim and the one a person actually looks at.
  *
  * Assertions are relative, never absolute pixels, so a cap or breakpoint change fails
@@ -27,8 +27,8 @@ import { registerUser, uniqueUser, createRecipe, createIngredient, commitSnapsho
  *
  * The shell's **padding box** is measured, not its border box: `<CommonPageShell>` and the
  * header's container carry the same `px-4 sm:px-6 lg:px-8` gutters, so their border boxes
- * coincide while the things a person actually sees — the logo glyph and the first word of
- * the content — sit one gutter inside. Comparing border boxes to the logo is off by exactly
+ * coincide while the things a person actually sees (the logo glyph and the first word of
+ * the content) sit one gutter inside. Comparing border boxes to the logo is off by exactly
  * that gutter (32px at `lg`) and would fail against a layout that is correct.
  */
 const probe = (page: import('@playwright/test').Page) =>
@@ -76,7 +76,7 @@ test.describe('logo / content alignment', () => {
 
     /**
      * `wide` pages only. A `content` (4xl) or `form` (2xl) page is *deliberately* narrower
-     * and centred — that is the design, not a misalignment — so only the pages that share
+     * and centred, which is correct and not a misalignment, so only the pages that share
      * the header's own `max-w-7xl` cap can be asserted flush against the logo.
      */
     for (const [name, path] of [
@@ -101,7 +101,7 @@ test.describe('logo / content alignment', () => {
       ).toBeLessThanOrEqual(2)
     }
 
-    // The alignment is structural, so it must hold at every width — including the ones the
+    // The alignment is structural, so it must hold at every width, including the ones the
     // old magic-number media query did not cover (below `lg`).
     for (const width of [768, 1024, 1280, 1920, 2560]) {
       await page.setViewportSize({ width, height: 900 })
@@ -118,7 +118,7 @@ test.describe('logo / content alignment', () => {
    * The header must never be wider than the window.
    *
    * The layout root is `h-dvh overflow-hidden`, so an over-wide header does **not** produce
-   * a scrollbar — it is silently clipped, and the clipped end is the right-hand cluster
+   * a scrollbar. It is silently clipped, and the clipped end is the right-hand cluster
    * holding the account menu. Measured before the desktop breakpoint moved to `lg`: at a
    * 768px viewport the header's content wanted **949px**, so the avatar and the theme toggle
    * were simply not on screen between `md` and ~1000px, with nothing to indicate it.
@@ -169,7 +169,7 @@ test.describe('logo / content alignment', () => {
    *
    * Same failure as the app header, one level down and harder to see. The action cluster
    * held six `sm` buttons at a fixed 578px with `shrink-0`, while the identity line beside
-   * it carried `min-w-0` — so the identity was structurally the side that gave way. At a
+   * it carried `min-w-0`, so the identity was structurally the side that gave way. At a
    * 640px viewport it was squeezed to **zero width** and disappeared; at 768px the slug was
    * fully truncated; at the full 832px content column it showed 93px of a 435px name. Six
    * buttons were legible and the name of the page was not, and nothing overflowed visibly,
@@ -226,7 +226,7 @@ test.describe('logo / content alignment', () => {
            * A visible text label on an action, as opposed to a count.
            *
            * The star's number and the two trailing count badges are `UBadge`s and legitimate
-           * at every width — a count is information, not a name — so this looks for a
+           * at every width (a count is information, not a name), so this looks for a
            * `data-slot="label"` on the buttons themselves, which is what Nuxt UI renders for
            * a `label` prop and what would come back if someone re-added one.
            */
@@ -252,7 +252,7 @@ test.describe('logo / content alignment', () => {
 
       // Icon-only at EVERY width, so the cluster is always one line. Labelled it was
       // 578px against a reading column capped at 832px, which wrapped to two ragged rows
-      // even at 2560px — a wider screen buys a `content` page nothing. See DESIGNBOOK §2.4:
+      // even at 2560px; a wider screen buys a `content` page nothing. See DESIGNBOOK §2.4:
       // all of them collapse together, never one icon among labelled siblings.
       expect(m.labelsVisible, `the actions must stay icon-only at ${width}px`).toBe(false)
       expect(m.buttonLines, `the action cluster wrapped to ${m.buttonLines} lines at ${width}px`).toBe(1)

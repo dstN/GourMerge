@@ -1,5 +1,7 @@
 /**
- * POST /api/recipes/:id/gourmerge-requests — Create a GourMerge Request
+ * POST /api/recipes/:id/gourmerge-requests
+ *
+ * Create a GourMerge Request
  *
  * Proposes changes from a source branch to a target branch.
  * The :id is the TARGET recipe (the one being proposed to).
@@ -20,7 +22,7 @@ const createSchema = z.object({
 
 export default defineEventHandler(async (event) => {
   const session = await requireUserSession(event)
-  // Opening a GourMerge Request is a published/social action — gate on a verified
+  // Opening a GourMerge Request is a published/social action: gate on a verified
   // email (no-op unless REQUIRE_EMAIL_VERIFICATION=true). See ROADMAP P2-007.
   await requireVerifiedUser(event)
   const targetRecipeId = Number(getRouterParam(event, 'id'))

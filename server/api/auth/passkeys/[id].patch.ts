@@ -1,5 +1,7 @@
 /**
- * PATCH /api/auth/passkeys/:id — rename a passkey.
+ * PATCH /api/auth/passkeys/:id
+ *
+ * Rename a passkey.
  *
  * The auto-generated label is a guess from the user agent ("iPhone", "Windows"), which
  * stops being useful the moment someone has two keys on the same platform. Renaming is

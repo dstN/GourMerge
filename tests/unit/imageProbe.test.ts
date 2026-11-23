@@ -3,7 +3,7 @@ import { probeImage } from '../../server/utils/imageProbe'
 
 /**
  * `probeImage` is the only thing standing between an upload and the database, so its two
- * jobs both carry real risk: deciding what the bytes *are* (a wrong answer is stored XSS —
+ * jobs both carry real risk: deciding what the bytes *are* (a wrong answer is stored XSS;
  * see the docblock in the module) and reading the dimensions out of a header without a
  * decoder (a wrong answer is a mis-sized box on the recipe page and the layout shift the
  * `width`/`height` attributes exist to prevent).
@@ -28,7 +28,7 @@ function png(width: number, height: number): Buffer {
 
 /**
  * JPEG: `FFD8`, then length-prefixed segments until a Start-Of-Frame. `leading` lets a test
- * push non-SOF segments in front of it — including `FFC4` (DHT), which sits inside the
+ * push non-SOF segments in front of it, including `FFC4` (DHT), which sits inside the
  * `C0..CF` numeric range and is exactly the marker a naive range check misreads as a frame.
  */
 function jpeg(width: number, height: number, leading: Array<{ marker: number; payload: number }> = []): Buffer {
@@ -93,7 +93,7 @@ function webpExtended(width: number, height: number): Buffer {
   return riff('VP8X', body)
 }
 
-describe('probeImage — format detection', () => {
+describe('probeImage: format detection', () => {
   it('identifies each supported format from its magic bytes', () => {
     expect(probeImage(png(10, 20))?.mimeType).toBe('image/png')
     expect(probeImage(jpeg(10, 20))?.mimeType).toBe('image/jpeg')
@@ -131,7 +131,7 @@ describe('probeImage — format detection', () => {
   })
 })
 
-describe('probeImage — dimensions', () => {
+describe('probeImage: dimensions', () => {
   it('reads PNG width and height from IHDR', () => {
     expect(probeImage(png(1600, 900))).toMatchObject({ width: 1600, height: 900 })
   })
@@ -145,9 +145,9 @@ describe('probeImage — dimensions', () => {
     // read as a SOF, the dimensions come back as whatever the table's bytes happen to be.
     const withTables = jpeg(1600, 900, [
       { marker: 0xe0, payload: 14 }, // APP0/JFIF
-      { marker: 0xc4, payload: 30 }, // DHT — in range, not a frame
+      { marker: 0xc4, payload: 30 }, // DHT: in range, not a frame
       { marker: 0xdb, payload: 65 }, // DQT
-      { marker: 0xcc, payload: 8 }, // DAC — also in range, also not a frame
+      { marker: 0xcc, payload: 8 }, // DAC: also in range, also not a frame
     ])
     expect(probeImage(withTables)).toMatchObject({ width: 1600, height: 900 })
   })

@@ -1,12 +1,14 @@
 /**
- * DELETE /api/ingredients/:id — Remove an ingredient the caller created.
+ * DELETE /api/ingredients/:id
+ *
+ * Remove an ingredient the caller created.
  *
  * Same ownership rule as the PATCH endpoint: only `created_by === session.user.id`, 404 (not
- * 403) for anyone else, never the Swiss BLV rows. This exists for the typo case — you typed
+ * 403) for anyone else, never the Swiss BLV rows. This exists for the typo case: you typed
  * "Mehl" wrong, created a duplicate, and want it gone before anyone else ever sees it.
  *
  * `recipe_commit_ingredients.ingredient_id` has no `onDelete` clause (see schema.ts), so MySQL
- * enforces RESTRICT by default: once a commit — even a since-superseded one — has snapshotted
+ * enforces RESTRICT by default: once a commit (even a since-superseded one) has snapshotted
  * this ingredient, the FK blocks the delete outright. That is correct for this app's
  * immutable-history model (you cannot rewrite a past commit out from under it), so it is
  * checked explicitly here and turned into a clean 409 rather than a raw driver error.
@@ -48,7 +50,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // `ingredient_nutrition` cascades on delete (schema.ts) — no separate cleanup needed.
+  // `ingredient_nutrition` cascades on delete (schema.ts), so no separate cleanup is needed.
   await db.delete(ingredients).where(eq(ingredients.id, id))
 
   return { success: true }

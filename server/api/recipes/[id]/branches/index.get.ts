@@ -1,10 +1,12 @@
 /**
- * GET /api/recipes/:id/branches — List all branches for a recipe
+ * GET /api/recipes/:id/branches
  *
- * The visibility check is not decoration: this used to answer for any recipe id, so the
+ * List all branches for a recipe
+ *
+ * The visibility check matters: this used to answer for any recipe id, so the
  * branch names of a private recipe ("thanksgiving-surprise", "client-pitch") were readable
- * by anyone walking the sequential ids. Its siblings — `snapshot`, `compare`, the GourMerge
- * Request lists — all checked; this one and two others did not, which is the shape of gap a
+ * by anyone walking the sequential ids. Its siblings (`snapshot`, `compare`, the GourMerge
+ * Request lists) all checked; this one and two others did not, which is the shape of gap a
  * per-endpoint copy of the rule produces. `requireVisibleRecipe` is the one copy now.
  */
 import { eq } from 'drizzle-orm'

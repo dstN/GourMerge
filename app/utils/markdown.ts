@@ -3,7 +3,7 @@
  *
  * Recipe step content is stored either as TipTap HTML (new saves) or as raw
  * Markdown (legacy saves). Both are user-controlled, so the rendered HTML MUST
- * be sanitized before it is injected via `v-html` — the app CSP allows
+ * be sanitized before it is injected via `v-html`: the app CSP allows
  * `script-src 'unsafe-inline'`, so an unsanitized `<img onerror>` / `<script>`
  * in a step would execute (stored XSS). See ARCHITECTURE.md §8 + §12.
  *

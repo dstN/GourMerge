@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Hamburger + offcanvas panel for everything below lg. Not md: four labelled nav items
-// plus the control cluster overflow a md viewport and the shell clips it — see MainNav.vue. Order: account CTA (guests),
+// plus the control cluster overflow a md viewport and the shell clips it (see MainNav.vue). Order: account CTA (guests),
 // nav, help, account actions, then preferences last as a compact single row.
 const { t, locale, setLocale } = useI18n()
 const { loggedIn, user, clear } = useUserSession()
@@ -25,7 +25,7 @@ const localeItems = [
 ]
 
 // Mirrors the desktop header: Explore is public, the rest needs an account. localePath() on
-// every entry because :to is a dynamic binding i18n won't rewrite — see DashboardSidebar.vue.
+// every entry because :to is a dynamic binding i18n won't rewrite (see DashboardSidebar.vue).
 const navLinks = computed(() =>
   loggedIn.value
     ? [

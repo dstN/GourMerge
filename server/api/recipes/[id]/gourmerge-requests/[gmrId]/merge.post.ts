@@ -1,10 +1,12 @@
 /**
- * POST /api/recipes/:id/gourmerge-requests/:gmrId/merge — Execute the merge
+ * POST /api/recipes/:id/gourmerge-requests/:gmrId/merge
+ *
+ * Execute the merge
  *
  * Only the target recipe owner can merge. Must be status=open, no conflicts.
  *
  * Transaction:
- *   1. Find base commit (common ancestor — walk parentCommitId from both branch heads)
+ *   1. Find base commit (common ancestor: walk parentCommitId from both branch heads)
  *   2. Load base/source/target snapshots
  *   3. Run three-way merge; abort on conflicts
  *   4. Insert merge commit on target branch
@@ -170,7 +172,7 @@ export default defineEventHandler(async (event) => {
   // Run three-way merge, applying any user-supplied conflict resolutions.
   const mergeResult = threeWayMerge(baseSnapshot, sourceSnapshot, targetSnapshot, resolutions)
 
-  // Any conflict left unresolved blocks the merge — return them for the picker UI.
+  // Any conflict left unresolved blocks the merge; return them for the picker UI.
   if (mergeResult.hasConflicts) {
     return {
       success: false,

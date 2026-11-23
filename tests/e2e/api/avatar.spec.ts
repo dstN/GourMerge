@@ -5,7 +5,7 @@ import { registerUser } from '../support/api'
 
 /**
  * The uploaded profile picture: crop invariant, delivery, and the same storage rules as the
- * recipe photo (`recipe-image.spec.ts`) with one addition — squareness is enforced on the
+ * recipe photo (`recipe-image.spec.ts`) with one addition: squareness is enforced on the
  * server, not only by the client-side cropper, because `user_avatars.edge` and every
  * consumer of it assume `width === height` unconditionally.
  */
@@ -14,7 +14,7 @@ test.beforeEach(async () => {
   await resetRateLimits()
 })
 
-/** A real, decodable square photo — see `recipe-image.spec.ts` for why it must decode. */
+/** A real, decodable square photo; see `recipe-image.spec.ts` for why it must decode. */
 async function realSquarePhoto(edge: number): Promise<Buffer> {
   const pixels = Buffer.alloc(edge * edge * 3)
   for (let y = 0; y < edge; y++) {
@@ -145,7 +145,7 @@ test('replacing swaps the checksum; deleting clears the row, the profile and the
   const profile = await (await request.get(`/api/users/${owner.username}`)).json()
   expect(profile.user.avatarUrl).toBeNull()
 
-  // The session cookie itself must reflect the clear, not only the DB row — a `null` set
+  // The session cookie itself must reflect the clear, not only the DB row. A `null` set
   // through `setUserSession`'s `defu` merge would silently keep the old value here.
   const session = await (await request.get('/api/_auth/session')).json()
   expect(session.user.avatarUrl).toBeNull()

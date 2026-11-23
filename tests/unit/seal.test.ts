@@ -9,7 +9,7 @@ import { describe, test, expect, beforeAll, vi } from 'vitest'
  * that unsealed successfully would let anyone skip 2FA outright.
  *
  * `createError` and h3's cookie helpers are Nitro auto-imports, so they are stubbed
- * before the modules load — the same pattern as `totp.test.ts`.
+ * before the modules load, the same pattern as `totp.test.ts`.
  */
 const SECRET = 'x'.repeat(48)
 
@@ -29,15 +29,15 @@ describe('seal / unseal', () => {
     expect(await unseal(token)).toEqual({ userId: 42, issuedAt: 1_700_000_000_000 })
   })
 
-  test('is deterministic — no nonce, so the same payload seals identically', async () => {
+  test('is deterministic: no nonce, so the same payload seals identically', async () => {
     const { seal } = await sealMod()
     // Worth pinning: this is a MAC, not encryption. The payload is not secret and the
-    // token is short-lived, so determinism is acceptable — but it should be a decision,
+    // token is short-lived, so determinism is acceptable, but it should be a decision,
     // not a surprise to whoever reads the cookie.
     expect(await seal({ userId: 1 })).toBe(await seal({ userId: 1 }))
   })
 
-  test('the payload is readable — this is authentication, not encryption', async () => {
+  test('the payload is readable: this is authentication, not encryption', async () => {
     const { seal } = await sealMod()
     const token = await seal({ userId: 7 })
     const decoded = JSON.parse(Buffer.from(token.split('.')[0]!, 'base64url').toString('utf8'))
@@ -84,7 +84,7 @@ describe('seal / unseal', () => {
     const { createHmac } = await import('node:crypto')
     const body = Buffer.from('not json at all', 'utf8').toString('base64url')
     const mac = createHmac('sha256', SECRET).update(body).digest().toString('base64url')
-    // A correct signature is not enough — the parse still has to succeed.
+    // A correct signature is not enough; the parse still has to succeed.
     expect(await unseal(`${body}.${mac}`)).toBeNull()
   })
 

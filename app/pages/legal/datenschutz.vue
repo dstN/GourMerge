@@ -119,8 +119,8 @@ useSeoMeta({
             <li>{{ t('legal.privacy.retentionErrors') }}</li>
           </ul>
           <!-- Automatic deletion of dormant accounts. Art. 13(2)(a) requires the
-               period to be stated, and it is genuinely enforced nightly by
-               `npm run db:inactive` — so this text and that cron must agree. -->
+               period to be stated, and it is enforced nightly by
+               `npm run db:inactive`, so this text and that cron must agree. -->
           <p class="text-sm text-muted mt-3">{{ t('legal.privacy.retentionInactive') }}</p>
         </section>
 

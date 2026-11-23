@@ -3,7 +3,7 @@ import { canonicalRedirect } from '../../server/utils/canonicalHost'
 
 /**
  * The canonical-host rule is narrow by design, and the tests exist mostly to pin the
- * things it must NOT do — a redirect loop here would take the whole site down, and
+ * things it must NOT do. A redirect loop here would take the whole site down, and
  * redirecting an ACME challenge would silently stop certificate renewal.
  */
 describe('canonicalRedirect', () => {
@@ -15,7 +15,7 @@ describe('canonicalRedirect', () => {
   })
 
   test('preserves the query string, which the task URLs depend on', () => {
-    // `/tasks/retention?key=…` — losing the query would turn a working cron into a 401.
+    // `/tasks/retention?key=…`: losing the query would turn a working cron into a 401.
     expect(canonicalRedirect('www.gourmerge.de', '/tasks/retention?key=abc&dryRun=1', 'GET')?.location).toBe(
       'https://gourmerge.de/tasks/retention?key=abc&dryRun=1'
     )
@@ -34,7 +34,7 @@ describe('canonicalRedirect', () => {
     expect(canonicalRedirect('WWW.gourmerge.de', '/', 'GET')?.location).toBe('https://gourmerge.de/')
   })
 
-  test('leaves the apex alone — this is what makes a loop impossible', () => {
+  test('leaves the apex alone, which is what makes a loop impossible', () => {
     expect(canonicalRedirect('gourmerge.de', '/recipes/new', 'GET')).toBeNull()
   })
 

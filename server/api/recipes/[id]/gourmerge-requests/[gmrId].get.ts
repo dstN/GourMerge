@@ -1,5 +1,7 @@
 /**
- * GET /api/recipes/:id/gourmerge-requests/:gmrId — Get a single GourMerge Request with diff
+ * GET /api/recipes/:id/gourmerge-requests/:gmrId
+ *
+ * Get a single GourMerge Request with diff
  */
 import { eq, and } from 'drizzle-orm'
 import {

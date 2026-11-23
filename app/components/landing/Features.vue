@@ -1,8 +1,8 @@
 <script setup lang="ts">
 /**
- * The four-card feature grid of the landing page. Its own component for one reason: it is
- * rendered with `hydrate-never` from `pages/index.vue`. Nothing in it is interactive — cards,
- * icons, text — so hydrating it only paid for walking its DOM inside the one long task that
+ * The four-card feature grid of the landing page. It is its own component because it is
+ * rendered with `hydrate-never` from `pages/index.vue`. Nothing in it (cards,
+ * icons, text) is interactive, so hydrating it only paid for walking its DOM inside the one long task that
  * Lighthouse scores as Total Blocking Time. See the note in `pages/index.vue`.
  */
 const { t } = useI18n()

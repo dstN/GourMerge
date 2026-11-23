@@ -1,5 +1,7 @@
 /**
- * PUT /api/recipes/:id/image — set (or replace) the recipe's one serving-suggestion photo.
+ * PUT /api/recipes/:id/image
+ *
+ * Set (or replace) the recipe's one serving-suggestion photo.
  *
  * Owner only, one image per recipe, enforced by the UNIQUE index on `recipe_images` and
  * by upserting rather than inserting.
@@ -13,15 +15,15 @@
  * declines to declare its length is refused outright rather than streamed hopefully.
  * Browsers always send it for a `fetch` with a `Blob`/`FormData` body.
  *
- * The declared length is not trusted as the real size either — the parsed part is measured
+ * The declared length is not trusted as the real size either: the parsed part is measured
  * again below. The header is a cheap early exit, not the authority.
  *
  * Answering before the body has been read leaves unread bytes on the socket, so both early
  * rejections send `Connection: close`. Without it Node destroys the socket at the end of the
  * response and the *next* request on that keep-alive connection dies with `ECONNRESET`
- * instead of getting an answer — which is how this surfaced: the 413 assertion passed and
+ * instead of getting an answer. That is how this surfaced: the 413 assertion passed and
  * the following test failed on an unrelated `/auth/register`. Draining the body instead
- * would defeat the entire point of checking early.
+ * would defeat the purpose of checking early.
  */
 import { z } from 'zod'
 import { createHash } from 'node:crypto'
@@ -30,8 +32,8 @@ import { recipeImages, recipes } from '~~/server/database/schema'
 
 /**
  * 2 MB on the wire. The uploader downsizes to 1600px WebP before sending (typically
- * 150–350 KB), so this is the ceiling for a client that skipped that — an original
- * phone JPEG — not the expected size.
+ * 150–350 KB), so this is the ceiling for a client that skipped that (an original
+ * phone JPEG), not the expected size.
  *
  * It bounds the *transfer*, not the decode. A 2 MB PNG can expand to gigabytes of pixels,
  * which is what `limitInputPixels` in `imageEncode.ts` is for.
@@ -41,13 +43,13 @@ const MAX_UPLOAD_BYTES = 2 * 1024 * 1024
 /**
  * The limit that actually means something: the size of what ends up in the row.
  *
- * There is no filesystem here — `recipe_images.data` is a `MEDIUMBLOB`, so "the stored
+ * There is no filesystem here: `recipe_images.data` is a `MEDIUMBLOB`, so "the stored
  * size" is exactly `Buffer.length`, with no base64 inflation and nothing on disk to
  * measure. Enforcing only `MAX_UPLOAD_BYTES` checked the *transfer*, which is the number
  * nobody cares about: the wire is transient, the row is what gets backed up, dumped
  * nightly and paid for.
  *
- * The two are equal on purpose — "2 MB" should mean the same thing whichever end you look
+ * The two are equal on purpose: "2 MB" should mean the same thing whichever end you look
  * at. In practice the re-encode lands far under it (150–350 KB), so this only bites when
  * `sharp` fell open and the client's own bytes are what would be stored.
  */
@@ -86,7 +88,7 @@ export default defineEventHandler(async (event) => {
   // Sniffed from the bytes; the part's own Content-Type is discarded (see imageProbe.ts).
   const probed = probeImage(filePart.data)
   if (!probed) {
-    throw createError({ statusCode: 415, statusMessage: 'Unsupported image format — use JPEG, PNG or WebP' })
+    throw createError({ statusCode: 415, statusMessage: 'Unsupported image format. Use JPEG, PNG or WebP' })
   }
   const shortest = Math.min(probed.width, probed.height)
   const longest = Math.max(probed.width, probed.height)
@@ -100,7 +102,7 @@ export default defineEventHandler(async (event) => {
 
   /**
    * Re-encoded to WebP for storage, after the header checks and never instead of them.
-   * Fails open to the client's bytes — see `imageEncode.ts` for why that is the right
+   * Fails open to the client's bytes; see `imageEncode.ts` for why that is the right
    * failure mode on this host, and for the decompression-bomb guard a byte cap cannot give.
    */
   const encoded = await reencodeToWebp(filePart.data, probed)
@@ -151,7 +153,7 @@ export default defineEventHandler(async (event) => {
   // Bump the recipe so caches keyed on `updatedAt` (explore cards, sitemap) notice.
   await db.update(recipes).set({ updatedAt: new Date() }).where(eq(recipes.id, recipe.id))
 
-  // The stored shape, not the uploaded one — the client renders from this, so it has to
+  // The stored shape, not the uploaded one: the client renders from this, so it has to
   // describe what `/image` will actually serve.
   return {
     checksum,

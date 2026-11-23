@@ -1,9 +1,11 @@
 /**
- * GET /api/recipes/tour-recipe — Fetch the system tour recipe for the onboarding tour.
+ * GET /api/recipes/tour-recipe
+ *
+ * Fetch the system tour recipe for the onboarding tour.
  *
  * Returns the recipe owned by the `system` user so the tour composable can
  * navigate to it for the fork step. Only returns a result if the requesting
- * user has NOT finished the tour yet — once finished, the recipe is invisible.
+ * user has NOT finished the tour yet. Once finished, the recipe is invisible.
  */
 import { eq } from 'drizzle-orm'
 import { recipes, users } from '~~/server/database/schema'

@@ -2,7 +2,7 @@
  * Warn, then delete, accounts dormant for three years.
  *
  * The **production path** for this job. It lives inside the Nitro bundle because
- * the deploy ships only `.output/` and `app.js` — there is no `scripts/`, no
+ * the deploy ships only `.output/` and `app.js`. There is no `scripts/`, no
  * `package.json` and no `.env` on the host, so a Plesk "Run a command" cron could
  * not reach `scripts/inactive-accounts.mjs` or find a `DATABASE_URL`. Running it in
  * the app process instead gives it the existing pool, the Passenger-injected
@@ -13,12 +13,12 @@
  *
  * ## The rules, and why
  *
- * - The clock is `users.last_login_at` — **only a login resets it.** A warning email
+ * - The clock is `users.last_login_at`, and **only a login resets it.** A warning email
  *   deliberately does not, or the notice would keep extending the very period it
  *   warns about. Accounts that never logged in fall back to `created_at`.
  * - One email per account per run: the most urgent stage not yet sent. Notice
  *   windows are unbounded above, or an account crossing the three-year line
- *   mid-cycle would fall between the windows — too late for a notice, and blocked
+ *   mid-cycle would fall between the windows: too late for a notice, and blocked
  *   from deletion for lacking one. That stalls forever.
  * - The final notice is **terminal**: no earlier-stage mail may follow it.
  * - Nothing is deleted until the final notice is at least 24 h old. Without that
@@ -50,7 +50,7 @@ export interface InactivityResult {
   noticesSent: number
   deleted: number
   failures: number
-  /** Populated when `dryRun` is set — what *would* have happened. */
+  /** Populated when `dryRun` is set: what *would* have happened. */
   planned: string[]
 }
 
@@ -74,7 +74,7 @@ export async function runInactivitySweep(opts: { dryRun?: boolean } = {}): Promi
    * warned. A missing environment variable must not be able to cause that.
    *
    * Throwing here means Plesk's "Errors only" notification fires and nothing is
-   * touched. A dry run is still allowed — it neither mails nor deletes.
+   * touched. A dry run is still allowed; it neither mails nor deletes.
    */
   if (!dryRun && !isMailConfigured()) {
     logger.error('inactivity sweep refused: SMTP is not configured')
@@ -96,7 +96,7 @@ export async function runInactivitySweep(opts: { dryRun?: boolean } = {}): Promi
   )) as unknown as Candidate[][]
 
   for (const row of candidates[0] ?? []) {
-    // The final notice is terminal — see the header.
+    // The final notice is terminal; see the header.
     if (row.inactivity_notice_24h_at !== null) continue
 
     const ageDays = (Date.now() - new Date(row.last_seen).getTime()) / 86_400_000

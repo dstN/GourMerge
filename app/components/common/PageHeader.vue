@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * PageHeader — title block for every page. DESIGNBOOK §4.3.
+ * PageHeader: title block for every page. DESIGNBOOK §4.3.
  *
  * Usage (Nuxt path-prefixes components in components/common/):
  *   <CommonPageHeader :title="t('nav.myRecipes')" :subtitle="t('dashboard.subtitle')">

@@ -1,5 +1,5 @@
 /**
- * Recipe discussions — the thread shape shared by the API and the UI.
+ * Recipe discussions: the thread shape shared by the API and the UI.
  *
  * A thread anchored to a commit (`commitId !== null`) and one anchored to the recipe
  * carry exactly the same fields on purpose; only where they are listed differs. See the

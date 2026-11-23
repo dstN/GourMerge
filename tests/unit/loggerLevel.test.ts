@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 /**
  * The stray-space bug that took production down: `LOG_LEVEL="info "` made `pino()` throw
  * `default level:info  must be included in custom levels`, and because the logger is built
- * lazily on first use — often inside `logger.error()` — the process died while reporting an
+ * lazily on first use (often inside `logger.error()`), the process died while reporting an
  * error. Passenger returned "Incomplete response received from application" and the browser a
  * 502. These cases assert the resolver never throws and never returns a level pino rejects.
  */

@@ -2,7 +2,7 @@
  * Shared by the seed scripts: (re)write `ingredient_search_terms` for a set of ingredients.
  *
  * Lives next to the scripts rather than in `server/utils/` because the scripts are plain
- * Node with a `mysql2` connection, not Nitro with Drizzle — the Nitro side has its own
+ * Node with a `mysql2` connection, not Nitro with Drizzle. The Nitro side has its own
  * `syncIngredientSearchTerms()` for single rows. Both derive the rows from the same
  * `searchTermsForIngredient()`, which is the part that must not fork.
  *
@@ -30,7 +30,7 @@ export function asJson(value, fallback) {
 
 /**
  * @param conn  an open `mysql2/promise` connection, inside a transaction if the caller wants one
- * @param rows  `{ id, name, name_translations, synonyms }` — the column shapes of `ingredients`,
+ * @param rows  `{ id, name, name_translations, synonyms }`, the column shapes of `ingredients`,
  *              JSON either parsed or as a string
  * @returns the number of term rows written
  */

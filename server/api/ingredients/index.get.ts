@@ -9,8 +9,8 @@
  * "Weizen Mehl, Type 405" through the space-free `compact` column. The query goes through
  * the same normaliser, so the two sides only ever have to agree with each other.
  *
- * Ranked — the catalog is several thousand rows and the dropdown shows ten, so order is the
- * feature. Per ingredient the best of its matching terms decides:
+ * Ranked: the catalog is several thousand rows and the dropdown shows ten, so order matters
+ * most. Per ingredient the best of its matching terms decides:
  *   0  the whole term equals the query ("tomate" → "Tomate")
  *   1  the term starts with the query as whole words ("tomate" → "Tomate, roh", "Tomate, getrocknet")
  *   2  the term starts with the query inside a word ("tomate" → "Tomatensaft")
@@ -21,7 +21,7 @@
  * The last two need three characters per word, below which they match most of the table.
  * Ties, judged on the one best-matching term of the ingredient: a term in the viewer's
  * locale beats one in another, a name beats a synonym, and a shorter matched term beats a
- * longer one — which is what puts "Tomate, roh" above "Tomate, gekocht" and both above
+ * longer one. That is what puts "Tomate, roh" above "Tomate, gekocht" and both above
  * "Tomatensuppe", without the data having to say which is "raw".
  *
  * Locale-aware: if a matching translation exists in the requested locale, it's returned as
@@ -85,7 +85,7 @@ export default defineEventHandler(async (event) => {
   const normalized = words.join(' ')
   const compact = words.join('')
 
-  // Escaped once, used everywhere below — a `%`/`_` in `q` should match itself, not act as
+  // Escaped once, used everywhere below: a `%`/`_` in `q` should match itself, not act as
   // a wildcard the caller never asked for (see likeEscape.ts). The normaliser has already
   // dropped both, so this is belt and braces.
   const wordStart = sql`t.term LIKE ${`${escapeLikePattern(normalized)} %`}`
@@ -116,8 +116,8 @@ export default defineEventHandler(async (event) => {
 
   // Exact ⊂ word-start ⊂ prefix ⊂ compact-prefix ⊂ substring, so the WHERE only needs the
   // outermost conditions; the CASE above re-derives the finer tiers.
-  // One score per matching term — tier first, then the viewer's locale, then name before
-  // synonym, then length — and the ingredient ranks by its single best term. Scoring the
+  // One score per matching term (tier first, then the viewer's locale, then name before
+  // synonym, then length), and the ingredient ranks by its single best term. Scoring the
   // parts across different terms (best tier from one, "is a name" from another) let a
   // sauce whose Italian name merely contains "peperoni" outrank the pepper itself.
   // The name/synonym step is small on purpose: a paired Swiss food keeps its old German

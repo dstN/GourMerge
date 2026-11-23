@@ -2,7 +2,7 @@
  * TOTP (RFC 6238) two-factor authentication.
  *
  * **App-agnostic by design.** The generated `otpauth://totp/…` URI uses the
- * standard defaults — SHA1, 6 digits, 30-second period — so it works in Google
+ * standard defaults (SHA1, 6 digits, 30-second period), so it works in Google
  * Authenticator, Authy, 1Password, Bitwarden, Aegis, Microsoft Authenticator and
  * anything else implementing RFC 6238. Do **not** "upgrade" the algorithm or digit
  * count: Google Authenticator ignores those URI parameters and always assumes the
@@ -17,7 +17,7 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes, timingSafeEqual } from 'node:crypto'
 import { Secret, TOTP } from 'otpauth'
 
-/** Standard parameters — see the file header before changing any of these. */
+/** Standard parameters; see the file header before changing any of these. */
 const ISSUER = 'GourMerge'
 const ALGORITHM = 'SHA1'
 const DIGITS = 6
@@ -36,7 +36,7 @@ const RECOVERY_GROUP = 5
  * A plaintext secret is a bearer token for the account: anyone with a DB dump could
  * generate valid codes forever, which would make 2FA theatre. Derived from
  * `TOTP_ENCRYPTION_KEY` when set; otherwise from `NUXT_SESSION_PASSWORD` so a
- * fresh install works without a second secret to provision — but the dedicated
+ * fresh install works without a second secret to provision, but the dedicated
  * variable is strongly preferred, because rotating the session password would
  * otherwise invalidate every enrolled authenticator at once.
  */

@@ -18,7 +18,7 @@ const error = ref('')
 /**
  * Two-factor step. `/auth/login` returns `{ totpRequired: true }` **without** a
  * session for accounts that opted in, and the pending state lives in a short-lived
- * signed cookie — so this view is a continuation of the same attempt, not a
+ * signed cookie, so this view is a continuation of the same attempt, not a
  * separate authenticated area.
  */
 const totpRequired = ref(false)
@@ -27,7 +27,7 @@ const totpCode = ref('')
 /**
  * Passkey sign-in. Usernameless: no email is sent, so the browser offers whichever
  * discoverable passkeys it holds for this domain. A successful assertion completes the
- * login outright — no password, no TOTP step (see the endpoint for why that is not a
+ * login outright, with no password and no TOTP step (see the endpoint for why that is not a
  * downgrade).
  */
 const { authenticate: passkeyAuthenticate } = useWebAuthn({
@@ -49,7 +49,7 @@ async function signInWithPasskey() {
     await fetchSession()
     navigateTo('/dashboard')
   } catch (err: unknown) {
-    // Dismissing the OS prompt is a DOMException, not a failure — the user simply
+    // Dismissing the OS prompt is a DOMException, not a failure: the user simply
     // changed their mind, so it must not surface as an error.
     if (err instanceof DOMException && (err.name === 'NotAllowedError' || err.name === 'AbortError')) {
       return
@@ -61,7 +61,7 @@ async function signInWithPasskey() {
 }
 
 /**
- * Email OR username — deliberately not `.email()`.
+ * Email OR username, deliberately not `.email()`.
  *
  * The field used to validate as an email address, which meant a user who knew their
  * username was told their own name was an "invalid email address" before the request
@@ -207,7 +207,7 @@ async function submitTotp() {
 
       <!-- Passkey alternative. Below the password form rather than above it: most
            visitors still have no passkey, and leading with an option they cannot use
-           would be confusing. `subtle` per DESIGNBOOK §2.2 — a secondary next to a
+           would be confusing. `subtle` per DESIGNBOOK §2.2: a secondary next to a
            solid needs a visible surface or it reads smaller. -->
       <template v-if="passkeySupported">
         <USeparator :label="t('common.or')" />

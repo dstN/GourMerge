@@ -1,9 +1,11 @@
 /**
- * POST /api/privacy/confirm — the account owner clicked the link in their inbox.
+ * POST /api/privacy/confirm
+ *
+ * The account owner clicked the link in their inbox.
  *
  * For an EXPORT this is the whole authorisation step: the window is extended to
  * 24h and the same token becomes the download credential. It stays multi-use on
- * purpose, because the link is also emailed — a one-shot token would be burned
+ * purpose, because the link is also emailed: a one-shot token would be burned
  * by whichever of the two the user opened first.
  *
  * For a DELETION this only records the confirmation. The destructive part waits

@@ -34,7 +34,7 @@ const editOpen = ref(false)
 
 /**
  * Always rendered (see template) rather than `v-if`, even though it only does something for
- * an owned ingredient — an absent button changes how much width the flex row's other
+ * an owned ingredient: an absent button changes how much width the flex row's other
  * children get, so an owned and a non-owned row ended up visibly different widths for their
  * name field. `invisible` on the disabled state keeps the slot's width without showing it.
  */
@@ -57,7 +57,7 @@ function update(patch: Partial<IngredientRowData>) {
 <template>
   <!--
     One row, two layouts. Below `sm` the five controls stack, because a single flex row
-    squeezed the ingredient name down to about three characters ("Pou", "Kart") — the
+    squeezed the ingredient name down to about three characters ("Pou", "Kart"). The
     name is the one field you cannot guess from context, so it gets the full width.
 
       mobile            sm and up
@@ -110,7 +110,7 @@ function update(patch: Partial<IngredientRowData>) {
 
       <!--
         Was `hidden sm:block`, which meant notes could be neither read nor written on a
-        phone — the data existed and the field to reach it did not.
+        phone, although the data existed.
       -->
       <UInput
         :model-value="row.notes"
@@ -120,7 +120,7 @@ function update(patch: Partial<IngredientRowData>) {
       />
     </div>
 
-    <!-- Only the row's own creator can use this — same reveal-on-hover treatment as remove,
+    <!-- Only the row's own creator can use this. Same reveal-on-hover treatment as remove,
          since it is a secondary action on an otherwise plain ingredient list. Always
          rendered, never `v-if`: see `canEditRow`'s comment above. -->
     <UButton

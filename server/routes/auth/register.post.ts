@@ -1,5 +1,5 @@
 /**
- * POST /auth/register — Create a new user account
+ * POST /auth/register: Create a new user account
  *
  * Validates input with Zod, hashes password, inserts user, sends the email
  * verification mail, and sets the session cookie (auto-login after registration).
@@ -82,7 +82,7 @@ export default defineEventHandler(async (event) => {
 
   if (!inserted) throw createError({ statusCode: 500, statusMessage: 'Insert failed.' })
 
-  // ── Verification mail: best-effort — the account is already committed, so a dead
+  // ── Verification mail: best-effort. The account is already committed, so a dead
   // SMTP host must not 500 a signup that in fact succeeded; resend via the unverified banner.
   try {
     await issueEmailVerification({ id: inserted.id, email })
@@ -101,7 +101,7 @@ export default defineEventHandler(async (event) => {
       displayName: displayName || username,
       email,
       avatarUrl: null,
-      // A fresh account is unverified by definition — the mail above was only just sent.
+      // A fresh account is unverified by definition; the mail above was only just sent.
       emailVerified: false,
     },
     loggedInAt: new Date().toISOString(),

@@ -5,13 +5,13 @@
  *
  * A WebAuthn ceremony is two requests: one that issues a challenge, one that verifies
  * the signature over it. `nuxt-auth-utils` lets you store that challenge anywhere via
- * `storeChallenge`/`getChallenge`, and the obvious choice — the user session — is
+ * `storeChallenge`/`getChallenge`, and the obvious choice, the user session, is
  * wrong here for two reasons:
  *
  *   1. **Authentication begins with no session.** A passwordless login has nobody to
  *      attach a session to yet.
  *   2. **Passenger runs multiple processes.** Anything in memory breaks the moment the
- *      two halves land on different workers — the same constraint that made the rate
+ *      two halves land on different workers, the same constraint that made the rate
  *      limiter DB-backed.
  *
  * Rows are single-use (deleted on read) and short-lived, so a captured challenge

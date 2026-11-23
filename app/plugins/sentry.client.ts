@@ -1,11 +1,11 @@
 /**
- * Sentry in the browser — errors only, loaded on the first error or the first interaction.
+ * Sentry in the browser: errors only, loaded on the first error or the first interaction.
  *
  * This replaces the conventional `sentry.client.config.ts`. With that file present, the
  * `@sentry/nuxt` module registers a plugin that `await`s the config module before any other
- * plugin runs, which puts the whole browser SDK — its download, its parse and `Sentry.init()`
- * with the default integrations (global handlers, breadcrumbs on fetch/XHR/DOM/history,
- * dedupe, …) — on the critical path to the first interactive frame. On the mobile profile
+ * plugin runs, which puts the whole browser SDK on the critical path to the first interactive
+ * frame: its download, its parse and `Sentry.init()` with the default integrations (global
+ * handlers, breadcrumbs on fetch/XHR/DOM/history, dedupe, …). On the mobile profile
  * that is work inside the one long task Lighthouse scores as Total Blocking Time, weight 30,
  * spent on a visitor who has not had an error yet.
  *
@@ -19,7 +19,7 @@
  * interacts (`pointerdown`, `keydown`, `focusin`). A page that is only looked at never pays for
  * monitoring; a page that is used has the SDK up before the user can do anything that needs
  * reporting. The cost is breadcrumbs: Sentry only records those from the moment it exists,
- * so an error on the first tap has no trail before that tap. The error itself is not lost —
+ * so an error on the first tap has no trail before that tap. The error itself is not lost;
  * see the next section.
  *
  * ## The gap before the SDK exists, and how it is closed
@@ -37,7 +37,7 @@
  * ## Why `@sentry/browser`, not `@sentry/nuxt`
  *
  * The Nuxt package's client entry re-exports all of `@sentry/vue`, which re-exports all of
- * `@sentry/browser` — Session Replay, User Feedback and browser tracing included — and that
+ * `@sentry/browser` (Session Replay, User Feedback and browser tracing included), and that
  * whole graph survived into the chunk (428 KB raw) although only `init` and
  * `captureException` were ever called. Importing the two names from `@sentry/browser` directly
  * leaves the bundler a graph it can prune. What `@sentry/nuxt`'s `init` added on top was SDK
@@ -46,7 +46,7 @@
  * component reaches `vue:error` (Nuxt installs `app.config.errorHandler` for exactly that),
  * and what the integration adds is the component name on the event, not the error.
  *
- * Errors only — no browser tracing, same trade as before: `browserTracingIntegration` sets up
+ * Errors only, no browser tracing, same trade as before: `browserTracingIntegration` sets up
  * PerformanceObservers and long-task tracking on the main thread during exactly the window
  * Lighthouse measures. It is not among `@sentry/browser`'s defaults; the filter below is
  * belt-and-braces, so an upstream default cannot re-enable it.
@@ -100,7 +100,7 @@ export default defineNuxtPlugin((nuxtApp) => {
         release: release || undefined,
         integrations: (defaults) => defaults.filter((integration) => integration.name !== 'BrowserTracing'),
         // No `sendDefaultPii`: Sentry 11 removed the option, and nothing in the v11 SDK sets
-        // `user.ip_address = '{{auto}}'` on events — the behaviour `false` used to buy is now
+        // `user.ip_address = '{{auto}}'` on events; the behaviour `false` used to buy is now
         // the only behaviour.
         ignoreErrors: [
           'ResizeObserver loop limit exceeded',
@@ -108,10 +108,10 @@ export default defineNuxtPlugin((nuxtApp) => {
           'Network request failed',
           'Failed to fetch',
           'Load failed',
-          // Thrown by a script Microsoft injects into pages — Outlook's SafeLinks scanner and
-          // the Office browser add-in — as an unhandled rejection with a plain string reason.
+          // Thrown by a script Microsoft injects into pages (Outlook's SafeLinks scanner and
+          // the Office browser add-in) as an unhandled rejection with a plain string reason.
           // It has nothing to do with the page; the first production event came from a link
-          // scanner visiting /en with a desktop-Chrome user agent. Widely known, never ours.
+          // scanner visiting /en with a desktop-Chrome user agent. It is a widely known error and not ours.
           /Object Not Found Matching Id:\d+, MethodName:\w+, ParamCount:\d+/,
         ],
         // Code that browser extensions run inside the page is not our code either.

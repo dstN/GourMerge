@@ -1,5 +1,5 @@
 /**
- * GourMerge — Counter Reconcile Script (P3-010)
+ * GourMerge counter reconcile script (P3-010)
  *
  * Recomputes denormalized starCount + forkCount on every recipe by counting
  * real rows in recipe_stars and recipes (forkedFromRecipeId) respectively.
@@ -7,7 +7,7 @@
  * Run manually or as a scheduled job:
  *   node scripts/reconcile-counters.mjs
  *
- * Safe to run on a live production DB — uses UPDATE ... WHERE to skip unchanged rows.
+ * Safe to run on a live production DB: uses UPDATE ... WHERE to skip unchanged rows.
  */
 
 import { createConnection } from 'mysql2/promise'

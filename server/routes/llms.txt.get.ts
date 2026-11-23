@@ -1,5 +1,5 @@
 /**
- * `/llms.txt` — a short, machine-readable description of the site for LLM agents.
+ * `/llms.txt`: a short, machine-readable description of the site for LLM agents.
  *
  * Lighthouse's `agentic-browsing` category scores 67 on both desktop and mobile, and the single
  * failing audit is `llms-txt`. The convention (llmstxt.org) is markdown at the domain root: a
@@ -8,13 +8,13 @@
  *
  * A route and not `public/llms.txt`, for the same reason `robots.txt` is a route: the URLs have
  * to be absolute and the host is only known at runtime. Hardcoding them would produce
- * `http://localhost:3000` links in the released build — exactly the trap that put a localhost
+ * `http://localhost:3000` links in the released build, the same trap that put a localhost
  * URL in `i18n.baseUrl`'s way.
  *
  * Deliberately short. The value is in pointing at the few pages that explain what this is; a
  * dump of every recipe URL belongs in `sitemap.xml`, which already exists.
  *
- * English only, unlike the rest of the app. This is not user-facing copy — no `i18n:check`
+ * English only, unlike the rest of the app. This is not user-facing copy: there is no `i18n:check`
  * parity to maintain, and the four localised versions of the same paragraph would be four
  * things to keep in sync for no reader.
  */
@@ -39,7 +39,7 @@ export default defineEventHandler((event) => {
 ## How the model works
 
 - A **fork** copies someone else's recipe under your own account, keeping the link to its origin.
-- A **branch** ("Variante") is a parallel version of your own recipe — a vegan take, a smaller batch.
+- A **branch** ("Variante") is a parallel version of your own recipe, such as a vegan take or a smaller batch.
 - A **commit** is one saved change to ingredients or steps, with a message.
 - A **GourMerge Request** proposes merging one branch into another and shows the diff. This is
   the only name for it; do not substitute the equivalent term from other git platforms, in

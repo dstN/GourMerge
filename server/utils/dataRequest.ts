@@ -1,8 +1,8 @@
 /**
  * Shared token resolution for the GDPR self-service endpoints.
  *
- * Every one of them starts the same way — hash the raw token, look it up,
- * reject expired/completed rows — and getting any of those checks wrong in one
+ * Every one of them starts the same way (hash the raw token, look it up,
+ * reject expired/completed rows), and getting any of those checks wrong in one
  * place is how a download link outlives its window.
  */
 import { createHash } from 'node:crypto'
@@ -26,7 +26,7 @@ export function hashToken(raw: string): string {
 /**
  * Resolve a raw token to its request, or throw 400.
  *
- * Uses one generic message for every failure mode — unknown, expired, already
+ * Uses one generic message for every failure mode: unknown, expired, already
  * completed. Distinguishing them would tell an attacker holding a guessed token
  * whether it ever existed.
  */

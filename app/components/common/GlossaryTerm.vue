@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * GlossaryTerm — Displays a friendly cooking alias with the canonical git term in a tooltip.
+ * GlossaryTerm: displays a friendly cooking alias with the canonical git term in a tooltip.
  *
  * Usage (Nuxt path-prefixes components in components/common/):
  *   <CommonGlossaryTerm term="fork" />
@@ -31,7 +31,7 @@ const displayText = computed(() => (props.canonical ? canonicalTerm.value : alia
 </script>
 
 <template>
-  <UTooltip :text="`${canonicalTerm} — ${description}`" :delay-duration="300">
+  <UTooltip :text="`${canonicalTerm}: ${description}`" :delay-duration="300">
     <span
       :class="[
         'inline-flex items-center gap-0.5 cursor-help border-b border-dashed border-current/40 hover:border-current/80 transition-colors',

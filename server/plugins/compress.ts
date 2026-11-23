@@ -7,7 +7,7 @@
  * the first paint; `document-latency-insight` flagged it as "No compression applied". The
  * static side is handled by `nitro.compressPublicAssets` in `nuxt.config.ts` (pre-built
  * `.br`/`.gz` siblings that the static handler serves by `Accept-Encoding`); the HTML is
- * rendered per request, so it has to be compressed per request — here.
+ * rendered per request, so it has to be compressed per request, which happens here.
  *
  * In production nginx already gzips on the fly, so the visible change there is gzip → brotli
  * (about a fifth smaller on this HTML). A proxy does not re-encode a body that already carries
@@ -18,7 +18,7 @@
  * original request headers, then takes the result as TEXT (`res.text()`), copies its headers
  * onto the real response and sends that string. Compressing the inner render therefore
  * produced a body that was brotli bytes mangled through a UTF-8 decode, sent under a
- * `content-encoding: br` header — "Decompression failed" in every client. The E2E suite caught
+ * `content-encoding: br` header: "Decompression failed" in every client. The E2E suite caught
  * it on the 409 from a duplicate registration and the 400 from a reused e-mail token (both
  * answered as HTML, because Playwright's request client sends `Accept: * / *`; API routes and
  * JSON-accepting clients get Nitro's JSON error and never touched this path). The inner render

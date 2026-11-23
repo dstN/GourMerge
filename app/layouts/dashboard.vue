@@ -1,8 +1,8 @@
 <script setup lang="ts">
 /**
- * Dashboard Layout — the signed-in shell.
+ * Dashboard layout: the signed-in shell.
  *
- * ## There is no sidebar any more, and that is the point
+ * ## There is no sidebar any more
  *
  * This layout used to carry a 256px `<aside>` whose four links (Dashboard, Meine Rezepte,
  * Favoriten, Entdecken) were *also* in the header nav and *also* in the user dropdown, and
@@ -12,12 +12,11 @@
  *
  * Removing it fixes a second thing at the same time. With a sidebar, the header is centred
  * in the *window* while the content column starts after the sidebar, so the logo and the
- * content it sits above never line up — the previous attempt at that alignment needed a
+ * content it sits above never line up. The previous attempt at that alignment needed a
  * documented block of magic numbers in `main.css` plus an E2E test pinning them, and still
  * only worked from `lg` up. Without it, both the header and the content are the same
  * `max-w-7xl` container centred in the same viewport, and they line up by construction, at
- * every width, with no CSS at all. That is exactly what the logged-out `/explore` state was
- * already doing right.
+ * every width, with no CSS at all, as the logged-out `/explore` state already did.
  *
  * What remains layout-specific is the email-verification banner, which is why this is still
  * a separate layout from `default` rather than the two being merged.
@@ -91,7 +90,7 @@ const localeSwitchItems = [
     <LayoutVerifyEmailBanner class="shrink-0" />
 
     <!-- ── Main Content (the only scrollable region) ─────────
-         A bare scroll container — DESIGNBOOK §4.1. The page's own <CommonPageShell>
+         A bare scroll container (DESIGNBOOK §4.1). The page's own <CommonPageShell>
          owns the cap and the gutters, and because those match the header's container
          exactly, content and chrome align without any layout CSS here.
 
@@ -100,7 +99,7 @@ const localeSwitchItems = [
          mouse (axe: `scrollable-region-focusable`). -->
     <!-- `data-shell` is the only thing in the DOM that names which shell rendered. All
          three layouts use `#main-content`, so that id cannot tell them apart, and the
-         email-verification banner — the one remaining behavioural difference — renders
+         email-verification banner (the one remaining behavioural difference) renders
          nothing unless the gate is on. `tests/e2e/shell.spec.ts` asserts against this. -->
     <main id="main-content" data-shell="app" tabindex="0" class="flex-1 overflow-y-auto">
       <slot />

@@ -3,7 +3,7 @@
  *
  * A route rather than `public/robots.txt`, because the `Sitemap:` directive must be an
  * absolute URL and that made the static file a *second* hardcoded copy of the app's
- * host — one that drifted: it advertised `gourmerge.app` long after the site became
+ * host, and that copy drifted: it advertised `gourmerge.app` long after the site became
  * `gourmerge.de`, pointing crawlers at a domain that is not the site. It now reads the
  * same `public.appUrl` the sitemap itself uses, so the two cannot disagree.
  */

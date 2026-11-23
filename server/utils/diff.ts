@@ -210,7 +210,7 @@ export function computeStepsDiff(oldSteps: CommitStep[], newSteps: CommitStep[])
           newContent: newStep.content,
         })
       } else {
-        // Modified — compute text diff
+        // Modified: compute text diff
         const segments = computeTextDiff(oldStep.content, newStep.content)
         result.push({
           type: 'modified',
@@ -233,7 +233,7 @@ export function computeStepsDiff(oldSteps: CommitStep[], newSteps: CommitStep[])
 /**
  * Compute a complete diff between two recipe commits.
  *
- * This is the main entry point — called by the API route
+ * This is the main entry point, called by the API route
  * `GET /api/recipes/:id/diff?from=<commitA>&to=<commitB>`
  *
  * @param commitA - The "base" commit (older)

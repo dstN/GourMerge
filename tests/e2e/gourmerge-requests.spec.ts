@@ -4,7 +4,7 @@ import { registerUser, uniqueUser, createRecipe, createIngredient, commitSnapsho
 /**
  * Opening a GourMerge Request from the list.
  *
- * The row was `<UCard :to="…">`, and UCard declares no `to` prop — it takes `as`, `title`,
+ * The row was `<UCard :to="…">`, and UCard declares no `to` prop; it takes `as`, `title`,
  * `description`, `variant`, `class`, `ui`. The attribute fell through to a plain <div>, so
  * nothing navigated while `cursor-pointer` and a hover border made every row look
  * clickable. A request could be listed and never opened, so it could never be merged or

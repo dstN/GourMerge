@@ -1,5 +1,7 @@
 /**
- * GET /api/recipes/by-slug/:username/:slug — Resolve a recipe by username + slug
+ * GET /api/recipes/by-slug/:username/:slug
+ *
+ * Resolve a recipe by username + slug
  *
  * This is the primary lookup for GitHub-style URLs (/username/recipe-slug).
  * Returns the full recipe data with branches, ingredients, and steps.
@@ -89,7 +91,7 @@ export default defineEventHandler(async (event) => {
 
   // ── Check if current user has starred this recipe ──────────
   let isStarred = false
-  // Guests get metric — it is the storage form and the default for the German
+  // Guests get metric: it is the storage form and the default for the German
   // primary audience.
   let viewerMeasurementSystem: MeasurementSystem = 'metric'
   if (session?.user) {
@@ -117,13 +119,13 @@ export default defineEventHandler(async (event) => {
   /**
    * Which branch this page shows.
    *
-   * The default branch used to be the only one that could be *viewed* — the branches page
+   * The default branch used to be the only one that could be *viewed*: the branches page
    * offered "edit" and "history" links but nothing to read a variant, so a branch like
    * "paleo" was reachable only through the editor. Everything below (ingredients, steps,
    * nutrition, structured data) now keys off `selectedBranch`.
    *
    * The lookup is `find` over branches already filtered to this recipe, so an id belonging
-   * to somebody else's recipe cannot select anything — it falls through to the default
+   * to somebody else's recipe cannot select anything. It falls through to the default
    * rather than leaking a foreign snapshot.
    */
   const defaultBranch = branches.find((b) => b.isDefault) || branches[0]
@@ -140,7 +142,7 @@ export default defineEventHandler(async (event) => {
           unit: recipeCommitIngredients.unit,
           notes: recipeCommitIngredients.notes,
           sortOrder: recipeCommitIngredients.sortOrder,
-          // Never sent to the client as-is — only `createdBy === viewer` matters, resolved
+          // Never sent to the client as-is. Only `createdBy === viewer` matters, resolved
           // below into the boolean `canEdit`. The Swiss BLV import never sets this column.
           createdBy: ingredients.createdBy,
         })
@@ -153,7 +155,7 @@ export default defineEventHandler(async (event) => {
   /**
    * Apply the viewer's measurement preference on the READ path.
    *
-   * Storage stays metric-canonical (g/ml/piece/pinch/tsp/tbsp) — see
+   * Storage stays metric-canonical (g/ml/piece/pinch/tsp/tbsp); see
    * current_state §4. `getBestDisplayUnit` also handles the metric niceties
    * (1200 g → 1.2 kg), so this runs for both systems, not just imperial.
    *
@@ -165,7 +167,7 @@ export default defineEventHandler(async (event) => {
    */
   const measurementSystem: MeasurementSystem = viewerMeasurementSystem
   const displayIngredients = currentIngredients.map((ing) => {
-    // `createdBy` never leaves this endpoint as-is — only whether it matches the viewer
+    // `createdBy` never leaves this endpoint as-is. Only whether it matches the viewer
     // does, which is the one bit the ingredient-editing feature actually needs.
     const { createdBy, ...rest } = ing
     const canEdit = !!session?.user && createdBy === session.user.id
@@ -240,12 +242,12 @@ export default defineEventHandler(async (event) => {
     .where(and(eq(gourmergeRequests.recipeId, recipe.id), eq(gourmergeRequests.status, 'open')))
 
   /**
-   * Image METADATA only — never `recipeImages.data`. The bytes come from
+   * Image METADATA only, never `recipeImages.data`. The bytes come from
    * `/api/recipes/:id/image`, so the JSON payload of every recipe page stays small and
    * the photo is a separately cacheable resource. `width`/`height` travel with it because
    * the page sets them as attributes to reserve the box before the image arrives; without
    * them the photo landing between ingredients and steps would shove the steps down the
-   * page, which is precisely the layout shift CLS measures.
+   * page, which is the layout shift CLS measures.
    */
   const [image] = await db
     .select({
@@ -276,7 +278,7 @@ export default defineEventHandler(async (event) => {
     forkedFrom,
     branches,
     defaultBranch,
-    /** The branch actually rendered — equals `defaultBranch` unless `?branch=` selected another. */
+    /** The branch actually rendered: equals `defaultBranch` unless `?branch=` selected another. */
     selectedBranch,
     // Carries canonical `quantity`/`unit` PLUS `displayQuantity`/`displayUnit`
     // resolved for this viewer's measurement preference.

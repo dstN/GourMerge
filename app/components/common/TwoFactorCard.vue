@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * TwoFactorCard — opt-in TOTP enrolment, used on /settings.
+ * TwoFactorCard: opt-in TOTP enrolment, used on /settings.
  *
  * Usage (Nuxt path-prefixes components in components/common/):
  *   <CommonTwoFactorCard />
@@ -10,7 +10,7 @@
  * Authenticator all work. The key is also shown as text, because a desktop without
  * a camera cannot scan and some apps only offer manual entry.
  *
- * Two-factor is entirely optional — nothing prompts for it and nothing depends on
+ * Two-factor is entirely optional: nothing prompts for it and nothing depends on
  * it. This card just makes it available.
  */
 const { t } = useI18n()
@@ -38,7 +38,7 @@ const setup = ref<SetupResponse | null>(null)
 const setupCode = ref('')
 const busy = ref(false)
 
-/** Shown once, after confirmation — never retrievable afterwards. */
+/** Shown once, after confirmation; never retrievable afterwards. */
 const recoveryCodes = ref<string[] | null>(null)
 const copied = ref(false)
 
@@ -157,7 +157,7 @@ async function confirmDisable() {
       <template #body>
         <div v-if="setup" class="space-y-4">
           <p class="text-sm">{{ t('twofa.setupScan') }}</p>
-          <!-- Rendered server-side to a data: URI — the strict CSP forbids external
+          <!-- Rendered server-side to a data: URI because the strict CSP forbids external
                image hosts, and it keeps the secret away from any third party. -->
           <img :src="setup.qrDataUri" :alt="t('twofa.setupScan')" class="mx-auto rounded-lg bg-white p-2" width="240" />
 

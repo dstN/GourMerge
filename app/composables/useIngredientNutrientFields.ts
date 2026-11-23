@@ -9,7 +9,7 @@ import {
 
 /**
  * The macro fields `server/utils/nutrition.ts` reads, shared between `NewIngredientModal`
- * and `EditIngredientModal` — they used to keep separate copies that had to be edited in
+ * and `EditIngredientModal`; they used to keep separate copies that had to be edited in
  * lockstep. Ordered the way a EU nutrition label reads: energy, fat (of which saturates),
  * carbohydrate (of which sugars), fibre, protein, salt.
  */

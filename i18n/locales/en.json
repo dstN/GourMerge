@@ -90,16 +90,16 @@
     "featureBranch": "Create Variants",
     "featureBranchDesc": "Experiment on separate variants without changing the original. Perfect for vegan or gluten-free versions.",
     "featureCommit": "Save Your Versions",
-    "featureCommitDesc": "Every adjustment is saved as a version — trace your cooking history without gaps.",
+    "featureCommitDesc": "Every adjustment is saved as a version, so you can trace your cooking history without gaps.",
     "featureMerge": "GourMerge Requests",
     "featureMergeDesc": "Offer your improvements to the original author. Together we cook better.",
     "howItWorks": "How It Works",
     "step1Title": "Create a Recipe",
-    "step1Desc": "Create your first recipe — like a new repository on GitHub.",
+    "step1Desc": "Create your first recipe, like a new repository on GitHub.",
     "step2Title": "Edit Ingredients & Steps",
     "step2Desc": "Use the visual editor to add ingredients and write preparation steps.",
     "step3Title": "Save Your Version",
-    "step3Desc": "Save your adjustments with a version note — e.g., 'Reduced sugar'.",
+    "step3Desc": "Save your adjustments with a version note, e.g., 'Reduced sugar'.",
     "step4Title": "Share & Collaborate",
     "step4Desc": "Share your recipe publicly or invite others to contribute via GourMerge Requests.",
     "ctaTitle": "Ready to Cook?",
@@ -111,7 +111,7 @@
     "recentlyEdited": "Recently edited",
     "reportsTitle": "{n} of your things have been reported",
     "emptyTitle": "No Recipes Yet",
-    "emptyDescription": "Create your first recipe and start your culinary journey.",
+    "emptyDescription": "Create your first recipe to get started.",
     "createFirst": "Create First Recipe",
     "errorTitle": "Session Expired",
     "errorDescription": "Your session has expired. Please log in again."
@@ -186,7 +186,7 @@
     "fork": "Remix",
     "forkSuccess": "Your remix is ready.",
     "forkError": "Could not create your remix.",
-    "seoDescriptionFallback": "Discover and remix this recipe on GourMerge — the platform for collaborative recipe development.",
+    "seoDescriptionFallback": "Discover and remix this recipe on GourMerge, the platform for collaborative recipe development.",
     "forkedFrom": "Forked from",
     "viewForks": "View forks",
     "tagsLabel": "Tags",
@@ -212,9 +212,9 @@
     "deleteIngredientConfirm": "Are you sure? The ingredient will be permanently removed from the catalog.",
     "ingredientDeleted": "Ingredient deleted.",
     "nutritionOptional": "Nutrition per 100 g (optional)",
-    "nutritionOptionalHint": "Without an energy value this ingredient does not count toward the recipe totals — it is reported as missing instead.",
+    "nutritionOptionalHint": "Without an energy value this ingredient does not count toward the recipe totals and is reported as missing instead.",
     "gramsPerPiece": "Weight per piece (g)",
-    "gramsPerPieceHint": "Only relevant if this ingredient is measured in \"piece\" — e.g. 60 g for 1 egg. Without it, GourMerge roughly assumes 100 g per piece.",
+    "gramsPerPieceHint": "Only relevant if this ingredient is measured in \"piece\", e.g. 60 g for 1 egg. Without it, GourMerge roughly assumes 100 g per piece.",
     "nutritionSourceUser": "Source: self-reported",
     "ingredientCreated": "Ingredient created.",
     "editIngredientTitle": "Edit ingredient",
@@ -266,7 +266,7 @@
     "noteLabel": "Additional details",
     "notePlaceholder": "Anything that helps us understand the issue",
     "submit": "Submit report",
-    "success": "Thanks — this has been reported.",
+    "success": "Thanks, this has been reported.",
     "alreadyReported": "You already reported this.",
     "error": "Could not submit the report.",
     "recipe": "Report recipe",
@@ -362,7 +362,7 @@
     "diffError": "Failed to load changes."
   },
   "glossary": {
-    "seoDescription": "GourMerge glossary — understand git concepts explained as cooking terms.",
+    "seoDescription": "GourMerge glossary: git concepts explained as cooking terms.",
     "subtitle": "Git concepts explained as cooking terms. Git-savvy users will find the technical term in the badge.",
     "recipe": {
       "alias": "Recipe",
@@ -379,7 +379,7 @@
     "branch": {
       "alias": "Variant",
       "canonical": "Branch",
-      "description": "A parallel version of your recipe — experiment without changing the main version.",
+      "description": "A parallel version of your recipe. Experiment without changing the main version.",
       "helpHint": "Think of a variant as a 'vegan version' or 'gluten-free variant'. Changes on a variant don't affect other variants until you merge."
     },
     "commit": {
@@ -391,7 +391,7 @@
     "merge": {
       "alias": "Combine",
       "canonical": "Merge",
-      "description": "Apply changes from one variant into another, combining the best of both.",
+      "description": "Apply changes from one variant to another.",
       "helpHint": "When you merge, GourMerge combines the ingredient and step changes. If two people changed the same ingredient differently, you'll see a conflict to resolve."
     },
     "gourmergeRequest": {
@@ -421,7 +421,7 @@
     "noStarred": "No starred recipes yet.",
     "editSettings": "Edit Settings",
     "qrAvatarAlt": "Generated QR avatar for {name}",
-    "qrAvatarTitle": "{name} — scan the QR code to open the profile",
+    "qrAvatarTitle": "{name}: scan the QR code to open the profile",
     "qrAvatarScanHint": "Scan to open this profile"
   },
   "settings": {
@@ -431,7 +431,7 @@
     "avatar": "Photo",
     "avatarUpload": "Upload photo",
     "avatarReplace": "Replace photo",
-    "avatarHint": "JPEG, PNG or WebP. With no photo we generate a QR-code avatar from your username — scan it to open your profile.",
+    "avatarHint": "JPEG, PNG or WebP. With no photo we generate a QR-code avatar from your username. Scan it to open your profile.",
     "avatarSaved": "Photo updated.",
     "avatarRemoved": "Photo removed.",
     "avatarError": "Could not save the photo.",
@@ -494,7 +494,7 @@
       "fork": {
         "alias": "Remix / Own Version",
         "canonical": "Fork",
-        "desc": "Make your own copy of someone else's recipe and adapt it freely — the original stays unchanged."
+        "desc": "Make your own copy of someone else's recipe and adapt it freely. The original stays unchanged."
       },
       "branch": {
         "alias": "Variant",
@@ -509,12 +509,12 @@
       "merge": {
         "alias": "Combine",
         "canonical": "Merge",
-        "desc": "Merge changes from one variant into another — GourMerge handles conflicts for you."
+        "desc": "Merge changes from one variant into another. GourMerge handles conflicts for you."
       },
       "gourmergeRequest": {
         "alias": "Propose Changes",
         "canonical": "GourMerge Request",
-        "desc": "Propose your changes to the original recipe's author — they can review, comment, and accept."
+        "desc": "Propose your changes to the original recipe's author. They can review, comment, and accept."
       }
     }
   },
@@ -526,7 +526,7 @@
     "step": {
       "explore": {
         "title": "Discover Recipes",
-        "desc": "Browse public recipes from the community — filter by difficulty, tags, or sort by popularity."
+        "desc": "Browse public recipes from the community. Filter by difficulty or tags, or sort by popularity."
       },
       "newRecipe": {
         "title": "Create a Recipe",
@@ -534,7 +534,7 @@
       },
       "recipeForm": {
         "title": "Fill In Your Recipe",
-        "desc": "Give your recipe a title and click \"Create Recipe\" below — the tour continues automatically from there. It gets deleted again once the tour ends."
+        "desc": "Give your recipe a title and click \"Create Recipe\" below. The tour continues automatically from there. The recipe gets deleted again once the tour ends."
       },
       "star": {
         "title": "Star Recipes",
@@ -546,7 +546,7 @@
       },
       "pointers": {
         "title": "There's a lot more to explore!",
-        "desc": "Up here you'll also find version history, variants and GourMerge Requests. Try those out on your own recipes later — we'll explain them in more detail then! Click \"Next\" to tidy up."
+        "desc": "Up here you'll also find version history, variants and GourMerge Requests. Try those out on your own recipes later and we'll explain them in more detail then! Click \"Next\" to tidy up."
       },
       "addIngredient": {
         "title": "Add ingredients",
@@ -582,11 +582,11 @@
       },
       "historyPage": {
         "title": "The recipe's history",
-        "desc": "Here you can see every commit to this recipe — every change is tracked, just like in Git."
+        "desc": "Here you can see every commit to this recipe. Every change is tracked, just like in Git."
       },
       "gmrPage": {
         "title": "Suggestions from others",
-        "desc": "This is where GourMerge Requests land — suggestions from people who forked your recipe. You can review them and merge the changes into your recipe!"
+        "desc": "This is where GourMerge Requests land: suggestions from people who forked your recipe. You can review them and merge the changes into your recipe!"
       },
       "newBranch": {
         "title": "Create a new variant",
@@ -601,8 +601,8 @@
         "desc": "Perfect! You now have a new variant you can work on independently from the original."
       }
     },
-    "endedEarly": "The tour ends here — there was no sample recipe available to show the remaining steps.",
-    "finishedNoFork": "Tour complete! Forking needs a public recipe from someone else — once one exists, you can try it here."
+    "endedEarly": "The tour ends here because there was no sample recipe available to show the remaining steps.",
+    "finishedNoFork": "Tour complete! Forking needs a public recipe from someone else. Once one exists, you can try it here."
   },
   "help": {
     "menu": "Help",
@@ -670,9 +670,9 @@
       "dataAccount": "Account data:",
       "dataAccountDesc": "email address, username, display name",
       "dataSession": "Session cookie:",
-      "dataSessionDesc": "HttpOnly, 14-day lifetime, set only when you log in. Holds your account data (username, display name, email address, avatar, verification status) encrypted — readable only by our server, never by your browser or a third party.",
+      "dataSessionDesc": "HttpOnly, 14-day lifetime, set only when you log in. Holds your account data (username, display name, email address, avatar, verification status) encrypted, readable only by our server, never by your browser or a third party.",
       "dataPrefs": "Functional cookies:",
-      "dataPrefsDesc": "language selection, colour scheme (light/dark) and whether the introduction has already been seen. These cookies store only your preferences — no identifier and no personal data — and are necessary to operate the site.",
+      "dataPrefsDesc": "language selection, colour scheme (light/dark) and whether the introduction has already been seen. These cookies store only your preferences (no identifier and no personal data) and are necessary to operate the site.",
       "dataContact": "Contact form:",
       "dataContactDesc": "name, email address and message content",
       "dataRecipes": "Content:",
@@ -680,7 +680,7 @@
       "purposeTitle": "3. Purpose of processing",
       "purposeBody": "The data collected is used solely to operate the GourMerge platform and to communicate with users. The legal basis is Art. 6(1)(b) GDPR (performance of a contract) and Art. 6(1)(f) GDPR (legitimate interests). For enquiries submitted through the contact form, the legal basis is Art. 6(1)(f) GDPR.",
       "thirdPartiesTitle": "4. Disclosure to third parties",
-      "thirdPartiesBody": "As a rule, data is not passed on to third parties. Exception: we use Sentry for error monitoring. When an error occurs, technical data (e.g. stack traces) is transmitted; the Sentry project runs in the EU region and the data stays within the EU. The SDK does not transmit personal data such as email addresses; the IP address that is technically part of the transfer is not stored by Sentry (project setting “Prevent Storing of IP Addresses”). Fonts are served from our own server — there is no connection to Google Fonts or any other external CDN.",
+      "thirdPartiesBody": "As a rule, data is not passed on to third parties. Exception: we use Sentry for error monitoring. When an error occurs, technical data (e.g. stack traces) is transmitted; the Sentry project runs in the EU region and the data stays within the EU. The SDK does not transmit personal data such as email addresses; the IP address that is technically part of the transfer is not stored by Sentry (project setting “Prevent Storing of IP Addresses”). Fonts are served from our own server. There is no connection to Google Fonts or any other external CDN.",
       "thirdPartiesSentryLink": "Sentry’s privacy policy",
       "rightsTitle": "5. Your rights (GDPR Art. 15–22)",
       "right1": "Access to stored data (Art. 15)",
@@ -732,10 +732,10 @@
       "retentionErrors": "Error reports at Sentry: 90 days.",
       "selfServiceTitle": "9. Self-service",
       "selfServiceDesc": "You can trigger an export or a deletion yourself at any time, without writing to us:",
-      "retentionInactive": "Inactive accounts: if you do not sign in for three years, we delete your account automatically. We warn you three times by email beforehand — six months, four weeks and 24 hours before deletion. A single sign-in is enough to keep the account, and the period then starts over. Only your last login counts, not opening an email.",
+      "retentionInactive": "Inactive accounts: if you do not sign in for three years, we delete your account automatically. We warn you three times by email beforehand: six months, four weeks and 24 hours before deletion. A single sign-in is enough to keep the account, and the period then starts over. Only your last login counts, not opening an email.",
       "twofaTitle": "Two-factor authentication (optional)",
-      "twofaBody": "You may optionally protect your account with an authenticator app (TOTP). We then store an encrypted key used to generate codes, plus ten recovery codes as hashes. No phone number is collected and nothing is shared with third parties — the codes are generated entirely on your own device. You can switch the feature off again at any time in your settings, which deletes the associated data.",
-      "deletionHard": "An erasure under Art. 17 GDPR deletes your account for real rather than merely disabling it. Contributions that are inseparable from other people’s recipe history — versions someone copied into their own fork, and your GourMerge Requests and comments in their discussions — are reassigned to an anonymous placeholder account. Your name, email address and profile are removed entirely."
+      "twofaBody": "You may optionally protect your account with an authenticator app (TOTP). We then store an encrypted key used to generate codes, plus ten recovery codes as hashes. No phone number is collected and nothing is shared with third parties: the codes are generated entirely on your own device. You can switch the feature off again at any time in your settings, which deletes the associated data.",
+      "deletionHard": "An erasure under Art. 17 GDPR deletes your account for real rather than merely disabling it. Contributions that are inseparable from other people’s recipe history (versions someone copied into their own fork, and your GourMerge Requests and comments in their discussions) are reassigned to an anonymous placeholder account. Your name, email address and profile are removed entirely."
     }
   },
   "editor": {
@@ -766,7 +766,7 @@
     "subtitle": "Add a second step to your sign-in using an authenticator app.",
     "statusOn": "Enabled",
     "statusOff": "Not enabled",
-    "appHint": "Works with any authenticator app — Google Authenticator, Authy, 1Password, Bitwarden or Aegis.",
+    "appHint": "Works with any authenticator app, such as Google Authenticator, Authy, 1Password, Bitwarden or Aegis.",
     "enable": "Set up",
     "disable": "Disable",
     "setupScan": "Scan this QR code with your authenticator app:",
@@ -799,7 +799,7 @@
     "network": "Cannot reach the server. Check your connection and try again.",
     "unauthorized": "You do not have permission to do that.",
     "notFound": "We could not find that.",
-    "conflict": "That did not work — it probably already exists or was just changed.",
+    "conflict": "That did not work. It probably already exists or was just changed.",
     "validation": "Please check your input.",
     "rateLimited": "Too many attempts. Wait a moment and try again.",
     "unavailable": "The service is temporarily unavailable. Please try again later.",
@@ -810,7 +810,7 @@
   },
   "passkey": {
     "title": "Passkeys",
-    "subtitle": "Sign in without a password — using your fingerprint, face or device PIN.",
+    "subtitle": "Sign in without a password, using your fingerprint, face or device PIN.",
     "explain": "A passkey stays on your device and cannot be intercepted or typed into a fake site. At sign-in it replaces both your password and your verification code.",
     "add": "Add a passkey",
     "none": "No passkey set up yet.",
@@ -876,7 +876,7 @@
   },
   "cookieConsent": {
     "bannerTitle": "We use cookies",
-    "bannerBody": "We set technically necessary cookies for login, your language preference, and a few convenience features. We don't currently use categories like statistics or marketing — see our",
+    "bannerBody": "We set technically necessary cookies for login, your language preference, and a few convenience features. We don't currently use categories like statistics or marketing. See our",
     "privacyLinkText": "privacy policy",
     "acceptAll": "Accept all",
     "acceptNecessary": "Necessary only",
@@ -885,7 +885,7 @@
     "settingsIntro": "Choose which cookie categories we're allowed to set. More details in our",
     "categoryNecessaryTitle": "Technically necessary",
     "categoryNecessaryAlwaysOn": "Always on",
-    "categoryNecessaryDesc": "The session cookie for login (encrypted, it holds your account data — username, display name, email address, avatar, verification status — readable only by our server), a short-lived cookie for the two-factor in-between step (holds only your user ID, valid for 5 minutes), your language choice, and the note that you've already seen the intro. These cookies are required for the site to work and can't be turned off.",
+    "categoryNecessaryDesc": "The session cookie for login (encrypted, it holds your account data: username, display name, email address, avatar, verification status; readable only by our server), a short-lived cookie for the two-factor in-between step (holds only your user ID, valid for 5 minutes), your language choice, and the note that you've already seen the intro. These cookies are required for the site to work and can't be turned off.",
     "categoryStatisticsTitle": "Statistics",
     "categoryStatisticsDesc": "Not currently in use. Reserved in case we introduce anonymous usage statistics later.",
     "categoryMarketingTitle": "Marketing",

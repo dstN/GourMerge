@@ -1,6 +1,6 @@
 @import 'tailwindcss';
 @import '@nuxt/ui';
-/* Skeleton shimmer — the upstream plugin from assistant-ui, not a reimplementation.
+/* Skeleton shimmer: the upstream plugin from assistant-ui, not a reimplementation.
  * Three hand-rolled attempts got the geometry, the direction and the falloff wrong in turn;
  * this is the reference itself (CSS-only, zero runtime). Applied to skeletons via
  * `app.config.ts`; the reduced-motion opt-out and the brand colour live further down. */
@@ -19,7 +19,7 @@
 @theme {
   /* ── Primary: Saffron / Amber ─────────────────────────────── */
   /* Base palette (used as-is in dark mode). Light mode darkens 300–950 below for
-   * WCAG AA — see the `:root:not(.dark)` override. */
+   * WCAG AA (see the `:root:not(.dark)` override). */
   --color-primary-50: oklch(0.98 0.02 85);
   --color-primary-100: oklch(0.95 0.04 82);
   --color-primary-200: oklch(0.9 0.08 78);
@@ -61,7 +61,7 @@
 /* ── Nutrition macro colours (DESIGNBOOK §1.1) ─────────────────
  * The macro bar and its legend must read the SAME token, or the swatch stops
  * matching the segment it labels. Protein leans on the herb accent, carbs on the
- * brand saffron, fat one hue warmer — a three-step warm ramp that stays legible
+ * brand saffron, fat one hue warmer: a three-step warm ramp that stays legible
  * side by side and never reaches for a raw `amber-*`/`orange-*` utility. */
 :root {
   --gm-macro-protein: var(--color-secondary-500);
@@ -93,13 +93,13 @@
 
 /* ── WCAG AA: dark-mode neutral text ──────────────────────────
  * Nuxt UI's dark defaults are dimmed=neutral-500, muted=neutral-400. On our dark
- * card surface, neutral-500 measures **3.74:1** — below AA for the 12px meta text
+ * card surface, neutral-500 measures **3.74:1**, below AA for the 12px meta text
  * on `RecipeCard` (author, counts). Verified with axe: 6 failing nodes on
  * `/explore` in dark mode, which the a11y gate logged as "serious" and let through
  * because it only fails on "critical".
  *
- * Lift both tiers one step. The hierarchy survives — text(200) > muted(300) >
- * dimmed(400) — and all three now clear AA. This is the dark-mode counterpart of
+ * Lift both tiers one step. The hierarchy survives (text(200) > muted(300) >
+ * dimmed(400)) and all three now clear AA. This is the dark-mode counterpart of
  * the light-mode block below; contrast is fixed centrally in BOTH modes, which is
  * what DESIGNBOOK §1.6 promises. */
 .dark {
@@ -109,7 +109,7 @@
 
 /* ── WCAG AA: light-mode-only darkening ───────────────────────
  * On white, the base saffron (300–950) and Nuxt UI's muted/dimmed neutral text
- * fall below 4.5:1. Scope the darkening to light mode — dark mode keeps the base
+ * fall below 4.5:1. Scope the darkening to light mode; dark mode keeps the base
  * saffron palette, where the lighter shades already contrast well on dark
  * backgrounds (only the neutrals needed the block above). */
 :root:not(.dark) {
@@ -131,8 +131,8 @@
  * ONLY place the fix lives: light mode drops to -700, dark mode rises to -400
  * (already high-contrast on a dark background).
  *
- * They are also the only sanctioned use of raw Tailwind palette literals — that
- * is the whole point of collecting them here instead of at ~15 call sites, where
+ * They are also the only sanctioned use of raw Tailwind palette literals, which
+ * is why they are collected here instead of at ~15 call sites, where
  * they were previously hand-applied and inevitably diverged. */
 .tint-success {
   color: var(--color-green-700);
@@ -164,7 +164,7 @@
 .dark .tint-herb {
   color: var(--color-lime-400);
 }
-/* Matching tint background for the herb pair — the semantic ramps cover
+/* Matching tint background for the herb pair. The semantic ramps cover
  * success/warning/error/info, but "vegetarian" needs its own hue to stay
  * distinguishable from "vegan". */
 .bg-tint-herb {
@@ -172,9 +172,9 @@
 }
 
 /* ── The one in-text link style (DESIGNBOOK §1.5) ──────────────
- * Colour is `--ui-primary`, **not** `--color-primary-500`. That distinction is the
- * whole point: `--ui-primary` is Nuxt UI's mode-aware brand colour — primary-500 in
- * light, primary-**400** in dark — and it is what a solid button's background uses.
+ * Colour is `--ui-primary`, **not** `--color-primary-500`. The distinction matters:
+ * `--ui-primary` is Nuxt UI's mode-aware brand colour (primary-500 in
+ * light, primary-**400** in dark), and it is what a solid button's background uses.
  * Hardcoding `-500` matched buttons in light mode and drifted a visible shade
  * lighter-vs-darker in dark mode, so links and buttons looked like two different
  * oranges. Reading the same variable the buttons read means they cannot diverge
@@ -204,18 +204,17 @@
  * content column would sit sensibly beside the 256px dashboard sidebar and finish level
  * with the header's controls. It worked, it was pinned by an E2E test, and it was only
  * ever necessary because the header was centred in the WINDOW while the content started
- * after the sidebar — two frames that could never agree by construction.
+ * after the sidebar: two frames that could never agree by construction.
  *
  * The sidebar is gone (see `layouts/dashboard.vue`). Header and content are now the same
  * `max-w-7xl` container centred in the same viewport, so the logo and the content below it
- * share a left edge at every width, with no CSS at all. The right amount of code for that
- * is none, which is what is here now.
+ * share a left edge at every width, with no CSS at all.
  *
  * `.page-shell` itself stays on <CommonPageShell> as a stable hook for
  * `tests/e2e/layout-alignment.spec.ts`, which measures that alignment. */
 
 /* ── Skeleton loading: the tw-shimmer plugin, brand-coloured ───
- * Nuxt UI's skeleton is `animate-pulse rounded-md bg-elevated` — the whole block fades in
+ * Nuxt UI's skeleton is `animate-pulse rounded-md bg-elevated`: the whole block fades in
  * and out together, which reads as "something is broken and blinking" rather than "content
  * is on its way". A highlight travelling left-to-right reads as directional progress.
  *
@@ -223,7 +222,7 @@
  * gradient. Three hand-rolled attempts are the reason: the first swept right-to-left, the
  * second had a three-stop ramp whose derivative kinks read as the band's own edges, and the
  * third wasted a fifth of every cycle on an empty "rest" and felt sluggish. The upstream
- * plugin gets all three right and adds things I had explicitly declined to build — speed
+ * plugin gets all three right and adds things I had explicitly declined to build: speed
  * expressed in px/sec so a wide card and a small badge shimmer at the same velocity, and
  * `shimmer-container`, which coordinates one diagonal pass across a whole group of
  * placeholders instead of animating each independently.
@@ -231,7 +230,7 @@
  * Only two things are ours, and both are below: the brand colour, and the reduced-motion
  * opt-out. The class list itself is applied in `app.config.ts`.
  *
- * /dev/skeletons holds a skeleton still so the pass can be scrubbed frame by frame — a real
+ * /dev/skeletons holds a skeleton still so the pass can be scrubbed frame by frame; a real
  * one is on screen for a few hundred milliseconds. */
 
 /* Brand orange rather than the plugin's default near-black, so loading reads as part of the
@@ -239,7 +238,7 @@
  *
  * `--ui-primary`, NOT `--color-primary-500`: the former is Nuxt UI's mode-aware brand colour,
  * same rule as the link colour above. Here it is also a hard constraint rather than a
- * preference — Tailwind v4 tree-shakes `@theme` variables, so `--color-primary-300` and
+ * preference: Tailwind v4 tree-shakes `@theme` variables, so `--color-primary-300` and
  * friends are simply absent from the stylesheet unless some utility references them, and a
  * `color-mix()` over a missing variable is an invalid declaration, i.e. no shimmer at all.
  * Found by rendering it and getting a blank bar.
@@ -252,7 +251,7 @@
  *
  * Also worth keeping: `--ui-text-dimmed` at 18% and `--ui-bg-accented` were both effectively
  * invisible (the latter sits ~4% off `bg-elevated` in light mode). Both computed correctly
- * and both animated correctly; a loading affordance nobody can see is still not one. */
+ * and both animated correctly, but nobody could see them. */
 .gm-skeleton {
   --shimmer-color: color-mix(in oklab, var(--ui-primary) 40%, transparent);
 
@@ -261,7 +260,7 @@
    * Nuxt UI's skeleton theme is `animate-pulse rounded-md bg-elevated`, and an
    * `app.config.ts` override is MERGED with it by tailwind-variants rather than replacing it.
    * tailwind-merge only drops a class when a later class conflicts within the same group, and
-   * `shimmer` is not in the `animate` group — so `animate-pulse` survives, and because
+   * `shimmer` is not in the `animate` group, so `animate-pulse` survives, and because
    * Tailwind emits it after the plugin's `@utility shimmer` in the same layer, `animation:
    * pulse 2s …` wins. The measured result before this block: `animation-name: pulse`, a fully
    * built shimmer gradient underneath it, and no movement. Adding `animate-none` to the base
@@ -271,8 +270,8 @@
    * These rules are unlayered, so they beat everything in Tailwind's layers without
    * `!important`. Values are copied verbatim from tw-shimmer's `@utility shimmer`.
    *
-   * `--_duration` and `--_repeat-delay` are the plugin's internals — the only way to keep its
-   * width-derived speed, which is the whole reason for using it rather than a fixed duration.
+   * `--_duration` and `--_repeat-delay` are the plugin's internals and the only way to keep its
+   * width-derived speed, which is the reason for using it rather than a fixed duration.
    * The fallbacks matter: if upstream renames them, `calc()` over a missing variable is
    * invalid at computed-value time and `animation-duration` would fall back to 0s, i.e. no
    * shimmer. 750ms + 20ms is what the surface preset computes for a typical skeleton, so a
@@ -286,7 +285,7 @@
 }
 
 /* An indefinite looping animation is exactly what this setting is for, and the plugin does
- * not handle it — a placeholder stays perfectly usable standing still, so nothing is lost.
+ * not handle it. A placeholder stays perfectly usable standing still, so nothing is lost.
  *
  * Targets `.shimmer` rather than `.gm-skeleton` so it also covers the text variant if that
  * ever gets used. `-webkit-text-fill-color` has to be restored for exactly that reason:
@@ -304,7 +303,7 @@
 /* ── Dropdown/menu open: no highlight/icon colour flash ────────
  * Nuxt UI menu items (and their leading icons + labels) animate colour via a
  * transition. On open, the highlighted values are briefly present and animate
- * out, which reads as a one-frame flash across the menu — most visibly on the
+ * out, which reads as a one-frame flash across the menu, most visibly on the
  * icons. `transition` does not inherit, so we must disable it on the item, its
  * ::before highlight, AND every descendant (icons/labels). The highlight then
  * only ever appears instantly on real hover/keyboard-focus, never on open. */
@@ -323,8 +322,8 @@
 /* ── Interactive elements get a pointer cursor ─────────────────
  * Tailwind v3's preflight set `cursor: pointer` on `button`; **v4 removed it** and
  * defers to the browser default, which is `cursor: default`. So after the v4
- * migration every `<button>` in the app — every `UButton`, dropdown trigger, tab
- * and toggle — silently lost its pointer. Links were unaffected (the UA stylesheet
+ * migration every `<button>` in the app (every `UButton`, dropdown trigger, tab
+ * and toggle) silently lost its pointer. Links were unaffected (the UA stylesheet
  * gives `a[href]` a pointer), which is why it read as "some things are clickable,
  * some aren't".
  *
@@ -477,7 +476,7 @@ html {
   z-index: 9999;
   padding: 0.5rem 1rem;
   /* Same pairing a solid primary button uses (DESIGNBOOK §1.1): `--ui-primary` is
-   * mode-aware, and `--ui-text-inverted` flips with it — so the label stays legible
+   * mode-aware, and `--ui-text-inverted` flips with it, so the label stays legible
    * on the lighter primary-400 that dark mode resolves to. A hardcoded `white`
    * would sit on light orange in dark mode. */
   background: var(--ui-primary);

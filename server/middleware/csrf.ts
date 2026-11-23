@@ -10,7 +10,7 @@ export default defineEventHandler((event) => {
   if (!PROTECTED_PREFIXES.some((p) => path.startsWith(p))) return
 
   const origin = getHeader(event, 'origin')
-  // No Origin header → curl / server-to-server / mobile — not a browser CSRF vector
+  // No Origin header: curl / server-to-server / mobile, not a browser CSRF vector
   if (!origin) return
 
   const config = useRuntimeConfig()
@@ -18,7 +18,7 @@ export default defineEventHandler((event) => {
   try {
     allowedOrigin = new URL(config.public.appUrl).origin
   } catch {
-    // Misconfigured appUrl — fail open in dev, fail closed in prod
+    // Misconfigured appUrl: fail open in dev, fail closed in prod
     if (process.env.NODE_ENV === 'production') {
       throw createError({ statusCode: 403, statusMessage: 'CSRF: server misconfiguration' })
     }
@@ -31,8 +31,8 @@ export default defineEventHandler((event) => {
      * "CSRF: origin not allowed", which makes the two cases that produce it
      * indistinguishable after the fact:
      *
-     *   - a scanner POSTing to `/api/*` from somewhere else — expected, ignorable,
-     *     and the whole point of the check;
+     *   - a scanner POSTing to `/api/*` from somewhere else (expected, ignorable,
+     *     and the whole point of the check);
      *   - a real user whose browser sent an origin we did not anticipate (`null`
      *     after a cross-origin redirect, an embedded WebView, a stale PWA client),
      *     which is a bug in *our* funnel and needs fixing.

@@ -169,7 +169,7 @@ describe('display resolution on the recipe read path', () => {
   })
 
   it('produces a unit the page has an i18n label for', () => {
-    // Mirrors UNIT_I18N in app/pages/[username]/[slug]/index.vue — a unit the
+    // Mirrors UNIT_I18N in app/pages/[username]/[slug]/index.vue. A unit the
     // engine can emit but the page cannot label would render as a raw token.
     const LABELLED = new Set(['g', 'ml', 'piece', 'pinch', 'tsp', 'tbsp', 'kg', 'l', 'oz', 'lb', 'cup', 'floz'])
     for (const [qty, unit] of CANONICAL) {

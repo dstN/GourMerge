@@ -1,9 +1,11 @@
 /**
- * POST /api/privacy/delete — execute an erasure request (GDPR Art. 17).
+ * POST /api/privacy/delete
+ *
+ * Execute an erasure request (GDPR Art. 17).
  *
  * The account row is **hard-deleted**. Four FKs into `users` are NOT NULL and
- * RESTRICT — `recipes.owner_id`, `recipe_commits.author_id`,
- * `gourmerge_requests.author_id`, `gm_request_comments.author_id` — and a fork copies
+ * RESTRICT (`recipes.owner_id`, `recipe_commits.author_id`,
+ * `gourmerge_requests.author_id`, `gm_request_comments.author_id`), and a fork copies
  * commits keeping the ORIGINAL author_id, so a bare `DELETE` cannot work. The
  * attribution that legitimately lives inside *other people's* recipes is therefore
  * reassigned to a single shared anonymous ghost account before the row is removed;

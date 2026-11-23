@@ -1,5 +1,7 @@
 /**
- * POST /api/recipes/:id/star — Toggle star on a recipe
+ * POST /api/recipes/:id/star
+ *
+ * Toggle star on a recipe
  *
  * Stars if not already starred, unstars if already starred.
  * Keeps starCount in sync atomically via the same transaction.

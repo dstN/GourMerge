@@ -2,7 +2,7 @@
  * Localized transactional-email strings (server-only).
  *
  * These deliberately live here rather than in `i18n/locales/*.json` because:
- *   1. They are never used client-side — keeping them out of the i18n bundle
+ *   1. They are never used client-side. Keeping them out of the i18n bundle
  *      avoids shipping them to the browser.
  *   2. `@nuxtjs/i18n` compiles the locale JSON, so importing those files in a
  *      server util yields a wrapped shape, not raw strings.
@@ -22,7 +22,7 @@ export interface EmailStrings {
 }
 
 /**
- * A plain informational email — no link, no action, nothing to confirm. Distinct from
+ * A plain informational email with no link and nothing to act on or confirm. Distinct from
  * `EmailStrings` because that shape always assumes a URL to embed; forcing one in here
  * (an empty `<a href="">`) would produce a broken link where there is deliberately none.
  * `body` may contain a literal `{email}` placeholder, substituted by the caller.
@@ -35,16 +35,16 @@ export interface EmailNoticeStrings {
 export interface EmailBundle {
   verification: EmailStrings
   passwordReset: EmailStrings
-  /** GDPR Art. 15 — confirm that the export request came from the account owner. */
+  /** GDPR Art. 15: confirm that the export request came from the account owner. */
   exportConfirm: EmailStrings
-  /** GDPR Art. 15 — the download link, also shown in the browser. */
+  /** GDPR Art. 15: the download link, also shown in the browser. */
   exportReady: EmailStrings
-  /** GDPR Art. 17 — confirm that the erasure request came from the account owner. */
+  /** GDPR Art. 17: confirm that the erasure request came from the account owner. */
   deletionConfirm: EmailStrings
   /** Sent to the NEW address; clicking it both switches the email and verifies it. */
   emailChangeConfirm: EmailStrings
   /**
-   * Sent to the OLD address when a change is requested — no link, nothing to click.
+   * Sent to the OLD address when a change is requested. It has no link and nothing to click.
    * The change already cannot complete without the new address confirming, so this is
    * pure notice: if the recipient did not request it, their account is the one that may
    * be compromised, not the address someone is trying to switch it to.
@@ -67,7 +67,7 @@ export const EMAIL_MESSAGES: Record<EmailLocale, EmailBundle> = {
       intro: 'Für dein GourMerge-Konto wurde ein Zurücksetzen des Passworts angefordert.',
       linkLabel: 'Passwort zurücksetzen',
       expiry:
-        'Dieser Link läuft in 2 Stunden ab. Falls du das nicht angefordert hast, ignoriere diese E-Mail — dein Passwort bleibt unverändert.',
+        'Dieser Link läuft in 2 Stunden ab. Falls du das nicht angefordert hast, ignoriere diese E-Mail. Dein Passwort bleibt unverändert.',
       textIntro: 'Klicke auf den Link, um dein GourMerge-Passwort zurückzusetzen:',
     },
     exportConfirm: {
@@ -76,7 +76,7 @@ export const EMAIL_MESSAGES: Record<EmailLocale, EmailBundle> = {
         'Für dein GourMerge-Konto wurde eine Datenauskunft nach Art. 15 DSGVO angefordert. Bestätige über den folgenden Link, dass die Anfrage von dir stammt:',
       linkLabel: 'Datenauskunft bestätigen',
       expiry:
-        'Dieser Link läuft in 2 Stunden ab. Falls du das nicht angefordert hast, ignoriere diese E-Mail — es werden keine Daten herausgegeben.',
+        'Dieser Link läuft in 2 Stunden ab. Falls du das nicht angefordert hast, ignoriere diese E-Mail. Es werden keine Daten herausgegeben.',
       textIntro: 'Bestätige über den Link, dass die Datenauskunft von dir stammt:',
     },
     exportReady: {
@@ -107,7 +107,7 @@ export const EMAIL_MESSAGES: Record<EmailLocale, EmailBundle> = {
     },
     emailChangeNotice: {
       subject: 'Änderung deiner GourMerge-E-Mail-Adresse angefordert',
-      body: 'Für dein GourMerge-Konto wurde eine Änderung der E-Mail-Adresse zu {email} angefordert. Die Änderung wird erst wirksam, wenn diese neue Adresse bestätigt wird. Falls du das nicht warst, ändere umgehend dein Passwort — jemand mit Zugriff auf dein Konto versucht möglicherweise, es zu übernehmen.',
+      body: 'Für dein GourMerge-Konto wurde eine Änderung der E-Mail-Adresse zu {email} angefordert. Die Änderung wird erst wirksam, wenn diese neue Adresse bestätigt wird. Falls du das nicht warst, ändere umgehend dein Passwort. Jemand mit Zugriff auf dein Konto versucht möglicherweise, es zu übernehmen.',
     },
   },
   en: {
@@ -123,7 +123,7 @@ export const EMAIL_MESSAGES: Record<EmailLocale, EmailBundle> = {
       intro: 'Someone requested a password reset for your GourMerge account.',
       linkLabel: 'Reset your password',
       expiry:
-        "This link expires in 2 hours. If you didn't request this, ignore this email — your password won't change.",
+        "This link expires in 2 hours. If you didn't request this, ignore this email. Your password won't change.",
       textIntro: 'Click the link to reset your GourMerge password:',
     },
     exportConfirm: {
@@ -131,7 +131,7 @@ export const EMAIL_MESSAGES: Record<EmailLocale, EmailBundle> = {
       intro:
         'A data export under Art. 15 GDPR was requested for your GourMerge account. Confirm via the link below that the request came from you:',
       linkLabel: 'Confirm data export',
-      expiry: "This link expires in 2 hours. If you didn't request this, ignore this email — no data will be released.",
+      expiry: "This link expires in 2 hours. If you didn't request this, ignore this email. No data will be released.",
       textIntro: 'Confirm via the link that the data export was requested by you:',
     },
     exportReady: {
@@ -161,7 +161,7 @@ export const EMAIL_MESSAGES: Record<EmailLocale, EmailBundle> = {
     },
     emailChangeNotice: {
       subject: 'Change to your GourMerge email address requested',
-      body: "A change to your GourMerge account's email address, to {email}, was requested. The change only takes effect once that new address is confirmed. If this wasn't you, change your password right away — someone with access to your account may be trying to take it over.",
+      body: "A change to your GourMerge account's email address, to {email}, was requested. The change only takes effect once that new address is confirmed. If this wasn't you, change your password right away. Someone with access to your account may be trying to take it over.",
     },
   },
   fr: {
@@ -177,7 +177,7 @@ export const EMAIL_MESSAGES: Record<EmailLocale, EmailBundle> = {
       intro: 'Une réinitialisation du mot de passe a été demandée pour ton compte GourMerge.',
       linkLabel: 'Réinitialiser le mot de passe',
       expiry:
-        "Ce lien expire dans 2 heures. Si tu n'es pas à l'origine de cette demande, ignore cet e-mail — ton mot de passe ne changera pas.",
+        "Ce lien expire dans 2 heures. Si tu n'es pas à l'origine de cette demande, ignore cet e-mail : ton mot de passe ne changera pas.",
       textIntro: 'Clique sur le lien pour réinitialiser ton mot de passe GourMerge :',
     },
     exportConfirm: {
@@ -186,7 +186,7 @@ export const EMAIL_MESSAGES: Record<EmailLocale, EmailBundle> = {
         'Une demande d’accès aux données (art. 15 RGPD) a été faite pour ton compte GourMerge. Confirme via le lien ci-dessous que la demande vient bien de toi :',
       linkLabel: 'Confirmer la demande',
       expiry:
-        "Ce lien expire dans 2 heures. Si tu n'es pas à l'origine de cette demande, ignore cet e-mail — aucune donnée ne sera transmise.",
+        "Ce lien expire dans 2 heures. Si tu n'es pas à l'origine de cette demande, ignore cet e-mail : aucune donnée ne sera transmise.",
       textIntro: 'Confirme via le lien que la demande de données vient bien de toi :',
     },
     exportReady: {
@@ -217,7 +217,7 @@ export const EMAIL_MESSAGES: Record<EmailLocale, EmailBundle> = {
     },
     emailChangeNotice: {
       subject: 'Changement de ton adresse e-mail GourMerge demandé',
-      body: 'Un changement de l’adresse e-mail de ton compte GourMerge, vers {email}, a été demandé. Le changement ne prendra effet qu’après confirmation de cette nouvelle adresse. Si ce n’est pas toi, change ton mot de passe immédiatement — quelqu’un ayant accès à ton compte essaie peut-être de le détourner.',
+      body: 'Un changement de l’adresse e-mail de ton compte GourMerge, vers {email}, a été demandé. Le changement ne prendra effet qu’après confirmation de cette nouvelle adresse. Si ce n’est pas toi, change ton mot de passe immédiatement. Quelqu’un ayant accès à ton compte essaie peut-être de le détourner.',
     },
   },
   it: {
@@ -272,7 +272,7 @@ export const EMAIL_MESSAGES: Record<EmailLocale, EmailBundle> = {
     },
     emailChangeNotice: {
       subject: 'Richiesta di modifica del tuo indirizzo e-mail GourMerge',
-      body: 'È stata richiesta una modifica dell’indirizzo e-mail del tuo account GourMerge, a {email}. La modifica avrà effetto solo dopo la conferma di questo nuovo indirizzo. Se non sei stato tu, cambia immediatamente la password — qualcuno con accesso al tuo account potrebbe cercare di impossessarsene.',
+      body: 'È stata richiesta una modifica dell’indirizzo e-mail del tuo account GourMerge, a {email}. La modifica avrà effetto solo dopo la conferma di questo nuovo indirizzo. Se non sei stato tu, cambia immediatamente la password. Qualcuno con accesso al tuo account potrebbe cercare di impossessarsene.',
     },
   },
 }

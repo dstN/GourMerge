@@ -27,7 +27,7 @@ async function submit() {
 <template>
   <UCard>
     <!-- The `max-w-md` cap and centring live in the auth layout (DESIGNBOOK §4.1),
-         not here — this card used to add `max-w-md mx-auto mt-16` of its own, so it
+         not here. This card used to add `max-w-md mx-auto mt-16` of its own, so it
          rendered narrower and 64px lower than the login card. -->
     <template #header>
       <h1 class="text-2xl font-bold text-center">{{ t('auth.forgotPassword') }}</h1>

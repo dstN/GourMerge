@@ -1,8 +1,10 @@
 /**
- * POST /api/auth/totp/confirm — finish enrolment by proving possession.
+ * POST /api/auth/totp/confirm
+ *
+ * Finish enrolment by proving possession.
  *
  * Only after a valid code does the row become `confirmed` and start gating login.
- * Returns the recovery codes **once** — they are stored bcrypt-hashed, so this
+ * Returns the recovery codes **once**. They are stored bcrypt-hashed, so this
  * response is the only time they exist in readable form. Without them a lost phone
  * is an unrecoverable lockout, which is the most common way a 2FA rollout turns
  * into support load.
@@ -16,7 +18,7 @@ const schema = z.object({ token: z.string().min(6).max(10) })
 export default defineEventHandler(async (event) => {
   const session = await requireUserSession(event)
 
-  // 6 digits is brute-forceable without a limit — 1e6 space, and an attacker only
+  // 6 digits is brute-forceable without a limit: 1e6 space, and an attacker only
   // needs the window to overlap. This is the single most important control here.
   await useRateLimit(getRateLimitKey(event, 'totp-confirm'), { max: 8, windowSeconds: 300 })
 

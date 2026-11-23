@@ -1,11 +1,13 @@
 /**
- * PATCH /api/ingredients/:id — Edit an ingredient the caller created.
+ * PATCH /api/ingredients/:id
  *
- * Only `ingredients.created_by === session.user.id` may edit — never the Swiss BLV rows
+ * Edit an ingredient the caller created.
+ *
+ * Only `ingredients.created_by === session.user.id` may edit: never the Swiss BLV rows
  * (`created_by IS NULL`) and never another user's contribution, regardless of role. There
  * is no admin override here on purpose: an admin acting on a bad user-submitted ingredient
  * goes through the report queue and deletes it (or asks the author to fix it), the same
- * "the moderation tools are the response" shape as every other reportable kind — editing
+ * "the moderation tools are the response" shape as every other reportable kind. Editing
  * someone else's data in place would leave no trace of who actually wrote what.
  */
 import { z } from 'zod'
@@ -41,7 +43,7 @@ export default defineEventHandler(async (event) => {
     .limit(1)
   if (!existing) throw createError({ statusCode: 404, statusMessage: 'Ingredient not found' })
   if (existing.createdBy !== session.user.id) {
-    // 404, not 403: same reasoning as `requireVisibleRecipe` — an ingredient's edit
+    // 404, not 403: same reasoning as `requireVisibleRecipe`. An ingredient's edit
     // history is not something to confirm the existence of to someone who cannot touch it.
     throw createError({ statusCode: 404, statusMessage: 'Ingredient not found' })
   }
@@ -117,7 +119,7 @@ export default defineEventHandler(async (event) => {
         })
     } else {
       // An explicit clear (energy sent empty) removes the row rather than leaving a
-      // no-energy nutrition row behind — see the POST endpoint's own reasoning: a
+      // no-energy nutrition row behind. Per the POST endpoint's own reasoning, a
       // nutrition row with no energy value reads as "covered" to `computeNutrition` and
       // is worse than no row at all.
       await db.delete(ingredientNutrition).where(eq(ingredientNutrition.ingredientId, id))

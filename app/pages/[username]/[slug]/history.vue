@@ -89,7 +89,7 @@ function formatDate(dateStr: string) {
 // ── Commit-level discussion ──────────────────────────────────
 /**
  * Opened per commit in a modal rather than expanded inline. The timeline is a scan
- * surface — its job is "what changed, when, by whom" — and an inline thread of arbitrary
+ * surface (its job is "what changed, when, by whom"), and an inline thread of arbitrary
  * length inside one entry destroys that the moment anyone writes three paragraphs. A modal
  * keeps the list scannable and gives the conversation the full width it needs.
  *
@@ -235,7 +235,7 @@ onMounted(() => {
     </UModal>
 
     <!-- Commit-level discussion. `v-if` on the body so the panel mounts (and fetches)
-         only for the commit actually opened — one request per opened thread, not one per
+         only for the commit actually opened: one request per opened thread, not one per
          commit in the timeline. -->
     <UModal
       :open="discussionCommit !== null"

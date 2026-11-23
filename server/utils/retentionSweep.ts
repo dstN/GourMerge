@@ -1,7 +1,7 @@
 /**
  * Enforce the retention windows named in section 7 of the privacy policy.
  *
- * Lives here — inside the Nitro bundle — rather than only in
+ * Lives here, inside the Nitro bundle, rather than only in
  * `scripts/cleanup-retention.mjs`, because **the deploy ships only `.output/` and
  * `app.js`**. There is no `scripts/`, no `package.json` and no `.env` on the host,
  * so a Plesk "Run a command" cron calling `npm run db:cleanup` could never work.
@@ -22,7 +22,7 @@ export interface SweepRule {
 
 /**
  * Each rule mirrors a line in the privacy policy. Change a window here and section
- * 7 of `datenschutz.vue` has to change with it — they are two statements of the
+ * 7 of `datenschutz.vue` has to change with it; they are two statements of the
  * same fact.
  */
 const RETENTION_RULES: SweepRule[] = [

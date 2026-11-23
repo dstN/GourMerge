@@ -33,7 +33,7 @@ const showCreateModal = ref(false)
 const newBranchName = ref('')
 const sourceBranchId = ref<number | undefined>(undefined)
 const creating = ref(false)
-/** The tour's `branch-created` step anchors on this specific row — see the template. */
+/** The tour's `branch-created` step anchors on this specific row (see the template). */
 const lastCreatedBranchId = ref<number | null>(null)
 
 async function createBranch() {
@@ -163,9 +163,9 @@ watch(
             </div>
           </div>
 
-          <!-- Row actions — all `sm`, per DESIGNBOOK §2 (same rank, same size) -->
+          <!-- Row actions: all `sm`, per DESIGNBOOK §2 (same rank, same size) -->
           <div class="flex shrink-0 items-center gap-2">
-            <!-- The missing link: this page offered edit and history but no way to simply
+            <!-- This page offered edit and history but no way to simply
                  read a variant, so a branch could only be inspected through the editor. -->
             <UButton
               :label="t('common.view')"

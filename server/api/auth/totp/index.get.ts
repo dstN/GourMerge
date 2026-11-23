@@ -1,7 +1,9 @@
 /**
- * GET /api/auth/totp — the viewer's own 2FA status.
+ * GET /api/auth/totp
  *
- * Deliberately returns no secret and no code — only whether 2FA is on, and how many
+ * The viewer's own 2FA status.
+ *
+ * Deliberately returns no secret and no code, only whether 2FA is on and how many
  * recovery codes are still unused, so `/settings` can prompt a regeneration before
  * the user runs out.
  */

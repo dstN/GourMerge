@@ -56,7 +56,7 @@ export function useOnboarding() {
     }
   }
 
-  /** Mark the tour as fully completed — controls system recipe visibility. */
+  /** Mark the tour as fully completed; controls system recipe visibility. */
   async function finishTour() {
     cookie.value = true
     if (loggedIn.value) {

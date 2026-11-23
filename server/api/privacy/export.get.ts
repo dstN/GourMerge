@@ -1,5 +1,7 @@
 /**
- * GET /api/privacy/export?token=… — download the data export (GDPR Art. 15/20).
+ * GET /api/privacy/export?token=…
+ *
+ * Download the data export (GDPR Art. 15/20).
  *
  * A GET with the token in the query so the emailed link is clickable. That does
  * put the token in the URL, which is why the window is short, the row is

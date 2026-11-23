@@ -25,7 +25,7 @@ function snap(ingredients: MergeIngredient[], steps: MergeStep[]): MergeSnapshot
 
 // ── Ingredient merges ────────────────────────────────────────────
 
-describe('threeWayMerge — ingredients', () => {
+describe('threeWayMerge: ingredients', () => {
   test('no changes from either side → result = base', () => {
     const base = snap([ing(1, '100.00'), ing(2, '200.00')], [])
     const result = threeWayMerge(base, base, base)
@@ -110,7 +110,7 @@ describe('threeWayMerge — ingredients', () => {
   test('both modify the same ingredient differently → CONFLICT', () => {
     const base = snap([ing(1, '100.00')], [])
     const source = snap([ing(1, '150.00')], []) // changed to 150
-    const target = snap([ing(1, '200.00')], []) // changed to 200 — different
+    const target = snap([ing(1, '200.00')], []) // changed to 200, a different value
     const result = threeWayMerge(base, source, target)
     expect(result.hasConflicts).toBe(true)
     expect(result.conflicts.some((c) => c.type === 'ingredient' && c.ingredientId === 1)).toBe(true)
@@ -165,7 +165,7 @@ describe('threeWayMerge — ingredients', () => {
 
 // ── Step merges ──────────────────────────────────────────────────
 
-describe('threeWayMerge — steps', () => {
+describe('threeWayMerge: steps', () => {
   test('no changes from either side → result = base', () => {
     const base = snap([], [step(1, 'Preheat oven'), step(2, 'Mix flour')])
     const result = threeWayMerge(base, base, base)
@@ -259,7 +259,7 @@ describe('threeWayMerge — steps', () => {
 
 // ── Combined merge ───────────────────────────────────────────────
 
-describe('threeWayMerge — combined', () => {
+describe('threeWayMerge: combined', () => {
   test('source adds ingredient and modifies a step, target unchanged → clean merge', () => {
     const base = snap([ing(1, '100.00')], [step(1, 'Preheat oven')])
     const source = snap([ing(1, '100.00'), ing(2, '50.00')], [step(1, 'Preheat to 200°C')])
@@ -284,7 +284,7 @@ describe('threeWayMerge — combined', () => {
 
 // ── Conflict resolution (interactive picker) ─────────────────────
 
-describe('threeWayMerge — conflict resolution', () => {
+describe('threeWayMerge: conflict resolution', () => {
   test('ingredient edit/edit conflict resolved to source → no conflict, source kept', () => {
     const base = snap([ing(1, '100.00')], [])
     const source = snap([ing(1, '150.00')], [])

@@ -5,7 +5,7 @@ import { describe, test, expect } from 'vitest'
  * they are pure decisions and they got the semantics wrong once already.
  *
  * Recipes saved before the locale badge landed contain `content_translations.de` that is
- * byte-for-byte equal to `content` — a duplicate, not an override. The first attempt showed
+ * byte-for-byte equal to `content`: a duplicate, not an override. The first attempt showed
  * the author's own language whenever *any* value existed, which meant those recipes rendered
  * the same German text twice: once in the main editor, once as its own "translation".
  *
@@ -38,7 +38,7 @@ function stripRedundant(main: string, map: Partial<Record<Locale, string>>): Rec
 
 const empty = { de: '', en: '', fr: '', it: '' }
 
-describe('localesFor — which languages the panel offers', () => {
+describe('localesFor: which languages the panel offers', () => {
   test('omits the working language when nothing is stored for it', () => {
     expect(localesFor('de', { main: 'Anbraten.', map: empty })).toEqual(['en', 'fr', 'it'])
   })
@@ -81,7 +81,7 @@ describe('localesFor — which languages the panel offers', () => {
   })
 })
 
-describe('stripRedundant — what gets saved', () => {
+describe('stripRedundant: what gets saved', () => {
   test('drops a translation identical to the main text', () => {
     const main = 'Anbraten.'
     expect(stripRedundant(main, { ...empty, de: main })).toBeNull()
@@ -89,7 +89,7 @@ describe('stripRedundant — what gets saved', () => {
 
   test('drops identical copies in any locale, not just the working one', () => {
     // Safe because the read path falls back to `content` when a translation is absent,
-    // so the rendered output is unchanged — it just stops shadowing later edits.
+    // so the rendered output is unchanged; it just stops shadowing later edits.
     const main = 'Anbraten.'
     expect(stripRedundant(main, { de: main, en: main, fr: 'Faire revenir.', it: '' })).toEqual({
       fr: 'Faire revenir.',

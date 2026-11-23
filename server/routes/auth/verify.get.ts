@@ -42,7 +42,7 @@ export default defineEventHandler(async (event) => {
    * If the link was opened in the browser that is already signed in as this user,
    * refresh the cached flag so the "verify your email" banner goes away immediately.
    * Without this the DB says verified and the session cookie still says otherwise
-   * until the next login — the banner would keep nagging someone who just complied.
+   * until the next login, and the banner would keep nagging someone who just complied.
    *
    * Guarded on the id: the link may well be opened while signed in as somebody else
    * (a shared machine), and marking *their* session verified would be a lie.

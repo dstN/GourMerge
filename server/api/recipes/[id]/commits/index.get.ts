@@ -1,17 +1,19 @@
 /**
- * GET /api/recipes/:id/commits — Get commit history for a branch
+ * GET /api/recipes/:id/commits
+ *
+ * Get commit history for a branch
  *
  * Query params:
  * - branchId (required): which branch to list commits for
  *
  * Walks the `parentCommitId` chain from the branch's head commit rather than
  * filtering flatly by `branch_id`. Creating a branch (`POST .../branches`)
- * points a NEW branch row at the SAME head commit as its source — it does not
+ * points a NEW branch row at the SAME head commit as its source; it does not
  * retag any existing commit rows, exactly like `git checkout -b`. Every commit
  * made before the branch point therefore still carries the SOURCE branch's
  * `branch_id`, so `WHERE branch_id = :branchId` returned nothing (or only
  * commits made after branching) for any branch that wasn't the one those
- * commits were originally made on — the shared upstream history disappeared
+ * commits were originally made on, so the shared upstream history disappeared
  * from a new variant's history view. Ancestry is what "git log <branch>"
  * actually means: everything reachable by following parent pointers from
  * HEAD, regardless of which branch row a given ancestor's `branch_id` points
@@ -30,7 +32,7 @@ export default defineEventHandler(async (event) => {
   const recipeId = Number(getRouterParam(event, 'id'))
   /**
    * The branch was already scoped to the recipe below, but the *recipe* was not scoped to
-   * the caller — so a private recipe's whole history (commit messages, author names,
+   * the caller, so a private recipe's whole history (commit messages, author names,
    * timestamps) answered to anyone walking the sequential ids. Commit messages are prose
    * the author wrote assuming nobody outside could read them.
    */
@@ -82,7 +84,7 @@ export default defineEventHandler(async (event) => {
 
   const commitById = new Map(allCommits.map((c) => [c.id, c]))
 
-  // Walk head → root via parentCommitId — already newest-first, matching the
+  // Walk head → root via parentCommitId. Already newest-first, matching the
   // previous `orderBy(desc(createdAt))` intent, but by actual lineage rather
   // than timestamp (which a merge commit could otherwise put out of order).
   const chain: typeof allCommits = []

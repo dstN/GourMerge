@@ -3,9 +3,9 @@
  * that needs to check before writing a cookie of its own.
  *
  * `necessary` (session cookie, 2FA-pending cookie, locale, onboarding-seen)
- * cannot be opted out of — the site cannot function without them, so the UI
- * only surfaces `statistics` and `marketing` as real choices. Both are not
- * wired to anything yet — they exist so a future analytics/marketing script
+ * cannot be opted out of: the site cannot function without them, so the UI
+ * only surfaces `statistics` and `marketing` as real choices. Neither is
+ * wired to anything yet; they exist so a future analytics/marketing script
  * has a `hasConsent()` check to gate on instead of a second consent-manager
  * rewrite.
  */

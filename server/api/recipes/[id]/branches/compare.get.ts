@@ -4,10 +4,10 @@
  * Compare the head commits of two branches (same or cross-recipe).
  *
  * Query params:
- *   from            — source branch ID (the "proposed changes" side)
- *   to              — target branch ID (the "base" side)
- *   sourceRecipeId  — (optional) recipe ID that owns the source branch
- *                     if omitted, assumes the same recipe as :id
+ *   from            source branch ID (the "proposed changes" side)
+ *   to              target branch ID (the "base" side)
+ *   sourceRecipeId  (optional) recipe ID that owns the source branch;
+ *                   if omitted, assumes the same recipe as :id
  */
 import { eq, and } from 'drizzle-orm'
 import {

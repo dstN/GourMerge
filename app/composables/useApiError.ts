@@ -3,8 +3,8 @@
  *
  * ## Why this exists
  *
- * Endpoints throw `createError({ statusMessage: 'Invalid email or password' })` —
- * English, because that string is part of the API contract and is what lands in the
+ * Endpoints throw `createError({ statusMessage: 'Invalid email or password' })`
+ * in English, because that string is part of the API contract and is what lands in the
  * logs. Sixteen call sites then displayed it verbatim with
  * `err.data?.statusMessage || t('…')`, so a German, French or Italian user got the
  * raw English text whenever the server had anything specific to say. The
@@ -16,10 +16,9 @@
  * Maps the **HTTP status** to a translated message and never shows server text.
  * Status is the part that is stable and meaningful across locales; the prose is not.
  *
- * A missing `err.data` — which is what a dead or unreachable server produces —
+ * A missing `err.data` (which is what a dead or unreachable server produces)
  * becomes a distinct "could not reach the server" message rather than being
- * conflated with bad credentials. Those two are not the same problem and should not
- * read the same.
+ * conflated with bad credentials.
  *
  * ## Machine-readable codes
  *
@@ -29,7 +28,7 @@
  * than a change across all 41 at once.
  *
  * Only codes in that table are honoured, so an unmapped or attacker-influenced value
- * can never reach the screen — a code is a lookup key, never text to display.
+ * can never reach the screen: a code is a lookup key, never text to display.
  *
  * ## Known limitation
  *
@@ -50,7 +49,7 @@ interface FetchLikeError {
 const CODE_MESSAGES: Record<string, string> = {
   /**
    * Thrown by `requireVerifiedUser`. Without this the create/publish form said
-   * "you do not have permission to do that" — which reads as an account-permissions
+   * "you do not have permission to do that", which reads as an account-permissions
    * problem and gives no hint that the fix is a link sitting in the user's inbox.
    */
   email_not_verified: 'errors.emailNotVerified',

@@ -2,7 +2,7 @@
 import type { RecipeDetail } from '~~/shared/types/recipe'
 
 /**
- * `auth: true` was dead metadata — nothing reads `route.meta.auth`, so this page
+ * `auth: true` was dead metadata: nothing reads `route.meta.auth`, so this page
  * had no client-side guard at all and an anonymous visitor got a form that could
  * only fail server-side. The named `auth` middleware is what actually guards.
  */

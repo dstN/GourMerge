@@ -119,7 +119,7 @@ export function threeWayMerge(
     const targetChanged = b === null ? t !== null : t === null || ingFullKey(b) !== ingFullKey(t)
 
     if (!sourceChanged && !targetChanged) {
-      // Neither changed — keep base (= target = source)
+      // Neither changed: keep base (= target = source)
       if (b !== null) mergedIngredients.push(b)
     } else if (sourceChanged && !targetChanged) {
       // Only source changed: use source (null = deleted)
@@ -130,12 +130,12 @@ export function threeWayMerge(
     } else {
       // Both changed
       if (s === null && t === null) {
-        // Both deleted — no conflict, just gone
+        // Both deleted: no conflict, just gone
       } else if (s !== null && t !== null && ingContentKey(s) === ingContentKey(t)) {
-        // Both made the same change — no conflict
+        // Both made the same change: no conflict
         mergedIngredients.push(s)
       } else {
-        // Real conflict — apply the user's resolution if one was provided.
+        // Real conflict: apply the user's resolution if one was provided.
         const resolution = ingResolutions.get(id)
         if (resolution) {
           const chosen = resolution.choice === 'source' ? s : t
@@ -189,12 +189,12 @@ export function threeWayMerge(
     } else {
       // Both changed
       if (s === null && t === null) {
-        // Both removed — clean
+        // Both removed: clean
       } else if (s !== null && t !== null && s.content === t.content) {
-        // Same change — clean
+        // Same change: clean
         mergedSteps.push(s)
       } else {
-        // Real conflict — apply the user's resolution if one was provided.
+        // Real conflict: apply the user's resolution if one was provided.
         const resolution = stepResolutions.get(order)
         if (resolution) {
           const chosen = resolution.choice === 'source' ? s : t

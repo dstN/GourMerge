@@ -7,7 +7,7 @@ import { hashToken } from '../../server/utils/dataRequest'
  * raw token exists only inside the user's inbox, and the database stores this
  * hash. If it ever became reversible, non-deterministic, or accidentally
  * truncated, an attacker with database read access could mint working export
- * links — which return every piece of personal data we hold.
+ * links, which return every piece of personal data we hold.
  */
 describe('hashToken', () => {
   test('produces a 64-char lowercase sha256 hex digest', () => {
@@ -15,7 +15,7 @@ describe('hashToken', () => {
     expect(out).toMatch(/^[0-9a-f]{64}$/)
   })
 
-  test('is deterministic — the same token always resolves to the same row', () => {
+  test('is deterministic: the same token always resolves to the same row', () => {
     const raw = randomBytes(32).toString('hex')
     expect(hashToken(raw)).toBe(hashToken(raw))
   })

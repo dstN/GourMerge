@@ -1,5 +1,7 @@
 /**
- * POST /api/recipes/:id/tags — Replace the full tag set for a recipe
+ * POST /api/recipes/:id/tags
+ *
+ * Replace the full tag set for a recipe
  *
  * Body: { tags: string[] }
  * Creates tags if they don't exist, deletes all existing associations, then inserts new ones.

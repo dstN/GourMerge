@@ -1,12 +1,12 @@
 /**
- * POST /auth/passkey-authenticate — sign in with a passkey. No email, no password, no
+ * POST /auth/passkey-authenticate: sign in with a passkey. No email, no password, no
  * TOTP step: unlocking a passkey already needs the device plus biometric/PIN
  * (possession + inherence), at least as strong as password+TOTP and phishing-resistant
  * besides (origin-bound assertion). TOTP stays the second factor for password logins;
  * see login.post.ts.
  *
  * Usernameless: no `userName` sent means no `allowCredentials`, so the browser offers
- * whatever discoverable passkeys it holds for this domain — the account is resolved from
+ * whatever discoverable passkeys it holds for this domain. The account is resolved from
  * the returned credential id, which is why `user_passkeys.credential_id` is globally unique.
  */
 import { eq } from 'drizzle-orm'
@@ -15,7 +15,7 @@ import { userPasskeys, users } from '~~/server/database/schema'
 
 // Transports are stored as a plain string array; narrowed to WebAuthnCredential's own union
 // (not @simplewebauthn/types, a transitive-only dependency here) since the values are echoed
-// back from the authenticator untouched — a type assertion, not a validation gap.
+// back from the authenticator untouched, so this is a type assertion, not a validation gap.
 type Transports = NonNullable<WebAuthnCredential['transports']>
 
 function asTransports(value: string[] | null): Transports | undefined {
@@ -26,12 +26,12 @@ export default defineWebAuthnAuthenticateEventHandler({
   storeChallenge: (_event, challenge, attemptId) => storeWebauthnChallenge(challenge, attemptId),
   getChallenge: (_event, attemptId) => consumeWebauthnChallenge(attemptId),
 
-  // Must match enrolment's value in passkeys/register.post.ts — this is what makes the
+  // Must match enrolment's value in passkeys/register.post.ts. This is what makes the
   // "no TOTP step" skip above actually true rather than aspirational.
   getOptions: () => ({ userVerification: 'required' as const }),
 
   // Throws rather than returning null so a bad credential id and a bad signature look
-  // identical — the endpoint can't be used to probe which credential ids exist.
+  // identical, so the endpoint can't be used to probe which credential ids exist.
   async getCredential(event, credentialId) {
     await useRateLimit(getRateLimitKey(event, 'passkey-auth'), { max: 10, windowSeconds: 300 })
 
@@ -73,7 +73,7 @@ export default defineWebAuthnAuthenticateEventHandler({
       throw createError({ statusCode: 401, statusMessage: 'Unauthorized' })
     }
 
-    // isCounterRegression tolerates 0 — synced passkeys (iCloud, Google) always report zero.
+    // isCounterRegression tolerates 0: synced passkeys (iCloud, Google) always report zero.
     const received = authenticationInfo.newCounter ?? 0
     const [stored] = await db
       .select({ counter: userPasskeys.counter })
@@ -82,7 +82,7 @@ export default defineWebAuthnAuthenticateEventHandler({
       .limit(1)
 
     if (stored && isCounterRegression(stored.counter, received)) {
-      logger.error('passkey counter regression — possible cloned credential', { userId })
+      logger.error('passkey counter regression, possible cloned credential', { userId })
       throw createError({ statusCode: 401, statusMessage: 'Unauthorized' })
     }
 
@@ -93,7 +93,7 @@ export default defineWebAuthnAuthenticateEventHandler({
     await clearUserSession(event)
     await markPasskeyUsed(db, credential.id, received)
 
-    // No TOTP step — see the header. `completeLogin` also stamps `last_login_at`,
+    // No TOTP step; see the header. `completeLogin` also stamps `last_login_at`,
     // which is what keeps an active passkey user off the inactivity-deletion path.
     await completeLogin(event, user)
 

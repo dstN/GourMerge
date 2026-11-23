@@ -22,7 +22,7 @@ jobs:
 
     services:
       # MySQL 8.4 to match production (which reports 8.4.11).
-      # This was mariadb:11 while prod and local dev were both MySQL — and the
+      # This was mariadb:11 while prod and local dev were both MySQL, and the
       # ingredient search runs raw JSON_EXTRACT/JSON_UNQUOTE plus a
       # collation-sensitive LIKE, and explore uses MATCH…AGAINST, all of which
       # differ between the engines. Tests must run on what production runs.
@@ -64,7 +64,7 @@ jobs:
         run: npm run lint
 
       # Enforces DESIGNBOOK.md. The axe gate checks contrast and the i18n gate
-      # checks parity; neither catches design *inconsistency* — competing colour
+      # checks parity; neither catches design *inconsistency*: competing colour
       # spellings, ad-hoc button sizes, per-page content widths. This does.
       - name: Design-system gate
         run: npm run design:check
@@ -83,7 +83,7 @@ jobs:
 
       # Fail on any CRITICAL advisory. High/moderate are tracked + proposed as
       # reviewable PRs by Dependabot (some current highs are dev-tool/transitive
-      # or need breaking upgrades — see docs/SECRETS.md / dependabot.yml).
+      # or need breaking upgrades; see docs/SECRETS.md / dependabot.yml).
       - name: Dependency audit (critical)
         run: npm audit --audit-level=critical
 
@@ -96,7 +96,7 @@ jobs:
       # NUXT_SENTRY_RELEASE is read in nuxt.config at BUILD time (its name does
       # not match the runtimeConfig path, so it cannot be injected on the host).
       # Stamping the SHA here is what makes Sentry issues attributable to a
-      # release. The SENTRY_* secrets are optional — source-map upload is skipped
+      # release. The SENTRY_* secrets are optional: source-map upload is skipped
       # when the auth token is empty, and the build still succeeds.
       - name: Build
         env:
@@ -106,7 +106,7 @@ jobs:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         run: npm run build
 
-      # This artifact IS the release — deploy.yml downloads it and ships it to the
+      # This artifact IS the release. deploy.yml downloads it and ships it to the
       # host, so anything missing here is missing in production.
       - name: Upload build artifact
         if: github.ref == 'refs/heads/master'
@@ -117,8 +117,8 @@ jobs:
           retention-days: 7
           # Not optional, and not related to the version bump above. Since
           # upload-artifact v4.4 hidden files are EXCLUDED by default, and Nitro puts
-          # deduplicated runtime dependencies in `.output/server/node_modules/.nitro/`
-          # — a dot directory. Locally that holds `entities@7.0.1` and `entities@8.0.0`
+          # deduplicated runtime dependencies in `.output/server/node_modules/.nitro/`,
+          # a dot directory. Locally that holds `entities@7.0.1` and `entities@8.0.0`
           # (28 files), with `node_modules/entities` symlinked into it. Dropping it means
           # the artifact is missing a package the server requires at runtime, and the
           # first deploy would have failed with a module-not-found nobody could explain

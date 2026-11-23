@@ -12,7 +12,7 @@ const bodySchema = z.object({
 export default defineEventHandler(async (event) => {
   const body = await readValidatedBody(event, bodySchema.parse)
 
-  // Bot trap — return silently if honeypot field is filled
+  // Bot trap: return silently if honeypot field is filled
   if (body.honeypot) {
     return { ok: true }
   }

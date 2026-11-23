@@ -1,5 +1,7 @@
 /**
- * POST /api/recipes/:id/discussions/:discussionId/comments — reply to a thread.
+ * POST /api/recipes/:id/discussions/:discussionId/comments
+ *
+ * Reply to a thread.
  *
  * A resolved thread is closed to new replies, the way a merged GourMerge Request is:
  * reopening is one click for the author or the recipe owner, and without that rule

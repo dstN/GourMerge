@@ -2,8 +2,8 @@
  * Enforce the retention periods stated in the privacy policy.
  *
  * The policy names concrete windows (Art. 13(2)(a) GDPR requires it), so those
- * windows have to actually happen — a documented period nobody enforces is
- * worse than none, because it is a claim you cannot back up. Before this script
+ * windows have to actually be enforced; otherwise the policy states a period
+ * nothing backs up. Before this script
  * existed, `contact_messages` and `rate_limit_hits` had no delete path anywhere
  * in the codebase and simply grew forever.
  *
@@ -69,7 +69,7 @@ const RULES = [
   },
   {
     // Not personal data in the usual sense, but it is IP-derived and the table
-    // is write-heavy — the runbook used to carry this as a manual SQL snippet.
+    // is write-heavy. The runbook used to carry this as a manual SQL snippet.
     label: 'rate-limit buckets older than 24h',
     count: 'SELECT COUNT(*) AS n FROM rate_limit_hits WHERE window_start < (UNIX_TIMESTAMP() - 86400)',
     delete: 'DELETE FROM rate_limit_hits WHERE window_start < (UNIX_TIMESTAMP() - 86400)',

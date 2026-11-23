@@ -6,8 +6,7 @@
  * as literal syntax in most of them.
  *
  * Lines are prefixed with `- ` because Apple Notes, Google Keep and most editors convert
- * that into a real checklist or bullet on paste — which is the whole point of sending a
- * shopping list somewhere.
+ * that into a real checklist or bullet on paste.
  */
 export interface ShoppingListItem {
   /** Already formatted for the viewer: quantity + unit, in their measurement system. */
@@ -18,7 +17,7 @@ export interface ShoppingListItem {
 
 export interface ShoppingListInput {
   title: string
-  /** e.g. "4 Portionen" — omitted when the recipe does not say. */
+  /** e.g. "4 Portionen"; omitted when the recipe does not say. */
   subtitle?: string | null
   items: ShoppingListItem[]
   /** Appended as provenance so a pasted list can be traced back. */

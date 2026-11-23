@@ -5,7 +5,7 @@
  * very different consumers need it: this module (inside Nitro) and
  * `scripts/inactive-accounts.mjs` (a plain Node process with no TS pipeline, run
  * from cron). A JSON file both can read is the only way to keep one source of
- * truth — the alternative was the script re-parsing a TypeScript literal, which
+ * truth. The alternative was the script re-parsing a TypeScript literal, which
  * is exactly the kind of duplication that drifts silently.
  *
  * Three stages, all sent before anything is deleted:
@@ -20,7 +20,7 @@
  */
 import messages from './inactivityMessages.json'
 // Reuse rather than redeclare: everything under `server/utils/` is auto-imported by
-// Nitro, so a second `EmailLocale` / `BuiltEmail` export would collide — Nitro picks
+// Nitro, so a second `EmailLocale` / `BuiltEmail` export would collide: Nitro picks
 // one and silently ignores the other, meaning an unrelated server file could end up
 // with the wrong type. knip flags this as a duplicated import.
 import type { EmailLocale } from './emailMessages'
@@ -54,7 +54,7 @@ function resolveLocale(locale?: string | null): EmailLocale {
  * Build one inactivity notice.
  *
  * @param deletionDate When the account is due to be deleted. Rendered as a full
- *   date with no time — an exact timestamp would imply a precision the nightly
+ *   date with no time, because an exact timestamp would imply a precision the nightly
  *   cron does not have.
  */
 export function buildInactivityEmail(

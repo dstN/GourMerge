@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * PasskeyCard — passkey enrolment and management, used on /settings.
+ * PasskeyCard: passkey enrolment and management, used on /settings.
  *
  * Usage (Nuxt path-prefixes components in components/common/):
  *   <CommonPasskeyCard />
@@ -12,7 +12,7 @@
  * actually needs to understand.
  *
  * Renaming matters more than it looks: the default label is guessed from the user agent
- * ("Windows", "iPhone"), so two keys on one platform are indistinguishable — and you
+ * ("Windows", "iPhone"), so two keys on one platform are indistinguishable, and you
  * can only safely revoke a key you can identify.
  */
 const { t, locale } = useI18n()
@@ -54,7 +54,7 @@ async function addPasskey() {
   busy.value = true
   try {
     // The server ignores whatever userName we send and takes the identity from the
-    // session instead — see the register handler's `validateUser`. Sending a
+    // session instead (see the register handler's `validateUser`). Sending a
     // placeholder keeps the library's required-field check happy without implying the
     // client gets a say.
     await register({ userName: 'session' })
@@ -62,7 +62,7 @@ async function addPasskey() {
     await refresh()
   } catch (e: unknown) {
     // A user who dismisses the OS prompt produces a DOMException, not an HTTP error.
-    // Treating that as a failure would be wrong — they simply changed their mind.
+    // Treating that as a failure would be wrong: they simply changed their mind.
     if (e instanceof DOMException && (e.name === 'NotAllowedError' || e.name === 'AbortError')) {
       toast.info(t('passkey.cancelled'))
     } else {
@@ -148,7 +148,7 @@ async function confirmRemove() {
             </p>
           </div>
 
-          <!-- Row actions — all `sm`, per DESIGNBOOK §2 -->
+          <!-- Row actions: all `sm`, per DESIGNBOOK §2 -->
           <div class="flex shrink-0 items-center gap-2">
             <UButton
               :label="t('passkey.rename')"

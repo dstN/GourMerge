@@ -1,13 +1,13 @@
 <script setup lang="ts">
 /**
- * CommonAvatarUpload — pick, crop and store the current user's profile picture, used on
+ * CommonAvatarUpload: pick, crop and store the current user's profile picture, used on
  * /settings. Replaces the old free-text avatar URL field: pasting an arbitrary URL meant a
  * profile picture could point at any origin, silently change later, or serve mixed content.
  * `PUT/DELETE /api/users/me/avatar` are now the only writers of `users.avatar_url`.
  *
  * Self-contained like `RecipeImageUpload`: on a successful upload or removal it calls
  * `refreshSession()` rather than emitting for a parent to react to, because the one thing
- * that needs to know is `useUserSession()`'s cached copy — everywhere else that renders an
+ * that needs to know is `useUserSession()`'s cached copy. Everywhere else that renders an
  * avatar reads that, or re-fetches the profile it belongs to.
  */
 const { t } = useI18n()

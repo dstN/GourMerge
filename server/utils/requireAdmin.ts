@@ -1,9 +1,9 @@
 /**
- * Guard for `/api/admin/*`. Always re-checks the database — `isAdmin` is deliberately not
+ * Guard for `/api/admin/*`. Always re-checks the database. `isAdmin` is deliberately not
  * carried in the session the way `emailVerified` is: that field is documented as
  * "for display only, never a security boundary" precisely so it never gets reused as one
  * later, and admin access is exactly the case where that mistake would matter. There is no
- * self-service promotion path either, so a stale session cannot be leveraged by anything —
+ * self-service promotion path either, so a stale session cannot be used by anything:
  * only `UPDATE users SET is_admin = 1` by whoever already has database access can grant it.
  *
  * Usage:

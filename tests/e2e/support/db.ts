@@ -33,7 +33,7 @@ export async function resetRateLimits(): Promise<void> {
 }
 
 /**
- * One-off query against the app's own database, for assertions no HTTP response exposes —
+ * One-off query against the app's own database, for assertions no HTTP response exposes,
  * e.g. that a token row exists, or a column changed. A connection per call, not a pool: an
  * open pool keeps the Node process alive after the last test, and Playwright hangs at the
  * end of the run instead of exiting (same reasoning as `resetRateLimits` above).

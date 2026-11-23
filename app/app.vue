@@ -10,8 +10,8 @@ const appUrl = useRuntimeConfig().public.appUrl.replace(/\/$/, '')
  * (WCAG 3.1.1). Reactive, so it updates on a locale switch rather than only on load.
  *
  * The canonical link comes from i18n's own generator, which gets it right per locale
- * (`/fr` → `https://gourmerge.de/fr`). It needs `i18n.baseUrl` to produce absolute URLs — see
- * the note in nuxt.config.ts.
+ * (`/fr` → `https://gourmerge.de/fr`). It needs `i18n.baseUrl` to produce absolute URLs (see
+ * the note in nuxt.config.ts).
  */
 const localeHead = useLocaleHead({ lang: true, dir: true, seo: true })
 
@@ -23,8 +23,8 @@ const localeHead = useLocaleHead({ lang: true, dir: true, seo: true })
  * one and drops the rest, so three quarters of the translation work never reaches search
  * results. This is the tag that prevents that, and production had none.
  *
- * Hand-rolled because `useLocaleHead({ seo: true })` emits the canonical and stops — verified on
- * a production build, `grep -c hreflang` = 0 next to a correct canonical. The module puts the
+ * Hand-rolled because `useLocaleHead({ seo: true })` emits the canonical and stops. Verified on
+ * a production build: `grep -c hreflang` = 0 next to a correct canonical. The module puts the
  * alternates behind `experimental.strictSeo`, and that flag 500s every page here even with the
  * `language` tags it demands, so it is not an option. Ten lines under our own control and
  * checked by a test beat a flag that takes the site down.
@@ -48,7 +48,7 @@ const alternateLinks = computed(() => {
 // Two calls rather than one merged object, and not for style: i18n's `link` entries carry their
 // own narrow types (a `CanonicalLink` insists on `rel: 'canonical'`), so concatenating them with
 // plain alternate objects fails to typecheck. Splitting them keeps both sides honestly typed
-// instead of silencing it with a cast — `useHead` merges the results anyway.
+// instead of silencing it with a cast. `useHead` merges the results anyway.
 useHead(() => ({
   htmlAttrs: { lang: locale.value, ...localeHead.value.htmlAttrs },
   link: localeHead.value.link,
@@ -62,14 +62,13 @@ useHead(() => ({ link: alternateLinks.value }))
  *
  * `useSeoMeta` here sets the floor; a page calling `useSeoMeta({ title, description })` overrides
  * it, which is how recipe and profile pages already work. Before this, pages that set only a
- * title had no description at all — Google then invents one from the body text, and link
+ * title had no description at all; Google then invents one from the body text, and link
  * previews in chat apps showed a bare URL.
  *
  * All of it is translated, including `og:description`. A German share link showing an English
- * description is the kind of detail that makes a four-locale site feel like one locale with
- * three afterthoughts.
+ * description makes a four-locale site look like one locale with three bolted on.
  *
- * `og:image` is the PWA icon, and that is not a contradiction of "no images, text only" — that
+ * `og:image` is the PWA icon, which does not contradict "no images, text only": that
  * rule is about recipe photography and uploads. A share card with no image at all is rendered as
  * a grey box by every platform, and this is a logo we already ship.
  *
@@ -99,12 +98,12 @@ useSeoMeta({
       <NuxtPage />
     </NuxtLayout>
 
-    <!-- Onboarding overlays — mounted globally so they work in every layout.
+    <!-- Onboarding overlays, mounted globally so they work in every layout.
          Signed-in only: every tour entry point is behind a session (the concept intro,
          the help menu, the mobile menu's "start tour", and the fork tour's first "Remix"
          click, which `forkRecipe()` refuses for guests). For a visitor these two components
-         mounted a modal and the tour engine right after hydration — inside the same task,
-         since `ClientOnly` flips in the mount flush — for nothing to show. `Lazy`, so the
+         mounted a modal and the tour engine right after hydration (inside the same task,
+         since `ClientOnly` flips in the mount flush) for nothing to show. `Lazy`, so the
          tour engine is its own chunk and no longer part of the entry every visitor parses. -->
     <ClientOnly v-if="loggedIn">
       <LazyOnboardingConceptIntro />

@@ -3,16 +3,16 @@ import { resetRateLimits } from '../support/db'
 import { uniqueUser, registerUser, createRecipe, createIngredient, commitSnapshot } from '../support/api'
 
 /**
- * Nothing about a private recipe may answer to a stranger — on **any** endpoint.
+ * Nothing about a private recipe may answer to a stranger, on **any** endpoint.
  *
  * ## What this was written for
  *
  * A white-hat sweep of every `GET` under `/api/recipes/:id/` found three that never checked
  * visibility while their siblings all did:
  *
- * - `branches` — leaked branch names.
- * - `commits` — leaked the whole history: commit messages, author names, timestamps.
- * - `diff` — leaked the recipe's actual ingredients and steps. Worse still, it never scoped
+ * - `branches`: leaked branch names.
+ * - `commits`: leaked the whole history: commit messages, author names, timestamps.
+ * - `diff`: leaked the recipe's actual ingredients and steps. Worse still, it never scoped
  *   `?from=` / `?to=` to the recipe in the path either, so `/api/recipes/<any public
  *   id>/diff?from=1&to=2` returned commits 1 and 2 *from whatever recipe they belonged to*.
  *   Recipe and commit ids are sequential integers, so walking them dumped every private

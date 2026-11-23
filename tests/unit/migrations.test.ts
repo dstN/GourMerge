@@ -17,7 +17,7 @@ import { resolve } from 'node:path'
  *   message at all.
  *
  * So a `SHOW TABLES` says everything worked, the app runs locally because the tables exist,
- * and the only place it surfaces is CI's migrate step — as a bare "exit code 1". That is
+ * and the only place it surfaces is CI's migrate step, as a bare "exit code 1". That is
  * exactly what happened with `recipe_discussion_comments_discussion_id_recipe_discussions_id_fk`
  * (65 characters), and checking "do the tables exist" instead of "did migrate succeed" is
  * what let it through.
@@ -48,7 +48,7 @@ describe('migration SQL', () => {
 
     for (const { name, sql } of migrationFiles()) {
       // Every backtick-quoted name in the file. Column names are in there too, which is
-      // correct — the 64-character limit applies to all of them.
+      // correct: the 64-character limit applies to all of them.
       for (const [, identifier] of sql.matchAll(/`([^`]+)`/g)) {
         if (identifier!.length > MAX_IDENTIFIER) {
           offenders.push(`${name}: ${identifier!.length} chars — ${identifier}`)
@@ -67,7 +67,7 @@ describe('migration SQL', () => {
 
   /**
    * The journal is what `drizzle-kit migrate` reads to decide what to apply. It was
-   * gitignored once, which meant a fresh checkout applied *nothing* and failed silently —
+   * gitignored once, which meant a fresh checkout applied *nothing* and failed silently;
    * see the note in `.claude/current_state.md` §13. A gap or a duplicate in the sequence
    * would be a subtler version of the same class of problem.
    */

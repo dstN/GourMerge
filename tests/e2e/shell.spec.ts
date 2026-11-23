@@ -6,13 +6,13 @@ import { registerUser, uniqueUser, createRecipe, createIngredient, commitSnapsho
  *
  * Recipe-scoped pages come in two kinds: `branches`/`history` are auth-gated and always
  * used the authenticated shell, while the recipe page, its forks list and the GourMerge
- * Request pages are public and used the plain one unconditionally — so a signed-in user
+ * Request pages are public and used the plain one unconditionally, so a signed-in user
  * lost the authenticated chrome on a recipe and got it back on "Varianten", flickering in
  * and out with no rule they could infer. The `shell` middleware makes layout follow the
  * viewer instead of the route.
  *
  * **What it asserts changed with the nav rework.** The visible marker used to be the
- * dashboard `<aside>`; that sidebar is gone (it triple-listed every destination — see
+ * dashboard `<aside>`; that sidebar is gone (it triple-listed every destination; see
  * `layouts/dashboard.vue`). The remaining difference between the two shells is the
  * email-verification banner region, which is what this now checks: the authenticated shell
  * renders `<LayoutVerifyEmailBanner>`'s host element, the public one does not. A stale

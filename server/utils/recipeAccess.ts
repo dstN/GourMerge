@@ -1,8 +1,8 @@
 /**
  * One place that answers "may this caller see / change this recipe?".
  *
- * The same eight lines — select owner + visibility, 404 if missing, 404 (not 403) if
- * private and not yours — were copy-pasted into every recipe-scoped endpoint. They
+ * The same eight lines (select owner + visibility, 404 if missing, 404 (not 403) if
+ * private and not yours) were copy-pasted into every recipe-scoped endpoint. They
  * agreed, which is luck rather than design: the moment one of them returns 403 for a
  * private recipe instead of 404, that endpoint becomes an existence oracle for private
  * recipes while its neighbours stay quiet.
@@ -66,8 +66,8 @@ export async function requireVisibleRecipe(event: H3Event, recipeId: number): Pr
 /**
  * Confirm a commit id actually belongs to a recipe, and return it.
  *
- * `recipe_commits` carries no `recipe_id` — a commit belongs to a branch, which belongs
- * to a recipe — so a caller-supplied commit id has to be joined back through
+ * `recipe_commits` carries no `recipe_id` (a commit belongs to a branch, which belongs
+ * to a recipe), so a caller-supplied commit id has to be joined back through
  * `recipe_branches` before it can be used as a scope. Skip this and any endpoint taking
  * `?commitId=` becomes a way to read or write against a snapshot in somebody else's
  * private recipe.

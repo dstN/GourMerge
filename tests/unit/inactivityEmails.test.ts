@@ -24,7 +24,7 @@ describe('parity', () => {
   test('the cron script reads the same JSON as the app', () => {
     // The nightly job runs as plain Node with no TS pipeline, so the copy lives in
     // JSON that both consumers read. If someone re-inlines it into the .ts module,
-    // cron mail and app mail would drift silently — this asserts they cannot.
+    // cron mail and app mail would drift silently; this asserts they cannot.
     const json = JSON.parse(readFileSync(resolve('server/utils/inactivityMessages.json'), 'utf8'))
     expect(json).toEqual(INACTIVITY_MESSAGES)
 
@@ -144,7 +144,7 @@ describe('the retention schedule', () => {
     // `sendMail()` falls back to a streamTransport that SUCCEEDS while delivering
     // nothing, so a missing SMTP variable in production would stamp the notice column
     // and hard-delete the account 24h later, unwarned. Both paths must stop instead.
-    // A dry run stays allowed — it neither mails nor deletes.
+    // A dry run stays allowed: it neither mails nor deletes.
     const sweep = readFileSync(resolve('server/utils/inactivitySweep.ts'), 'utf8')
     expect(sweep).toContain('isMailConfigured()')
     expect(sweep).toMatch(/if \(!dryRun && !isMailConfigured\(\)\)/)
@@ -166,7 +166,7 @@ describe('the retention schedule', () => {
     expect(src).toMatch(/if \(!expected \|\| expected\.length < 16\)/)
   })
 
-  test('only a login resets the clock — notices never do', () => {
+  test('only a login resets the clock; notices never do', () => {
     // completeLogin clears all three notice columns; nothing else may.
     const login = readFileSync(resolve('server/utils/completeLogin.ts'), 'utf8')
     expect(login).toContain('lastLoginAt')

@@ -1,5 +1,5 @@
 /**
- * The agent skill advertised by `/.well-known/ai-catalog.json` — see
+ * The agent skill advertised by `/.well-known/ai-catalog.json`. See
  * `server/utils/agentCatalog.ts` for what it is and why it exists.
  */
 export default defineEventHandler((event) => {

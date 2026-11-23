@@ -1,5 +1,5 @@
 /**
- * POST /auth/login — Authenticate an existing user
+ * POST /auth/login: Authenticate an existing user
  *
  * Validates credentials, verifies password hash, sets session cookie.
  *
@@ -12,7 +12,7 @@
  * The identifier is matched against BOTH columns, and the two can never collide:
  * `users.username` is validated at registration as `[a-zA-Z0-9_-]+`, so it cannot
  * contain an `@`, and an email address must. A value therefore addresses exactly one
- * of the two columns, both of which are unique — there is no case where the OR can
+ * of the two columns, both of which are unique. There is no case where the OR can
  * return the wrong row, and none where it can return two.
  */
 import { z } from 'zod'
@@ -25,7 +25,7 @@ const loginSchema = z
     identifier: z.string().trim().min(1).max(255).optional(),
     /**
      * Legacy name for the same field. Kept so a browser still running the previously
-     * cached bundle can sign in during the minutes after a deploy — otherwise the
+     * cached bundle can sign in during the minutes after a deploy; otherwise the
      * rollout itself locks people out of the login form.
      */
     email: z.string().trim().min(1).max(255).optional(),
@@ -85,7 +85,7 @@ export default defineEventHandler(async (event) => {
 
   // ── Second factor, if this account opted in ─────────────────
   // Only a CONFIRMED enrolment gates login. An unconfirmed row means the user began
-  // setup and never proved possession — treating that as enabled would lock them out
+  // setup and never proved possession, and treating that as enabled would lock them out
   // of their own account. 2FA is entirely opt-in: an account with no enrolment takes
   // exactly the path it always did.
   const [totp] = await db
@@ -95,7 +95,7 @@ export default defineEventHandler(async (event) => {
     .limit(1)
 
   if (totp?.confirmedAt) {
-    // Deliberately NOT a session — see server/utils/pendingTotp.ts for why a
+    // Deliberately NOT a session. See server/utils/pendingTotp.ts for why a
     // half-authenticated session would make the second factor decorative.
     // `last_login_at` is not stamped yet either: the login is not complete.
     await setPendingTotp(event, user.id)

@@ -1,5 +1,7 @@
 /**
- * GET /api/recipes/:id/diff — Compare two commits
+ * GET /api/recipes/:id/diff
+ *
+ * Compare two commits
  *
  * Query params:
  * - from: commit ID (base/older)
@@ -7,20 +9,20 @@
  *
  * Returns a structured CommitDiff with ingredient and step changes.
  *
- * ## Two guards, and neither is optional
+ * ## Two required guards
  *
  * This endpoint used to have neither, which made it a full unauthenticated read of every
  * private recipe in the database:
  *
  * 1. **The recipe must be visible to the caller.** Without this, a private recipe's
- *    contents were readable by anyone who knew its id — and ids are sequential integers.
- * 2. **Both commit ids must belong to *this* recipe.** This is the sharper half. `from` and
+ *    contents were readable by anyone who knew its id, and ids are sequential integers.
+ * 2. **Both commit ids must belong to *this* recipe.** This is the more serious gap. `from` and
  *    `to` were used verbatim, so `/api/recipes/<any public id>/diff?from=1&to=2` returned
  *    the ingredients and steps of commits 1 and 2 *whatever recipe they lived in*. The path
  *    parameter was decoration; walking the integers dumped the whole table.
  *
  * `requireCommitInRecipe` joins through `recipe_branches` because `recipe_commits` carries
- * no `recipe_id` of its own — which is exactly why the check was easy to omit.
+ * no `recipe_id` of its own, which is why the check was easy to omit.
  */
 import { eq } from 'drizzle-orm'
 import type { CommitIngredient, CommitStep } from '~~/shared/types'
@@ -70,7 +72,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Both "from" and "to" commit IDs are required' })
   }
 
-  // Scope both ids to this recipe before a single row is read — see the docblock.
+  // Scope both ids to this recipe before a single row is read (see the docblock).
   await Promise.all([requireCommitInRecipe(recipe.id, fromCommitId), requireCommitInRecipe(recipe.id, toCommitId)])
 
   const db = useDrizzle()

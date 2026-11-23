@@ -1,5 +1,7 @@
 /**
- * PATCH /api/recipes/:id — Update recipe metadata
+ * PATCH /api/recipes/:id
+ *
+ * Update recipe metadata
  */
 import { z } from 'zod'
 import { eq } from 'drizzle-orm'
@@ -60,7 +62,7 @@ export default defineEventHandler(async (event) => {
 
   await useRateLimit(`recipe:update:${session.user.id}`, { max: 60, windowSeconds: 600 })
 
-  // Switching a recipe to public is "publishing" — gate on a verified email
+  // Switching a recipe to public is "publishing": gate on a verified email
   // (no-op unless REQUIRE_EMAIL_VERIFICATION=true). See ROADMAP P2-007.
   if (result.data.visibility === 'public') await requireVerifiedUser(event)
 

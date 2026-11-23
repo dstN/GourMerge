@@ -9,7 +9,7 @@ export default withNuxt(
       'vue/component-api-style': ['error', ['script-setup']],
       // Disallow console.log in production code (use the structured logger)
       'no-console': ['warn', { allow: ['error', 'warn'] }],
-      // Allow 'any' with justification — we use it in Drizzle query results and dynamic handlers.
+      // Allow 'any' with justification: we use it in Drizzle query results and dynamic handlers.
       // Prefer explicit types where possible but don't hard-block on every any.
       '@typescript-eslint/no-explicit-any': 'warn',
       // Prettier owns element formatting; this rule conflicts with how Prettier
@@ -18,13 +18,13 @@ export default withNuxt(
       /**
        * `click:` as an object property is the Nuxt UI **v3** menu-item API.
        *
-       * v4 reads `onSelect`, and an unknown key on an item is not an error — it is simply
+       * v4 reads `onSelect`, and an unknown key on an item is not an error. It is simply
        * never looked at. So the entry renders, looks right, and does nothing when clicked.
        * That is how signing out became impossible from the desktop header, and how both
        * entries in the help menu became decorative, for as long as this app has been on v4.
        *
        * Nothing else caught it. Typecheck stays quiet because `DropdownMenuItem` extends
-       * `LinkProps`, which pulls in Vue's HTML attribute types — verified by reintroducing
+       * `LinkProps`, which pulls in Vue's HTML attribute types. Verified by reintroducing
        * `click:` on an array explicitly annotated as `DropdownMenuItem[][]` and watching
        * `nuxt typecheck` pass. A lint rule is the only thing here that actually fails.
        *

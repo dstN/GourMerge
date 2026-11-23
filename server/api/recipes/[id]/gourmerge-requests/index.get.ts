@@ -1,5 +1,7 @@
 /**
- * GET /api/recipes/:id/gourmerge-requests — List GourMerge Requests for a recipe
+ * GET /api/recipes/:id/gourmerge-requests
+ *
+ * List GourMerge Requests for a recipe
  */
 import { eq, and, desc } from 'drizzle-orm'
 import { recipes, gourmergeRequests, users } from '~~/server/database/schema'

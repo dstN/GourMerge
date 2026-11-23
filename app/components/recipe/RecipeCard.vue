@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * RecipeCard — Preview card for recipe listings
+ * RecipeCard: preview card for recipe listings
  */
 const { t } = useI18n()
 

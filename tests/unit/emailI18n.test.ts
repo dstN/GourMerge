@@ -51,7 +51,7 @@ describe('buildPasswordResetEmail', () => {
 /**
  * The GDPR builders carry links that either hand over every piece of personal
  * data we hold, or erase an account. A builder that dropped the URL, or fell
- * back to the wrong locale, would send someone an unusable — or wrong-language —
+ * back to the wrong locale, would send someone an unusable (or wrong-language)
  * instruction at exactly the moment precision matters.
  */
 describe('GDPR self-service emails', () => {
@@ -88,7 +88,7 @@ describe('GDPR self-service emails', () => {
 
 /**
  * `buildEmailChangeConfirmEmail` goes to the address being switched TO and carries the
- * confirm link — same contract as the GDPR builders above. `buildEmailChangeNoticeEmail`
+ * confirm link, with the same contract as the GDPR builders above. `buildEmailChangeNoticeEmail`
  * goes to the address being switched AWAY FROM and carries no link at all; its own test
  * exists precisely to pin that difference, since reusing `build()` for it would have
  * produced a broken `<a href="">`.
@@ -108,7 +108,7 @@ describe('email-change emails', () => {
     expect(buildEmailChangeConfirmEmail('xx', URL).subject).toBe(buildEmailChangeConfirmEmail('de', URL).subject)
   })
 
-  test('the notice email (to the old address) carries no link — there is nothing to click', () => {
+  test('the notice email (to the old address) carries no link: there is nothing to click', () => {
     const mail = buildEmailChangeNoticeEmail('de', 'neu@example.com')
     expect(mail.html).not.toContain('<a ')
     expect(mail.text).not.toContain('http')
@@ -138,7 +138,7 @@ describe('EMAIL_MESSAGES parity', () => {
   // Derived from the German bundle rather than hardcoded, so a NEW bundle is
   // covered the moment it is added. The previous version listed `verification`
   // and `passwordReset` explicitly, which meant the three GDPR bundles were
-  // added without the gate noticing — a missing French `exportReady.expiry`
+  // added without the gate noticing; a missing French `exportReady.expiry`
   // would have shipped silently.
   const SECTIONS = Object.keys(EMAIL_MESSAGES.de) as Array<keyof EmailBundle>
 
@@ -176,7 +176,7 @@ describe('EMAIL_MESSAGES parity', () => {
     }
   })
 
-  // Each locale must actually be translated — copy-pasting the English bundle
+  // Each locale must actually be translated. Copy-pasting the English bundle
   // and forgetting to translate it would otherwise pass every check above.
   test('subjects differ between locales', () => {
     for (const section of SECTIONS) {

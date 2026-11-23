@@ -1,10 +1,12 @@
 /**
- * POST /api/recipes/:id/discussions — open a thread on a recipe or on one of its commits.
+ * POST /api/recipes/:id/discussions
+ *
+ * Open a thread on a recipe or on one of its commits.
  *
  * Anyone signed in may open one on a recipe they can see; that is the point of the
- * feature. Two guards make that safe rather than naive:
+ * feature. Two guards make that safe:
  *
- * - `requireVerifiedUser` — the same gate GourMerge Request creation uses, so an
+ * - `requireVerifiedUser`: the same gate GourMerge Request creation uses, so an
  *   unverified throwaway address cannot post. No-op unless `REQUIRE_EMAIL_VERIFICATION`.
  * - a DB-backed rate limit, because this is the first endpoint in the app where an
  *   arbitrary signed-in user writes arbitrary text into somebody else's page. The bucket

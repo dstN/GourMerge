@@ -55,7 +55,7 @@ const state = reactive<Partial<Schema>>({
   prepTimeMinutes: undefined,
   cookTimeMinutes: undefined,
   difficulty: 'medium',
-  // tour.active (shared singleton), not a ?tour=1 query — true regardless of which entry
+  // tour.active (shared singleton), not a ?tour=1 query, so true regardless of which entry
   // path got them here. Defaults private during the tour: publishing needs a verified
   // email the tour hasn't required yet; select below still allows public.
   visibility: tour.active.value ? 'private' : 'public',

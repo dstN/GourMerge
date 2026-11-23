@@ -1,5 +1,7 @@
 /**
- * PATCH /api/recipes/:id/gourmerge-requests/:gmrId — Update status or description
+ * PATCH /api/recipes/:id/gourmerge-requests/:gmrId
+ *
+ * Update status or description
  *
  * Valid transitions:
  *   open → closed (author or recipe owner)

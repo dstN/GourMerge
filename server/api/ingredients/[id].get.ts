@@ -1,7 +1,9 @@
 /**
- * GET /api/ingredients/:id — Full detail for one ingredient, including nutrition.
+ * GET /api/ingredients/:id
  *
- * Used by the edit form to load current values before showing them — `GET /api/ingredients`
+ * Full detail for one ingredient, including nutrition.
+ *
+ * Used by the edit form to load current values before showing them. `GET /api/ingredients`
  * (the autocomplete search) deliberately returns a compact shape, not this one. Nothing
  * here is sensitive: an ingredient is shared catalog data, not personal content, so this is
  * public like the autocomplete itself.

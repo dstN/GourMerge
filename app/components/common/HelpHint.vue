@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * HelpHint — A ? icon that opens a popover with contextual help text.
+ * HelpHint: a ? icon that opens a popover with contextual help text.
  *
  * Usage (Nuxt path-prefixes components in components/common/):
  *   <CommonHelpHint i18n-key="glossary.fork.helpHint" />
@@ -16,7 +16,7 @@ const props = defineProps<{
   /** Optional heading (i18n key or raw string) */
   title?: string
   /**
-   * Size of the ? icon. Must match the buttons it sits beside — DESIGNBOOK §2.3 asks for
+   * Size of the ? icon. Must match the buttons it sits beside: DESIGNBOOK §2.3 asks for
    * one height per cluster, and a hint that is 8px shorter than its neighbours reads as
    * misalignment rather than as a quieter affordance. `lg` exists for exactly that.
    */

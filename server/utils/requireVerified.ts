@@ -17,7 +17,7 @@ export async function requireVerifiedUser(event: H3Event): Promise<void> {
   if (!session?.user?.id) throw createError({ statusCode: 401, statusMessage: 'Unauthorized.' })
 
   const db = useDrizzle()
-  if (!db) return // fail open on startup — don't block if DB not ready yet
+  if (!db) return // fail open on startup, don't block if DB not ready yet
 
   const [user] = await db
     .select({ emailVerifiedAt: users.emailVerifiedAt })

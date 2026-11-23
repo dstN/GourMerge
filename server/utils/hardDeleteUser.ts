@@ -14,14 +14,14 @@
  * ## The approach
  *
  * A single shared tombstone account (`users.is_ghost`, username `ghost`) inherits
- * that orphaned attribution — the same pattern GitHub uses. The user's *own* content
+ * that orphaned attribution, the same pattern GitHub uses. The user's *own* content
  * is deleted outright; only their fingerprints inside other people's forks and
  * threads survive, and those now read as the anonymous ghost.
  *
  * The ghost is not loginable: its `password_hash` is a sentinel no password can
  * verify against, and its email is at an `.invalid` domain.
  *
- * Every caller — the self-service GDPR erasure and the nightly inactivity job —
+ * Every caller (the self-service GDPR erasure and the nightly inactivity job)
  * must go through here, or the two paths will drift on exactly the constraints that
  * make this hard.
  */
@@ -78,7 +78,7 @@ export interface HardDeleteResult {
  * Delete `userId` for real.
  *
  * @param deleteOwnedRecipes When false, the user's recipes are handed to the ghost
- *   instead of deleted — used by the self-service flow, where the departing user
+ *   instead of deleted. Used by the self-service flow, where the departing user
  *   chooses whether their public contributions stay up. The nightly inactivity job
  *   passes `true`: nobody is there to ask.
  */
@@ -137,7 +137,7 @@ export async function hardDeleteUser(db: Db, userId: number, deleteOwnedRecipes:
 
     /**
      * Reassign whatever attribution is left. After the step above these are rows
-     * living inside OTHER users' recipes — a commit copied into their fork, a
+     * living inside OTHER users' recipes: a commit copied into their fork, a
      * GourMerge Request they received, a comment in their thread. Deleting those
      * would corrupt someone else's history; nulling is impossible (NOT NULL); so
      * they become the ghost's.
@@ -153,7 +153,7 @@ export async function hardDeleteUser(db: Db, userId: number, deleteOwnedRecipes:
       .where(eq(gourmergeRequestComments.authorId, userId))
 
     // mysql2 reports affected rows on the result header; shape varies, so read
-    // defensively — these counts are for the audit log, not for control flow.
+    // defensively; these counts are for the audit log, not for control flow.
     // Discussion threads and their replies live inside other people's recipes for exactly
     // the same reason a comment does, and their author FK is RESTRICT for the same reason.
     // Omitting these two is not a soft failure: `DELETE FROM users` would raise
@@ -173,14 +173,14 @@ export async function hardDeleteUser(db: Db, userId: number, deleteOwnedRecipes:
     result.discussionsReassigned = readAffected(threads) + readAffected(threadReplies)
 
     // Contact-form messages are linked only by address, so they are matched here
-    // and removed regardless of the recipe choice — purely personal data of no
+    // and removed regardless of the recipe choice. They are purely personal data of no
     // value to anyone else.
     if (victim?.email) {
       await tx.delete(contactMessages).where(eq(contactMessages.email, victim.email))
     }
 
-    // Everything else — stars, verification/reset tokens, data requests, the TOTP
-    // enrolment and its recovery codes — hangs off `ON DELETE CASCADE`, so this one
+    // Everything else (stars, verification/reset tokens, data requests, the TOTP
+    // enrolment and its recovery codes) hangs off `ON DELETE CASCADE`, so this one
     // statement removes them with the row.
     await tx.delete(users).where(and(eq(users.id, userId), eq(users.isGhost, false)))
   })

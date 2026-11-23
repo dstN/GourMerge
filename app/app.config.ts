@@ -1,5 +1,5 @@
 /**
- * One of two places (with assets/css/main.css) where a visual decision may be made — see
+ * One of two places (with assets/css/main.css) where a visual decision may be made; see
  * DESIGNBOOK.md. Every default set here exists so no call site has to pass the prop.
  *
  * `ui.<component>.defaultVariants.<prop>` wins over the component's own default
@@ -34,10 +34,10 @@ export default defineAppConfig({
 
     // DO NOT set defaultVariants on button/badge/card: appConfig defaults are resolved before a
     // component's own declared defaults, and 44 Nuxt UI components render a nested UButton/UBadge
-    // internally (Modal close button, Toast, ColorModeButton, …) — this overrides their intended
-    // styling too. Badge preference belongs on our own call sites instead — see DESIGNBOOK §7.
+    // internally (Modal close button, Toast, ColorModeButton, …), so this overrides their intended
+    // styling too. Badge preference belongs on our own call sites instead (see DESIGNBOOK §7).
 
-    // ── Form controls — DESIGNBOOK §3 ────────────────────────────
+    // ── Form controls (DESIGNBOOK §3) ────────────────────────────
     // Slot classes are safe to set globally: they are additive (tailwind-merge),
     // so a nested InputMenu simply also becomes full width, which is correct.
     input: FULL_WIDTH_ROOT,
@@ -47,7 +47,7 @@ export default defineAppConfig({
     select: FULL_WIDTH_BASE,
     selectMenu: FULL_WIDTH_BASE,
 
-    // ── Alerts — always the tinted variant ───────────────────────
+    // ── Alerts: always the tinted variant ───────────────────────
     // Safe: no other Nuxt UI component we use renders a nested UAlert, and all
     // five of our alerts are informational rather than solid-primary shouting.
     alert: {
@@ -56,7 +56,7 @@ export default defineAppConfig({
       },
     },
 
-    // Shimmer instead of pulse. Only the animation is swapped — shape/surface stay Nuxt UI's
+    // Shimmer instead of pulse. Only the animation is swapped; shape/surface stay Nuxt UI's
     // default (`animate-pulse rounded-md bg-elevated`), so future upstream changes still reach us.
     // `shimmer shimmer-bg` (tw-shimmer plugin, main.css) needs both classes: `shimmer-bg` sets the
     // surface-preset variables, `shimmer` carries the gradient/animation. `bg-elevated` survives

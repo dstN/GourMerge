@@ -1,18 +1,18 @@
 <script setup lang="ts">
 /**
- * MainNav — the one desktop header navigation, shared by the `default` and `dashboard`
+ * MainNav: the one desktop header navigation, shared by the `default` and `dashboard`
  * layouts.
  *
  * ## What it is for, and what it is deliberately not for
  *
  * This carries **destinations you move between while working**: the public browse surface,
  * your own recipes, your favourites, and the one action worth a permanent button. It does
- * NOT carry account entries — those live in `<LayoutUserDropdown>`, which is the single
+ * NOT carry account entries; those live in `<LayoutUserDropdown>`, which is the single
  * home for "things about me" (dashboard, settings, sign out).
  *
- * That split is the whole point. Before it, four destinations sat in this nav, the same
+ * Before this split, four destinations sat in this nav, the same
  * four plus two actions sat in a 256px dashboard sidebar, and four of them appeared a third
- * time in the user dropdown — fifteen entries for nine destinations, with no rule about
+ * time in the user dropdown: fifteen entries for nine destinations, with no rule about
  * which copy to use. The sidebar is gone (see `layouts/dashboard.vue`) and every
  * destination now appears exactly once here or once in the account menu, never both.
  *
@@ -28,12 +28,12 @@
  *
  * Four labelled items plus the logo plus the control cluster (locale select, theme, help,
  * avatar) need about 1000px. At `md` the header's content measured **949px against a 768px
- * viewport** — and because the layout root is `h-dvh overflow-hidden`, that overflow was
+ * viewport**, and because the layout root is `h-dvh overflow-hidden`, that overflow was
  * clipped rather than scrolled, so the account menu was simply cut off between 768px and
  * ~1000px with nothing on screen to say so. `<LayoutMobileMenu>` already carries every one
  * of these destinations, so that range gets the offcanvas instead. The three files that
- * make up the switch — this nav, both layouts' control clusters, and the menu's own
- * `lg:hidden` — have to agree, or one of them reappears alone.
+ * make up the switch (this nav, both layouts' control clusters, and the menu's own
+ * `lg:hidden`) have to agree, or one of them reappears alone.
  */
 const { t } = useI18n()
 const { loggedIn } = useUserSession()
@@ -51,7 +51,7 @@ const { loggedIn } = useUserSession()
       to="/recipes"
     />
     <!-- Labelled like its neighbours. It shipped icon-only for one revision, on the theory
-         that the star reads unambiguously and saves width — and it did read as an oversight
+         that the star reads unambiguously and saves width. It read as an oversight
          instead: one bare glyph in a row of three labels looks like a link whose text failed
          to load, not like a deliberately quieter item. Rank is expressed by variant here
          (§2), not by withholding the word.
@@ -65,7 +65,7 @@ const { loggedIn } = useUserSession()
       to="/recipes/starred"
       data-tour="favorites-nav"
     />
-    <!-- The one emphasised action in the cluster — DESIGNBOOK §2: idle nav is
+    <!-- The one emphasised action in the cluster. DESIGNBOOK §2: idle nav is
          neutral/ghost, the primary action is soft. -->
     <UButton v-if="loggedIn" :label="t('nav.newRecipe')" variant="soft" icon="i-lucide-plus" to="/recipes/new" />
   </nav>

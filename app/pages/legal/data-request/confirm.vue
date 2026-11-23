@@ -4,8 +4,8 @@
  *
  * Export  → confirms, then shows the download link (also sent by email).
  * Deletion → confirms, then asks for the scope. The destructive call is a
- *            separate, explicit click: opening a link from an inbox — which
- *            scanners and previewers do automatically — must never erase an
+ *            separate, explicit click: opening a link from an inbox (which
+ *            scanners and previewers do automatically) must never erase an
  *            account on its own.
  */
 const { t } = useI18n()
@@ -72,7 +72,7 @@ async function confirmDeletion() {
         <h1 class="text-2xl font-bold">{{ t('legal.privacy.confirmTitle') }}</h1>
       </template>
 
-      <!-- checking — a spinner is right here: an action is already in flight
+      <!-- checking: a spinner is right here: an action is already in flight
            (DESIGNBOOK §6.2) -->
       <div v-if="state === 'checking'" class="text-center py-10">
         <UIcon name="i-lucide-loader-2" class="size-8 mx-auto mb-3 animate-spin text-primary" aria-hidden="true" />

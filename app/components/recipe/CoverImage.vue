@@ -1,11 +1,11 @@
 <script setup lang="ts">
 /**
- * RecipeCoverImage — the serving suggestion, rendered between the ingredients and the steps.
+ * RecipeCoverImage: the serving suggestion, rendered between the ingredients and the steps.
  *
- * That position is the whole point and it is not decorative sequencing: it is the seam in
+ * The position is deliberate: it is the seam in
  * the page where the reader switches from "do I want to make this / what do I need to buy"
  * to "how do I make it". A photo at the very top competes with the title for the first
- * impression and pushes the ingredient list — the part people actually scroll to — below
+ * impression and pushes the ingredient list (the part people actually scroll to) below
  * the fold on a phone. Between the two lists it does the job a serving suggestion is for:
  * it shows what the thing you just read the ingredients for is supposed to look like,
  * right before you start cooking.
@@ -15,7 +15,7 @@
  * `width`/`height` come from the stored dimensions and are set as real attributes, so the
  * browser reserves the exact aspect ratio before a single byte of the image arrives.
  * Without them, an image dropped into the middle of a page pushes everything below it
- * down on load — a layout shift worth 25% of the Lighthouse performance score, in the
+ * down on load: a layout shift worth 25% of the Lighthouse performance score, in the
  * one place on the page where it is most visible.
  *
  * `loading="lazy"` and `decoding="async"` because it is below the fold by construction,
@@ -36,7 +36,7 @@ const src = computed(() => `/api/recipes/${props.recipeId}/image?v=${props.image
 
 /**
  * An empty `alt` is the correct value for a decorative image, and a serving suggestion
- * next to a full recipe genuinely is one — but only if the author declined to describe
+ * next to a full recipe is one, but only if the author declined to describe
  * it. When they did write something, that text is the accessible name. Never a filename,
  * never "image".
  */

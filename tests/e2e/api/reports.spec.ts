@@ -4,7 +4,7 @@ import { registerUser, createRecipe, uniqueUser } from '../support/api'
 
 /**
  * Reporting: recipes, users, discussion comments, images and ingredients, per the ROADMAP
- * spec — "reports are visible to the owner of the reported artefact and to an admin;
+ * spec: "reports are visible to the owner of the reported artefact and to an admin;
  * nothing is auto-hidden; the shipped moderation tools are the response."
  */
 test.beforeEach(async () => {
@@ -29,15 +29,15 @@ test('reporting is idempotent per (reporter, target), and 404s on a target you c
   const firstBody = await first.json()
   expect(firstBody.alreadyReported).toBe(false)
 
-  // Resubmitting must not create a second row or error — the unique index is the guard.
+  // Resubmitting must not create a second row or error; the unique index prevents both.
   const again = await request.post('/api/reports', {
     data: { targetKind: 'recipe', targetId: publicRecipe.id, reason: 'inappropriate' },
   })
   expect(again.status()).toBe(200)
   expect((await again.json()).alreadyReported).toBe(true)
 
-  // A private recipe the reporter cannot see must 404, the same as any other endpoint —
-  // reporting must not become a second way to confirm it exists.
+  // A private recipe the reporter cannot see must 404, the same as any other endpoint.
+  // Reporting must not become a second way to confirm it exists.
   const hidden = await request.post('/api/reports', {
     data: { targetKind: 'recipe', targetId: privateRecipe.id, reason: 'spam' },
   })
@@ -75,7 +75,7 @@ test('a recipe owner sees a report on their recipe via /mine; a reported user do
   expect(
     mine.some((r: { targetKind: string; targetId: number }) => r.targetKind === 'recipe' && r.targetId === recipe.id)
   ).toBe(true)
-  // The 'user' report is deliberately absent — a reported person is not told they were
+  // The 'user' report is deliberately absent: a reported person is not told they were
   // reported, only an admin sees that one.
   expect(mine.some((r: { targetKind: string }) => r.targetKind === 'user')).toBe(false)
 })
@@ -88,7 +88,7 @@ test('only an admin can list or act on /api/admin/reports', async ({ request }) 
     await request.post('/api/reports', { data: { targetKind: 'recipe', targetId: recipe.id, reason: 'spam' } })
   ).json()
 
-  // Still signed in as the reporter — not an admin.
+  // Still signed in as the reporter, not an admin.
   const forbidden = await request.get('/api/admin/reports')
   expect(forbidden.status()).toBe(403)
   expect((await request.patch(`/api/admin/reports/${created.id}`, { data: { status: 'dismissed' } })).status()).toBe(
@@ -129,16 +129,16 @@ test('deleting the reported recipe auto-closes its open report', async ({ reques
     await request.post('/api/reports', { data: { targetKind: 'recipe', targetId: recipe.id, reason: 'spam' } })
   ).json()
 
-  // Still the admin session — confirm it is open before the delete.
+  // Still the admin session. Confirm it is open before the delete.
   const beforeDelete = await (await request.get('/api/admin/reports')).json()
   expect(beforeDelete.some((r: { id: number }) => r.id === created.id)).toBe(true)
 
-  // Back to the owner to delete their own recipe — `registerUser`'s returned password is
+  // Back to the owner to delete their own recipe. `registerUser`'s returned password is
   // what makes logging back into a specific earlier account possible in this test.
   await request.post('/auth/login', { data: { identifier: owner.email, password: owner.password } })
   expect((await request.delete(`/api/recipes/${recipe.id}`)).ok()).toBeTruthy()
 
-  // Deleting the recipe is the moderation response — the report is closed, not left open
+  // Deleting the recipe is the moderation response: the report is closed, not left open
   // against something that no longer exists.
   await request.post('/auth/login', { data: { identifier: admin.email, password: admin.password } })
   const afterDelete = await (await request.get('/api/admin/reports?status=actioned')).json()

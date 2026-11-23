@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * seed-tour-recipe.mjs — Seed the `system` user and a demo recipe for the onboarding tour.
+ * seed-tour-recipe.mjs: seed the `system` user and a demo recipe for the onboarding tour.
  *
  * The `system` user is never loginable (password_hash is a sentinel no bcrypt
  * comparison can match, same pattern as `ghost`). The recipe is a real Klassische
@@ -8,7 +8,7 @@
  *
  * The recipe is **public** so the explore API can serve it to users who haven't
  * finished the tour yet. Users who have (`has_finished_tour = 1`) and guests
- * never see it — the explore endpoint filters it out.
+ * never see it; the explore endpoint filters it out.
  *
  * Idempotent: re-running updates nothing if the rows already exist.
  *
@@ -19,14 +19,14 @@
 // No `dotenv`. `.env` is loaded by `--env-file-if-exists` in the npm script (a Node
 // built-in since 20.12), which is what every sibling script here effectively relies on
 // through the caller's environment. The import was the repo's only use of the package and
-// it was never in `package.json` — so `npm run knip` failed on it, and CI with it, while
+// it was never in `package.json`, so `npm run knip` failed on it, and CI with it, while
 // the module resolved anyway because something else pulled it in transitively.
 import mysql from 'mysql2/promise'
 import crypto from 'node:crypto'
 
 const DATABASE_URL = process.env.DATABASE_URL
 if (!DATABASE_URL) {
-  console.error('DATABASE_URL not set — aborting.')
+  console.error('DATABASE_URL not set, aborting.')
   process.exit(1)
 }
 
@@ -86,7 +86,7 @@ try {
       systemUserId,
       'Klassische Tomatensuppe',
       RECIPE_SLUG,
-      'Eine wärmende, samtige Tomatensuppe — perfekt als leichtes Mittagessen oder Vorspeise. Frische Tomaten, Zwiebeln und Basilikum ergeben einen Klassiker, der immer schmeckt.',
+      'Eine wärmende, samtige Tomatensuppe, perfekt als leichtes Mittagessen oder Vorspeise. Frische Tomaten, Zwiebeln und Basilikum ergeben einen Klassiker, der immer schmeckt.',
       'public',
       4, // servings
       10, // prep_time_minutes
@@ -99,9 +99,9 @@ try {
         it: 'Zuppa classica di pomodoro',
       }),
       JSON.stringify({
-        en: 'A warming, velvety tomato soup — perfect as a light lunch or starter. Fresh tomatoes, onions and basil make a classic that never disappoints.',
-        fr: 'Un velouté de tomates réconfortant — parfait en entrée ou en plat léger. Tomates fraîches, oignons et basilic pour un classique qui plaît toujours.',
-        it: 'Una vellutata di pomodoro calda e avvolgente — perfetta come pranzo leggero o antipasto. Pomodori freschi, cipolle e basilico per un classico che non delude mai.',
+        en: 'A warming, velvety tomato soup, perfect as a light lunch or starter. Fresh tomatoes, onions and basil make a classic that never disappoints.',
+        fr: 'Un velouté de tomates réconfortant, parfait en entrée ou en plat léger. Tomates fraîches, oignons et basilic pour un classique qui plaît toujours.',
+        it: 'Una vellutata di pomodoro calda e avvolgente, perfetta come pranzo leggero o antipasto. Pomodori freschi, cipolle e basilico per un classico che non delude mai.',
       }),
       0,
       0,
@@ -255,7 +255,7 @@ try {
   }
   console.log(`  ✓ tags linked`)
 
-  console.log('\n✅ Tour recipe seed complete.')
+  console.log('\n✓ Tour recipe seed complete.')
 } finally {
   await conn.end()
 }

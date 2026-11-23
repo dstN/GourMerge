@@ -1,11 +1,11 @@
 <script setup lang="ts">
 /**
- * EditIngredientModal — lets the ingredient's own creator fix a name, category or nutrition
+ * EditIngredientModal: lets the ingredient's own creator fix a name, category or nutrition
  * value after the fact. The server enforces `created_by === viewer` independently
  * (`PATCH` / `DELETE /api/ingredients/:id`); this component trusts `canEdit` from the caller
  * only to decide whether to show the trigger at all, same as any other owner-only control.
  *
- * Mirrors `NewIngredientModal.vue`'s field set on purpose — editing is the same macro and
+ * Mirrors `NewIngredientModal.vue`'s field set on purpose: editing is the same macro and
  * micro fields and the same four locale names, just pre-filled and PATCHed instead of POSTed.
  */
 import type { MacroKey } from '~/composables/useIngredientNutrientFields'
@@ -201,7 +201,7 @@ async function confirmDelete() {
               <!-- `type="text"` + `inputmode="decimal"`, not `type="number"`: a native number
                    input rejects a comma in most locales, and German nutrition labels are
                    written with one ("12,5"). The server (`decimalSchema`) already accepts
-                   either separator — the input just has to let people type it. -->
+                   either separator; the input just has to let people type it. -->
               <UFormField
                 v-for="n in MACRO_FIELDS"
                 :key="n.key"
@@ -290,7 +290,7 @@ async function confirmDelete() {
     </template>
   </UModal>
 
-  <!-- Nested confirm, not window.confirm — DESIGNBOOK §6.4. -->
+  <!-- Nested confirm, not window.confirm (DESIGNBOOK §6.4). -->
   <UModal
     :open="deleteConfirmOpen"
     :title="t('recipe.deleteIngredientTitle')"

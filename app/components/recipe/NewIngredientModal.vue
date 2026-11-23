@@ -1,17 +1,17 @@
 <script setup lang="ts">
 /**
- * NewIngredientModal — collects the details for an ingredient that does not exist yet.
+ * NewIngredientModal: collects the details for an ingredient that does not exist yet.
  *
  * Before this, choosing "create X" in the autocomplete created a master-table row from a
  * bare name: no translations, no category, no nutrition. The API had always accepted all
- * three; nothing ever asked for them. The consequences were quiet but real — the
+ * three; nothing ever asked for them. As a result the
  * ingredient was findable only in the language it happened to be typed in, and it dragged
  * every recipe's nutrition totals toward zero while being counted as "covered enough" to
  * not stand out.
  *
  * Creation happens on confirm here rather than at commit time, so the row exists with its
  * data attached and the caller gets a real id immediately. It also makes creating an
- * ingredient a deliberate act instead of a side effect of saving — which is how a dev
+ * ingredient a deliberate act instead of a side effect of saving, which is how a dev
  * database ends up with dozens of rows called `Butter 1785947886683`.
  */
 import type { MacroKey } from '~/composables/useIngredientNutrientFields'
@@ -33,7 +33,7 @@ export interface CreatedIngredient {
 
 const props = defineProps<{
   open: boolean
-  /** What the user typed in the autocomplete — pre-fills the canonical name and own locale. */
+  /** What the user typed in the autocomplete; pre-fills the canonical name and own locale. */
   initialName: string
 }>()
 
@@ -67,7 +67,7 @@ const { data: categories } = await useFetch<string[]>('/api/ingredients/categori
 const categoryItems = computed(() => (categories.value ?? []).map((c) => ({ label: c, value: c })))
 
 // Reset on each open, and seed the typed text into both the canonical name and the
-// language the author is working in — that is the one translation we can be sure of.
+// language the author is working in: that is the one translation we can be sure of.
 watch(
   () => props.open,
   (isOpen) => {
@@ -177,7 +177,7 @@ async function submit() {
               <!-- `type="text"` + `inputmode="decimal"`, not `type="number"`: a native number
                    input rejects a comma in most locales, and German nutrition labels are
                    written with one ("12,5"). The server (`decimalSchema`) already accepts
-                   either separator — the input just has to let people type it. -->
+                   either separator; the input just has to let people type it. -->
               <UFormField
                 v-for="n in MACRO_FIELDS"
                 :key="n.key"

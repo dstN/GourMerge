@@ -1,5 +1,5 @@
 /**
- * Pure helpers for the BLS 4.0 import — everything that can be unit-tested without a
+ * Pure helpers for the BLS 4.0 import: everything that can be unit-tested without a
  * spreadsheet or a database: the code systematics, the scope rule, the category mapping,
  * the value markers, the nutrient mapping and the erratum corrections.
  *
@@ -8,9 +8,9 @@
  * codes carry a letter in positions 3–4 (`M5B1600`); nothing here depends on those.
  */
 
-/** `ingredient_sources.dataset` — the family, never versioned. */
+/** `ingredient_sources.dataset`: the family, never versioned. */
 export const DATASET = 'bls'
-/** `ingredient_sources.dataset_version` — bump when the MRI publishes 4.1. */
+/** `ingredient_sources.dataset_version`: bump when the MRI publishes 4.1. */
 export const DATASET_VERSION = '4.0'
 /** `ingredient_nutrition.source` for values that come from this dataset. */
 export const NUTRITION_SOURCE = 'bls-4.0'
@@ -18,7 +18,7 @@ export const NUTRITION_SOURCE = 'bls-4.0'
 /**
  * Groups B–W are foods one can buy; X and Y are dishes the MRI calculated from recipes
  * (Kalbsfrikassee, Gulaschsuppe). A dish is what GourMerge makes out of ingredients, so X/Y
- * stay out unless `bls-map.csv` lists a code explicitly — which it does for the ~235 that
+ * stay out unless `bls-map.csv` lists a code explicitly, which it does for the ~235 that
  * are ingredients in their own right: stocks, sauces, dressings, doughs.
  */
 export function isDishGroup(code) {
@@ -154,7 +154,7 @@ const MICROS = {
 
 /**
  * Erratum §3: the MRI's software added OLSAC (available oligosaccharides) a second time to
- * the energy, as if they were fibre — 8 kJ/g and 2 kcal/g on top of the 17/4 already inside
+ * the energy, as if they were fibre: 8 kJ/g and 2 kcal/g on top of the 17/4 already inside
  * CHO. 411 foods, up to +23 % (glucose syrup). The documented formula is right; the
  * published numbers are not, until 4.1. Subtracting the extra term reproduces the formula.
  */
@@ -193,11 +193,11 @@ export function mapNutrition(values, erratum) {
   return nutrition
 }
 
-/** The decision file's own grammar — one row per BLS code that is not the default. */
+/** The decision file's own grammar: one row per BLS code that is not the default. */
 const DECISIONS = new Set(['same', 'new', 'skip'])
 
 /**
- * Parse `bls-map.csv`. Columns: bls_code,decision,target,note. Quotes are not supported —
+ * Parse `bls-map.csv`. Columns: bls_code,decision,target,note. Quotes are not supported;
  * notes must not contain commas, which the writer enforces.
  */
 export function parseMap(text) {
@@ -209,7 +209,7 @@ export function parseMap(text) {
     const [code, decision, target, ...rest] = line.split(',')
     if (!code || !DECISIONS.has(decision)) throw new Error(`bls-map.csv: bad row "${line}"`)
     if (decision === 'same' && !/^(swiss:\d+|curated:.+)$/.test(target ?? '')) {
-      throw new Error(`bls-map.csv: "same" needs a swiss:<id> or curated:<name> target — "${line}"`)
+      throw new Error(`bls-map.csv: "same" needs a swiss:<id> or curated:<name> target: "${line}"`)
     }
     if (rows.has(code)) throw new Error(`bls-map.csv: ${code} listed twice`)
     rows.set(code, { decision, target: target || null, note: rest.join(',') || null })

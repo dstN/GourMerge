@@ -10,7 +10,7 @@ const { t } = useI18n()
 const { loggedIn } = useUserSession()
 
 const search = ref('')
-// 'all' is a sentinel (empty-string values break Nuxt UI v4 USelect — ARCHITECTURE §5)
+// 'all' is a sentinel (empty-string values break Nuxt UI v4 USelect, see ARCHITECTURE §5)
 const difficulty = ref('all')
 const dietaryFilter = ref('all')
 const sort = ref('stars')
@@ -57,7 +57,7 @@ useSeoMeta({ title: `${t('nav.explore')}: GourMerge` })
     <CommonPageShell width="wide">
       <CommonPageHeader :title="t('nav.explore')" :subtitle="t('explore.subtitle')" icon="i-lucide-compass" />
 
-      <!-- Filters — the one place form controls may set an explicit width,
+      <!-- Filters: the one place form controls may set an explicit width,
            because they sit in a horizontal cluster (DESIGNBOOK §3.4). -->
       <div class="flex flex-wrap gap-3 mb-6">
         <UInput
@@ -108,7 +108,7 @@ useSeoMeta({ title: `${t('nav.explore')}: GourMerge` })
         />
       </div>
 
-      <!-- Tag filter — a toggle row, so these are buttons per DESIGNBOOK §2, not
+      <!-- Tag filter: a toggle row, so these are buttons per DESIGNBOOK §2, not
            pills. They used to be hand-rolled <button>s with bespoke pill styles. -->
       <div v-if="allTags?.length" class="flex flex-wrap gap-2 mb-6">
         <UButton

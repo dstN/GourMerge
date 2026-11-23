@@ -29,7 +29,7 @@ type Locale = (typeof LOCALES)[number]
  * shadows the main field and goes stale the moment the main text is edited.
  *
  * The author's own locale is therefore hidden unless a stored value would genuinely
- * **override** the main text — that is, it exists *and differs from it*. An identical copy
+ * **override** the main text, that is, it exists *and differs from it*. An identical copy
  * (which is what recipes saved before this change actually contain: `content_translations.de`
  * byte-for-byte equal to `content`) carries no information, so showing it is pure
  * duplication. A value that really differs still appears, flagged, because it is winning
@@ -53,7 +53,7 @@ function localesFor(...fields: Array<{ main: string; map: Partial<Record<Locale,
  * Drop translations that merely repeat the main text.
  *
  * Safe for every locale, not just the author's: the read path falls back to `content` when
- * a translation is absent, so removing a copy that equals `content` renders identically —
+ * a translation is absent, so removing a copy that equals `content` renders identically;
  * it only stops the value from shadowing later edits to the main text.
  */
 function stripRedundant(main: string, map: Record<Locale, string>): Record<string, string> | null {
@@ -299,7 +299,7 @@ async function deleteRecipe() {
     allowLeave.value = true
 
     // delete-demo (base tour) and delete-fork (fork tour) are both `hideNext: true` and
-    // both LAST in their tour — nothing else ever calls tour.next() for them. Without
+    // both LAST in their tour: nothing else ever calls tour.next() for them. Without
     // this, deleting the recipe the tour was pointed at leaves it `active` forever,
     // anchored to a button on a page it's about to navigate away from: hasFinishedTour
     // (set by finish() below, base tour only) could never actually become true, which
@@ -371,7 +371,7 @@ async function commitChanges() {
     return
   }
 
-  // Every ingredient must be a real, created master-table row before the recipe can be saved —
+  // Every ingredient must be a real, created master-table row before the recipe can be saved;
   // a typed-but-not-yet-created name (ingredientId still null) is not enough.
   const uncreated = ingredients.value.some((ing) => ing.ingredientId === null)
   if (uncreated) {
@@ -444,14 +444,14 @@ useSeoMeta({
 // ── Tour Automation ───────────────────────────────────────────
 //
 // The typed-in ingredient and step below are demonstration content the TOUR adds, not
-// something the visitor asked to keep — but `isDirty` cannot tell the difference between
+// something the visitor asked to keep, but `isDirty` cannot tell the difference between
 // that and real unsaved work, and used not to: it compares against the baseline captured
 // at load, so the moment this watcher typed "Apfel" in, the page was "dirty" for a visitor
 // who had done nothing yet. `view-recipe-btn`, three steps later, is a plain nav-link click
-// with no save step of its own — so clicking exactly the button the tour just told them to
+// with no save step of its own, so clicking exactly the button the tour just told them to
 // click tripped the unsaved-changes prompt every time. Re-baselining after each demo edit
 // is what makes "dirty" mean "changed since the tour handed it to you" instead of "changed
-// since the empty page loaded" — a real edit on top of the demo content still counts.
+// since the empty page loaded". A real edit on top of the demo content still counts.
 watch(
   () => tour.currentStep.value?.id,
   async (stepId) => {
@@ -612,7 +612,7 @@ watch(
             </div>
           </div>
 
-          <!-- Serving suggestion. Saves on its own rather than on commit — it is recipe
+          <!-- Serving suggestion. Saves on its own rather than on commit: it is recipe
                metadata, not part of a snapshot; see RecipeImageUpload. -->
           <UFormField :label="t('recipe.imageLabel')" :hint="t('recipe.imageOptional')">
             <RecipeImageUpload :recipe-id="recipe!.id" :initial-image="recipe!.image" />
@@ -743,7 +743,7 @@ watch(
           <!--
             Second add button, at the end of the list. The one in the card header is the
             only one that existed, so with a dozen ingredients you had to scroll back to
-            the top for every addition — and new rows appear at the bottom, which is where
+            the top for every addition, and new rows appear at the bottom, which is where
             your attention already is. A trailing button rather than a sticky one: the
             layout is a fixed shell with a single internal scroll container, where sticky
             positioning inside a card is fragile for no benefit here.
@@ -843,7 +843,7 @@ watch(
             </template>
           </ClientOnly>
 
-          <!-- Trailing add button — same reasoning as the ingredient list above.
+          <!-- Trailing add button, same reasoning as the ingredient list above.
                Outside <ClientOnly> so it works without waiting for the editor to hydrate. -->
           <UButton
             :label="t('recipe.addStep')"

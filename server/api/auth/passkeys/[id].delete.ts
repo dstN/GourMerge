@@ -1,5 +1,7 @@
 /**
- * DELETE /api/auth/passkeys/:id — remove one passkey.
+ * DELETE /api/auth/passkeys/:id
+ *
+ * Remove one passkey.
  *
  * Scoped to the session's own rows, so a guessed id cannot delete someone else's key.
  * A missing row returns 404 rather than a distinct "not yours", which keeps the
@@ -7,7 +9,7 @@
  *
  * Deliberately does **not** refuse to remove the last passkey. A password always
  * remains on the account (registration requires one), so deleting every key cannot
- * lock anyone out — unlike disabling TOTP, this needs no escape hatch.
+ * lock anyone out. Unlike disabling TOTP, this needs no escape hatch.
  */
 import { and, eq } from 'drizzle-orm'
 import { userPasskeys } from '~~/server/database/schema'

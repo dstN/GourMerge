@@ -4,22 +4,22 @@
  * A tour step anchors to a `data-tour="<id>"` element that lives on a specific
  * route. '@recipe' resolves to another user's public recipe (so the Fork button has
  * somewhere to point); '@demo' resolves to the recipe the visitor creates through the
- * real `/recipes/new` form during the `recipe-form-title` step — the tour stays visible
+ * real `/recipes/new` form during the `recipe-form-title` step. The tour stays visible
  * and anchored to that form (not hidden) while they fill it in, and `TourOverlay`'s
  * route watcher picks the tour back up once they submit it. The overlay handles
  * navigation, polling for the anchor, viewport clamping and auto-skipping steps whose
- * anchor never appears — so the tour never dead-ends.
+ * anchor never appears, so the tour never dead-ends.
  */
 
 export interface TourStep {
   /** data-tour anchor id */
   id: string
-  /** Route the anchor lives on. '@recipe' / '@demo' resolve dynamically — see above. */
+  /** Route the anchor lives on. '@recipe' / '@demo' resolve dynamically (see above). */
   route: string
   titleKey: string
   descKey: string
   placement?: 'top' | 'bottom' | 'left' | 'right'
-  /** Hides "Weiter"/"Fertig" — only `Zurück`/skip stay available. Forces steps like
+  /** Hides "Weiter"/"Fertig"; only `Zurück`/skip stay available. Forces steps like
    *  `recipe-form-title` to advance via the real form submit, not a one-click skip past it. */
   hideNext?: boolean
 }
@@ -224,8 +224,8 @@ export function useProductTour() {
 
   /**
    * Records the recipe the visitor just created through the real `/recipes/new` form
-   * while the `recipe-form-title` step was active — see `TourOverlay`'s route watcher,
-   * which is what calls this. Deliberately not a background API call that fabricates one:
+   * while the `recipe-form-title` step was active (see `TourOverlay`'s route watcher,
+   * which is what calls this). Deliberately not a background API call that fabricates one:
    * onboarding is supposed to teach recipe creation, not fake it.
    */
   function setDemoRecipe(recipe: { id: number; url: string }) {
@@ -279,7 +279,7 @@ export function useProductTour() {
   }
 
   /**
-   * The demo recipe only exists to carry the tour, so every exit path deletes it —
+   * The demo recipe only exists to carry the tour, so every exit path deletes it,
    * best-effort, since this is cleanup rather than something the visitor is waiting on.
    * A tour abandoned outright (closed tab, no "Fertig"/"Überspringen") leaves it behind,
    * same as any other draft a visitor walks away from; nothing here polls for that.
@@ -292,7 +292,7 @@ export function useProductTour() {
   }
 
   // Sub-tours point demoRecipe at a real recipe (id: 0 placeholder), not a throwaway one to
-  // delete, and must not trip the base tour's global dismissTour() — just mark that sub-tour done.
+  // delete, and must not trip the base tour's global dismissTour(); just mark that sub-tour done.
   function skip() {
     active.value = false
     if (activeTourName.value === 'base') {

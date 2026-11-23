@@ -1,7 +1,9 @@
 /**
- * PATCH /api/admin/reports/:id — Mark a report actioned or dismissed.
+ * PATCH /api/admin/reports/:id
  *
- * There is no "reopen" — once an admin has looked at it, it stays looked-at. If the same
+ * Mark a report actioned or dismissed.
+ *
+ * There is no "reopen": once an admin has looked at it, it stays looked-at. If the same
  * target gets reported again later, the unique index means that is a different row anyway.
  */
 import { z } from 'zod'

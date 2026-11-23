@@ -1,7 +1,9 @@
 /**
- * GET /api/tags — List all tags sorted by name (optionally search)
+ * GET /api/tags
  *
- * Query: q — partial name match
+ * List all tags sorted by name (optionally search)
+ *
+ * Query: `q`, partial name match
  */
 import { like, asc } from 'drizzle-orm'
 import { tags } from '~~/server/database/schema'

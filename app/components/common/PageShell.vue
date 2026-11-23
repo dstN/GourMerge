@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * PageShell — the one and only page content container. DESIGNBOOK §4.2.
+ * PageShell: the only page content container. DESIGNBOOK §4.2.
  *
  * Usage (Nuxt path-prefixes components in components/common/):
  *   <CommonPageShell width="wide">…</CommonPageShell>
@@ -8,12 +8,12 @@
  * Owns the content cap, the responsive gutters and the vertical rhythm, so no
  * page root carries `max-w-*`, `px-*` or `py-*`. Before this existed, nine
  * different caps were in use and every page hardcoded a flat `px-4` while the
- * header used `px-4 sm:px-6 lg:px-8` — content and nav were misaligned by up to
+ * header used `px-4 sm:px-6 lg:px-8`, so content and nav were misaligned by up to
  * 16px on desktop.
  *
  * `wide` is `max-w-7xl` on purpose: the exact cap of the header and footer, so a
  * grid page lines up with the nav above it. Since the dashboard sidebar was removed, that
- * is true in the signed-in shell too — the logo sits directly above a `wide` page's left
+ * is true in the signed-in shell too: the logo sits directly above a `wide` page's left
  * edge, which is what the public `/explore` state always did and the dashboard never could.
  */
 const props = withDefaults(
@@ -34,7 +34,7 @@ const WIDTHS = {
 </script>
 
 <template>
-  <!-- `page-shell` carries no styling any more — the sidebar shell it used to correct for
+  <!-- `page-shell` carries no styling any more. The sidebar shell it used to correct for
        is gone, and header and content now share one `max-w-7xl` container by construction
        (see the note in main.css). It stays as the stable hook
        `tests/e2e/layout-alignment.spec.ts` measures the content column with. -->

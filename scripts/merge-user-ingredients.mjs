@@ -7,12 +7,12 @@
  * autocomplete shows twice. This script replaces such a row with the reference one:
  * every commit's ingredient line that points at the user row is re-pointed at the
  * reference row, then the user row is deleted. Quantities, units, notes and order are
- * untouched; the nutrition of those recipes changes to the reference values — a user row
- * typically had none at all.
+ * untouched; the nutrition of those recipes changes to the reference values (a user row
+ * typically had none at all).
  *
  * That is a deliberate exception to "commits are immutable snapshots": the snapshot still
  * says the same thing, only the id behind the name is now the catalog's. Forks are
- * included on purpose — a fork copies commit rows with their ingredient ids, so leaving
+ * included on purpose: a fork copies commit rows with their ingredient ids, so leaving
  * them out would make a diff between a fork and its original disagree about an
  * ingredient that is one and the same.
  *
@@ -29,8 +29,8 @@
  *        user ingredient to fold. Prints what would change, writes nothing.
  *
  *   3. node scripts/backup-db.mjs && node scripts/merge-user-ingredients.mjs --apply mapping.tsv
- *        Validates every row (both ids exist, the target is a reference row — has an
- *        ingredient_sources entry — the user row is not), then re-points and deletes
+ *        Validates every row (both ids exist, the target is a reference row with an
+ *        ingredient_sources entry, the user row is not), then re-points and deletes
  *        inside one transaction. Refuses the whole file on the first invalid row.
  *
  * The mapping file holds production ids and never goes into the repo. The names users
@@ -172,7 +172,7 @@ function readMapping() {
 async function apply(conn) {
   const mapping = readMapping()
   if (mapping.length === 0) {
-    console.log('Mapping file has no rows — nothing to do.')
+    console.log('Mapping file has no rows; nothing to do.')
     return
   }
 
@@ -192,7 +192,7 @@ async function apply(conn) {
     const t = byId.get(m.targetId)
     if (!u) problems.push(`${m.userId}: no such ingredient`)
     else if (u.created_by === null)
-      problems.push(`${m.userId} "${u.name}": not user-created — this script only folds user rows`)
+      problems.push(`${m.userId} "${u.name}": not user-created; this script only folds user rows`)
     if (!t) problems.push(`${m.targetId}: no such target ingredient`)
     else if (t.created_by !== null) problems.push(`${m.targetId} "${t.name}": target is itself user-created`)
     else if (t.sources === 0 && !(u && u.manufacturer === null)) {
@@ -205,7 +205,7 @@ async function apply(conn) {
     }
   }
   if (problems.length) {
-    console.error(`${problems.length} problem(s) — nothing applied:`)
+    console.error(`${problems.length} problem(s), nothing applied:`)
     for (const p of problems) console.error('  ' + p)
     process.exit(1)
   }
@@ -214,7 +214,7 @@ async function apply(conn) {
     const u = byId.get(m.userId)
     const t = byId.get(m.targetId)
     console.log(
-      `${isDryRun ? 'would fold' : 'folding'} [${u.id}] "${u.name}" (${u.commits_using} commit line(s)) → [${t.id}] "${t.name}"${m.note ? `  — ${m.note}` : ''}`
+      `${isDryRun ? 'would fold' : 'folding'} [${u.id}] "${u.name}" (${u.commits_using} commit line(s)) → [${t.id}] "${t.name}"${m.note ? `  (${m.note})` : ''}`
     )
   }
   if (isDryRun) {
@@ -231,7 +231,7 @@ async function apply(conn) {
         [m.targetId, m.userId]
       )
       moved += res.affectedRows
-      // Reports on the user row (target_kind 'ingredient') would point at nothing — close them.
+      // Reports on the user row (target_kind 'ingredient') would point at nothing, so close them.
       await conn.execute(
         `UPDATE reports SET status = 'actioned' WHERE target_kind = 'ingredient' AND target_id = ? AND status = 'open'`,
         [m.userId]

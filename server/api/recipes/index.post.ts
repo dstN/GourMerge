@@ -1,8 +1,10 @@
 /**
- * POST /api/recipes — Create a new recipe (repository)
+ * POST /api/recipes
+ *
+ * Create a new recipe (repository)
  *
  * Creates the recipe + default 'main' branch + initial empty commit
- * inside a single DB transaction. This mirrors `git init` — every
+ * inside a single DB transaction. This mirrors `git init`: every
  * repo starts with a branch and a root commit.
  *
  * Returns the owner username + slug for GitHub-style URL navigation.

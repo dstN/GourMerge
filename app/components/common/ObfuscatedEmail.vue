@@ -1,12 +1,12 @@
 <script setup lang="ts">
 /**
- * Registers as <CommonObfuscatedEmail> — Nuxt path-prefixes subdirectory components, so the
+ * Registers as <CommonObfuscatedEmail>: Nuxt path-prefixes subdirectory components, so the
  * bare name would render nothing.
  *
  * Must stay readable without JS (§5 DDG) and survive a screen reader (no rtl-reversal trick),
  * while the plain address never appears as contiguous text or in an href in the SSR'd HTML: a
  * `display:none`, `aria-hidden` decoy poisons naive `textContent` scraping, and the mailto:
- * href is attached only after mount. Defeats simple harvesters, not a headless-browser one —
+ * href is attached only after mount. Defeats simple harvesters, not a headless-browser one;
  * the contact form is the fallback for those.
  */
 const props = withDefaults(

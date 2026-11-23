@@ -13,7 +13,7 @@
  *
  * 1. **It fails open.** If `sharp` cannot be loaded or throws for any reason, the caller
  *    gets the original bytes back with `recompressed: false`. The upload still works; only
- *    the extra compression is lost. The alternative — a 500 — would mean the feature stops
+ *    the extra compression is lost. The alternative, a 500, would mean the feature stops
  *    working entirely on a host we cannot test against until it is live.
  * 2. **`limitInputPixels`.** A 2 MB file can be a 30 000 × 30 000 PNG that decodes to
  *    several gigabytes: the "decompression bomb" that byte-size caps do nothing about.
@@ -26,7 +26,7 @@
  *
  * The browser has usually already produced a WebP. Re-encoding that is a second lossy pass,
  * and on a well-compressed input it can come out *larger*. So the result is only kept when
- * it is actually smaller — "compress for storage" is a claim about the stored size, not
+ * it is actually smaller: "compress for storage" is a claim about the stored size, not
  * about having run a compressor.
  */
 import type { ProbedImage } from './imageProbe'
@@ -36,7 +36,7 @@ const MAX_EDGE = 1600
 /** WebP quality. 80 is the usual sweet spot; above it the file grows faster than it improves. */
 const QUALITY = 80
 /**
- * Decoded-pixel ceiling — ~40 megapixels, comfortably above any phone camera and far below
+ * Decoded-pixel ceiling: ~40 megapixels, comfortably above any phone camera and far below
  * what would exhaust a worker. This is the guard a byte cap cannot provide.
  */
 const MAX_INPUT_PIXELS = 40_000_000
@@ -46,7 +46,7 @@ export interface EncodedImage {
   mimeType: string
   width: number
   height: number
-  /** False when the original bytes were kept — sharp was unavailable, failed, or lost. */
+  /** False when the original bytes were kept: sharp was unavailable, failed, or lost. */
   recompressed: boolean
 }
 
@@ -92,20 +92,20 @@ export async function reencodeToWebp(
     /**
      * Imported lazily, and that is deliberate: a top-level import would make the whole
      * module graph fail to load if the native binary is missing, taking the upload endpoint
-     * — and anything else that imports this file — down with it.
+     * (and anything else that imports this file) down with it.
      */
     const { default: sharp } = await import('sharp')
 
     const { data, info } = await sharp(input, { limitInputPixels: MAX_INPUT_PIXELS, failOn: 'error' })
       // EXIF orientation, applied before the resize. Without it a portrait phone photo is
-      // stored sideways — the browser uploader handles this too, but a direct API caller
+      // stored sideways. The browser uploader handles this too, but a direct API caller
       // does not, and this path exists precisely for the callers that skip the browser.
       .rotate()
       .resize({ width: maxEdge, height: maxEdge, fit: 'inside', withoutEnlargement: true })
       .webp({ quality, effort: 4 })
       .toBuffer({ resolveWithObject: true })
 
-    // Only keep it if it actually helped — see the docblock.
+    // Only keep it if it actually helped; see the docblock.
     if (data.length >= input.length && probed.mimeType === 'image/webp') return untouched
 
     return { data, mimeType: 'image/webp', width: info.width, height: info.height, recompressed: true }

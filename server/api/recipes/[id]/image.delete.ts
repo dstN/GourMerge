@@ -1,5 +1,7 @@
 /**
- * DELETE /api/recipes/:id/image — remove the recipe photo. Owner only.
+ * DELETE /api/recipes/:id/image
+ *
+ * Remove the recipe photo. Owner only.
  */
 import { eq } from 'drizzle-orm'
 import { recipeImages } from '~~/server/database/schema'

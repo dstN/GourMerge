@@ -1,12 +1,14 @@
 /**
- * PATCH /api/recipes/:id/discussions/:discussionId — edit the body, or resolve/reopen.
+ * PATCH /api/recipes/:id/discussions/:discussionId
+ *
+ * Edit the body, or resolve/reopen.
  *
  * Two different rights, deliberately not collapsed into one "can edit" check:
  *
- * - **body / title** — the author only. Nobody else may put words in someone's mouth,
+ * - **body / title**: the author only. Nobody else may put words in someone's mouth,
  *   the recipe owner included.
- * - **status** — the author *or* the recipe owner. "Resolved" is a statement about the
- *   thread's usefulness on this recipe, which is exactly the owner's call, and it is
+ * - **status**: the author *or* the recipe owner. "Resolved" is a statement about the
+ *   thread's usefulness on this recipe, which is the owner's call, and it is
  *   non-destructive: the text stays and it can be reopened.
  */
 import { z } from 'zod'

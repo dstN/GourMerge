@@ -1,5 +1,7 @@
 /**
- * POST /api/recipes/:id/fork — Fork a recipe
+ * POST /api/recipes/:id/fork
+ *
+ * Fork a recipe
  *
  * Deep-copies the recipe metadata, its default branch, and the FULL commit
  * history of that branch (every commit's ingredient/step snapshot) into a new
@@ -63,7 +65,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // A single call can replay up to MAX_FORK_HISTORY commits plus every ingredient and step
-  // row in them — by far the most expensive write in the app per request, and it had no
+  // row in them. It is by far the most expensive write in the app per request, and it had no
   // limiter at all.
   await useRateLimit(`recipe:fork:${session.user.id}`, { max: 10, windowSeconds: 3600 })
 

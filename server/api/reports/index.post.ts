@@ -1,8 +1,10 @@
 /**
- * POST /api/reports — Flag a recipe, user, discussion comment, image or ingredient.
+ * POST /api/reports
+ *
+ * Flag a recipe, user, discussion comment, image or ingredient.
  *
  * Idempotent per (reporter, target): resubmitting the same report returns the existing row
- * rather than erroring or inflating a count — the unique index on `reports` is what makes
+ * rather than erroring or inflating a count. The unique index on `reports` is what makes
  * that safe against a race between the `SELECT` and the `INSERT` below (a duplicate insert
  * fails the constraint, and that failure is treated the same as finding it on the SELECT).
  */
@@ -31,7 +33,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // Reporting is itself a moderation action worth bounding, independent of how many
-  // targets exist to report — generous for a real moderation session, not for a script.
+  // targets exist to report: generous for a real moderation session, not for a script.
   await useRateLimit(`report:create:${session.user.id}`, { max: 20, windowSeconds: 3600 })
 
   const db = useDrizzle()

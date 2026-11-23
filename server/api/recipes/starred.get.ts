@@ -1,5 +1,7 @@
 /**
- * GET /api/recipes/starred — Recipes the current user has starred
+ * GET /api/recipes/starred
+ *
+ * Recipes the current user has starred
  *
  * Authenticated. Returns card-shaped rows (most-recently-starred first).
  * Private recipes remain visible to the viewer only if they still have access

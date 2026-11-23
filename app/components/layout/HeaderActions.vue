@@ -4,8 +4,8 @@
  * sign-in/register pair (or the account dropdown), and the mobile hamburger.
  *
  * Extracted from `layouts/default.vue` so the layout can render it with `hydrate-on-idle`.
- * The select and the slideover are the two most component-heavy things on the landing page —
- * Reka UI composes each from a dozen parts — and nothing here is needed in the first frame:
+ * The select and the slideover are the two most component-heavy things on the landing page
+ * (Reka UI composes each from a dozen parts), and nothing here is needed in the first frame:
  * the markup is server-rendered and looks final, the controls merely do not respond until the
  * idle callback fires a few milliseconds after mount. Hydrating them in that callback takes
  * them out of the one long task that Lighthouse scores as Total Blocking Time.

@@ -1,9 +1,11 @@
 /**
- * POST /api/auth/totp/setup — begin (or restart) TOTP enrolment.
+ * POST /api/auth/totp/setup
+ *
+ * Begin (or restart) TOTP enrolment.
  *
  * Generates a fresh secret and returns the enrolment URI plus a QR data-URI. The
  * row is stored **unconfirmed**: it does not gate login until the user proves
- * possession via `confirm.post.ts`. That ordering matters — writing a confirmed row
+ * possession via `confirm.post.ts`. Writing a confirmed row
  * here would lock the user out if they abandoned setup half way.
  *
  * Re-running this replaces any unconfirmed secret, so a user who closed the dialog
@@ -54,7 +56,7 @@ export default defineEventHandler(async (event) => {
     await db.insert(userTotp).values({ userId, secretEncrypted: encryptSecret(secret) })
   }
 
-  // Rendered server-side to a data: URI — the strict CSP forbids external image
+  // Rendered server-side to a data: URI: the strict CSP forbids external image
   // hosts, and this keeps the secret out of any third party's hands.
   const qrDataUri = await QRCode.toDataURL(uri, { width: 240, margin: 1 })
 

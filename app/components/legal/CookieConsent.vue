@@ -1,21 +1,21 @@
 <script setup lang="ts">
 /**
  * Cookie banner + settings modal. Included explicitly at the end of `#main-content` in
- * each of the three layouts (`default.vue`, `dashboard.vue`, `auth.vue`) — the same
- * pattern `<LayoutFooterLinks>` already uses for shared shell UI — rather than mounted
+ * each of the three layouts (`default.vue`, `dashboard.vue`, `auth.vue`), the same
+ * pattern `<LayoutFooterLinks>` already uses for shared shell UI, rather than mounted
  * once globally in app.vue.
  *
- * That placement is the fix for a real bug, not a style choice: a `position: fixed`
+ * That placement fixes a real bug: a `position: fixed`
  * version of this banner sat on top of the viewport regardless of scroll position, so
- * any interactive element rendered near the visual bottom of a page — the recipe
- * form's submit button, the avatar-upload trigger on a short /settings page — could be
+ * any interactive element rendered near the visual bottom of a page (the recipe
+ * form's submit button, the avatar-upload trigger on a short /settings page) could be
  * scrolled fully into view (or already visible with no scroll needed) yet still
  * physically covered by the banner. `tests/e2e/tour.spec.ts` caught the first case,
  * `tests/e2e/avatar-upload.spec.ts` the second, and no amount of reserving trailing
  * scroll space fixes the second: that button was never off-screen to begin with.
  *
  * `position: sticky; bottom: 0` as the LAST child of `#main-content` instead reserves
- * its own space in that container's normal document flow — nothing can ever render
+ * its own space in that container's normal document flow. Nothing can ever render
  * behind it, because the browser lays out every earlier sibling first and only then
  * places this one, the same way it always has for a sticky footer. No measuring, no
  * `ResizeObserver`, no race between paint and JS.
@@ -23,13 +23,13 @@
  * Server-rendered, not `<ClientOnly>`. Consent lives in a cookie (`useCookieConsent`), so the
  * server knows on the first request whether the banner is due and renders it into the HTML;
  * the client hydrates the same decision, so there is nothing to mismatch. Before this the
- * banner only appeared after hydration — and on a phone it is the largest text block in the
+ * banner only appeared after hydration, and on a phone it is the largest text block in the
  * viewport, which made it the Largest Contentful Paint element: Lighthouse mobile reported LCP
  * at the moment the JavaScript finished, not at the first paint (12 s against a 4 s FCP on the
  * local build). Painting it with the document moves LCP back to where the page actually
  * appears. The sticky placement below is unchanged.
  *
- * "Necessary" cannot be opted out of — it is not a toggle, just an informational row —
+ * "Necessary" cannot be opted out of; it is an informational row, not a toggle, because
  * the site cannot function without those cookies. Only `statistics`/`marketing` are
  * real choices here.
  */

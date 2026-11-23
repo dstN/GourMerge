@@ -16,7 +16,7 @@ describe('parseValue', () => {
     expect(parseValue('0')).toBe(0)
   })
 
-  it('keeps a missing value missing — "-" and an empty cell are NULL, never zero', () => {
+  it('keeps a missing value missing: "-" and an empty cell are NULL, never zero', () => {
     expect(parseValue('-')).toBeNull()
     expect(parseValue('')).toBeNull()
     expect(parseValue(null)).toBeNull()

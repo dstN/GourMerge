@@ -25,7 +25,7 @@ function build(s: EmailStrings, url: string): BuiltEmail {
   }
 }
 
-/** No link, no action — see `EmailNoticeStrings` for why this can't reuse `build()`. */
+/** No link and no action; see `EmailNoticeStrings` for why this can't reuse `build()`. */
 function buildNotice(s: EmailNoticeStrings): BuiltEmail {
   return { subject: s.subject, text: s.body, html: `<p>${s.body}</p>` }
 }
@@ -40,17 +40,17 @@ export function buildPasswordResetEmail(locale: string | null | undefined, url: 
   return build(EMAIL_MESSAGES[resolveLocale(locale)].passwordReset, url)
 }
 
-/** GDPR Art. 15 — ask the account owner to confirm an export request. */
+/** GDPR Art. 15: ask the account owner to confirm an export request. */
 export function buildExportConfirmEmail(locale: string | null | undefined, url: string): BuiltEmail {
   return build(EMAIL_MESSAGES[resolveLocale(locale)].exportConfirm, url)
 }
 
-/** GDPR Art. 15 — deliver the download link (also shown in the browser). */
+/** GDPR Art. 15: deliver the download link (also shown in the browser). */
 export function buildExportReadyEmail(locale: string | null | undefined, url: string): BuiltEmail {
   return build(EMAIL_MESSAGES[resolveLocale(locale)].exportReady, url)
 }
 
-/** GDPR Art. 17 — ask the account owner to confirm an erasure request. */
+/** GDPR Art. 17: ask the account owner to confirm an erasure request. */
 export function buildDeletionConfirmEmail(locale: string | null | undefined, url: string): BuiltEmail {
   return build(EMAIL_MESSAGES[resolveLocale(locale)].deletionConfirm, url)
 }

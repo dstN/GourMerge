@@ -4,7 +4,7 @@
  * Kept in its **own signed, httpOnly cookie**, never in the user session. That is
  * the whole point: if the half-authenticated state lived in the session,
  * `requireUserSession()` would already succeed and every protected endpoint would be
- * reachable with only a password — the second factor would be decorative.
+ * reachable with only a password, and the second factor would be decorative.
  *
  * The cookie carries only the user id and an issue timestamp, sealed with the
  * session password so it cannot be forged, and expires after five minutes.

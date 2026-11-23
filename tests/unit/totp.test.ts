@@ -5,7 +5,7 @@ import { TOTP, Secret } from 'otpauth'
  * `server/utils/totp.ts` calls `createError` (a Nitro auto-import) inside its key
  * derivation, so it cannot be imported into a bare vitest environment without a
  * stub. Providing one is cheaper than restructuring the module, and the stub is only
- * reached on the misconfiguration path — which is itself worth testing.
+ * reached on the misconfiguration path, which is itself worth testing.
  */
 beforeAll(() => {
   ;(globalThis as unknown as { createError: (o: unknown) => Error }).createError = (o) =>
@@ -51,7 +51,7 @@ describe('otpauth URI', () => {
     const uri = buildOtpauthUri(generateSecret(), 'testkoch')
 
     // These three are the interoperability contract. Google Authenticator IGNORES
-    // non-default algorithm/digits and assumes SHA1/6 — so a "stronger" secret
+    // non-default algorithm/digits and assumes SHA1/6, so a "stronger" secret
     // imports cleanly and then produces codes that never validate. Do not change
     // these without re-reading server/utils/totp.ts's header.
     expect(uri).toContain('algorithm=SHA1')

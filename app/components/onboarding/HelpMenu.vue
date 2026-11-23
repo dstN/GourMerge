@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// Items use `onSelect`, not `click` — Nuxt UI v4's item API (see the no-restricted-syntax
+// Items use `onSelect`, not `click`, per Nuxt UI v4's item API (see the no-restricted-syntax
 // lint rule). `to` needs no localePath(): items render through ULink, which auto-localizes.
 import type { DropdownMenuItem } from '@nuxt/ui'
 

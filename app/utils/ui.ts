@@ -1,5 +1,5 @@
 /**
- * Shared UI mappings — DESIGNBOOK §7.
+ * Shared UI mappings (DESIGNBOOK §7).
  *
  * State→colour lives here, not at the call site, so the badge on a list page and
  * the badge on the matching detail page cannot drift apart. They previously did:
@@ -64,7 +64,7 @@ export const CARD_GRID = 'grid gap-4 sm:grid-cols-2 lg:grid-cols-3'
 
 /**
  * Sidebar / offcanvas nav link. `DashboardSidebar` and `MobileMenu` render the
- * same list of destinations and had byte-identical copies of this class list — one
+ * same list of destinations and had byte-identical copies of this class list; one
  * of them would eventually have been restyled alone.
  */
 export function navLinkClass(isActive: boolean): string[] {

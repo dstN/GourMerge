@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * CommonAvatarCropper — pan-and-zoom crop to a square, for one picked image.
+ * CommonAvatarCropper: pan-and-zoom crop to a square, for one picked image.
  *
  * There is no Nuxt UI building block for this, so the interaction is hand-rolled on top
  * of a plain `<img>` and Pointer Events rather than canvas-per-frame drawing: the browser
@@ -8,7 +8,7 @@
  * spec's `image-orientation: from-image` default), so dragging only ever touches CSS
  * `left`/`top`, and the canvas is touched exactly once, on confirm.
  *
- * ## The viewport *is* the crop — there is no separate mask to keep in sync
+ * ## The viewport *is* the crop; there is no separate mask to keep in sync
  *
  * What is visible inside the round, clipped viewport is pixel-for-pixel what
  * {@link exportBlob} produces, just scaled. Any framing UI (a grid, a bigger canvas with a
@@ -19,7 +19,7 @@
  *
  * Re-centring on every zoom step is simpler but relocates whatever the user just framed.
  * Clamping keeps the same offset unless it would now show empty space, which is the
- * behaviour people expect from "zoom" — the point under the cursor roughly holds still for
+ * behaviour people expect from "zoom": the point under the cursor roughly holds still for
  * small steps, and it only slides for a zoom-out large enough that the old offset genuinely
  * no longer fits.
  */
@@ -30,7 +30,7 @@ const { t } = useI18n()
 
 /** CSS size of the editing viewport. Square, and matches Tailwind's `size-72`. */
 const VIEW = 288
-/** Longest edge of the exported image. Matches `AVATAR_MAX_EDGE` in the upload endpoint —
+/** Longest edge of the exported image. Matches `AVATAR_MAX_EDGE` in the upload endpoint;
  *  exporting any larger would just be immediately downscaled again server-side. */
 const EXPORT_EDGE = 512
 const MAX_ZOOM = 3
@@ -84,7 +84,7 @@ function onImageLoad() {
   if (!el) return
   natural.width = el.naturalWidth
   natural.height = el.naturalHeight
-  // Centred by default — negative because the image is larger than the viewport on the
+  // Centred by default: negative because the image is larger than the viewport on the
   // shorter axis, zero on the axis where it exactly fits.
   offset.x = (VIEW - displayWidth.value) / 2
   offset.y = (VIEW - displayHeight.value) / 2
@@ -111,7 +111,7 @@ function onPointerUp() {
 }
 
 /**
- * Maps the visible square back to source-image pixels and draws exactly that region —
+ * Maps the visible square back to source-image pixels and draws exactly that region,
  * the inverse of the `left/top` + `width/height` used to display it. Because the viewport
  * is square and the scale is uniform on both axes, the source region is square too, so
  * this is always a true 1:1 crop and never a stretch.

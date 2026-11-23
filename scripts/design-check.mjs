@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * design-check — enforces the mechanically-checkable rules in DESIGNBOOK.md.
+ * design-check: enforces the mechanically-checkable rules in DESIGNBOOK.md.
  *
  * The axe a11y gate checks contrast; the i18n gate checks translation parity.
  * Neither catches *inconsistency*: four button sizes with no rule, `w-full` on
@@ -20,9 +20,9 @@ const FORM_CONTROLS = ['UInput', 'UTextarea', 'USelect', 'USelectMenu', 'UInputM
 
 /**
  * Pages allowed to not use <CommonPageShell> as their template root (§4.2):
- * - index.vue      — full-bleed marketing sections, each with its own shell inside
- * - explore.vue    — dynamic <NuxtLayout> root; the shell is the layout's child
- * - auth/*         — the auth layout supplies the cap and centring
+ * - index.vue      full-bleed marketing sections, each with its own shell inside
+ * - explore.vue    dynamic <NuxtLayout> root; the shell is the layout's child
+ * - auth/*         the auth layout supplies the cap and centring
  */
 const SHELL_EXEMPT = [
   'app/pages/index.vue',
@@ -75,8 +75,8 @@ function* classAttrs(text, offset) {
 /**
  * Each Nuxt UI component tag with its raw attribute string.
  *
- * Quote-aware on purpose: a Vue expression may contain `>` —
- * `v-if="summary.added > 0"` — so a `[^<>]*?` body regex silently truncates the
+ * Quote-aware on purpose: a Vue expression may contain `>`
+ * (`v-if="summary.added > 0"`), so a `[^<>]*?` body regex silently truncates the
  * tag and every attribute rule below would skip whatever followed. That exact bug
  * made a batch edit inject duplicate attributes into six badges.
  */
@@ -124,7 +124,7 @@ for (const abs of walk(join(ROOT, 'app'))) {
         lineOf(src, index),
         'arbitrary-ui-var',
         '§1.2',
-        `\`${hit[0]}\` — use the semantic utility (text-muted / bg-elevated / border-default …)`
+        `\`${hit[0]}\`: use the semantic utility (text-muted / bg-elevated / border-default …)`
       )
     }
   }
@@ -138,7 +138,7 @@ for (const abs of walk(join(ROOT, 'app'))) {
         lineOf(src, index),
         'raw-palette-hue',
         '§1.1',
-        `\`${hit[0].trim()}\` — use the semantic ramp (error-500, success-500 …), a \`.tint-*\` class, or a --gm-* token`
+        `\`${hit[0].trim()}\`: use the semantic ramp (error-500, success-500 …), a \`.tint-*\` class, or a --gm-* token`
       )
     }
   }
@@ -155,7 +155,7 @@ for (const abs of walk(join(ROOT, 'app'))) {
         lineOf(src, m.index),
         'raw-palette-hue',
         '§1.1',
-        `\`${m[1]}\` in script — map to a \`.tint-*\` class or a semantic ramp value instead`
+        `\`${m[1]}\` in script: map to a \`.tint-*\` class or a semantic ramp value instead`
       )
     }
   }
@@ -176,7 +176,7 @@ for (const abs of walk(join(ROOT, 'app'))) {
           lineOf(src, index),
           'form-control-size',
           '§3.2',
-          `<${tag}> must not set \`size\` — all controls are md (app.config.ts)`
+          `<${tag}> must not set \`size\`; all controls are md (app.config.ts)`
         )
       }
     }
@@ -190,7 +190,7 @@ for (const abs of walk(join(ROOT, 'app'))) {
         lineOf(src, index),
         'button-size-xl',
         '§2',
-        '`size="xl"` is not in the scale — the largest rank is `lg`'
+        '`size="xl"` is not in the scale; the largest rank is `lg`'
       )
     }
   }
@@ -218,7 +218,7 @@ for (const abs of walk(join(ROOT, 'app'))) {
         lineOf(src, tpl.offset),
         'page-root-layout-class',
         '§4.2',
-        `\`${bad[0]}\` on the page root — <CommonPageShell> owns cap and gutters`
+        `\`${bad[0]}\` on the page root: <CommonPageShell> owns cap and gutters`
       )
     }
   }
@@ -232,7 +232,7 @@ for (const abs of walk(join(ROOT, 'app'))) {
 
   // ── Rule 10: fixed brand shade as foreground / solid fill (§1.1) ─
   // `text-primary`/`bg-primary` read `--ui-primary`, which is 500 in light mode
-  // and 400 in dark — the same variable a solid button's background reads. A fixed
+  // and 400 in dark, the same variable a solid button's background reads. A fixed
   // shade matches buttons in one mode only. Alpha tints (`/10`, `/50`) are
   // deliberate and allowed: a wash is chosen against a shade.
   for (const { value, index } of classAttrs(tpl.text, tpl.offset)) {
@@ -243,7 +243,7 @@ for (const abs of walk(join(ROOT, 'app'))) {
         lineOf(src, index),
         'fixed-brand-shade',
         '§1.1',
-        `\`${hit[0].trim()}\` — use the mode-aware \`text-primary\` / \`bg-primary\` (alpha tints like \`bg-primary-500/10\` are fine)`
+        `\`${hit[0].trim()}\`: use the mode-aware \`text-primary\` / \`bg-primary\` (alpha tints like \`bg-primary-500/10\` are fine)`
       )
     }
   }
@@ -258,7 +258,7 @@ for (const abs of walk(join(ROOT, 'app'))) {
         lineOf(src, index),
         'badge-missing-color',
         '§7',
-        '<UBadge> without `color` renders solid primary — state `color="neutral"` (or the intended colour)'
+        '<UBadge> without `color` renders solid primary; state `color="neutral"` (or the intended colour)'
       )
     }
   }
@@ -281,7 +281,7 @@ for (const abs of walk(join(ROOT, 'app'))) {
   // `variant="subtle"` paints Nuxt UI's `text-<color>` on a 10% wash of the same hue.
   // In light mode that is the semantic 500 on near-white: `success` measures **2.03:1**,
   // less than half of AA. §1.6 solves it with the `.tint-*` classes, but only for call
-  // sites that remember to apply one — and the design book claimed the fix was central
+  // sites that remember to apply one, and the design book claimed the fix was central
   // while three of four subtle badges on a recipe page did not have it. axe only sees
   // this on a page the sweep happens to visit with the badge rendered, which is why it
   // sat undetected: it was found by adding the recipe page to the a11y sweep, not by any
@@ -289,7 +289,7 @@ for (const abs of walk(join(ROOT, 'app'))) {
   //
   // `primary` and `neutral` are excluded on purpose: the brand ramp is darkened
   // wholesale under `:root:not(.dark)` (§1.6) and neutral text is pinned there too, so
-  // neither needs a per-call-site class — `TINT_CLASS` maps both to `''` for that reason.
+  // neither needs a per-call-site class. `TINT_CLASS` maps both to `''` for that reason.
   const TINTED = ['success', 'warning', 'error', 'info']
   for (const { tag, attrs, index } of uiTags(tpl.text, tpl.offset)) {
     if (tag !== 'UBadge') continue
@@ -303,7 +303,7 @@ for (const abs of walk(join(ROOT, 'app'))) {
     if (/class="[^"]*\btint-(?:success|warning|error|info|herb)\b/.test(attrs)) continue
     if (/:class="[^"]*TINT_CLASS/.test(attrs)) continue
     // A component may resolve the class into a local (`const tint = computed(() =>
-    // TINT_CLASS[color.value])`) and bind that — `RecipeDifficultyBadge` does exactly
+    // TINT_CLASS[color.value])`) and bind that. `RecipeDifficultyBadge` does exactly
     // that, and it is the better pattern where the colour is already computed. Accept any
     // `:class` binding in a file whose script reaches for TINT_CLASS at all; requiring the
     // literal at the tag would push call sites back to re-deriving the map.
@@ -314,7 +314,7 @@ for (const abs of walk(join(ROOT, 'app'))) {
       lineOf(src, index),
       'subtle-badge-missing-tint',
       '§1.6',
-      `<UBadge variant="subtle" color="${literal ?? '<dynamic>'}"> needs its light-mode label colour — ` +
+      `<UBadge variant="subtle" color="${literal ?? '<dynamic>'}"> needs its light-mode label colour: ` +
         'add `:class="TINT_CLASS[color]"` (app/utils/ui.ts). Nuxt UI\'s own subtle text measures ~2:1 on white.'
     )
   }
@@ -332,7 +332,7 @@ for (const abs of walk(join(ROOT, 'app'))) {
     src = ''
   }
   for (const component of ['button', 'badge', 'card']) {
-    // Match `button: { … defaultVariants` — a commented mention must not trip it.
+    // Match `button: { … defaultVariants`; a commented mention must not trip it.
     const re = new RegExp(`^\\s*${component}:\\s*\\{[\\s\\S]{0,400}?defaultVariants`, 'm')
     const hit = re.exec(src)
     if (hit) {
@@ -367,13 +367,13 @@ for (const abs of walk(join(ROOT, 'app'))) {
       const src = readFileSync(abs, 'utf8')
       src.split('\n').forEach((line, i) => {
         // `i-lucide-git-pull-request` is Lucide's icon name, not our terminology.
-        // A line may opt out with `design-check-ignore` — used where the comment
+        // A line may opt out with `design-check-ignore`, used where the comment
         // is itself stating the rule.
         if (line.includes('design-check-ignore')) return
         const stripped = line.replace(/i-lucide-git-pull-request/g, '')
         const hit = TERM.exec(stripped)
         if (hit) {
-          report(file, i + 1, 'forbidden-term', '§10', `"${hit[0]}" — the project term is "GourMerge Request"`)
+          report(file, i + 1, 'forbidden-term', '§10', `"${hit[0]}": the project term is "GourMerge Request"`)
         }
       })
     }
@@ -392,7 +392,7 @@ function walkAny(dir, out = []) {
 
 // ── Report ───────────────────────────────────────────────────────
 if (findings.length === 0) {
-  console.log('✓ design:check — no design-book violations')
+  console.log('✓ design:check: no design-book violations')
   process.exit(0)
 }
 
@@ -402,11 +402,11 @@ for (const f of findings) {
   byRule.get(f.rule).push(f)
 }
 
-console.error(`\n✗ design:check — ${findings.length} violation(s) of DESIGNBOOK.md\n`)
+console.error(`\n✗ design:check: ${findings.length} violation(s) of DESIGNBOOK.md\n`)
 for (const [rule, list] of [...byRule.entries()].sort((a, b) => b[1].length - a[1].length)) {
   console.error(`  ${rule}  (${list[0].section})  ×${list.length}`)
   for (const f of list) console.error(`    ${f.file}:${f.line}  ${f.message}`)
   console.error('')
 }
-console.error('Fix centrally (app.config.ts / main.css) where possible — see DESIGNBOOK.md §12.\n')
+console.error('Fix centrally (app.config.ts / main.css) where possible; see DESIGNBOOK.md §12.\n')
 process.exit(1)

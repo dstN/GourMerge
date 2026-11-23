@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * EmptyState — the one look for "nothing here", "not found" and "it broke".
+ * EmptyState: the one look for "nothing here", "not found" and "it broke".
  * DESIGNBOOK §6.1.
  *
  * Usage (Nuxt path-prefixes components in components/common/):

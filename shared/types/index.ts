@@ -1,4 +1,4 @@
-// Auto-imported by both app/ and server/ via shared/. Primitive building blocks only —
+// Auto-imported by both app/ and server/ via shared/. Primitive building blocks only;
 // the rich, API-facing recipe/GMR view types (RecipeDetail, GourmergeRequestDetail, …)
 // live in ./recipe.ts instead.
 
@@ -63,7 +63,7 @@ export interface IngredientDiffEntry {
   /** Only present for 'added' and 'modified' */
   newQuantity?: number
   newUnit?: CanonicalUnit
-  /** Only present for 'modified' — what exactly changed */
+  /** Only present for 'modified': what exactly changed */
   changes?: ('quantity' | 'unit')[]
 }
 

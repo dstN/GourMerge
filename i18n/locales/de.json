@@ -90,16 +90,16 @@
     "featureBranch": "Erstelle Varianten",
     "featureBranchDesc": "Experimentiere auf eigenen Varianten, ohne das Original zu verändern. Perfekt für vegane oder glutenfreie Versionen.",
     "featureCommit": "Speichere deine Versionen",
-    "featureCommitDesc": "Jede Anpassung wird als Version gespeichert — so kannst du deine Kochgeschichte lückenlos nachvollziehen.",
+    "featureCommitDesc": "Jede Anpassung wird als Version gespeichert. So kannst du deine Kochgeschichte lückenlos nachvollziehen.",
     "featureMerge": "GourMerge Requests",
     "featureMergeDesc": "Biete deine Verbesserungen dem Original-Autor an. Zusammen kochen wir besser.",
     "howItWorks": "So funktioniert's",
     "step1Title": "Rezept erstellen",
-    "step1Desc": "Erstelle dein erstes Rezept — wie ein neues Repository auf GitHub.",
+    "step1Desc": "Erstelle dein erstes Rezept, wie ein neues Repository auf GitHub.",
     "step2Title": "Zutaten & Schritte bearbeiten",
     "step2Desc": "Nutze den visuellen Editor, um Zutaten hinzuzufügen und Zubereitungsschritte zu schreiben.",
     "step3Title": "Version speichern",
-    "step3Desc": "Speichere deine Anpassungen mit einer Versions-Notiz — z.B. 'Zucker reduziert'.",
+    "step3Desc": "Speichere deine Anpassungen mit einer Versions-Notiz, z.B. 'Zucker reduziert'.",
     "step4Title": "Teilen & Zusammenarbeiten",
     "step4Desc": "Teile dein Rezept öffentlich oder lade andere ein, über GourMerge Requests beizutragen.",
     "ctaTitle": "Bereit zum Kochen?",
@@ -111,7 +111,7 @@
     "recentlyEdited": "Zuletzt bearbeitet",
     "reportsTitle": "{n} deiner Inhalte wurden gemeldet",
     "emptyTitle": "Noch keine Rezepte",
-    "emptyDescription": "Erstelle dein erstes Rezept und starte deine kulinarische Reise.",
+    "emptyDescription": "Erstelle dein erstes Rezept, um loszulegen.",
     "createFirst": "Erstes Rezept erstellen",
     "errorTitle": "Sitzung abgelaufen",
     "errorDescription": "Deine Sitzung ist abgelaufen. Bitte melde dich erneut an."
@@ -186,7 +186,7 @@
     "fork": "Remixen",
     "forkSuccess": "Eigene Version erstellt.",
     "forkError": "Eigene Version konnte nicht erstellt werden.",
-    "seoDescriptionFallback": "Entdecke und remixe dieses Rezept auf GourMerge — die Plattform für kollaborative Rezeptentwicklung.",
+    "seoDescriptionFallback": "Entdecke und remixe dieses Rezept auf GourMerge, der Plattform für kollaborative Rezeptentwicklung.",
     "forkedFrom": "Abgeleitet von",
     "viewForks": "Remixe ansehen",
     "tagsLabel": "Tags",
@@ -212,9 +212,9 @@
     "deleteIngredientConfirm": "Bist du sicher? Die Zutat wird unwiderruflich aus dem Katalog gelöscht.",
     "ingredientDeleted": "Zutat gelöscht.",
     "nutritionOptional": "Nährwerte je 100 g (optional)",
-    "nutritionOptionalHint": "Ohne Energiewert zählt diese Zutat nicht in die Nährwertsumme des Rezepts — sie wird als „fehlend“ gezählt.",
+    "nutritionOptionalHint": "Ohne Energiewert zählt diese Zutat nicht in die Nährwertsumme des Rezepts. Sie wird dann als „fehlend“ gezählt.",
     "gramsPerPiece": "Gewicht pro Stück (g)",
-    "gramsPerPieceHint": "Nur relevant, wenn diese Zutat in „Stück“ angegeben wird — z. B. 60 g für 1 Ei. Ohne Angabe rechnet GourMerge grob mit 100 g pro Stück.",
+    "gramsPerPieceHint": "Nur relevant, wenn diese Zutat in „Stück“ angegeben wird, z. B. 60 g für 1 Ei. Ohne Angabe rechnet GourMerge grob mit 100 g pro Stück.",
     "nutritionSourceUser": "Quelle: selbst erfasst",
     "ingredientCreated": "Zutat angelegt.",
     "editIngredientTitle": "Zutat bearbeiten",
@@ -266,7 +266,7 @@
     "noteLabel": "Weitere Details",
     "notePlaceholder": "Alles, was uns hilft, das Problem zu verstehen",
     "submit": "Meldung absenden",
-    "success": "Danke — das wurde gemeldet.",
+    "success": "Danke, das wurde gemeldet.",
     "alreadyReported": "Du hast das bereits gemeldet.",
     "error": "Meldung konnte nicht gesendet werden.",
     "recipe": "Rezept melden",
@@ -362,7 +362,7 @@
     "diffError": "Änderungen konnten nicht geladen werden."
   },
   "glossary": {
-    "seoDescription": "GourMerge-Glossar — Git-Konzepte als Koch-Begriffe erklärt.",
+    "seoDescription": "GourMerge-Glossar: Git-Konzepte als Koch-Begriffe erklärt.",
     "subtitle": "Git-Konzepte als Koch-Begriffe erklärt. Git-Kennern zeigt das Badge den technischen Begriff.",
     "recipe": {
       "alias": "Rezept",
@@ -374,12 +374,12 @@
       "alias": "Remix",
       "canonical": "Fork",
       "description": "Erstelle deine eigene unabhängige Kopie eines fremden Rezepts und passe es frei an.",
-      "helpHint": "Beim Remixen entsteht eine persönliche Kopie eines Rezepts. Deine Änderungen bleiben getrennt vom Original – außer du stellst einen GourMerge Request."
+      "helpHint": "Beim Remixen entsteht eine persönliche Kopie eines Rezepts. Deine Änderungen bleiben getrennt vom Original, außer du stellst einen GourMerge Request."
     },
     "branch": {
       "alias": "Variante",
       "canonical": "Branch",
-      "description": "Eine parallele Version deines Rezepts – experimentiere, ohne die Hauptversion zu verändern.",
+      "description": "Eine parallele Version deines Rezepts. Experimentiere, ohne die Hauptversion zu verändern.",
       "helpHint": "Stell dir eine Variante wie eine 'vegane Version' oder 'glutenfreie Variante' vor. Änderungen auf einer Variante wirken sich erst auf andere aus, wenn du sie zusammenführst."
     },
     "commit": {
@@ -391,7 +391,7 @@
     "merge": {
       "alias": "Zusammenführen",
       "canonical": "Merge",
-      "description": "Übernimm Änderungen von einer Variante in eine andere und kombiniere das Beste aus beiden.",
+      "description": "Übernimm Änderungen von einer Variante in eine andere.",
       "helpHint": "Beim Zusammenführen kombiniert GourMerge die Zutaten- und Schrittänderungen. Wenn zwei Personen dieselbe Zutat unterschiedlich geändert haben, siehst du einen Konflikt."
     },
     "gourmergeRequest": {
@@ -421,7 +421,7 @@
     "noStarred": "Noch keine Favoriten.",
     "editSettings": "Einstellungen bearbeiten",
     "qrAvatarAlt": "Generiertes QR-Profilbild von {name}",
-    "qrAvatarTitle": "{name} — QR-Code scannen, um das Profil zu öffnen",
+    "qrAvatarTitle": "{name}: QR-Code scannen, um das Profil zu öffnen",
     "qrAvatarScanHint": "Scannen öffnet dieses Profil"
   },
   "settings": {
@@ -431,7 +431,7 @@
     "avatar": "Foto",
     "avatarUpload": "Foto hochladen",
     "avatarReplace": "Foto ersetzen",
-    "avatarHint": "JPEG, PNG oder WebP. Ohne Foto erzeugen wir aus deinem Benutzernamen ein QR-Code-Profilbild — scanne es, um dein Profil zu öffnen.",
+    "avatarHint": "JPEG, PNG oder WebP. Ohne Foto erzeugen wir aus deinem Benutzernamen ein QR-Code-Profilbild. Scanne es, um dein Profil zu öffnen.",
     "avatarSaved": "Foto aktualisiert.",
     "avatarRemoved": "Foto entfernt.",
     "avatarError": "Foto konnte nicht gespeichert werden.",
@@ -494,7 +494,7 @@
       "fork": {
         "alias": "Eigene Version / Remix",
         "canonical": "Fork",
-        "desc": "Erstelle eine eigene Kopie eines fremden Rezepts und passe sie frei an — das Original bleibt unverändert."
+        "desc": "Erstelle eine eigene Kopie eines fremden Rezepts und passe sie frei an. Das Original bleibt unverändert."
       },
       "branch": {
         "alias": "Variante",
@@ -509,12 +509,12 @@
       "merge": {
         "alias": "Zusammenführen",
         "canonical": "Merge",
-        "desc": "Führe Änderungen aus einer Variante in eine andere zusammen — GourMerge behandelt Konflikte automatisch."
+        "desc": "Führe Änderungen aus einer Variante in eine andere zusammen. GourMerge behandelt Konflikte automatisch."
       },
       "gourmergeRequest": {
         "alias": "Änderungen vorschlagen",
         "canonical": "GourMerge Request",
-        "desc": "Schlage deine Änderungen dem Autor des Originalrezepts vor — er kann sie prüfen, kommentieren und annehmen."
+        "desc": "Schlage deine Änderungen dem Autor des Originalrezepts vor. Er kann sie prüfen, kommentieren und annehmen."
       }
     }
   },
@@ -526,7 +526,7 @@
     "step": {
       "explore": {
         "title": "Rezepte entdecken",
-        "desc": "Stöbere in öffentlichen Rezepten der Community — filtere nach Schwierigkeit, Tags oder sortiere nach Beliebtheit."
+        "desc": "Stöbere in öffentlichen Rezepten der Community. Filtere nach Schwierigkeit oder Tags oder sortiere nach Beliebtheit."
       },
       "newRecipe": {
         "title": "Rezept erstellen",
@@ -534,7 +534,7 @@
       },
       "recipeForm": {
         "title": "Rezept ausfüllen",
-        "desc": "Gib deinem Rezept einen Titel und klicke unten auf „Rezept erstellen“ — die Tour macht danach automatisch weiter. Es wird am Ende wieder gelöscht."
+        "desc": "Gib deinem Rezept einen Titel und klicke unten auf „Rezept erstellen“. Die Tour macht danach automatisch weiter. Das Rezept wird am Ende wieder gelöscht."
       },
       "star": {
         "title": "Star & Favoriten",
@@ -546,15 +546,15 @@
       },
       "pointers": {
         "title": "Es gibt noch viel mehr zu entdecken!",
-        "desc": "Hier oben findest du übrigens auch den Versionsverlauf, Varianten und GourMerge Requests. Probier das bei deinen eigenen Rezepten später einfach mal aus – wir erklären dir das dann genauer! Klicke auf 'Weiter', um aufzuräumen."
+        "desc": "Hier oben findest du übrigens auch den Versionsverlauf, Varianten und GourMerge Requests. Probier das bei deinen eigenen Rezepten später einfach mal aus, wir erklären dir das dann genauer! Klicke auf 'Weiter', um aufzuräumen."
       },
       "historyPage": {
         "title": "Die Geschichte des Rezepts",
-        "desc": "Hier siehst du alle Commits zu diesem Rezept – jede Änderung wird protokolliert, ähnlich wie bei Git."
+        "desc": "Hier siehst du alle Commits zu diesem Rezept. Jede Änderung wird protokolliert, ähnlich wie bei Git."
       },
       "gmrPage": {
         "title": "Vorschläge von anderen",
-        "desc": "Hier landen GourMerge Requests – Vorschläge von Leuten, die dein Rezept geremixt haben. Du kannst sie prüfen und in dein Rezept übernehmen!"
+        "desc": "Hier landen GourMerge Requests: Vorschläge von Leuten, die dein Rezept geremixt haben. Du kannst sie prüfen und in dein Rezept übernehmen!"
       },
       "newBranch": {
         "title": "Neue Variante erstellen",
@@ -601,8 +601,8 @@
         "desc": "Du hast es geschafft! Lösche nun auch den Remix, um die Tour abzuschliessen."
       }
     },
-    "endedEarly": "Die Tour endet hier — es gab kein Beispielrezept, um die restlichen Schritte zu zeigen.",
-    "finishedNoFork": "Tour abgeschlossen! Zum Remixen brauchst du ein öffentliches Rezept einer anderen Person — sobald es welche gibt, kannst du es hier ausprobieren."
+    "endedEarly": "Die Tour endet hier, weil es kein Beispielrezept gab, um die restlichen Schritte zu zeigen.",
+    "finishedNoFork": "Tour abgeschlossen! Zum Remixen brauchst du ein öffentliches Rezept einer anderen Person. Sobald es welche gibt, kannst du es hier ausprobieren."
   },
   "help": {
     "menu": "Hilfe",
@@ -670,7 +670,7 @@
       "dataAccount": "Konto-Daten:",
       "dataAccountDesc": "E-Mail-Adresse, Benutzername, Anzeigename",
       "dataSession": "Session-Cookie:",
-      "dataSessionDesc": "HttpOnly, Laufzeit 14 Tage, wird ausschließlich beim Anmelden gesetzt. Enthält verschlüsselt deine Kontodaten (Benutzername, Anzeigename, E-Mail-Adresse, Profilbild, Bestätigungsstatus) — lesbar ausschließlich für unseren Server, nicht für deinen Browser oder Dritte.",
+      "dataSessionDesc": "HttpOnly, Laufzeit 14 Tage, wird ausschließlich beim Anmelden gesetzt. Enthält verschlüsselt deine Kontodaten (Benutzername, Anzeigename, E-Mail-Adresse, Profilbild, Bestätigungsstatus), lesbar ausschließlich für unseren Server, nicht für deinen Browser oder Dritte.",
       "dataPrefs": "Funktionale Cookies:",
       "dataPrefsDesc": "Sprachauswahl, Farbschema (hell/dunkel) und der Hinweis, dass die Einführung bereits gesehen wurde. Diese Cookies speichern nur Ihre Einstellungen, keine Kennung und keine personenbezogenen Daten, und sind für den Betrieb der Website erforderlich.",
       "dataContact": "Kontaktformular:",
@@ -680,7 +680,7 @@
       "purposeTitle": "3. Zweck der Verarbeitung",
       "purposeBody": "Die erhobenen Daten werden ausschließlich für den Betrieb der Plattform GourMerge sowie für die Kommunikation mit Nutzerinnen und Nutzern verwendet. Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO (Vertragserfüllung) und Art. 6 Abs. 1 lit. f DSGVO (berechtigte Interessen). Für Anfragen über das Kontaktformular ist die Rechtsgrundlage Art. 6 Abs. 1 lit. f DSGVO.",
       "thirdPartiesTitle": "4. Weitergabe an Dritte",
-      "thirdPartiesBody": "Daten werden grundsätzlich nicht an Dritte weitergegeben. Ausnahme: Wir nutzen Sentry für die Fehlerüberwachung. Im Fehlerfall werden technische Daten (z. B. Stack-Traces) übermittelt; das Sentry-Projekt wird in der EU-Region betrieben, die Daten verbleiben in der EU. Das SDK übermittelt keine personenbezogenen Daten wie E-Mail-Adressen; die IP-Adresse, die bei der Übertragung technisch anfällt, wird bei Sentry nicht gespeichert (Projekteinstellung „Prevent Storing of IP Addresses“). Schriftarten werden von unserem eigenen Server ausgeliefert — es besteht keine Verbindung zu Google Fonts oder anderen externen CDNs.",
+      "thirdPartiesBody": "Daten werden grundsätzlich nicht an Dritte weitergegeben. Ausnahme: Wir nutzen Sentry für die Fehlerüberwachung. Im Fehlerfall werden technische Daten (z. B. Stack-Traces) übermittelt; das Sentry-Projekt wird in der EU-Region betrieben, die Daten verbleiben in der EU. Das SDK übermittelt keine personenbezogenen Daten wie E-Mail-Adressen; die IP-Adresse, die bei der Übertragung technisch anfällt, wird bei Sentry nicht gespeichert (Projekteinstellung „Prevent Storing of IP Addresses“). Schriftarten werden von unserem eigenen Server ausgeliefert. Es besteht keine Verbindung zu Google Fonts oder anderen externen CDNs.",
       "thirdPartiesSentryLink": "Datenschutzerklärung von Sentry",
       "rightsTitle": "5. Ihre Rechte (DSGVO Art. 15–22)",
       "right1": "Auskunft über gespeicherte Daten (Art. 15)",
@@ -731,11 +731,11 @@
       "retentionLogs": "Server-Logs: höchstens 3 Tage, danach werden sie rotierend überschrieben.",
       "retentionErrors": "Fehlerberichte bei Sentry: 90 Tage.",
       "selfServiceTitle": "9. Selbstbedienung",
-      "selfServiceDesc": "Auskunft und Löschung kannst du jederzeit selbst anstoßen — ohne uns zu schreiben:",
-      "retentionInactive": "Inaktive Konten: Wenn du dich drei Jahre lang nicht anmeldest, löschen wir dein Konto automatisch. Wir warnen dich vorher dreimal per E-Mail — sechs Monate, vier Wochen und 24 Stunden vor der Löschung. Eine einzige Anmeldung genügt, damit dein Konto erhalten bleibt; die Frist beginnt dann neu. Maßgeblich ist ausschließlich dein letzter Login, nicht das Öffnen einer E-Mail.",
+      "selfServiceDesc": "Auskunft und Löschung kannst du jederzeit selbst anstoßen, ohne uns zu schreiben:",
+      "retentionInactive": "Inaktive Konten: Wenn du dich drei Jahre lang nicht anmeldest, löschen wir dein Konto automatisch. Wir warnen dich vorher dreimal per E-Mail: sechs Monate, vier Wochen und 24 Stunden vor der Löschung. Eine einzige Anmeldung genügt, damit dein Konto erhalten bleibt; die Frist beginnt dann neu. Maßgeblich ist ausschließlich dein letzter Login, nicht das Öffnen einer E-Mail.",
       "twofaTitle": "Zwei-Faktor-Authentifizierung (optional)",
-      "twofaBody": "Du kannst dein Konto freiwillig mit einer Authenticator-App (TOTP) zusätzlich schützen. Wir speichern dann einen verschlüsselten Schlüssel für die Code-Erzeugung sowie zehn Wiederherstellungscodes als Hash. Es werden keine Telefonnummern erhoben und keine Daten an Dritte übermittelt — die Codes entstehen ausschließlich auf deinem Gerät. Du kannst die Funktion jederzeit in den Einstellungen wieder deaktivieren; die zugehörigen Daten werden dabei gelöscht.",
-      "deletionHard": "Bei einer Löschung nach Art. 17 DSGVO wird dein Konto tatsächlich gelöscht, nicht nur gesperrt. Beiträge, die untrennbar zur Historie fremder Rezepte gehören — etwa Versionen, die jemand anderes in seine eigene Kopie übernommen hat, sowie deine GourMerge Requests und Kommentare in fremden Diskussionen — werden einem anonymen Platzhalterkonto zugeordnet. Dein Name, deine E-Mail-Adresse und dein Profil verschwinden dabei vollständig."
+      "twofaBody": "Du kannst dein Konto freiwillig mit einer Authenticator-App (TOTP) zusätzlich schützen. Wir speichern dann einen verschlüsselten Schlüssel für die Code-Erzeugung sowie zehn Wiederherstellungscodes als Hash. Es werden keine Telefonnummern erhoben und keine Daten an Dritte übermittelt: Die Codes entstehen ausschließlich auf deinem Gerät. Du kannst die Funktion jederzeit in den Einstellungen wieder deaktivieren; die zugehörigen Daten werden dabei gelöscht.",
+      "deletionHard": "Bei einer Löschung nach Art. 17 DSGVO wird dein Konto tatsächlich gelöscht, nicht nur gesperrt. Beiträge, die untrennbar zur Historie fremder Rezepte gehören (etwa Versionen, die jemand anderes in seine eigene Kopie übernommen hat, sowie deine GourMerge Requests und Kommentare in fremden Diskussionen), werden einem anonymen Platzhalterkonto zugeordnet. Dein Name, deine E-Mail-Adresse und dein Profil verschwinden dabei vollständig."
     }
   },
   "editor": {
@@ -766,7 +766,7 @@
     "subtitle": "Schütze dein Konto zusätzlich mit einer Authenticator-App.",
     "statusOn": "Aktiv",
     "statusOff": "Nicht aktiv",
-    "appHint": "Funktioniert mit jeder Authenticator-App — z. B. Google Authenticator, Authy, 1Password, Bitwarden oder Aegis.",
+    "appHint": "Funktioniert mit jeder Authenticator-App, z. B. Google Authenticator, Authy, 1Password, Bitwarden oder Aegis.",
     "enable": "Einrichten",
     "disable": "Deaktivieren",
     "setupScan": "Scanne diesen QR-Code mit deiner Authenticator-App:",
@@ -781,7 +781,7 @@
     "recoveryDone": "Ich habe sie gespeichert",
     "recoveryRemaining": "{n} von 10 Wiederherstellungscodes noch nutzbar",
     "disableTitle": "Zwei-Faktor-Authentifizierung deaktivieren",
-    "disableDesc": "Zur Bestätigung brauchen wir dein Passwort — nicht einen Code, damit du dich auch bei verlorenem Gerät nicht aussperrst.",
+    "disableDesc": "Zur Bestätigung brauchen wir dein Passwort statt eines Codes, damit du dich auch bei verlorenem Gerät nicht aussperrst.",
     "disablePassword": "Passwort",
     "disableConfirm": "Deaktivieren",
     "enabledToast": "Zwei-Faktor-Authentifizierung ist aktiv.",
@@ -799,7 +799,7 @@
     "network": "Der Server ist nicht erreichbar. Prüfe deine Verbindung und versuche es erneut.",
     "unauthorized": "Dazu fehlt dir die Berechtigung.",
     "notFound": "Das konnten wir nicht finden.",
-    "conflict": "Das geht so nicht — vermutlich existiert es schon oder wurde gerade geändert.",
+    "conflict": "Das geht so nicht. Vermutlich existiert es schon oder wurde gerade geändert.",
     "validation": "Bitte überprüfe deine Eingaben.",
     "rateLimited": "Zu viele Versuche. Warte einen Moment und versuche es erneut.",
     "unavailable": "Der Dienst ist gerade nicht verfügbar. Bitte versuche es später erneut.",
@@ -810,7 +810,7 @@
   },
   "passkey": {
     "title": "Passkeys",
-    "subtitle": "Melde dich ohne Passwort an — mit Fingerabdruck, Gesicht oder Geräte-PIN.",
+    "subtitle": "Melde dich ohne Passwort an, mit Fingerabdruck, Gesicht oder Geräte-PIN.",
     "explain": "Ein Passkey bleibt auf deinem Gerät und lässt sich nicht abfangen oder auf einer gefälschten Seite eingeben. Er ersetzt bei der Anmeldung Passwort und Bestätigungscode.",
     "add": "Passkey hinzufügen",
     "none": "Noch kein Passkey eingerichtet.",
@@ -876,7 +876,7 @@
   },
   "cookieConsent": {
     "bannerTitle": "Wir verwenden Cookies",
-    "bannerBody": "Für Login, Spracheinstellung und ein paar Komfortfunktionen setzen wir technisch notwendige Cookies. Kategorien wie Statistik oder Marketing nutzen wir aktuell nicht — mehr Details in unserer",
+    "bannerBody": "Für Login, Spracheinstellung und ein paar Komfortfunktionen setzen wir technisch notwendige Cookies. Kategorien wie Statistik oder Marketing nutzen wir aktuell nicht. Mehr Details in unserer",
     "privacyLinkText": "Datenschutzerklärung",
     "acceptAll": "Alle akzeptieren",
     "acceptNecessary": "Nur technisch notwendige",
@@ -885,7 +885,7 @@
     "settingsIntro": "Wähle, welche Cookie-Kategorien wir setzen dürfen. Details dazu findest du in unserer",
     "categoryNecessaryTitle": "Technisch notwendig",
     "categoryNecessaryAlwaysOn": "Immer aktiv",
-    "categoryNecessaryDesc": "Session-Cookie für den Login (enthält verschlüsselt deine Kontodaten — Benutzername, Anzeigename, E-Mail-Adresse, Profilbild, Bestätigungsstatus — lesbar ausschließlich für unseren Server), ein kurzlebiges Cookie für den Zwei-Faktor-Zwischenschritt (enthält nur deine Nutzer-ID, 5 Minuten gültig), deine Sprachauswahl und der Hinweis, dass du die Einführung schon gesehen hast. Diese Cookies sind für den Betrieb der Seite zwingend erforderlich und lassen sich nicht abwählen.",
+    "categoryNecessaryDesc": "Session-Cookie für den Login (enthält verschlüsselt deine Kontodaten: Benutzername, Anzeigename, E-Mail-Adresse, Profilbild, Bestätigungsstatus; lesbar ausschließlich für unseren Server), ein kurzlebiges Cookie für den Zwei-Faktor-Zwischenschritt (enthält nur deine Nutzer-ID, 5 Minuten gültig), deine Sprachauswahl und der Hinweis, dass du die Einführung schon gesehen hast. Diese Cookies sind für den Betrieb der Seite zwingend erforderlich und lassen sich nicht abwählen.",
     "categoryStatisticsTitle": "Statistik",
     "categoryStatisticsDesc": "Aktuell nicht im Einsatz. Reserviert für den Fall, dass wir später anonyme Nutzungsstatistiken einführen.",
     "categoryMarketingTitle": "Marketing",

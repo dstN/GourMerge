@@ -1,5 +1,5 @@
 /**
- * generateSlug — Create a URL-safe slug from a recipe title
+ * generateSlug: Create a URL-safe slug from a recipe title
  *
  * Converts "Omas Apfelkuchen 🍎" → "omas-apfelkuchen"
  * Handles German umlauts, special characters, and emoji.

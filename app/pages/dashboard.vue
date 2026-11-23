@@ -10,7 +10,7 @@ useSeoMeta({
   title: `${t('nav.dashboard')}: GourMerge`,
 })
 
-// Fetch user's recipes — already sorted by `updatedAt` DESC server-side, which is what
+// Fetch user's recipes, already sorted by `updatedAt` DESC server-side, which is what
 // makes the "recently edited" strip below just a slice of this, not a second fetch.
 const {
   data: recipes,
@@ -21,13 +21,13 @@ const {
 })
 
 /**
- * The one thing the removed dashboard sidebar had with no duplicate elsewhere — a quick
+ * The one thing the removed dashboard sidebar had with no duplicate elsewhere: a quick
  * "pick up where you left off" list. Restored on the dashboard page itself rather than as
  * global chrome (see ROADMAP.md): the grid below is the same data, same order, but shows
  * no timestamp, so at a glance it does not actually say what is recent.
  *
- * Skipped entirely once there are 3 or fewer recipes — at that size it would repeat the
- * whole grid immediately below it, which is not a shortcut, just the same list twice.
+ * Skipped entirely once there are 3 or fewer recipes. At that size it would just repeat the
+ * whole grid immediately below it.
  */
 const recentlyEdited = computed(() => (recipes.value && recipes.value.length > 3 ? recipes.value.slice(0, 3) : []))
 
@@ -39,7 +39,7 @@ interface MineReport {
   target: { label: string; url: string | null }
 }
 
-// "Visible to the owner of the reported artefact" (ROADMAP.md) — this is that surface.
+// "Visible to the owner of the reported artefact" (ROADMAP.md): this is that surface.
 // Open only: once actioned or dismissed there is nothing left for the owner to do about it.
 const { data: myReports } = useFetch<MineReport[]>('/api/reports/mine', {
   headers: useRequestHeaders(['cookie']),
@@ -50,7 +50,7 @@ const { data: myReports } = useFetch<MineReport[]>('/api/reports/mine', {
  * Clamped to never read in the future: `updatedAt` comes from the DB server's clock and
  * `Date.now()` from this one, and a small skew between the two is not something a "recently
  * edited" label should ever surface as "in 2 hours" for something just saved. Clamping
- * only the upper bound — never the magnitude of a genuinely past edit — is the one change
+ * only the upper bound (never the magnitude of a genuinely past edit) is the one change
  * that is correct regardless of which direction a real skew turns out to run.
  */
 function editedAgo(updatedAt: string): string {

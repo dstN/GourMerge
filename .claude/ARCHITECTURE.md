@@ -1,4 +1,4 @@
-# GourMerge — Architecture & Project Rulebook
+# GourMerge Architecture & Project Rulebook
 
 > **"Fork the recipe, merge the flavor."**
 > _Deutsch: "Wo bester Geschmack verschmilzt."_
@@ -9,7 +9,7 @@ See `.claude/current_state.md` for the current implementation status. See `.clau
 
 ---
 
-## 1. Wording — Absolute Rule
+## 1. Wording: Absolute Rule
 
 > **The term "Pull Request" is FORBIDDEN in this codebase.**
 
@@ -23,14 +23,14 @@ In all code, UI labels, database columns, API endpoints, comments, commit messag
 
 ---
 
-## 2. Tech Stack (fixed — do not substitute)
+## 2. Tech Stack (fixed, do not substitute)
 
 | Layer          | Technology                                                     |
 | -------------- | -------------------------------------------------------------- |
 | Framework      | **Nuxt 4** (Vue 3 Composition API)                             |
 | UI Library     | **Nuxt UI v4** (Reka UI + Tailwind CSS v4 + Tailwind Variants) |
 | Styling        | **Tailwind CSS v4** (CSS-first config via `@theme`)            |
-| Database       | **MySQL 8.4** (exclusively — see note below)                   |
+| Database       | **MySQL 8.4** (exclusively, see note below)                    |
 | ORM            | **Drizzle ORM** with `mysql2` driver                           |
 | i18n           | **@nuxtjs/i18n** (lazy-loaded, DE default + EN + FR + IT)      |
 | WYSIWYG Editor | **TipTap 3.x** with `@tiptap/markdown`                         |
@@ -39,7 +39,7 @@ In all code, UI labels, database columns, API endpoints, comments, commit messag
 
 > **Engine correction (2026-08-04).** This document previously specified MariaDB. In
 > reality every environment is MySQL: production is the Netcup MySQL host reporting
-> **8.4.11**, local dev is a native MySQL, and only CI ran `mariadb:11` — so tests were
+> **8.4.11**, local dev is a native MySQL, and only CI ran `mariadb:11`, so tests were
 > the single MariaDB in the project. CI and `docker-compose.yml` are now pinned to
 > `mysql:8.4`. This matters because the codebase issues engine-specific SQL:
 > `JSON_UNQUOTE(JSON_EXTRACT(…))` for locale-aware ingredient names, a
@@ -88,7 +88,7 @@ GourMerge/
 ├── docs/                       # Operational documentation
 ├── nuxt.config.ts              # Nuxt configuration (CSP, i18n, PWA, runtime config)
 ├── drizzle.config.ts           # Drizzle Kit config
-├── docker-compose.yml          # LOCAL DEV ONLY — MySQL 8.4
+├── docker-compose.yml          # LOCAL DEV ONLY: MySQL 8.4
 └── app.js                      # Passenger startup shim
 ```
 
@@ -96,19 +96,19 @@ GourMerge/
 
 - **Never** put Vue components, pages, or composables outside `app/`.
 - **Never** put server logic inside `app/`.
-- **Shared types** go in `shared/types/` — auto-imported by both `app/` and `server/`.
+- **Shared types** go in `shared/types/`, auto-imported by both `app/` and `server/`.
 - **i18n locale files** live in `i18n/locales/` (not `app/locales/`).
 - **`server/utils/`** files are auto-imported in server context only.
 
 ---
 
-## 4. Vue 3 Composition API — Strict Rules
+## 4. Vue 3 Composition API: Strict Rules
 
 ### Mandatory
 
 - Use `<script setup lang="ts">` in all components. No exceptions.
 - Use `defineProps` / `defineEmits` / `defineModel` with TypeScript types.
-- Use `ref()`, `computed()`, `watch()` — never `this`.
+- Use `ref()`, `computed()`, `watch()`; never `this`.
 - Use Nuxt auto-imports: `useRoute()`, `useFetch()`, `useAsyncData()`, `useState()`, etc.
 
 ### Forbidden
@@ -120,7 +120,7 @@ GourMerge/
 
 ---
 
-## 5. Nuxt UI v4 — Component Rules
+## 5. Nuxt UI v4: Component Rules
 
 ### Prefix
 
@@ -153,14 +153,14 @@ Use Iconify icons via the `icon` prop: `<UButton icon="i-lucide-git-fork" />`.
 ### USelect (v4 API)
 
 ```html
-<!-- CORRECT — v4 uses :items and value-key -->
+<!-- CORRECT: v4 uses :items and value-key -->
 <USelect v-model="val" :items="options" value-key="value" />
 
-<!-- WRONG — v3 API, does not work in v4 -->
+<!-- WRONG: v3 API, does not work in v4 -->
 <USelect v-model="val" :options="options" />
 ```
 
-Object arrays require `value-key="value"`. Empty string option values cause falsy-value mismatches — use a sentinel string (e.g. `'none'`) for "unselected".
+Object arrays require `value-key="value"`. Empty string option values cause falsy-value mismatches; use a sentinel string (e.g. `'none'`) for "unselected".
 
 ### UDropdownMenu items
 
@@ -172,11 +172,11 @@ Object arrays require `value-key="value"`. Empty string option values cause fals
 { label: 'Logout', icon: 'i-lucide-log-out', color: 'neutral' as const, click: handleLogout }
 ```
 
-Always include `color: 'neutral' as const` — missing it causes an icon colour flash on hover.
+Always include `color: 'neutral' as const`. Missing it causes an icon colour flash on hover.
 
 ### UModal for confirmations
 
-**Never use `window.confirm`** — it is suppressed silently by Chromium in dev environments (always returns `false`, blocking navigation). Use `UModal` with an `allowLeave` flag pattern instead:
+**Never use `window.confirm`**: it is suppressed silently by Chromium in dev environments (always returns `false`, blocking navigation). Use `UModal` with an `allowLeave` flag pattern instead:
 
 ```typescript
 const showModal = ref(false)
@@ -196,12 +196,12 @@ onBeforeRouteLeave((to, from, next) => {
 
 ---
 
-## 6. MySQL & Drizzle ORM — Best Practices
+## 6. MySQL & Drizzle ORM: Best Practices
 
 ### Schema Design
 
 - All tables use `snake_case` column names.
-- Primary keys: `INT AUTO_INCREMENT` (internal only — never expose in URLs/API).
+- Primary keys: `INT AUTO_INCREMENT` (internal only, never expose in URLs/API).
 - External identifiers: `BINARY(16)` UUIDv7 `public_id` column on externally-linked entities (`recipes`, `gourmerge_requests`). Generated app-side via `uuidv7` package.
 - **Auth tokens** (`email_verification_tokens`, `password_reset_tokens`) use **CSPRNG**, NOT UUIDv7. Store bcrypt hash, never plaintext.
 - Timestamps: `created_at DATETIME`, `updated_at TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`.
@@ -211,7 +211,7 @@ onBeforeRouteLeave((to, from, next) => {
 
 1. **Snapshot-based commits**: each commit stores a full snapshot of ingredients + steps. Never delta encoding.
 2. **Branch = Pointer**: a branch row points to `head_commit_id`. Creating a branch is 1 INSERT.
-3. **Commit DAG**: `parent_commit_id` creates a linked list. Traverse application-side. (The original rule said "no recursive CTEs, slow on MariaDB"; production is MySQL 8.4, where recursive CTEs are perfectly serviceable. The app-side walk stays because it is built, paginated and proven — not because CTEs are unavailable. Do not rewrite it without a measured reason.)
+3. **Commit DAG**: `parent_commit_id` creates a linked list. Traverse application-side. (The original rule said "no recursive CTEs, slow on MariaDB"; production is MySQL 8.4, where recursive CTEs are perfectly serviceable. The app-side walk stays because it is built, paginated and proven. Do not rewrite it without a measured reason.)
 4. **Diffs are computed on-read**: compare two commit snapshots at query time. Never pre-store diffs.
 5. **Indexing**: always index `branch_id`, `parent_commit_id`, `commit_id` (on ingredient/step tables), and `source_branch_id` / `target_branch_id` on GourMerge Requests.
 
@@ -219,8 +219,8 @@ onBeforeRouteLeave((to, from, next) => {
 
 Most FK relations use `onDelete: 'cascade'`. Two relations use NO ACTION (= RESTRICT in MySQL) and must be handled explicitly in the delete handler:
 
-- `recipes.forked_from_recipe_id` — nullify on forks before deleting parent
-- `gourmerge_requests.source_branch_id / target_branch_id / source_recipe_id` — delete cross-recipe GMRs before branch cascade
+- `recipes.forked_from_recipe_id`: nullify on forks before deleting parent
+- `gourmerge_requests.source_branch_id / target_branch_id / source_recipe_id`: delete cross-recipe GMRs before branch cascade
 
 See `server/api/recipes/[id].delete.ts` for the implementation.
 
@@ -230,12 +230,12 @@ See `server/api/recipes/[id].delete.ts` for the implementation.
 
 ### Connection
 
-- Use `mysql2` with connection pooling. Pool size ≈ 3–5 for shared Netcup hosting (Passenger spawns multiple processes — each has its own pool).
+- Use `mysql2` with connection pooling. Pool size ≈ 3–5 for shared Netcup hosting (Passenger spawns multiple processes, each with its own pool).
 - DB URL from `runtimeConfig.databaseUrl` (never hardcode).
 
 ---
 
-## 7. i18n — Internationalization Rules
+## 7. i18n: Internationalization Rules
 
 ### Setup
 
@@ -279,7 +279,7 @@ const { t, locale } = useI18n()
 - TipTap 3.x with `@tiptap/vue-3` + `@tiptap/starter-kit` + `@tiptap/markdown`.
 - Always use `immediatelyRender: false` for SSR safety (prevents hydration mismatch).
 - Wrap in `<ClientOnly>` with a plain-text fallback.
-- **Images are disabled** — no image extension, no `img::` upload track.
+- **Images are disabled**: no image extension, no `img::` upload track.
 
 ### Empty state normalization
 
@@ -326,8 +326,8 @@ The database stores **only metric canonical values**:
 
 - The global `ingredients` master table is populated from two datasets: the **Swiss BLV Food Composition Database V7.0** (`seed:swiss`) and the German **BLS 4.0** (`seed:bls`, after the Swiss one). A food both describe is ONE ingredient with two `ingredient_sources` rows (`server/database/seeds/bls-map.csv` decides; the German BLS name is displayed, the Swiss values are kept, the Swiss name stays as a synonym). Dish groups X/Y of the BLS stay out except for listed components. See `docs/BLS-INTEGRATION-PLAN.md`.
 - Nutrition stored in `ingredient_nutrition` (per 100g/100ml, edible portion). It holds the _effective_ values; `source` identifies where they came from: `'swiss-blv-v7'`, `'bls-4.0'`, `'user'` or `'curated'`.
-- `ingredient_sources` records which datasets know an ingredient, one row per `(dataset, external_id)` — **unique**, so a dataset row can never become two ingredients. `dataset` is the family without a version (`swiss-blv`, `bls`); the version is informational. Importers look foods up here, never by a versioned source string.
-- Search via `GET /api/ingredients?q=&locale=` matches `ingredient_search_terms` — normalised names and synonyms, see `shared/utils/ingredientSearch.ts` — never the raw name columns. Anything that writes `ingredients` in bulk is followed by `npm run search:rebuild`; the API handlers maintain the rows for user-created ingredients.
+- `ingredient_sources` records which datasets know an ingredient, one row per `(dataset, external_id)`, which is **unique**, so a dataset row can never become two ingredients. `dataset` is the family without a version (`swiss-blv`, `bls`); the version is informational. Importers look foods up here, never by a versioned source string.
+- Search via `GET /api/ingredients?q=&locale=` matches `ingredient_search_terms` (normalised names and synonyms, see `shared/utils/ingredientSearch.ts`), never the raw name columns. Anything that writes `ingredients` in bulk is followed by `npm run search:rebuild`; the API handlers maintain the rows for user-created ingredients.
 - Ingredients missing from Swiss BLV can be added to `scripts/seed-ingredients.mjs` with `source = 'curated'`.
 
 ---
@@ -342,11 +342,11 @@ The database stores **only metric canonical values**:
 
 ### Every endpoint must
 
-1. Validate body/query with **Zod** — reject unknown keys, enforce length caps matching DB
+1. Validate body/query with **Zod**: reject unknown keys, enforce length caps matching DB
 2. Use `requireUserSession(event)` for authenticated routes
-3. Return `createError()` for all error cases — never throw raw errors
+3. Return `createError()` for all error cases; never throw raw errors
 4. Check ownership before any mutation (`recipe.ownerId !== session.user.id` → 403)
-5. Use `useDrizzle()` — null-guard before any DB operation
+5. Use `useDrizzle()` and null-guard before any DB operation
 
 ### Response format
 
@@ -356,13 +356,13 @@ Return typed plain objects. No wrapper `{ data: ... }` envelope.
 
 ## 12. Security Rules
 
-- **Rate limiting**: DB-backed (`rate_limit_hits` table) — in-memory state is NOT multi-process safe under Passenger
+- **Rate limiting**: DB-backed (`rate_limit_hits` table), because in-memory state is NOT multi-process safe under Passenger
 - **CSRF**: enabled via nuxt-auth-utils / Nitro
 - **Session rotation**: regenerate after login/register
 - **Cookies**: `httpOnly`, `sameSite=lax`, 14-day maxAge; `secure` in production
-- **Markdown sanitization**: user-provided Markdown is rendered via `marked` — never inject as raw HTML without sanitization
+- **Markdown sanitization**: user-provided Markdown is rendered via `marked`; never inject as raw HTML without sanitization
 - **No stack traces in production**: Nitro error hook sanitizes responses
-- **Secrets**: injected via Passenger env directives — never committed, never in `docker-compose.yml`
+- **Secrets**: injected via Passenger env directives, never committed, never in `docker-compose.yml`
 
 ---
 

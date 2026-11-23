@@ -1,5 +1,7 @@
 /**
- * POST /api/ingredients — Create or get a master ingredient by name
+ * POST /api/ingredients
+ *
+ * Create or get a master ingredient by name
  *
  * Deduplicates by normalized canonical name (lowercase, trimmed).
  * If an ingredient with the same normalized name already exists, returns it.
@@ -27,7 +29,7 @@ export default defineEventHandler(async (event) => {
   const session = await requireUserSession(event)
 
   // Every write here lands in the GLOBAL catalog every other user's autocomplete then
-  // reads — unlike a recipe or a comment, this is not the caller's own content to spam.
+  // reads. Unlike a recipe or a comment, this is not the caller's own content to spam.
   // Generous enough for genuine recipe authoring (a handful of new ingredients per
   // recipe), tight enough that a script cannot flood the catalog.
   await useRateLimit(`ingredient:create:${session.user.id}`, { max: 20, windowSeconds: 600 })
@@ -64,7 +66,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // Create new ingredient. `createdBy` is what makes it editable/reportable later
-  // (see the `ingredients.created_by` comment in schema.ts) — the Swiss BLV import
+  // (see the `ingredients.created_by` comment in schema.ts). The Swiss BLV import
   // never sets it, so this is the one clean "did a user make this row" signal.
   const [created] = await db
     .insert(ingredients)

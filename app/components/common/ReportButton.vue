@@ -1,12 +1,11 @@
 <script setup lang="ts">
 /**
- * CommonReportButton — flags a recipe, user, discussion comment or image for moderation.
+ * CommonReportButton: flags a recipe, user, discussion comment or image for moderation.
  *
  * Owns the modal and the submit call; the trigger is a slot rather than a fixed button, so
  * a recipe page can put it in an overflow menu next to six already-icon-only actions
- * (DESIGNBOOK §2.4 — this is one more of those, not a good reason to add a seventh), while
- * a profile page or a single comment can render it as a plain small button instead. One
- * component, two very different places to stand.
+ * (DESIGNBOOK §2.4; this is one more of those, not a reason to add a seventh), while
+ * a profile page or a single comment can render it as a plain small button instead.
  */
 const props = defineProps<{
   targetKind: 'recipe' | 'user' | 'discussion_comment' | 'image' | 'ingredient'
@@ -32,7 +31,7 @@ function openModal() {
 }
 
 // The default slot passes `open` for a visible trigger (profile page, a single comment).
-// Exposed too for callers driving it from outside the template — a dropdown menu item
+// Exposed too for callers driving it from outside the template: a dropdown menu item
 // (the recipe page's overflow menu) has nowhere to put a scoped slot at all.
 defineExpose({ open: openModal })
 

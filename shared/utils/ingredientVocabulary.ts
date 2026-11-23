@@ -4,11 +4,11 @@
  * The Swiss BLV catalog says Poulet, Rahm and Peperoni; the German BLS says Hähnchen, Sahne
  * and Paprika; a user in Hamburg types the second and expects the first to show up. Rather
  * than editing either dataset's names, every search term that contains one side of a pair
- * also gets a variant with the other side — in both directions, so a BLS row is just as
+ * also gets a variant with the other side, in both directions, so a BLS row is just as
  * findable from Zürich. Words are in the normalised form of `normalizeSearchTerm()`
  * (lower-case, umlauts folded), matched as whole words.
  *
- * Deliberately small and deliberately only synonyms a cook treats as the same thing — a
+ * Deliberately small and deliberately only synonyms a cook treats as the same thing. A
  * pair here makes two rows interchangeable in the autocomplete, nothing more.
  */
 export const INGREDIENT_VOCABULARY: ReadonlyArray<readonly [string, string]> = [
@@ -22,7 +22,7 @@ export const INGREDIENT_VOCABULARY: ReadonlyArray<readonly [string, string]> = [
   ['plätzli', 'schnitzel'],
   ['platzli', 'schnitzel'],
   ['speck', 'bacon'],
-  // eggs — "Ei" alone must find "Hühnerei roh"; two characters never reach the substring tiers
+  // eggs: "Ei" alone must find "Hühnerei roh"; two characters never reach the substring tiers
   ['huhnerei', 'ei'],
   ['eier', 'ei'],
   // dairy

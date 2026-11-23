@@ -1,9 +1,9 @@
 /**
- * POST /auth/login-2fa — complete a login by supplying the second factor.
+ * POST /auth/login-2fa: complete a login by supplying the second factor.
  *
  * Accepts either a 6-digit TOTP code or one of the single-use recovery codes. The
  * pending state comes from the signed cookie set by `/auth/login`, never from a
- * session — so this endpoint cannot be used to elevate an arbitrary visitor, and it
+ * session, so this endpoint cannot be used to elevate an arbitrary visitor, and it
  * cannot be skipped by calling protected endpoints directly.
  */
 import { z } from 'zod'
@@ -17,7 +17,7 @@ const schema = z.object({
 
 export default defineEventHandler(async (event) => {
   // The tightest limit in the app. Six digits is a 1e6 space and an attacker who
-  // already has the password only needs to hit the live window — without this the
+  // already has the password only needs to hit the live window. Without this the
   // second factor is a speed bump.
   await useRateLimit(getRateLimitKey(event, 'login-2fa'), { max: 8, windowSeconds: 300 })
 
@@ -26,7 +26,7 @@ export default defineEventHandler(async (event) => {
 
   const userId = await readPendingTotp(event)
   if (!userId) {
-    // Expired or absent — the user has to start from the password again.
+    // Expired or absent: the user has to start from the password again.
     throw createError({ statusCode: 401, statusMessage: 'Your sign-in attempt expired. Please start again.' })
   }
 
@@ -57,7 +57,7 @@ export default defineEventHandler(async (event) => {
     }
   } else {
     // Recovery code. Hashes are bcrypt, so they must be compared one at a time
-    // against the unused rows — there is no way to look one up by value.
+    // against the unused rows; there is no way to look one up by value.
     const candidate = normalizeRecoveryCode(raw)
     const rows = await db
       .select()

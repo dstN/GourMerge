@@ -2,7 +2,7 @@ import { describe, test, expect, beforeAll } from 'vitest'
 
 /**
  * `server/utils/webauthn.ts` reaches for Nitro auto-imports (`createError`, `useDrizzle`)
- * at call time, so a bare vitest environment needs stubs before the module is loaded —
+ * at call time, so a bare vitest environment needs stubs before the module is loaded,
  * the same approach as `totp.test.ts`. Only the pure helpers are exercised here; the
  * challenge store is DB-backed and is proved by `tests/e2e/passkey.spec.ts`, which runs
  * both real ceremonies against a real database.
@@ -18,7 +18,7 @@ const mod = () => import('../../server/utils/webauthn')
 describe('isCounterRegression', () => {
   /**
    * The whole point of the signature counter is clone detection, and the whole trap is
-   * that synced passkeys (iCloud Keychain, Google Password Manager) always report `0` —
+   * that synced passkeys (iCloud Keychain, Google Password Manager) always report `0`:
    * a credential that legitimately lives on several devices cannot keep one monotonic
    * counter. Rejecting `0` would lock out almost every real passkey.
    */
@@ -53,7 +53,7 @@ describe('isCounterRegression', () => {
 describe('guessPasskeyName', () => {
   /**
    * The name is only a default label, but it is the only thing distinguishing rows in
-   * settings — and you can only safely revoke a key you can identify.
+   * settings, and you can only safely revoke a key you can identify.
    */
   test.each([
     ['Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)', 'iPhone'],
@@ -95,7 +95,7 @@ describe('guessPasskeyName', () => {
 describe('challenge store without a database', () => {
   /**
    * Fails closed. A ceremony that cannot persist its challenge must not fall back to
-   * an empty one — `nuxt-auth-utils` treats `challenge: ''` as "skip the check", so a
+   * an empty one. `nuxt-auth-utils` treats `challenge: ''` as "skip the check", so a
    * silent failure here would accept a signature over anything.
    */
   test('refuses to store or consume', async () => {

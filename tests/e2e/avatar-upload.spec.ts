@@ -10,7 +10,7 @@ import { resetRateLimits } from './support/db'
  *
  * - `AvatarCropper.vue`'s live preview is a `blob:` URL (`URL.createObjectURL`); it silently
  *   fails to paint under a `Content-Security-Policy` whose `img-src` does not list `blob:`,
- *   which happened here — the "Apply crop" button stayed disabled forever with no error.
+ *   which happened here: the "Apply crop" button stayed disabled forever with no error.
  * - Its export path (`<canvas>` + `drawImage`) is exactly the class of code
  *   `vitest.config.ts` excludes from unit coverage ("neither of which happy-dom implements"),
  *   so a real browser is the only thing that exercises it at all.
@@ -34,18 +34,18 @@ async function squarePhoto(edge: number): Promise<Buffer> {
 }
 
 test('picking a photo opens the cropper, and confirming stores a square WebP avatar', async ({ page }) => {
-  // The page's own context, not the standalone `request` fixture — they have separate
+  // The page's own context, not the standalone `request` fixture. They have separate
   // cookie jars, and the browser navigation below needs the session this sets.
   const request = page.context().request
   const user = await registerUser(request)
   // The onboarding welcome modal is unrelated to this test and its backdrop would intercept
-  // the very clicks this test makes — settled directly through the API rather than by
+  // the very clicks this test makes, so it is settled directly through the API rather than by
   // clicking through it, same as `startTourAtNewRecipeStep` avoids doing in `tour.spec.ts`.
   await request.patch('/api/users/me', { data: { onboardingCompletedAt: new Date().toISOString() } })
 
   await page.goto('/settings', { waitUntil: 'load' })
   // Wait for Vue hydration so @change="onPick" is attached before setInputFiles fires the
-  // native event below — a raw goto outruns it (see tour.spec.ts/journey.spec.ts). Settings
+  // native event below; a raw goto outruns it (see tour.spec.ts/journey.spec.ts). Settings
   // mounts enough cards (profile, avatar, email, passkeys, 2FA, the cookie banner) that this
   // page was the one where the race finally surfaced: the click always landed, but the
   // dispatched change event had no listener yet, so the cropper never opened.
@@ -69,7 +69,7 @@ test('picking a photo opens the cropper, and confirming stores a square WebP ava
   await expect(dialog).toBeVisible()
   const slider = dialog.getByRole('slider')
   await expect(slider).toBeVisible()
-  // Zoom in a couple of steps — exercises the re-clamp path in `AvatarCropper.vue`, not just
+  // Zoom in a couple of steps. This exercises the re-clamp path in `AvatarCropper.vue`, not just
   // the default 1:1 framing.
   await slider.focus()
   await slider.press('ArrowRight')
@@ -80,7 +80,7 @@ test('picking a photo opens the cropper, and confirming stores a square WebP ava
   await applyButton.click()
 
   // Nuxt UI's toast renders its message both in the visible card and in a second,
-  // `aria-hidden` live-region echo for screen readers — `getByText` alone matches both.
+  // `aria-hidden` live-region echo for screen readers, and `getByText` alone matches both.
   await expect(page.locator('[data-slot="title"]').filter({ hasText: /foto aktualisiert|photo updated/i })).toBeVisible(
     { timeout: 10_000 }
   )
@@ -93,7 +93,7 @@ test('picking a photo opens the cropper, and confirming stores a square WebP ava
   expect(delivered.status()).toBe(200)
   expect(delivered.headers()['content-type']).toContain('image/webp')
 
-  // Remove it — falls back to the generated identicon, and the button relabels accordingly.
+  // Remove it. It falls back to the generated identicon, and the button relabels accordingly.
   await page
     .locator('button')
     .filter({ hasText: /^löschen$|^delete$/i })

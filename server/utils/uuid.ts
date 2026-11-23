@@ -4,11 +4,11 @@ import { uuidv7 } from 'uuidv7'
  * Generate a new UUIDv7 as a 16-byte Buffer for BINARY(16) columns.
  *
  * UUIDv7 stores a 48-bit Unix-ms timestamp in its leading bytes,
- * keeping the secondary index dense and insert-cheap — unlike UUIDv4
+ * keeping the secondary index dense and insert-cheap, unlike UUIDv4,
  * which causes constant page splits (see ARCHITECTURE §5 / ROADMAP decision).
  *
  * Use for: recipes.publicId, gourmergeRequests.publicId
- * Do NOT use for: security tokens (verification/reset) — those must be CSPRNG.
+ * Do NOT use for: security tokens (verification/reset); those must be CSPRNG.
  */
 export function generatePublicId(): Buffer {
   const uuid = uuidv7() // e.g. "019682ab-1234-7xxx-xxxx-xxxxxxxxxxxx"

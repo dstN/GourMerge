@@ -35,15 +35,15 @@ playwright-report
 .vscode/*
 !.vscode/settings.json
 
-# Drizzle — the entire migrations/ folder (SQL + meta journal & snapshots) MUST be
+# Drizzle: the entire migrations/ folder (SQL + meta journal & snapshots) MUST be
 # versioned: drizzle-kit migrate needs meta/_journal.json to know what to apply, and
 # generate needs the snapshots to diff schema changes. Do NOT ignore meta/.
 
-# Claude — ignore everything inside .claude/ except team reference docs
+# Claude: ignore everything inside .claude/ except team reference docs
 .claude/*
 !.claude/ARCHITECTURE.md
 !.claude/ROADMAP.md
 !.claude/current_state.md
 
-# Local database dumps from `npm run db:backup` — personal data, never committed.
+# Local database dumps from `npm run db:backup` contain personal data, never committed.
 backups/

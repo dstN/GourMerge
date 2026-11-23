@@ -1,5 +1,7 @@
 /**
- * GET /api/recipes/:id/discussions — threads on a recipe, or on one of its commits.
+ * GET /api/recipes/:id/discussions
+ *
+ * Threads on a recipe, or on one of its commits.
  *
  * `?commitId=` selects the scope and is not optional-by-omission: absent means the
  * recipe-level threads only, `all` means every thread including commit-anchored ones

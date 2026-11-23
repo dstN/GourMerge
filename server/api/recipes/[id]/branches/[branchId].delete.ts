@@ -1,5 +1,7 @@
 /**
- * DELETE /api/recipes/:id/branches/:branchId — Delete a branch
+ * DELETE /api/recipes/:id/branches/:branchId
+ *
+ * Delete a branch
  *
  * Cannot delete the default (main) branch.
  */

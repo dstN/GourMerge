@@ -1,5 +1,7 @@
 /**
- * GET /api/recipes/:id — Get a single recipe with branches
+ * GET /api/recipes/:id
+ *
+ * Get a single recipe with branches
  */
 import { eq } from 'drizzle-orm'
 import {

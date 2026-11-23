@@ -14,7 +14,7 @@ import { registerUser, uniqueUser, createRecipe, createIngredient, commitSnapsho
  * - "Diskussion" was `<UButton to="#discussion">`, and clicking it did nothing at all.
  *   `UButton` with a `to` renders a `ULink`, which auto-localises through `$localePath`; a
  *   bare hash is not a route, so there was nothing to resolve. And the browser's own hash
- *   scroll would not have helped either — `<main>` is the only scroll container in this
+ *   scroll would not have helped either: `<main>` is the only scroll container in this
  *   shell (DESIGNBOOK §4.1), so a window-level scroll has nothing to move.
  *
  * axe does not catch the first (an accessible name from the count text is *a* name) and
@@ -53,7 +53,7 @@ test('every icon action carries a name, and the discussion jump scrolls', async 
   const cluster = page.locator('[data-tour="tour-pointers"]')
 
   // Every interactive control in the cluster, named. `title` for a pointer user and
-  // `aria-label` for everyone else — an icon with neither is an unlabelled button.
+  // `aria-label` for everyone else. An icon with neither is an unlabelled button.
   const named = await cluster.locator('a, button').evaluateAll((els) =>
     els.map((el) => ({
       title: el.getAttribute('title'),
@@ -69,7 +69,7 @@ test('every icon action carries a name, and the discussion jump scrolls', async 
     expect(n.aria, `an action with text "${n.text}" has no aria-label`).toBeTruthy()
   }
 
-  // The star's name must describe the ACTION, not the count — and it flips with the state.
+  // The star's name must describe the ACTION, not the count, and it flips with the state.
   const star = page.locator('[data-tour="star-button"]')
   const before = await star.getAttribute('aria-label')
   await star.click()

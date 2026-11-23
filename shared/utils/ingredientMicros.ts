@@ -1,5 +1,5 @@
 /**
- * Micronutrient catalog — the vitamin/mineral keys the Swiss BLV import writes into
+ * Micronutrient catalog: the vitamin/mineral keys the Swiss BLV import writes into
  * `ingredient_nutrition.micros` (see `scripts/import-swiss-foods.mjs`), also the exact set a
  * user can self-report for their own ingredients. Shared between server validation and both
  * the input forms and `NutritionFacts.vue`'s display so a key can never drift between "what
